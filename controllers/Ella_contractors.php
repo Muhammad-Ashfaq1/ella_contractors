@@ -8,10 +8,19 @@ class Ella_contractors extends AdminController
         // Load model with proper error handling
         try {
             $this->load->model('ella_contractors/Ella_contractors_model');
+            
             // Verify model is loaded
             if (!isset($this->ella_contractors_model)) {
                 log_message('error', 'Ella_contractors_model failed to load in constructor');
+                // Try alternative loading method
+                $this->load->model('Ella_contractors_model');
             }
+            
+            // Final verification
+            if (!isset($this->ella_contractors_model)) {
+                log_message('error', 'Ella_contractors_model still not loaded after alternative method');
+            }
+            
         } catch (Exception $e) {
             log_message('error', 'Failed to load Ella_contractors_model: ' . $e->getMessage());
         }
@@ -84,12 +93,32 @@ class Ella_contractors extends AdminController
     public function test() {
         echo "<h2>Debug Information</h2>";
         echo "<p>Model loaded: " . (isset($this->ella_contractors_model) ? 'YES' : 'NO') . "</p>";
+        
         if (isset($this->ella_contractors_model)) {
             echo "<p>Model class: " . get_class($this->ella_contractors_model) . "</p>";
             echo "<p>Methods available: " . implode(', ', get_class_methods($this->ella_contractors_model)) . "</p>";
+        } else {
+            echo "<p><strong>ERROR: Model is NULL!</strong></p>";
+            echo "<p>Let's check what happened:</p>";
+            
+            // Check if the model file exists
+            $model_path = APPPATH . 'models/ella_contractors/Ella_contractors_model.php';
+            echo "<p>Model file exists: " . (file_exists($model_path) ? 'YES' : 'NO') . "</p>";
+            echo "<p>Model path: " . $model_path . "</p>";
+            
+            // Check if we can load it manually
+            echo "<p>Attempting manual model load...</p>";
+            try {
+                $this->load->model('ella_contractors/Ella_contractors_model');
+                echo "<p>Manual load result: " . (isset($this->ella_contractors_model) ? 'SUCCESS' : 'FAILED') . "</p>";
+            } catch (Exception $e) {
+                echo "<p>Manual load error: " . $e->getMessage() . "</p>";
+            }
         }
+        
         echo "<hr>";
         echo "<p><a href='" . admin_url('ella_contractors/dashboard') . "'>Go to Dashboard</a></p>";
+        echo "<p><a href='" . admin_url('ella_contractors/contractors') . "'>Go to Contractors</a></p>";
     }
     
     /**
@@ -156,6 +185,20 @@ class Ella_contractors extends AdminController
         $search = $this->input->get('search');
         $status = $this->input->get('status');
         
+        // Safety check: ensure model is loaded
+        if (!isset($this->ella_contractors_model)) {
+            log_message('error', 'Model not loaded in contractors method');
+            $data['error'] = 'System error: Model not available. Please contact administrator.';
+            $data['contractors'] = [];
+            $data['total_count'] = 0;
+            $data['current_page'] = $page;
+            $data['total_pages'] = 1;
+            $data['search'] = $search;
+            $data['status_filter'] = $status;
+            $this->load->view('contractors_list', $data);
+            return;
+        }
+        
         try {
             $data['contractors'] = $this->ella_contractors_model->getContractors($limit, $offset, $search, $status);
             $data['total_count'] = $this->ella_contractors_model->getContractorsCount($search, $status);
@@ -166,6 +209,10 @@ class Ella_contractors extends AdminController
         } catch (Exception $e) {
             log_message('error', 'Error fetching contractors: ' . $e->getMessage());
             $data['error'] = 'Failed to load contractors. Please try again.';
+            $data['contractors'] = [];
+            $data['total_count'] = 0;
+            $data['current_page'] = $page;
+            $data['total_pages'] = 1;
         }
         
         $this->load->view('contractors_list', $data);
