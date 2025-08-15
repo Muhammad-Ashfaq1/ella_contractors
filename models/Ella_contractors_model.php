@@ -43,6 +43,18 @@ class ella_contractors_model extends App_Model {
     }
     
     /**
+     * Get all contractors without pagination (for dropdowns)
+     */
+    public function getAllContractors() {
+        $this->db->select('id, company_name, contact_person, status');
+        $this->db->from('tblella_contractors');
+        $this->db->where('status !=', 'deleted');
+        $this->db->order_by('company_name', 'ASC');
+        $query = $this->db->get();
+        return $query->result();
+    }
+    
+    /**
      * Get contractor by ID
      */
     public function getContractorById($id) {
@@ -761,5 +773,163 @@ class ella_contractors_model extends App_Model {
         }
         
         return $results;
+    }
+    
+    /**
+     * Get all contracts without pagination (for dropdowns)
+     */
+    public function getAllContracts() {
+        $this->db->select('id, title, contractor_id, status');
+        $this->db->from('tblella_contracts');
+        $this->db->where('status !=', 'deleted');
+        $this->db->order_by('title', 'ASC');
+        $query = $this->db->get();
+        return $query->result();
+    }
+    
+    /**
+     * Get all projects without pagination (for dropdowns)
+     */
+    public function getAllProjects() {
+        $this->db->select('id, name, contractor_id, status');
+        $this->db->from('tblella_projects');
+        $this->db->where('status !=', 'deleted');
+        $this->db->order_by('name', 'ASC');
+        $query = $this->db->get();
+        return $query->result();
+    }
+    
+    /**
+     * Get all payments without pagination (for dropdowns)
+     */
+    public function getAllPayments() {
+        $this->db->select('id, amount, contractor_id, status');
+        $this->db->from('tblella_payments');
+        $this->db->where('status !=', 'deleted');
+        $this->db->order_by('payment_date', 'DESC');
+        $query = $this->db->get();
+        return $query->result();
+    }
+    
+    /**
+     * Get contractor status options
+     */
+    public function getContractorStatusOptions() {
+        return [
+            'active' => 'Active',
+            'inactive' => 'Inactive',
+            'pending' => 'Pending',
+            'blacklisted' => 'Blacklisted'
+        ];
+    }
+    
+    /**
+     * Get contract status options
+     */
+    public function getContractStatusOptions() {
+        return [
+            'active' => 'Active',
+            'completed' => 'Completed',
+            'terminated' => 'Terminated',
+            'pending' => 'Pending'
+        ];
+    }
+    
+    /**
+     * Get project status options
+     */
+    public function getProjectStatusOptions() {
+        return [
+            'planning' => 'Planning',
+            'active' => 'Active',
+            'on_hold' => 'On Hold',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled'
+        ];
+    }
+    
+    /**
+     * Get payment status options
+     */
+    public function getPaymentStatusOptions() {
+        return [
+            'pending' => 'Pending',
+            'approved' => 'Approved',
+            'paid' => 'Paid',
+            'cancelled' => 'Cancelled'
+        ];
+    }
+    
+    /**
+     * Get project priority options
+     */
+    public function getProjectPriorityOptions() {
+        return [
+            'low' => 'Low',
+            'medium' => 'Medium',
+            'high' => 'High',
+            'urgent' => 'Urgent'
+        ];
+    }
+    
+    /**
+     * Get countries list
+     */
+    public function getCountries() {
+        return [
+            'US' => 'United States',
+            'CA' => 'Canada',
+            'UK' => 'United Kingdom',
+            'AU' => 'Australia',
+            'DE' => 'Germany',
+            'FR' => 'France',
+            'JP' => 'Japan',
+            'CN' => 'China',
+            'IN' => 'India',
+            'BR' => 'Brazil'
+        ];
+    }
+    
+    /**
+     * Get US states
+     */
+    public function getUSStates() {
+        return [
+            'AL' => 'Alabama', 'AK' => 'Alaska', 'AZ' => 'Arizona', 'AR' => 'Arkansas',
+            'CA' => 'California', 'CO' => 'Colorado', 'CT' => 'Connecticut',
+            'DE' => 'Delaware', 'FL' => 'Florida', 'GA' => 'Georgia',
+            'HI' => 'Hawaii', 'ID' => 'Idaho', 'IL' => 'Illinois',
+            'IN' => 'Indiana', 'IA' => 'Iowa', 'KS' => 'Kansas',
+            'KY' => 'Kentucky', 'LA' => 'Louisiana', 'ME' => 'Maine',
+            'MD' => 'Maryland', 'MA' => 'Massachusetts', 'MI' => 'Michigan',
+            'MN' => 'Minnesota', 'MS' => 'Mississippi', 'MO' => 'Missouri',
+            'MT' => 'Montana', 'NE' => 'Nebraska', 'NV' => 'Nevada',
+            'NH' => 'New Hampshire', 'NJ' => 'New Jersey', 'NM' => 'New Mexico',
+            'NY' => 'New York', 'NC' => 'North Carolina', 'ND' => 'North Dakota',
+            'OH' => 'Ohio', 'OK' => 'Oklahoma', 'OR' => 'Oregon',
+            'PA' => 'Pennsylvania', 'RI' => 'Rhode Island', 'SC' => 'South Carolina',
+            'SD' => 'South Dakota', 'TN' => 'Tennessee', 'TX' => 'Texas',
+            'UT' => 'Utah', 'VT' => 'Vermont', 'VA' => 'Virginia',
+            'WA' => 'Washington', 'WV' => 'West Virginia', 'WI' => 'Wisconsin',
+            'WY' => 'Wyoming'
+        ];
+    }
+    
+    /**
+     * Get report data for different report types
+     */
+    public function getReportData($report_type) {
+        switch ($report_type) {
+            case 'contractors':
+                return $this->db->get('tblella_contractors')->result();
+            case 'contracts':
+                return $this->db->get('tblella_contracts')->result();
+            case 'projects':
+                return $this->db->get('tblella_projects')->result();
+            case 'payments':
+                return $this->db->get('tblella_payments')->result();
+            default:
+                return [];
+        }
     }
 }

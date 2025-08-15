@@ -4,23 +4,7 @@ class Ella_contractors extends AdminController
 {
     public function __construct() {
         parent::__construct();
-        
-        // Load model with same pattern as twilio_dial module
         $this->load->model('ella_contractors_model');
-        
-        // Load library with error handling
-        try {
-            $this->load->library('DocumentManager');
-        } catch (Exception $e) {
-            log_message('error', 'Failed to load DocumentManager library: ' . $e->getMessage());
-        }
-        
-        // Check if user is logged in (basic auth check)
-        if (!$this->session->userdata('user_id')) {
-            // For demo purposes, set a default user
-            $this->session->set_userdata('user_id', 1);
-            $this->session->set_userdata('user_name', 'Demo User');
-        }
     }
     
     /**
@@ -312,7 +296,12 @@ class Ella_contractors extends AdminController
      * Add new contractor form
      */
     public function add_contractor() {
+        // Debug: Check if method is being called
+        log_message('debug', 'add_contractor method called');
+        
         if ($this->input->post()) {
+            log_message('debug', 'POST data received: ' . json_encode($this->input->post()));
+            
             // Validate required fields
             $this->load->library('form_validation');
             $this->form_validation->set_rules('company_name', 'Company Name', 'required|trim');
@@ -321,15 +310,41 @@ class Ella_contractors extends AdminController
             $this->form_validation->set_rules('phone', 'Phone', 'trim');
             
             if ($this->form_validation->run() == FALSE) {
+                log_message('debug', 'Validation failed: ' . validation_errors());
                 // Validation failed, show form with errors
                 $data['title'] = 'Add New Contractor';
-                $data['countries'] = $this->ella_contractors_model->getCountries();
-                $data['states'] = $this->ella_contractors_model->getUSStates();
-                $data['status_options'] = $this->ella_contractors_model->getContractorStatusOptions();
+                
+                // Debug: Check if model methods exist
+                try {
+                    $data['countries'] = $this->ella_contractors_model->getCountries();
+                    log_message('debug', 'Countries loaded: ' . count($data['countries']));
+                } catch (Exception $e) {
+                    log_message('error', 'Error loading countries: ' . $e->getMessage());
+                    $data['countries'] = [];
+                }
+                
+                try {
+                    $data['states'] = $this->ella_contractors_model->getUSStates();
+                    log_message('debug', 'States loaded: ' . count($data['states']));
+                } catch (Exception $e) {
+                    log_message('error', 'Error loading states: ' . $e->getMessage());
+                    $data['states'] = [];
+                }
+                
+                try {
+                    $data['status_options'] = $this->ella_contractors_model->getContractorStatusOptions();
+                    log_message('debug', 'Status options loaded: ' . count($data['status_options']));
+                } catch (Exception $e) {
+                    log_message('error', 'Error loading status options: ' . $e->getMessage());
+                    $data['status_options'] = [];
+                }
+                
                 $data['errors'] = validation_errors();
                 $this->load->view('contractor_form', $data);
                 return;
             }
+            
+            log_message('debug', 'Validation passed, preparing contractor data');
             
             // Prepare contractor data
             $contractor_data = [
@@ -355,28 +370,61 @@ class Ella_contractors extends AdminController
                 'created_by' => get_staff_user_id() ?: 1
             ];
             
+            log_message('debug', 'Contractor data prepared: ' . json_encode($contractor_data));
+            
             try {
+                log_message('debug', 'Calling createContractor method');
                 $contractor_id = $this->ella_contractors_model->createContractor($contractor_data);
+                log_message('debug', 'createContractor returned: ' . $contractor_id);
                 
                 if ($contractor_id) {
+                    log_message('debug', 'Contractor created successfully with ID: ' . $contractor_id);
                     set_alert('success', 'Contractor added successfully!');
                     redirect('admin/ella_contractors/contractors');
                 } else {
+                    log_message('error', 'createContractor returned false/null');
                     set_alert('danger', 'Failed to add contractor. Please try again.');
                 }
             } catch (Exception $e) {
                 log_message('error', 'Error adding contractor: ' . $e->getMessage());
+                log_message('error', 'Stack trace: ' . $e->getTraceAsString());
                 set_alert('danger', 'Failed to add contractor. Please try again.');
             }
         }
         
+        log_message('debug', 'Loading form for add contractor');
+        
         // Load form data for dropdowns
         $data['title'] = 'Add New Contractor';
-        $data['countries'] = $this->ella_contractors_model->getCountries();
-        $data['states'] = $this->ella_contractors_model->getUSStates();
-        $data['status_options'] = $this->ella_contractors_model->getContractorStatusOptions();
+        
+        // Debug: Check if model methods exist and load data
+        try {
+            $data['countries'] = $this->ella_contractors_model->getCountries();
+            log_message('debug', 'Countries loaded for form: ' . count($data['countries']));
+        } catch (Exception $e) {
+            log_message('error', 'Error loading countries for form: ' . $e->getMessage());
+            $data['countries'] = [];
+        }
+        
+        try {
+            $data['states'] = $this->ella_contractors_model->getUSStates();
+            log_message('debug', 'States loaded for form: ' . count($data['states']));
+        } catch (Exception $e) {
+            log_message('error', 'Error loading states for form: ' . $e->getMessage());
+            $data['states'] = [];
+        }
+        
+        try {
+            $data['status_options'] = $this->ella_contractors_model->getContractorStatusOptions();
+            log_message('debug', 'Status options loaded for form: ' . count($data['status_options']));
+        } catch (Exception $e) {
+            log_message('error', 'Error loading status options for form: ' . $e->getMessage());
+            $data['status_options'] = [];
+        }
+        
         $data['errors'] = '';
         
+        log_message('debug', 'About to load contractor_form view with data: ' . json_encode(array_keys($data)));
         $this->load->view('contractor_form', $data);
     }
     
@@ -1665,115 +1713,115 @@ class Ella_contractors extends AdminController
         $this->output->set_output($output);
     }
 
-    /* COMMENTED OUT FOR DEMO - BASIC CRUD OPERATIONS
-    
     /**
-     * Contractors list page
+     * Test method to debug model loading and available methods
      */
-    /*
-    public function contractors()
-    {
-        $data['title'] = 'All Contractors';
-        $this->load->view('contractors_list', $data);
-    }
-
-    /**
-     * Add new contractor
-     */
-    /*
-    public function add_contractor()
-    {
-        if ($this->input->post()) {
-            $data = $this->input->post();
-            $contractor_id = $this->ella_contractors_model->add_contractor($data);
+    public function debug_model() {
+        echo "<h2>Debug Model Loading</h2>";
+        
+        // Check if model is loaded
+        if (isset($this->ella_contractors_model)) {
+            echo "<p style='color: green;'>✅ Model is loaded</p>";
+            echo "<p><strong>Model class:</strong> " . get_class($this->ella_contractors_model) . "</p>";
             
-            if ($contractor_id) {
-                set_alert('success', 'Contractor added successfully');
-                redirect(admin_url('ella_contractors/contractor/' . $contractor_id));
-            } else {
-                set_alert('danger', 'Failed to add contractor');
+            // Check available methods
+            $methods = get_class_methods($this->ella_contractors_model);
+            echo "<p><strong>Available methods:</strong></p>";
+            echo "<ul>";
+            foreach ($methods as $method) {
+                if (strpos($method, 'get') === 0) {
+                    echo "<li>{$method}</li>";
+                }
             }
-        }
-        
-        $data['title'] = 'Add New Contractor';
-        $data['categories'] = $this->ella_contractors_model->get_contractor_categories();
-        $this->load->view('contractor_form', $data);
-    }
-
-    /**
-     * Edit contractor
-     */
-    /*
-    public function edit_contractor($id)
-    {
-        $contractor = $this->ella_contractors_model->get_contractor($id);
-        
-        if (!$contractor) {
-            show_404();
-        }
-
-        if ($this->input->post()) {
-            $data = $this->input->post();
-            $updated = $this->ella_contractors_model->update_contractor($id, $data);
+            echo "</ul>";
             
-            if ($updated) {
-                set_alert('success', 'Contractor updated successfully');
-                redirect(admin_url('ella_contractors/contractor/' . $id));
-            } else {
-                set_alert('danger', 'Failed to update contractor');
+            // Test specific methods
+            echo "<h3>Testing Helper Methods:</h3>";
+            
+            try {
+                $countries = $this->ella_contractors_model->getCountries();
+                echo "<p style='color: green;'>✅ getCountries(): " . count($countries) . " countries loaded</p>";
+            } catch (Exception $e) {
+                echo "<p style='color: red;'>❌ getCountries(): " . $e->getMessage() . "</p>";
             }
-        }
-        
-        $data['title'] = 'Edit Contractor';
-        $data['contractor'] = $contractor;
-        $data['categories'] = $this->ella_contractors_model->get_contractor_categories();
-        $this->load->view('contractor_form', $data);
-    }
-
-    /**
-     * Contractor profile page
-     */
-    /*
-    public function contractor_profile($id)
-    {
-        $contractor = $this->ella_contractors_model->get_contractor($id);
-        
-        if (!$contractor) {
-            show_404();
-        }
-        
-        $data['title'] = 'Contractor Profile - ' . $contractor->company_name;
-        $data['contractor'] = $contractor;
-        $data['contracts'] = $this->ella_contractors_model->get_contractor_contracts($id);
-        $data['payments'] = $this->ella_contractors_model->get_contractor_payments($id);
-        $data['projects'] = $this->ella_contractors_model->get_contractor_projects($id);
-        $data['documents'] = $this->ella_contractors_model->get_contractor_documents($id);
-        
-        $this->load->view('contractor_profile', $data);
-    }
-
-    /**
-     * Delete contractor
-     */
-    /*
-    public function delete_contractor($id)
-    {
-        if (!has_permission('ella_contractors', '', 'delete') && !is_admin()) {
-            access_denied('ella_contractors');
-        }
-        
-        $deleted = $this->ella_contractors_model->delete_contractor($id);
-        
-        if ($deleted) {
-            set_alert('success', 'Contractor deleted successfully');
+            
+            try {
+                $states = $this->ella_contractors_model->getUSStates();
+                echo "<p style='color: green;'>✅ getUSStates(): " . count($states) . " states loaded</p>";
+            } catch (Exception $e) {
+                echo "<p style='color: red;'>❌ getUSStates(): " . $e->getMessage() . "</p>";
+            }
+            
+            try {
+                $status_options = $this->ella_contractors_model->getContractorStatusOptions();
+                echo "<p style='color: green;'>✅ getContractorStatusOptions(): " . count($status_options) . " options loaded</p>";
+            } catch (Exception $e) {
+                echo "<p style='color: red;'>❌ getContractorStatusOptions(): " . $e->getMessage() . "</p>";
+            }
+            
         } else {
-            set_alert('danger', 'Failed to delete contractor');
+            echo "<p style='color: red;'>❌ Model is NOT loaded</p>";
         }
         
-        redirect(admin_url('ella_contractors/contractors'));
+        // Check database connection
+        echo "<h3>Database Connection:</h3>";
+        try {
+            $this->load->database();
+            $result = $this->db->query("SELECT 1 as test")->row();
+            echo "<p style='color: green;'>✅ Database connection: OK</p>";
+        } catch (Exception $e) {
+            echo "<p style='color: red;'>❌ Database connection: " . $e->getMessage() . "</p>";
+        }
+        
+        echo "<hr>";
+        echo "<p><a href='" . admin_url('ella_contractors/contractors') . "'>Back to Contractors</a></p>";
     }
 
-    // ... All other methods commented out for demo
-    
-    */
+    /**
+     * Simple test method to try creating a basic contractor
+     */
+    public function test_create() {
+        echo "<h2>Testing Contractor Creation</h2>";
+        
+        // Check if model is loaded
+        if (!isset($this->ella_contractors_model)) {
+            echo "<p style='color: red;'>❌ Model not loaded</p>";
+            return;
+        }
+        
+        echo "<p style='color: green;'>✅ Model is loaded</p>";
+        
+        // Try to create a simple contractor
+        $test_data = [
+            'company_name' => 'Test Company ' . date('Y-m-d H:i:s'),
+            'contact_person' => 'Test Person',
+            'email' => 'test@test.com',
+            'phone' => '555-1234',
+            'status' => 'active',
+            'date_created' => date('Y-m-d H:i:s'),
+            'date_updated' => date('Y-m-d H:i:s'),
+            'created_by' => 1
+        ];
+        
+        echo "<p>Test data: " . json_encode($test_data) . "</p>";
+        
+        try {
+            echo "<p>Calling createContractor...</p>";
+            $result = $this->ella_contractors_model->createContractor($test_data);
+            echo "<p>Result: " . var_export($result, true) . "</p>";
+            
+            if ($result) {
+                echo "<p style='color: green;'>✅ Contractor created successfully with ID: {$result}</p>";
+            } else {
+                echo "<p style='color: red;'>❌ Contractor creation failed</p>";
+            }
+            
+        } catch (Exception $e) {
+            echo "<p style='color: red;'>❌ Exception: " . $e->getMessage() . "</p>";
+            echo "<p>Stack trace: <pre>" . $e->getTraceAsString() . "</pre></p>";
+        }
+        
+        echo "<hr>";
+        echo "<p><a href='" . admin_url('ella_contractors/contractors') . "'>Back to Contractors</a></p>";
+    }
 }

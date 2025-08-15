@@ -114,3 +114,6 @@ $route['ella_contractors/payments/delete/(:num)'] = 'ella_contractors/Ella_contr
 // Notification routes (commented for now)
 // $route['ella_contractors/notifications/send'] = 'ella_contractors/Ella_contractors/send_notification';
 // $route['ella_contractors/notifications/reminder/(:num)'] = 'ella_contractors/Ella_contractors/send_reminder/$1';
+
+$route['ella_contractors/debug'] = 'ella_contractors/debug_model';
+$route['ella_contractors/test_create'] = 'ella_contractors/test_create';
