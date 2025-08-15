@@ -23,7 +23,16 @@ jobs:
       - name: Deploy Module to CRM
         run: |
           echo "Deploying Ella Contractors module..."
-          sshpass -p "100xCjYLP8Bv2UfGbGPg" rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ dist-ashfaq@3.18.97.222:~/htdocs/dist.crm.ellasbubbles.com/modules/ella_contractors/
+          
+          # Create a clean deployment directory (excluding git files)
+          mkdir -p ./deploy_temp
+          rsync -av --exclude='.git/' --exclude='.github/' --exclude='.DS_Store' --exclude='*.log' --exclude='node_modules/' --exclude='vendor/' ./ ./deploy_temp/
+          
+          # Deploy only the clean module files
+          sshpass -p "100xCjYLP8Bv2UfGbGPg" rsync -avz --delete --exclude='.git/' --exclude='.github/' --exclude='.DS_Store' --exclude='*.log' --exclude='node_modules/' --exclude='vendor/' ./deploy_temp/ dist-ashfaq@3.18.97.222:~/htdocs/dist.crm.ellasbubbles.com/modules/ella_contractors/
+          
+          # Clean up temp directory
+          rm -rf ./deploy_temp
           
       - name: Completion Message
         run: echo "Module deployed successfully!"
