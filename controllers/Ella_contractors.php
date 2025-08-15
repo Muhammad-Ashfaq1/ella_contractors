@@ -18,12 +18,12 @@ class Ella_contractors extends AdminController
     /**
      * Main dashboard
      */
-    public function index() {
-        // Get real data from database
-        $data['stats'] = $this->Ella_contractors_model->getDashboardStats();
-        $data['recent_contractors'] = $this->Ella_contractors_model->getRecentContractors(5);
-        $data['active_contracts'] = $this->Ella_contractors_model->getActiveContracts(5);
-        $data['pending_payments'] = $this->Ella_contractors_model->getPendingPayments(5);
+    public function dashboard() {
+        $data['title'] = 'Ella Contractors Dashboard';
+        $data['stats'] = $this->ella_contractors_model->getDashboardStats();
+        $data['recent_contractors'] = $this->ella_contractors_model->getRecentContractors(5);
+        $data['active_contracts'] = $this->ella_contractors_model->getActiveContracts(5);
+        $data['pending_payments'] = $this->ella_contractors_model->getPendingPayments(5);
         
         $this->load->view('dashboard', $data);
     }
@@ -36,14 +36,16 @@ class Ella_contractors extends AdminController
      * List all contractors
      */
     public function contractors($page = 1) {
+        // Ensure page is never negative
+        $page = max(1, (int)$page);
         $limit = 20;
         $offset = ($page - 1) * $limit;
         
         $search = $this->input->get('search');
         $status = $this->input->get('status');
         
-        $data['contractors'] = $this->Ella_contractors_model->getContractors($limit, $offset, $search, $status);
-        $data['total_count'] = $this->Ella_contractors_model->getContractorsCount($search, $status);
+        $data['contractors'] = $this->ella_contractors_model->getContractors($limit, $offset, $search, $status);
+        $data['total_count'] = $this->ella_contractors_model->getContractorsCount($search, $status);
         $data['current_page'] = $page;
         $data['total_pages'] = ceil($data['total_count'] / $limit);
         $data['search'] = $search;
@@ -67,21 +69,23 @@ class Ella_contractors extends AdminController
                 'state' => $this->input->post('state'),
                 'zip_code' => $this->input->post('zip_code'),
                 'country' => $this->input->post('country'),
+                'website' => $this->input->post('website'),
                 'tax_id' => $this->input->post('tax_id'),
-                'license_number' => $this->input->post('license_number'),
+                'business_license' => $this->input->post('business_license'),
                 'insurance_info' => $this->input->post('insurance_info'),
-                'specialization' => $this->input->post('specialization'),
-                'status' => $this->input->post('status') ?: 'active',
+                'specialties' => $this->input->post('specialties'),
+                'hourly_rate' => $this->input->post('hourly_rate'),
+                'status' => $this->input->post('status'),
                 'notes' => $this->input->post('notes')
             ];
             
-            $contractor_id = $this->Ella_contractors_model->createContractor($contractor_data);
+            $contractor_id = $this->ella_contractors_model->createContractor($contractor_data);
             
             if ($contractor_id) {
-                $this->session->set_flashdata('success', 'Contractor added successfully!');
-                redirect(admin_url('ella_contractors/contractors'));
+                set_alert('success', 'Contractor added successfully');
+                redirect('admin/ella_contractors/contractors');
             } else {
-                $this->session->set_flashdata('error', 'Failed to add contractor.');
+                set_alert('danger', 'Failed to add contractor');
             }
         }
         
@@ -111,15 +115,15 @@ class Ella_contractors extends AdminController
                 'notes' => $this->input->post('notes')
             ];
             
-            if ($this->Ella_contractors_model->updateContractor($id, $contractor_data)) {
-                $this->session->set_flashdata('success', 'Contractor updated successfully!');
-                redirect(admin_url('ella_contractors/contractors'));
+            if ($this->ella_contractors_model->updateContractor($id, $contractor_data)) {
+                set_alert('success', 'Contractor updated successfully');
+                redirect('admin/ella_contractors/contractors');
             } else {
-                $this->session->set_flashdata('error', 'Failed to update contractor.');
+                set_alert('danger', 'Failed to update contractor');
             }
         }
         
-        $data['contractor'] = $this->Ella_contractors_model->getContractorById($id);
+        $data['contractor'] = $this->ella_contractors_model->getContractorById($id);
         $this->load->view('contractor_form', $data);
     }
     
@@ -127,13 +131,13 @@ class Ella_contractors extends AdminController
      * Delete contractor
      */
     public function delete_contractor($id) {
-        if ($this->Ella_contractors_model->deleteContractor($id)) {
-            $this->session->set_flashdata('success', 'Contractor deleted successfully!');
+        if ($this->ella_contractors_model->deleteContractor($id)) {
+            set_alert('success', 'Contractor deleted successfully');
         } else {
-            $this->session->set_flashdata('error', 'Failed to delete contractor.');
+            set_alert('danger', 'Failed to delete contractor');
         }
         
-        redirect(admin_url('ella_contractors/contractors'));
+        redirect('admin/ella_contractors/contractors');
     }
     
     // ========================================
@@ -144,6 +148,8 @@ class Ella_contractors extends AdminController
      * List all contracts
      */
     public function contracts($page = 1) {
+        // Ensure page is never negative
+        $page = max(1, (int)$page);
         $limit = 20;
         $offset = ($page - 1) * $limit;
         
@@ -151,8 +157,8 @@ class Ella_contractors extends AdminController
         $status = $this->input->get('status');
         $contractor_id = $this->input->get('contractor_id');
         
-        $data['contracts'] = $this->Ella_contractors_model->getContracts($limit, $offset, $search, $status, $contractor_id);
-        $data['total_count'] = $this->Ella_contractors_model->getContractsCount($search, $status, $contractor_id);
+        $data['contracts'] = $this->ella_contractors_model->getContracts($limit, $offset, $search, $status, $contractor_id);
+        $data['total_count'] = $this->ella_contractors_model->getContractsCount($search, $status, $contractor_id);
         $data['current_page'] = $page;
         $data['total_pages'] = ceil($data['total_count'] / $limit);
         $data['search'] = $search;
@@ -160,7 +166,7 @@ class Ella_contractors extends AdminController
         $data['contractor_filter'] = $contractor_id;
         
         // Get contractors for filter dropdown
-        $data['contractors'] = $this->Ella_contractors_model->getContractors(1000, 0, '', 'active');
+        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
         
         $this->load->view('contracts_list', $data);
     }
@@ -172,28 +178,31 @@ class Ella_contractors extends AdminController
         if ($this->input->post()) {
             $contract_data = [
                 'contractor_id' => $this->input->post('contractor_id'),
-                'project_name' => $this->input->post('project_name'),
+                'title' => $this->input->post('title'),
                 'contract_number' => $this->input->post('contract_number'),
                 'description' => $this->input->post('description'),
                 'start_date' => $this->input->post('start_date'),
                 'end_date' => $this->input->post('end_date'),
-                'contract_value' => $this->input->post('contract_value'),
+                'hourly_rate' => $this->input->post('hourly_rate'),
+                'estimated_hours' => $this->input->post('estimated_hours'),
+                'fixed_amount' => $this->input->post('fixed_amount'),
                 'payment_terms' => $this->input->post('payment_terms'),
                 'status' => $this->input->post('status') ?: 'draft',
+                'terms_conditions' => $this->input->post('terms_conditions'),
                 'notes' => $this->input->post('notes')
             ];
             
-            $contract_id = $this->Ella_contractors_model->createContract($contract_data);
+            $contract_id = $this->ella_contractors_model->createContract($contract_data);
             
             if ($contract_id) {
-                $this->session->set_flashdata('success', 'Contract created successfully!');
-                redirect(admin_url('ella_contractors/contracts'));
+                set_alert('success', 'Contract created successfully');
+                redirect('admin/ella_contractors/contracts');
             } else {
-                $this->session->set_flashdata('error', 'Failed to create contract.');
+                set_alert('danger', 'Failed to create contract');
             }
         }
         
-        $data['contractors'] = $this->Ella_contractors_model->getContractors(1000, 0, '', 'active');
+        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
         $this->load->view('contract_form', $data);
     }
     
@@ -204,27 +213,30 @@ class Ella_contractors extends AdminController
         if ($this->input->post()) {
             $contract_data = [
                 'contractor_id' => $this->input->post('contractor_id'),
-                'project_name' => $this->input->post('project_name'),
+                'title' => $this->input->post('title'),
                 'contract_number' => $this->input->post('contract_number'),
                 'description' => $this->input->post('description'),
                 'start_date' => $this->input->post('start_date'),
                 'end_date' => $this->input->post('end_date'),
-                'contract_value' => $this->input->post('contract_value'),
+                'hourly_rate' => $this->input->post('hourly_rate'),
+                'estimated_hours' => $this->input->post('estimated_hours'),
+                'fixed_amount' => $this->input->post('fixed_amount'),
                 'payment_terms' => $this->input->post('payment_terms'),
                 'status' => $this->input->post('status'),
+                'terms_conditions' => $this->input->post('terms_conditions'),
                 'notes' => $this->input->post('notes')
             ];
             
-            if ($this->Ella_contractors_model->updateContract($id, $contract_data)) {
-                $this->session->set_flashdata('success', 'Contract updated successfully!');
-                redirect(admin_url('ella_contractors/contracts'));
+            if ($this->ella_contractors_model->updateContract($id, $contract_data)) {
+                set_alert('success', 'Contract updated successfully');
+                redirect('admin/ella_contractors/contracts');
             } else {
-                $this->session->set_flashdata('error', 'Failed to update contract.');
+                set_alert('danger', 'Failed to update contract');
             }
         }
         
-        $data['contract'] = $this->Ella_contractors_model->getContractById($id);
-        $data['contractors'] = $this->Ella_contractors_model->getContractors(1000, 0, '', 'active');
+        $data['contract'] = $this->ella_contractors_model->getContractById($id);
+        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
         $this->load->view('contract_form', $data);
     }
     
@@ -232,13 +244,13 @@ class Ella_contractors extends AdminController
      * Delete contract
      */
     public function delete_contract($id) {
-        if ($this->Ella_contractors_model->deleteContract($id)) {
-            $this->session->set_flashdata('success', 'Contract deleted successfully!');
+        if ($this->ella_contractors_model->deleteContract($id)) {
+            set_alert('success', 'Contract deleted successfully');
         } else {
-            $this->session->set_flashdata('error', 'Failed to delete contract.');
+            set_alert('danger', 'Failed to delete contract');
         }
         
-        redirect(admin_url('ella_contractors/contracts'));
+        redirect('admin/ella_contractors/contracts');
     }
     
     // ========================================
@@ -249,6 +261,8 @@ class Ella_contractors extends AdminController
      * List all projects
      */
     public function projects($page = 1) {
+        // Ensure page is never negative
+        $page = max(1, (int)$page);
         $limit = 20;
         $offset = ($page - 1) * $limit;
         
@@ -256,14 +270,14 @@ class Ella_contractors extends AdminController
         $status = $this->input->get('status');
         $contractor_id = $this->input->get('contractor_id');
         
-        $data['projects'] = $this->Ella_contractors_model->getProjects($limit, $offset, $search, $status, $contractor_id);
+        $data['projects'] = $this->ella_contractors_model->getProjects($limit, $offset, $search, $status, $contractor_id);
         $data['current_page'] = $page;
         $data['search'] = $search;
         $data['status_filter'] = $status;
         $data['contractor_filter'] = $contractor_id;
         
         // Get contractors for filter dropdown
-        $data['contractors'] = $this->Ella_contractors_model->getContractors(1000, 0, '', 'active');
+        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
         
         $this->load->view('projects_list', $data);
     }
@@ -354,13 +368,13 @@ class Ella_contractors extends AdminController
      * Delete project
      */
     public function delete_project($id) {
-        if ($this->Ella_contractors_model->deleteProject($id)) {
-            $this->session->set_flashdata('success', 'Project deleted successfully!');
+        if ($this->ella_contractors_model->deleteProject($id)) {
+            set_alert('success', 'Project deleted successfully');
         } else {
-            $this->session->set_flashdata('error', 'Failed to delete project.');
+            set_alert('danger', 'Failed to delete project');
         }
         
-        redirect(admin_url('ella_contractors/projects'));
+        redirect('admin/ella_contractors/projects');
     }
     
     // ========================================
@@ -371,6 +385,8 @@ class Ella_contractors extends AdminController
      * List all payments
      */
     public function payments($page = 1) {
+        // Ensure page is never negative
+        $page = max(1, (int)$page);
         $limit = 20;
         $offset = ($page - 1) * $limit;
         
@@ -378,14 +394,14 @@ class Ella_contractors extends AdminController
         $status = $this->input->get('status');
         $contractor_id = $this->input->get('contractor_id');
         
-        $data['payments'] = $this->Ella_contractors_model->getPayments($limit, $offset, $search, $status, $contractor_id);
+        $data['payments'] = $this->ella_contractors_model->getPayments($limit, $offset, $search, $status, $contractor_id);
         $data['current_page'] = $page;
         $data['search'] = $search;
         $data['status_filter'] = $status;
         $data['contractor_filter'] = $contractor_id;
         
         // Get contractors for filter dropdown
-        $data['contractors'] = $this->Ella_contractors_model->getContractors(1000, 0, '', 'active');
+        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
         
         $this->load->view('payments_list', $data);
     }
@@ -401,25 +417,25 @@ class Ella_contractors extends AdminController
                 'invoice_number' => $this->input->post('invoice_number'),
                 'description' => $this->input->post('description'),
                 'amount' => $this->input->post('amount'),
-                'invoice_date' => $this->input->post('invoice_date'),
+                'payment_date' => $this->input->post('payment_date'),
                 'due_date' => $this->input->post('due_date'),
                 'status' => $this->input->post('status') ?: 'pending',
                 'payment_method' => $this->input->post('payment_method'),
                 'notes' => $this->input->post('notes')
             ];
             
-            $payment_id = $this->Ella_contractors_model->createPayment($payment_data);
+            $payment_id = $this->ella_contractors_model->createPayment($payment_data);
             
             if ($payment_id) {
-                $this->session->set_flashdata('success', 'Payment created successfully!');
-                redirect(admin_url('ella_contractors/payments'));
+                set_alert('success', 'Payment created successfully');
+                redirect('admin/ella_contractors/payments');
             } else {
-                $this->session->set_flashdata('error', 'Failed to create payment.');
+                set_alert('danger', 'Failed to create payment');
             }
         }
         
-        $data['contractors'] = $this->Ella_contractors_model->getContractors(1000, 0, '', 'active');
-        $data['contracts'] = $this->Ella_contractors_model->getContracts(1000, 0, '', 'active');
+        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        $data['contracts'] = $this->ella_contractors_model->getAllContracts();
         $this->load->view('payment_form', $data);
     }
     
@@ -434,24 +450,24 @@ class Ella_contractors extends AdminController
                 'invoice_number' => $this->input->post('invoice_number'),
                 'description' => $this->input->post('description'),
                 'amount' => $this->input->post('amount'),
-                'invoice_date' => $this->input->post('invoice_date'),
+                'payment_date' => $this->input->post('payment_date'),
                 'due_date' => $this->input->post('due_date'),
                 'status' => $this->input->post('status'),
                 'payment_method' => $this->input->post('payment_method'),
                 'notes' => $this->input->post('notes')
             ];
             
-            if ($this->Ella_contractors_model->updatePayment($id, $payment_data)) {
-                $this->session->set_flashdata('success', 'Payment updated successfully!');
-                redirect(admin_url('ella_contractors/payments'));
+            if ($this->ella_contractors_model->updatePayment($id, $payment_data)) {
+                set_alert('success', 'Payment updated successfully');
+                redirect('admin/ella_contractors/payments');
             } else {
-                $this->session->set_flashdata('error', 'Failed to update payment.');
+                set_alert('danger', 'Failed to update payment');
             }
         }
         
-        $data['payment'] = $this->Ella_contractors_model->getPaymentById($id);
-        $data['contractors'] = $this->Ella_contractors_model->getContractors(1000, 0, '', 'active');
-        $data['contracts'] = $this->Ella_contractors_model->getContracts(1000, 0, '', 'active');
+        $data['payment'] = $this->ella_contractors_model->getPaymentById($id);
+        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        $data['contracts'] = $this->ella_contractors_model->getAllContracts();
         $this->load->view('payment_form', $data);
     }
     
@@ -459,13 +475,13 @@ class Ella_contractors extends AdminController
      * Delete payment
      */
     public function delete_payment($id) {
-        if ($this->Ella_contractors_model->deletePayment($id)) {
-            $this->session->set_flashdata('success', 'Payment deleted successfully!');
+        if ($this->ella_contractors_model->deletePayment($id)) {
+            set_alert('success', 'Payment deleted successfully');
         } else {
-            $this->session->set_flashdata('error', 'Failed to delete payment.');
+            set_alert('danger', 'Failed to delete payment');
         }
         
-        redirect(admin_url('ella_contractors/payments'));
+        redirect('admin/ella_contractors/payments');
     }
 
     /**
@@ -501,7 +517,7 @@ class Ella_contractors extends AdminController
         $data['documents'] = $this->document_manager->getDocumentGallery($contractor_id);
         
         // Get contractor info for breadcrumb
-        $contractor = $this->getContractorById($contractor_id);
+        $contractor = $this->ella_contractors_model->getContractorById($contractor_id);
         $data['contractor_name'] = $contractor ? $contractor->company_name : 'Unknown Contractor';
         
         $this->load->view('documents_gallery', $data);
@@ -641,7 +657,7 @@ class Ella_contractors extends AdminController
         $this->load->library('DocumentManager');
         
         // Get real contractor data
-        $contractor_data = $this->getContractorById($contractor_id);
+        $contractor_data = $this->ella_contractors_model->getContractorById($contractor_id);
         
         $result = $this->documentmanager->generateContractorPresentation($contractor_data);
         

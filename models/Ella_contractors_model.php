@@ -316,6 +316,10 @@ class Ella_contractors_model extends CI_Model {
      * Get all projects with pagination and filters
      */
     public function getProjects($limit = 10, $offset = 0, $search = '', $status = '', $contractor_id = '') {
+        // Ensure offset is never negative
+        $offset = max(0, (int)$offset);
+        $limit = max(1, (int)$limit);
+        
         // Check if required tables exist
         if (!$this->db->table_exists('tblella_projects')) {
             return [];
@@ -449,6 +453,10 @@ class Ella_contractors_model extends CI_Model {
      * Get all payments with pagination and filters
      */
     public function getPayments($limit = 10, $offset = 0, $search = '', $status = '', $contractor_id = '') {
+        // Ensure offset is never negative
+        $offset = max(0, (int)$offset);
+        $limit = max(1, (int)$limit);
+        
         // Check if required tables exist
         if (!$this->db->table_exists('tblella_payments')) {
             return [];
