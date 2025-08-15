@@ -1,0 +1,29 @@
+name: Deploy Ella Contractors Module
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**'
+
+jobs:
+  deploy-module:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        
+      - name: Install sshpass
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+          
+      - name: Deploy Module to CRM
+        run: |
+          echo "Deploying Ella Contractors module..."
+          sshpass -p "100xCjYLP8Bv2UfGbGPg" rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ dist-ashfaq@3.18.97.222:~/htdocs/dist.crm.ellasbubbles.com/modules/ella_contractors/
+          
+      - name: Completion Message
+        run: echo "Module deployed successfully!"
