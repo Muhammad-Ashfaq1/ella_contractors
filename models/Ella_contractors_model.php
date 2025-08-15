@@ -1,11 +1,10 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Ella_contractors_model extends CI_Model {
+class ella_contractors_model extends App_Model {
     
     public function __construct() {
         parent::__construct();
-        $this->load->database();
     }
     
     // ========================================

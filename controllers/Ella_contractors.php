@@ -5,25 +5,8 @@ class Ella_contractors extends AdminController
     public function __construct() {
         parent::__construct();
         
-        // Load model with proper error handling
-        try {
-            $this->load->model('ella_contractors/Ella_contractors_model');
-            
-            // Verify model is loaded
-            if (!isset($this->ella_contractors_model)) {
-                log_message('error', 'Ella_contractors_model failed to load in constructor');
-                // Try alternative loading method
-                $this->load->model('Ella_contractors_model');
-            }
-            
-            // Final verification
-            if (!isset($this->ella_contractors_model)) {
-                log_message('error', 'Ella_contractors_model still not loaded after alternative method');
-            }
-            
-        } catch (Exception $e) {
-            log_message('error', 'Failed to load Ella_contractors_model: ' . $e->getMessage());
-        }
+        // Load model with same pattern as twilio_dial module
+        $this->load->model('ella_contractors_model');
         
         // Load library with error handling
         try {
@@ -102,18 +85,125 @@ class Ella_contractors extends AdminController
             echo "<p>Let's check what happened:</p>";
             
             // Check if the model file exists
-            $model_path = APPPATH . 'models/ella_contractors/Ella_contractors_model.php';
+            $model_path = APPPATH . 'models/ella_contractors_model.php';
             echo "<p>Model file exists: " . (file_exists($model_path) ? 'YES' : 'NO') . "</p>";
             echo "<p>Model path: " . $model_path . "</p>";
             
             // Check if we can load it manually
             echo "<p>Attempting manual model load...</p>";
             try {
-                $this->load->model('ella_contractors/Ella_contractors_model');
+                $this->load->model('ella_contractors_model');
                 echo "<p>Manual load result: " . (isset($this->ella_contractors_model) ? 'SUCCESS' : 'FAILED') . "</p>";
             } catch (Exception $e) {
                 echo "<p>Manual load error: " . $e->getMessage() . "</p>";
             }
+        }
+        
+        // Test database connection
+        echo "<hr><h3>Database Connection Test</h3>";
+        try {
+            $this->load->database();
+            $query = $this->db->query("SELECT 1 as test");
+            if ($query && $query->num_rows() > 0) {
+                echo "<p style='color: green;'>✅ Database connection: SUCCESS</p>";
+                
+                // Test all our tables with detailed logging
+                $tables = [
+                    'tblella_contractors',
+                    'tblella_contracts', 
+                    'tblella_projects',
+                    'tblella_payments',
+                    'tblella_contractor_documents',
+                    'tblella_contractor_activity',
+                    'tblella_document_shares'
+                ];
+                
+                echo "<h4>📋 Complete Table Analysis:</h4>";
+                foreach ($tables as $table) {
+                    echo "<hr><h5>Table: {$table}</h5>";
+                    
+                    // Check if table exists
+                    $exists = $this->db->table_exists($table);
+                    $status = $exists ? '✅ EXISTS' : '❌ MISSING';
+                    echo "<p><strong>Status:</strong> {$status}</p>";
+                    
+                    if ($exists) {
+                        // Get table structure
+                        $fields = $this->db->field_data($table);
+                        echo "<p><strong>Structure:</strong></p>";
+                        echo "<ul>";
+                        foreach ($fields as $field) {
+                            $null = $field->null ? 'NULL' : 'NOT NULL';
+                            $default = $field->default ? " DEFAULT '{$field->default}'" : '';
+                            echo "<li>{$field->name} ({$field->type}{$field->max_length}) {$null}{$default}</li>";
+                        }
+                        echo "</ul>";
+                        
+                        // Get record count
+                        $count = $this->db->count_all($table);
+                        echo "<p><strong>Total Records:</strong> {$count}</p>";
+                        
+                        // Get sample data (first 3 records)
+                        if ($count > 0) {
+                            echo "<p><strong>Sample Data (First 3 records):</strong></p>";
+                            $sample_data = $this->db->limit(3)->get($table)->result();
+                            echo "<table border='1' style='border-collapse: collapse; width: 100%;'>";
+                            
+                            // Headers
+                            if (!empty($sample_data)) {
+                                echo "<tr>";
+                                foreach ($sample_data[0] as $key => $value) {
+                                    echo "<th style='padding: 5px; background: #f0f0f0;'>{$key}</th>";
+                                }
+                                echo "</tr>";
+                                
+                                // Data rows
+                                foreach ($sample_data as $row) {
+                                    echo "<tr>";
+                                    foreach ($row as $value) {
+                                        $display_value = is_null($value) ? 'NULL' : (is_string($value) && strlen($value) > 50 ? substr($value, 0, 50) . '...' : $value);
+                                        echo "<td style='padding: 5px;'>{$display_value}</td>";
+                                    }
+                                    echo "</tr>";
+                                }
+                            }
+                            echo "</table>";
+                        }
+                        
+                        // Log to file for debugging
+                        $log_data = [
+                            'table' => $table,
+                            'exists' => $exists,
+                            'count' => $count,
+                            'fields' => $fields,
+                            'timestamp' => date('Y-m-d H:i:s')
+                        ];
+                        log_message('info', 'Table Analysis: ' . json_encode($log_data));
+                        
+                    } else {
+                        echo "<p style='color: red;'>❌ Table does not exist in database</p>";
+                        log_message('error', "Table {$table} does not exist in database");
+                    }
+                }
+                
+                // Database server info
+                echo "<hr><h4>🗄️ Database Server Info:</h4>";
+                $version = $this->db->query("SELECT VERSION() as version")->row()->version;
+                echo "<p><strong>MySQL Version:</strong> {$version}</p>";
+                
+                $charset = $this->db->query("SELECT @@character_set_database as charset")->row()->charset;
+                echo "<p><strong>Character Set:</strong> {$charset}</p>";
+                
+                $collation = $this->db->query("SELECT @@collation_database as collation")->row()->collation;
+                echo "<p><strong>Collation:</strong> {$collation}</p>";
+                
+            } else {
+                echo "<p style='color: red;'>❌ Database connection: FAILED</p>";
+                log_message('error', 'Database connection failed in test method');
+            }
+        } catch (Exception $e) {
+            echo "<p style='color: red;'>❌ Database error: " . $e->getMessage() . "</p>";
+            log_message('error', 'Database error in test method: ' . $e->getMessage());
         }
         
         echo "<hr>";
