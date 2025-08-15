@@ -8,6 +8,10 @@ class Ella_contractors extends AdminController
         // Load model with proper error handling
         try {
             $this->load->model('ella_contractors/Ella_contractors_model');
+            // Verify model is loaded
+            if (!isset($this->ella_contractors_model)) {
+                log_message('error', 'Ella_contractors_model failed to load in constructor');
+            }
         } catch (Exception $e) {
             log_message('error', 'Failed to load Ella_contractors_model: ' . $e->getMessage());
         }
@@ -28,13 +32,62 @@ class Ella_contractors extends AdminController
     }
     
     /**
+     * Check if model is loaded and provide fallback data
+     */
+    private function getModelData($method, $params = [], $fallback = []) {
+        if (isset($this->ella_contractors_model) && method_exists($this->ella_contractors_model, $method)) {
+            try {
+                return call_user_func_array([$this->ella_contractors_model, $method], $params);
+            } catch (Exception $e) {
+                log_message('error', "Error calling {$method}: " . $e->getMessage());
+                return $fallback;
+            }
+        } else {
+            log_message('error', "Model or method {$method} not available");
+            return $fallback;
+        }
+    }
+    
+    /**
+     * Provide fallback data when model fails
+     */
+    private function getFallbackData($type) {
+        switch ($type) {
+            case 'contractors':
+                return [
+                    ['id' => 1, 'company_name' => 'Demo Contractor', 'status' => 'active', 'contact_person' => 'John Doe'],
+                    ['id' => 2, 'company_name' => 'Sample Company', 'status' => 'pending', 'contact_person' => 'Jane Smith']
+                ];
+            case 'contracts':
+                return [
+                    ['id' => 1, 'title' => 'Demo Contract', 'status' => 'active', 'contractor_id' => 1],
+                    ['id' => 2, 'title' => 'Sample Project', 'status' => 'pending', 'contractor_id' => 2]
+                ];
+            case 'projects':
+                return [
+                    ['id' => 1, 'name' => 'Demo Project', 'status' => 'active', 'contractor_id' => 1],
+                    ['id' => 2, 'name' => 'Sample Work', 'status' => 'planning', 'contractor_id' => 2]
+                ];
+            case 'payments':
+                return [
+                    ['id' => 1, 'amount' => 1000, 'status' => 'pending', 'contractor_id' => 1],
+                    ['id' => 2, 'amount' => 2500, 'status' => 'approved', 'contractor_id' => 2]
+                ];
+            default:
+                return [];
+        }
+    }
+    
+    /**
      * Test method to debug model loading
      */
     public function test() {
         echo "<h2>Debug Information</h2>";
         echo "<p>Model loaded: " . (isset($this->ella_contractors_model) ? 'YES' : 'NO') . "</p>";
-        echo "<p>Model class: " . get_class($this->ella_contractors_model) . "</p>";
-        echo "<p>Methods available: " . implode(', ', get_class_methods($this->ella_contractors_model)) . "</p>";
+        if (isset($this->ella_contractors_model)) {
+            echo "<p>Model class: " . get_class($this->ella_contractors_model) . "</p>";
+            echo "<p>Methods available: " . implode(', ', get_class_methods($this->ella_contractors_model)) . "</p>";
+        }
         echo "<hr>";
         echo "<p><a href='" . admin_url('ella_contractors/dashboard') . "'>Go to Dashboard</a></p>";
     }
@@ -103,12 +156,17 @@ class Ella_contractors extends AdminController
         $search = $this->input->get('search');
         $status = $this->input->get('status');
         
-        $data['contractors'] = $this->ella_contractors_model->getContractors($limit, $offset, $search, $status);
-        $data['total_count'] = $this->ella_contractors_model->getContractorsCount($search, $status);
-        $data['current_page'] = $page;
-        $data['total_pages'] = ceil($data['total_count'] / $limit);
-        $data['search'] = $search;
-        $data['status_filter'] = $status;
+        try {
+            $data['contractors'] = $this->ella_contractors_model->getContractors($limit, $offset, $search, $status);
+            $data['total_count'] = $this->ella_contractors_model->getContractorsCount($search, $status);
+            $data['current_page'] = $page;
+            $data['total_pages'] = ceil($data['total_count'] / $limit);
+            $data['search'] = $search;
+            $data['status_filter'] = $status;
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contractors: ' . $e->getMessage());
+            $data['error'] = 'Failed to load contractors. Please try again.';
+        }
         
         $this->load->view('contractors_list', $data);
     }
@@ -138,13 +196,18 @@ class Ella_contractors extends AdminController
                 'notes' => $this->input->post('notes')
             ];
             
-            $contractor_id = $this->ella_contractors_model->createContractor($contractor_data);
-            
-            if ($contractor_id) {
-                set_alert('success', 'Contractor added successfully');
-                redirect('admin/ella_contractors/contractors');
-            } else {
-                set_alert('danger', 'Failed to add contractor');
+            try {
+                $contractor_id = $this->ella_contractors_model->createContractor($contractor_data);
+                
+                if ($contractor_id) {
+                    set_alert('success', 'Contractor added successfully');
+                    redirect('admin/ella_contractors/contractors');
+                } else {
+                    set_alert('danger', 'Failed to add contractor');
+                }
+            } catch (Exception $e) {
+                log_message('error', 'Error adding contractor: ' . $e->getMessage());
+                set_alert('danger', 'Failed to add contractor. Please try again.');
             }
         }
         
@@ -174,15 +237,25 @@ class Ella_contractors extends AdminController
                 'notes' => $this->input->post('notes')
             ];
             
-            if ($this->ella_contractors_model->updateContractor($id, $contractor_data)) {
-                set_alert('success', 'Contractor updated successfully');
-                redirect('admin/ella_contractors/contractors');
-            } else {
-                set_alert('danger', 'Failed to update contractor');
+            try {
+                if ($this->ella_contractors_model->updateContractor($id, $contractor_data)) {
+                    set_alert('success', 'Contractor updated successfully');
+                    redirect('admin/ella_contractors/contractors');
+                } else {
+                    set_alert('danger', 'Failed to update contractor');
+                }
+            } catch (Exception $e) {
+                log_message('error', 'Error updating contractor: ' . $e->getMessage());
+                set_alert('danger', 'Failed to update contractor. Please try again.');
             }
         }
         
-        $data['contractor'] = $this->ella_contractors_model->getContractorById($id);
+        try {
+            $data['contractor'] = $this->ella_contractors_model->getContractorById($id);
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contractor for edit: ' . $e->getMessage());
+            show_404();
+        }
         $this->load->view('contractor_form', $data);
     }
     
@@ -190,10 +263,15 @@ class Ella_contractors extends AdminController
      * Delete contractor
      */
     public function delete_contractor($id) {
-        if ($this->ella_contractors_model->deleteContractor($id)) {
-            set_alert('success', 'Contractor deleted successfully');
-        } else {
-            set_alert('danger', 'Failed to delete contractor');
+        try {
+            if ($this->ella_contractors_model->deleteContractor($id)) {
+                set_alert('success', 'Contractor deleted successfully');
+            } else {
+                set_alert('danger', 'Failed to delete contractor');
+            }
+        } catch (Exception $e) {
+            log_message('error', 'Error deleting contractor: ' . $e->getMessage());
+            set_alert('danger', 'Failed to delete contractor. Please try again.');
         }
         
         redirect('admin/ella_contractors/contractors');
@@ -216,16 +294,26 @@ class Ella_contractors extends AdminController
         $status = $this->input->get('status');
         $contractor_id = $this->input->get('contractor_id');
         
-        $data['contracts'] = $this->ella_contractors_model->getContracts($limit, $offset, $search, $status, $contractor_id);
-        $data['total_count'] = $this->ella_contractors_model->getContractsCount($search, $status, $contractor_id);
-        $data['current_page'] = $page;
-        $data['total_pages'] = ceil($data['total_count'] / $limit);
-        $data['search'] = $search;
-        $data['status_filter'] = $status;
-        $data['contractor_filter'] = $contractor_id;
+        try {
+            $data['contracts'] = $this->ella_contractors_model->getContracts($limit, $offset, $search, $status, $contractor_id);
+            $data['total_count'] = $this->ella_contractors_model->getContractsCount($search, $status, $contractor_id);
+            $data['current_page'] = $page;
+            $data['total_pages'] = ceil($data['total_count'] / $limit);
+            $data['search'] = $search;
+            $data['status_filter'] = $status;
+            $data['contractor_filter'] = $contractor_id;
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contracts: ' . $e->getMessage());
+            $data['error'] = 'Failed to load contracts. Please try again.';
+        }
         
         // Get contractors for filter dropdown
-        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        try {
+            $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contractors for contract filter: ' . $e->getMessage());
+            $data['contractors'] = []; // Fallback
+        }
         
         $this->load->view('contracts_list', $data);
     }
@@ -251,17 +339,27 @@ class Ella_contractors extends AdminController
                 'notes' => $this->input->post('notes')
             ];
             
-            $contract_id = $this->ella_contractors_model->createContract($contract_data);
-            
-            if ($contract_id) {
-                set_alert('success', 'Contract created successfully');
-                redirect('admin/ella_contractors/contracts');
-            } else {
-                set_alert('danger', 'Failed to create contract');
+            try {
+                $contract_id = $this->ella_contractors_model->createContract($contract_data);
+                
+                if ($contract_id) {
+                    set_alert('success', 'Contract created successfully');
+                    redirect('admin/ella_contractors/contracts');
+                } else {
+                    set_alert('danger', 'Failed to create contract');
+                }
+            } catch (Exception $e) {
+                log_message('error', 'Error creating contract: ' . $e->getMessage());
+                set_alert('danger', 'Failed to create contract. Please try again.');
             }
         }
         
-        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        try {
+            $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contractors for contract form: ' . $e->getMessage());
+            $data['contractors'] = []; // Fallback
+        }
         $this->load->view('contract_form', $data);
     }
     
@@ -286,16 +384,31 @@ class Ella_contractors extends AdminController
                 'notes' => $this->input->post('notes')
             ];
             
-            if ($this->ella_contractors_model->updateContract($id, $contract_data)) {
-                set_alert('success', 'Contract updated successfully');
-                redirect('admin/ella_contractors/contracts');
-            } else {
-                set_alert('danger', 'Failed to update contract');
+            try {
+                if ($this->ella_contractors_model->updateContract($id, $contract_data)) {
+                    set_alert('success', 'Contract updated successfully');
+                    redirect('admin/ella_contractors/contracts');
+                } else {
+                    set_alert('danger', 'Failed to update contract');
+                }
+            } catch (Exception $e) {
+                log_message('error', 'Error updating contract: ' . $e->getMessage());
+                set_alert('danger', 'Failed to update contract. Please try again.');
             }
         }
         
-        $data['contract'] = $this->ella_contractors_model->getContractById($id);
-        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        try {
+            $data['contract'] = $this->ella_contractors_model->getContractById($id);
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contract for edit: ' . $e->getMessage());
+            show_404();
+        }
+        try {
+            $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contractors for contract form: ' . $e->getMessage());
+            $data['contractors'] = []; // Fallback
+        }
         $this->load->view('contract_form', $data);
     }
     
@@ -303,10 +416,15 @@ class Ella_contractors extends AdminController
      * Delete contract
      */
     public function delete_contract($id) {
-        if ($this->ella_contractors_model->deleteContract($id)) {
-            set_alert('success', 'Contract deleted successfully');
-        } else {
-            set_alert('danger', 'Failed to delete contract');
+        try {
+            if ($this->ella_contractors_model->deleteContract($id)) {
+                set_alert('success', 'Contract deleted successfully');
+            } else {
+                set_alert('danger', 'Failed to delete contract');
+            }
+        } catch (Exception $e) {
+            log_message('error', 'Error deleting contract: ' . $e->getMessage());
+            set_alert('danger', 'Failed to delete contract. Please try again.');
         }
         
         redirect('admin/ella_contractors/contracts');
@@ -329,14 +447,24 @@ class Ella_contractors extends AdminController
         $status = $this->input->get('status');
         $contractor_id = $this->input->get('contractor_id');
         
-        $data['projects'] = $this->ella_contractors_model->getProjects($limit, $offset, $search, $status, $contractor_id);
-        $data['current_page'] = $page;
-        $data['search'] = $search;
-        $data['status_filter'] = $status;
-        $data['contractor_filter'] = $contractor_id;
+        try {
+            $data['projects'] = $this->ella_contractors_model->getProjects($limit, $offset, $search, $status, $contractor_id);
+            $data['current_page'] = $page;
+            $data['search'] = $search;
+            $data['status_filter'] = $status;
+            $data['contractor_filter'] = $contractor_id;
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching projects: ' . $e->getMessage());
+            $data['error'] = 'Failed to load projects. Please try again.';
+        }
         
         // Get contractors for filter dropdown
-        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        try {
+            $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contractors for project filter: ' . $e->getMessage());
+            $data['contractors'] = []; // Fallback
+        }
         
         $this->load->view('projects_list', $data);
     }
@@ -366,17 +494,32 @@ class Ella_contractors extends AdminController
                 'notes' => $this->input->post('notes')
             ];
 
-            $project_id = $this->ella_contractors_model->createProject($data);
-            if ($project_id) {
-                set_alert('success', 'Project created successfully');
-                redirect('admin/ella_contractors/projects');
-            } else {
-                set_alert('danger', 'Failed to create project');
+            try {
+                $project_id = $this->ella_contractors_model->createProject($data);
+                if ($project_id) {
+                    set_alert('success', 'Project created successfully');
+                    redirect('admin/ella_contractors/projects');
+                } else {
+                    set_alert('danger', 'Failed to create project');
+                }
+            } catch (Exception $e) {
+                log_message('error', 'Error creating project: ' . $e->getMessage());
+                set_alert('danger', 'Failed to create project. Please try again.');
             }
         }
 
-        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
-        $data['contracts'] = $this->ella_contractors_model->getAllContracts();
+        try {
+            $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contractors for project form: ' . $e->getMessage());
+            $data['contractors'] = []; // Fallback
+        }
+        try {
+            $data['contracts'] = $this->ella_contractors_model->getAllContracts();
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contracts for project form: ' . $e->getMessage());
+            $data['contracts'] = []; // Fallback
+        }
         $data['title'] = 'Add New Project';
         $this->load->view('project_form', $data);
     }
@@ -386,7 +529,13 @@ class Ella_contractors extends AdminController
             redirect('admin');
         }
 
-        $project = $this->ella_contractors_model->getProjectById($id);
+        try {
+            $project = $this->ella_contractors_model->getProjectById($id);
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching project for edit: ' . $e->getMessage());
+            show_404();
+        }
+
         if (!$project) {
             show_404();
         }
@@ -408,17 +557,37 @@ class Ella_contractors extends AdminController
                 'notes' => $this->input->post('notes')
             ];
 
-            if ($this->ella_contractors_model->updateProject($id, $data)) {
-                set_alert('success', 'Project updated successfully');
-                redirect('admin/ella_contractors/projects');
-            } else {
-                set_alert('danger', 'Failed to update project');
+            try {
+                if ($this->ella_contractors_model->updateProject($id, $data)) {
+                    set_alert('success', 'Project updated successfully');
+                    redirect('admin/ella_contractors/projects');
+                } else {
+                    set_alert('danger', 'Failed to update project');
+                }
+            } catch (Exception $e) {
+                log_message('error', 'Error updating project: ' . $e->getMessage());
+                set_alert('danger', 'Failed to update project. Please try again.');
             }
         }
 
-        $data['project'] = $project;
-        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
-        $data['contracts'] = $this->ella_contractors_model->getAllContracts();
+        try {
+            $data['project'] = $project;
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching project for edit: ' . $e->getMessage());
+            show_404();
+        }
+        try {
+            $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contractors for project form: ' . $e->getMessage());
+            $data['contractors'] = []; // Fallback
+        }
+        try {
+            $data['contracts'] = $this->ella_contractors_model->getAllContracts();
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contracts for project form: ' . $e->getMessage());
+            $data['contracts'] = []; // Fallback
+        }
         $data['title'] = 'Edit Project';
         $this->load->view('project_form', $data);
     }
@@ -427,10 +596,15 @@ class Ella_contractors extends AdminController
      * Delete project
      */
     public function delete_project($id) {
-        if ($this->ella_contractors_model->deleteProject($id)) {
-            set_alert('success', 'Project deleted successfully');
-        } else {
-            set_alert('danger', 'Failed to delete project');
+        try {
+            if ($this->ella_contractors_model->deleteProject($id)) {
+                set_alert('success', 'Project deleted successfully');
+            } else {
+                set_alert('danger', 'Failed to delete project');
+            }
+        } catch (Exception $e) {
+            log_message('error', 'Error deleting project: ' . $e->getMessage());
+            set_alert('danger', 'Failed to delete project. Please try again.');
         }
         
         redirect('admin/ella_contractors/projects');
@@ -453,14 +627,24 @@ class Ella_contractors extends AdminController
         $status = $this->input->get('status');
         $contractor_id = $this->input->get('contractor_id');
         
-        $data['payments'] = $this->ella_contractors_model->getPayments($limit, $offset, $search, $status, $contractor_id);
-        $data['current_page'] = $page;
-        $data['search'] = $search;
-        $data['status_filter'] = $status;
-        $data['contractor_filter'] = $contractor_id;
+        try {
+            $data['payments'] = $this->ella_contractors_model->getPayments($limit, $offset, $search, $status, $contractor_id);
+            $data['current_page'] = $page;
+            $data['search'] = $search;
+            $data['status_filter'] = $status;
+            $data['contractor_filter'] = $contractor_id;
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching payments: ' . $e->getMessage());
+            $data['error'] = 'Failed to load payments. Please try again.';
+        }
         
         // Get contractors for filter dropdown
-        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        try {
+            $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contractors for payment filter: ' . $e->getMessage());
+            $data['contractors'] = []; // Fallback
+        }
         
         $this->load->view('payments_list', $data);
     }
@@ -483,18 +667,33 @@ class Ella_contractors extends AdminController
                 'notes' => $this->input->post('notes')
             ];
             
-            $payment_id = $this->ella_contractors_model->createPayment($payment_data);
-            
-            if ($payment_id) {
-                set_alert('success', 'Payment created successfully');
-                redirect('admin/ella_contractors/payments');
-            } else {
-                set_alert('danger', 'Failed to create payment');
+            try {
+                $payment_id = $this->ella_contractors_model->createPayment($payment_data);
+                
+                if ($payment_id) {
+                    set_alert('success', 'Payment created successfully');
+                    redirect('admin/ella_contractors/payments');
+                } else {
+                    set_alert('danger', 'Failed to create payment');
+                }
+            } catch (Exception $e) {
+                log_message('error', 'Error creating payment: ' . $e->getMessage());
+                set_alert('danger', 'Failed to create payment. Please try again.');
             }
         }
         
-        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
-        $data['contracts'] = $this->ella_contractors_model->getAllContracts();
+        try {
+            $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contractors for payment form: ' . $e->getMessage());
+            $data['contractors'] = []; // Fallback
+        }
+        try {
+            $data['contracts'] = $this->ella_contractors_model->getAllContracts();
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contracts for payment form: ' . $e->getMessage());
+            $data['contracts'] = []; // Fallback
+        }
         $this->load->view('payment_form', $data);
     }
     
@@ -516,17 +715,37 @@ class Ella_contractors extends AdminController
                 'notes' => $this->input->post('notes')
             ];
             
-            if ($this->ella_contractors_model->updatePayment($id, $payment_data)) {
-                set_alert('success', 'Payment updated successfully');
-                redirect('admin/ella_contractors/payments');
-            } else {
-                set_alert('danger', 'Failed to update payment');
+            try {
+                if ($this->ella_contractors_model->updatePayment($id, $payment_data)) {
+                    set_alert('success', 'Payment updated successfully');
+                    redirect('admin/ella_contractors/payments');
+                } else {
+                    set_alert('danger', 'Failed to update payment');
+                }
+            } catch (Exception $e) {
+                log_message('error', 'Error updating payment: ' . $e->getMessage());
+                set_alert('danger', 'Failed to update payment. Please try again.');
             }
         }
         
-        $data['payment'] = $this->ella_contractors_model->getPaymentById($id);
-        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
-        $data['contracts'] = $this->ella_contractors_model->getAllContracts();
+        try {
+            $data['payment'] = $this->ella_contractors_model->getPaymentById($id);
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching payment for edit: ' . $e->getMessage());
+            show_404();
+        }
+        try {
+            $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contractors for payment form: ' . $e->getMessage());
+            $data['contractors'] = []; // Fallback
+        }
+        try {
+            $data['contracts'] = $this->ella_contractors_model->getAllContracts();
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contracts for payment form: ' . $e->getMessage());
+            $data['contracts'] = []; // Fallback
+        }
         $this->load->view('payment_form', $data);
     }
     
@@ -534,10 +753,15 @@ class Ella_contractors extends AdminController
      * Delete payment
      */
     public function delete_payment($id) {
-        if ($this->ella_contractors_model->deletePayment($id)) {
-            set_alert('success', 'Payment deleted successfully');
-        } else {
-            set_alert('danger', 'Failed to delete payment');
+        try {
+            if ($this->ella_contractors_model->deletePayment($id)) {
+                set_alert('success', 'Payment deleted successfully');
+            } else {
+                set_alert('danger', 'Failed to delete payment');
+            }
+        } catch (Exception $e) {
+            log_message('error', 'Error deleting payment: ' . $e->getMessage());
+            set_alert('danger', 'Failed to delete payment. Please try again.');
         }
         
         redirect('admin/ella_contractors/payments');
@@ -573,11 +797,21 @@ class Ella_contractors extends AdminController
         
         $data['title'] = 'Documents Gallery';
         $data['contractor_id'] = $contractor_id;
-        $data['documents'] = $this->document_manager->getDocumentGallery($contractor_id);
+        try {
+            $data['documents'] = $this->document_manager->getDocumentGallery($contractor_id);
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching documents for gallery: ' . $e->getMessage());
+            $data['error'] = 'Failed to load documents. Please try again.';
+        }
         
         // Get contractor info for breadcrumb
-        $contractor = $this->ella_contractors_model->getContractorById($contractor_id);
-        $data['contractor_name'] = $contractor ? $contractor->company_name : 'Unknown Contractor';
+        try {
+            $contractor = $this->ella_contractors_model->getContractorById($contractor_id);
+            $data['contractor_name'] = $contractor ? $contractor->company_name : 'Unknown Contractor';
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contractor for gallery: ' . $e->getMessage());
+            $data['contractor_name'] = 'Unknown Contractor'; // Fallback
+        }
         
         $this->load->view('documents_gallery', $data);
     }
@@ -612,7 +846,12 @@ class Ella_contractors extends AdminController
     {
         $this->load->library('../libraries/DocumentManager', '', 'document_manager');
         
-        $result = $this->document_manager->generateShareLink($document_id);
+        try {
+            $result = $this->document_manager->generateShareLink($document_id);
+        } catch (Exception $e) {
+            log_message('error', 'Error generating share link: ' . $e->getMessage());
+            $result = ['success' => false, 'message' => 'Failed to generate share link'];
+        }
         
         if ($result['success']) {
             echo json_encode([
@@ -621,7 +860,7 @@ class Ella_contractors extends AdminController
                 'expires_at' => $result['expires_at']
             ]);
         } else {
-            echo json_encode(['success' => false, 'message' => 'Failed to generate share link']);
+            echo json_encode(['success' => false, 'message' => $result['message']]);
         }
     }
 
@@ -632,9 +871,24 @@ class Ella_contractors extends AdminController
         $this->load->library('DocumentManager');
         
         // Get real contract data (in real implementation, this would come from database)
-        $contract_data = $this->getContractData($contract_id);
+        try {
+            $contract_data = $this->ella_contractors_model->getContractById($contract_id);
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contract data for PDF: ' . $e->getMessage());
+            $contract_data = null; // Fallback
+        }
         
-        $result = $this->documentmanager->generateContractPDF($contract_data);
+        if (!$contract_data) {
+            show_404();
+            return;
+        }
+
+        try {
+            $result = $this->documentmanager->generateContractPDF($contract_data);
+        } catch (Exception $e) {
+            log_message('error', 'Error generating contract PDF: ' . $e->getMessage());
+            $result = ['success' => false, 'error' => 'Failed to generate PDF. Please try again.'];
+        }
         
         if ($result['success']) {
             // Force download the generated file
@@ -660,9 +914,24 @@ class Ella_contractors extends AdminController
         $this->load->library('DocumentManager');
         
         // Get real invoice data
-        $invoice_data = $this->getInvoiceData($payment_id);
+        try {
+            $invoice_data = $this->ella_contractors_model->getPaymentById($payment_id);
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching invoice data for PDF: ' . $e->getMessage());
+            $invoice_data = null; // Fallback
+        }
         
-        $result = $this->documentmanager->generateInvoicePDF($invoice_data);
+        if (!$invoice_data) {
+            show_404();
+            return;
+        }
+
+        try {
+            $result = $this->documentmanager->generateInvoicePDF($invoice_data);
+        } catch (Exception $e) {
+            log_message('error', 'Error generating invoice PDF: ' . $e->getMessage());
+            $result = ['success' => false, 'error' => 'Failed to generate PDF. Please try again.'];
+        }
         
         if ($result['success']) {
             // Force download the generated file
@@ -688,9 +957,24 @@ class Ella_contractors extends AdminController
         $this->load->library('DocumentManager');
         
         // Get real report data
-        $report_data = $this->getReportData($report_type);
+        try {
+            $report_data = $this->ella_contractors_model->getReportData($report_type);
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching report data for PDF: ' . $e->getMessage());
+            $report_data = null; // Fallback
+        }
         
-        $result = $this->documentmanager->generateReportPDF($report_data, $report_type);
+        if (!$report_data) {
+            show_404();
+            return;
+        }
+
+        try {
+            $result = $this->documentmanager->generateReportPDF($report_data, $report_type);
+        } catch (Exception $e) {
+            log_message('error', 'Error generating report PDF: ' . $e->getMessage());
+            $result = ['success' => false, 'error' => 'Failed to generate PDF. Please try again.'];
+        }
         
         if ($result['success']) {
             // Force download the generated file
@@ -716,9 +1000,24 @@ class Ella_contractors extends AdminController
         $this->load->library('DocumentManager');
         
         // Get real contractor data
-        $contractor_data = $this->ella_contractors_model->getContractorById($contractor_id);
+        try {
+            $contractor_data = $this->ella_contractors_model->getContractorById($contractor_id);
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching contractor data for presentation: ' . $e->getMessage());
+            $contractor_data = null; // Fallback
+        }
         
-        $result = $this->documentmanager->generateContractorPresentation($contractor_data);
+        if (!$contractor_data) {
+            show_404();
+            return;
+        }
+
+        try {
+            $result = $this->documentmanager->generateContractorPresentation($contractor_data);
+        } catch (Exception $e) {
+            log_message('error', 'Error generating contractor presentation: ' . $e->getMessage());
+            $result = ['success' => false, 'error' => 'Failed to generate presentation. Please try again.'];
+        }
         
         if ($result['success']) {
             // Force download the generated file
@@ -744,9 +1043,24 @@ class Ella_contractors extends AdminController
         $this->load->library('DocumentManager');
         
         // Get real project data
-        $project_data = $this->getProjectData($project_id);
+        try {
+            $project_data = $this->ella_contractors_model->getProjectById($project_id);
+        } catch (Exception $e) {
+            log_message('error', 'Error fetching project data for presentation: ' . $e->getMessage());
+            $project_data = null; // Fallback
+        }
         
-        $result = $this->documentmanager->generateProjectPresentation($project_data);
+        if (!$project_data) {
+            show_404();
+            return;
+        }
+
+        try {
+            $result = $this->documentmanager->generateProjectPresentation($project_data);
+        } catch (Exception $e) {
+            log_message('error', 'Error generating project presentation: ' . $e->getMessage());
+            $result = ['success' => false, 'error' => 'Failed to generate presentation. Please try again.'];
+        }
         
         if ($result['success']) {
             // Force download the generated file
