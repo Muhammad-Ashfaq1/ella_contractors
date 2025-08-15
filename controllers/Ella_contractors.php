@@ -489,20 +489,39 @@ class Ella_contractors extends AdminController
      */
     public function add_contract() {
         if ($this->input->post()) {
+            // Validate required fields
+            $this->load->library('form_validation');
+            $this->form_validation->set_rules('title', 'Contract Title', 'required|trim');
+            $this->form_validation->set_rules('contractor_id', 'Contractor', 'required|trim');
+            $this->form_validation->set_rules('start_date', 'Start Date', 'required|trim');
+            
+            if ($this->form_validation->run() == FALSE) {
+                // Validation failed, show form with errors
+                $data['title'] = 'Add New Contract';
+                $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+                $data['status_options'] = $this->ella_contractors_model->getContractStatusOptions();
+                $data['errors'] = validation_errors();
+                $this->load->view('contract_form', $data);
+                return;
+            }
+            
             $contract_data = [
                 'contractor_id' => $this->input->post('contractor_id'),
                 'title' => $this->input->post('title'),
                 'contract_number' => $this->input->post('contract_number'),
                 'description' => $this->input->post('description'),
                 'start_date' => $this->input->post('start_date'),
-                'end_date' => $this->input->post('end_date'),
-                'hourly_rate' => $this->input->post('hourly_rate'),
-                'estimated_hours' => $this->input->post('estimated_hours'),
-                'fixed_amount' => $this->input->post('fixed_amount'),
+                'end_date' => $this->input->post('end_date') ?: null,
+                'hourly_rate' => $this->input->post('hourly_rate') ? floatval($this->input->post('hourly_rate')) : null,
+                'estimated_hours' => $this->input->post('estimated_hours') ? intval($this->input->post('estimated_hours')) : null,
+                'fixed_amount' => $this->input->post('fixed_amount') ? floatval($this->input->post('fixed_amount')) : null,
                 'payment_terms' => $this->input->post('payment_terms'),
                 'status' => $this->input->post('status') ?: 'draft',
                 'terms_conditions' => $this->input->post('terms_conditions'),
-                'notes' => $this->input->post('notes')
+                'notes' => $this->input->post('notes'),
+                'date_created' => date('Y-m-d H:i:s'),
+                'date_updated' => date('Y-m-d H:i:s'),
+                'created_by' => get_staff_user_id() ?: 1
             ];
             
             try {
@@ -520,12 +539,12 @@ class Ella_contractors extends AdminController
             }
         }
         
-        try {
-            $data['contractors'] = $this->ella_contractors_model->getAllContractors();
-        } catch (Exception $e) {
-            log_message('error', 'Error fetching contractors for contract form: ' . $e->getMessage());
-            $data['contractors'] = []; // Fallback
-        }
+        // Load form data for dropdowns
+        $data['title'] = 'Add New Contract';
+        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        $data['status_options'] = $this->ella_contractors_model->getContractStatusOptions();
+        $data['errors'] = '';
+        
         $this->load->view('contract_form', $data);
     }
     
@@ -644,20 +663,41 @@ class Ella_contractors extends AdminController
         }
 
         if ($this->input->post()) {
+            // Validate required fields
+            $this->load->library('form_validation');
+            $this->form_validation->set_rules('name', 'Project Name', 'required|trim');
+            $this->form_validation->set_rules('contractor_id', 'Contractor', 'required|trim');
+            $this->form_validation->set_rules('start_date', 'Start Date', 'required|trim');
+            
+            if ($this->form_validation->run() == FALSE) {
+                // Validation failed, show form with errors
+                $data['title'] = 'Add New Project';
+                $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+                $data['contracts'] = $this->ella_contractors_model->getAllContracts();
+                $data['status_options'] = $this->ella_contractors_model->getProjectStatusOptions();
+                $data['priority_options'] = $this->ella_contractors_model->getProjectPriorityOptions();
+                $data['errors'] = validation_errors();
+                $this->load->view('project_form', $data);
+                return;
+            }
+            
             $data = [
                 'contractor_id' => $this->input->post('contractor_id'),
                 'contract_id' => $this->input->post('contract_id') ?: null,
                 'name' => $this->input->post('name'),
                 'description' => $this->input->post('description'),
-                'budget' => $this->input->post('budget'),
-                'estimated_hours' => $this->input->post('estimated_hours'),
-                'actual_hours' => $this->input->post('actual_hours'),
+                'budget' => $this->input->post('budget') ? floatval($this->input->post('budget')) : null,
+                'estimated_hours' => $this->input->post('estimated_hours') ? intval($this->input->post('estimated_hours')) : null,
+                'actual_hours' => $this->input->post('actual_hours') ? intval($this->input->post('actual_hours')) : null,
                 'start_date' => $this->input->post('start_date'),
-                'end_date' => $this->input->post('end_date'),
-                'status' => $this->input->post('status'),
-                'priority' => $this->input->post('priority'),
+                'end_date' => $this->input->post('end_date') ?: null,
+                'status' => $this->input->post('status') ?: 'planning',
+                'priority' => $this->input->post('priority') ?: 'medium',
                 'location' => $this->input->post('location'),
-                'notes' => $this->input->post('notes')
+                'notes' => $this->input->post('notes'),
+                'date_created' => date('Y-m-d H:i:s'),
+                'date_updated' => date('Y-m-d H:i:s'),
+                'created_by' => get_staff_user_id() ?: 1
             ];
 
             try {
@@ -674,19 +714,14 @@ class Ella_contractors extends AdminController
             }
         }
 
-        try {
-            $data['contractors'] = $this->ella_contractors_model->getAllContractors();
-        } catch (Exception $e) {
-            log_message('error', 'Error fetching contractors for project form: ' . $e->getMessage());
-            $data['contractors'] = []; // Fallback
-        }
-        try {
-            $data['contracts'] = $this->ella_contractors_model->getAllContracts();
-        } catch (Exception $e) {
-            log_message('error', 'Error fetching contracts for project form: ' . $e->getMessage());
-            $data['contracts'] = []; // Fallback
-        }
+        // Load form data for dropdowns
         $data['title'] = 'Add New Project';
+        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        $data['contracts'] = $this->ella_contractors_model->getAllContracts();
+        $data['status_options'] = $this->ella_contractors_model->getProjectStatusOptions();
+        $data['priority_options'] = $this->ella_contractors_model->getProjectPriorityOptions();
+        $data['errors'] = '';
+        
         $this->load->view('project_form', $data);
     }
 
@@ -707,20 +742,41 @@ class Ella_contractors extends AdminController
         }
 
         if ($this->input->post()) {
+            // Validate required fields
+            $this->load->library('form_validation');
+            $this->form_validation->set_rules('name', 'Project Name', 'required|trim');
+            $this->form_validation->set_rules('contractor_id', 'Contractor', 'required|trim');
+            $this->form_validation->set_rules('start_date', 'Start Date', 'required|trim');
+            
+            if ($this->form_validation->run() == FALSE) {
+                // Validation failed, show form with errors
+                $data['title'] = 'Edit Project';
+                $data['project'] = $project;
+                $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+                $data['contracts'] = $this->ella_contractors_model->getAllContracts();
+                $data['status_options'] = $this->ella_contractors_model->getProjectStatusOptions();
+                $data['priority_options'] = $this->ella_contractors_model->getProjectPriorityOptions();
+                $data['errors'] = validation_errors();
+                $this->load->view('project_form', $data);
+                return;
+            }
+            
             $data = [
                 'contractor_id' => $this->input->post('contractor_id'),
                 'contract_id' => $this->input->post('contract_id') ?: null,
                 'name' => $this->input->post('name'),
                 'description' => $this->input->post('description'),
-                'budget' => $this->input->post('budget'),
-                'estimated_hours' => $this->input->post('estimated_hours'),
-                'actual_hours' => $this->input->post('actual_hours'),
+                'budget' => $this->input->post('budget') ? floatval($this->input->post('budget')) : null,
+                'estimated_hours' => $this->input->post('estimated_hours') ? intval($this->input->post('estimated_hours')) : null,
+                'actual_hours' => $this->input->post('actual_hours') ? intval($this->input->post('actual_hours')) : null,
                 'start_date' => $this->input->post('start_date'),
-                'end_date' => $this->input->post('end_date'),
-                'status' => $this->input->post('status'),
-                'priority' => $this->input->post('priority'),
+                'end_date' => $this->input->post('end_date') ?: null,
+                'status' => $this->input->post('status') ?: 'planning',
+                'priority' => $this->input->post('priority') ?: 'medium',
                 'location' => $this->input->post('location'),
-                'notes' => $this->input->post('notes')
+                'notes' => $this->input->post('notes'),
+                'date_updated' => date('Y-m-d H:i:s'),
+                'updated_by' => get_staff_user_id() ?: 1
             ];
 
             try {
@@ -736,25 +792,15 @@ class Ella_contractors extends AdminController
             }
         }
 
-        try {
-            $data['project'] = $project;
-        } catch (Exception $e) {
-            log_message('error', 'Error fetching project for edit: ' . $e->getMessage());
-            show_404();
-        }
-        try {
-            $data['contractors'] = $this->ella_contractors_model->getAllContractors();
-        } catch (Exception $e) {
-            log_message('error', 'Error fetching contractors for project form: ' . $e->getMessage());
-            $data['contractors'] = []; // Fallback
-        }
-        try {
-            $data['contracts'] = $this->ella_contractors_model->getAllContracts();
-        } catch (Exception $e) {
-            log_message('error', 'Error fetching contracts for project form: ' . $e->getMessage());
-            $data['contracts'] = []; // Fallback
-        }
+        // Load form data for dropdowns
         $data['title'] = 'Edit Project';
+        $data['project'] = $project;
+        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        $data['contracts'] = $this->ella_contractors_model->getAllContracts();
+        $data['status_options'] = $this->ella_contractors_model->getProjectStatusOptions();
+        $data['priority_options'] = $this->ella_contractors_model->getProjectPriorityOptions();
+        $data['errors'] = '';
+        
         $this->load->view('project_form', $data);
     }
     
@@ -820,46 +866,62 @@ class Ella_contractors extends AdminController
      */
     public function add_payment() {
         if ($this->input->post()) {
+            // Validate required fields
+            $this->load->library('form_validation');
+            $this->form_validation->set_rules('amount', 'Amount', 'required|trim|numeric');
+            $this->form_validation->set_rules('contractor_id', 'Contractor', 'required|trim');
+            $this->form_validation->set_rules('payment_date', 'Payment Date', 'required|trim');
+            
+            if ($this->form_validation->run() == FALSE) {
+                // Validation failed, show form with errors
+                $data['title'] = 'Add New Payment';
+                $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+                $data['contracts'] = $this->ella_contractors_model->getAllContracts();
+                $data['status_options'] = $this->ella_contractors_model->getPaymentStatusOptions();
+                $data['errors'] = validation_errors();
+                $this->load->view('payment_form', $data);
+                return;
+            }
+            
             $payment_data = [
                 'contractor_id' => $this->input->post('contractor_id'),
-                'contract_id' => $this->input->post('contract_id'),
-                'invoice_number' => $this->input->post('invoice_number'),
-                'description' => $this->input->post('description'),
-                'amount' => $this->input->post('amount'),
+                'contract_id' => $this->input->post('contract_id') ?: null,
+                'project_id' => $this->input->post('project_id') ?: null,
+                'amount' => floatval($this->input->post('amount')),
                 'payment_date' => $this->input->post('payment_date'),
-                'due_date' => $this->input->post('due_date'),
-                'status' => $this->input->post('status') ?: 'pending',
+                'due_date' => $this->input->post('due_date') ?: null,
                 'payment_method' => $this->input->post('payment_method'),
-                'notes' => $this->input->post('notes')
+                'reference_number' => $this->input->post('reference_number'),
+                'status' => $this->input->post('status') ?: 'pending',
+                'notes' => $this->input->post('notes'),
+                'date_created' => date('Y-m-d H:i:s'),
+                'date_updated' => date('Y-m-d H:i:s'),
+                'created_by' => get_staff_user_id() ?: 1
             ];
             
             try {
                 $payment_id = $this->ella_contractors_model->createPayment($payment_data);
                 
                 if ($payment_id) {
-                    set_alert('success', 'Payment created successfully');
+                    set_alert('success', 'Payment added successfully');
                     redirect('admin/ella_contractors/payments');
                 } else {
-                    set_alert('danger', 'Failed to create payment');
+                    set_alert('danger', 'Failed to add payment');
                 }
             } catch (Exception $e) {
-                log_message('error', 'Error creating payment: ' . $e->getMessage());
-                set_alert('danger', 'Failed to create payment. Please try again.');
+                log_message('error', 'Error adding payment: ' . $e->getMessage());
+                set_alert('danger', 'Failed to add payment. Please try again.');
             }
         }
         
-        try {
-            $data['contractors'] = $this->ella_contractors_model->getAllContractors();
-        } catch (Exception $e) {
-            log_message('error', 'Error fetching contractors for payment form: ' . $e->getMessage());
-            $data['contractors'] = []; // Fallback
-        }
-        try {
-            $data['contracts'] = $this->ella_contractors_model->getAllContracts();
-        } catch (Exception $e) {
-            log_message('error', 'Error fetching contracts for payment form: ' . $e->getMessage());
-            $data['contracts'] = []; // Fallback
-        }
+        // Load form data for dropdowns
+        $data['title'] = 'Add New Payment';
+        $data['contractors'] = $this->ella_contractors_model->getAllContractors();
+        $data['contracts'] = $this->ella_contractors_model->getAllContracts();
+        $data['projects'] = $this->ella_contractors_model->getAllProjects();
+        $data['status_options'] = $this->ella_contractors_model->getPaymentStatusOptions();
+        $data['errors'] = '';
+        
         $this->load->view('payment_form', $data);
     }
     
