@@ -28,6 +28,13 @@ class Ella_contractors extends AdminController
         $this->load->view('dashboard', $data);
     }
     
+    /**
+     * Main index method - redirects to dashboard
+     */
+    public function index() {
+        redirect('admin/ella_contractors/dashboard');
+    }
+    
     // ========================================
     // CONTRACTORS MANAGEMENT
     // ========================================
