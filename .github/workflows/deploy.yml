@@ -28,8 +28,8 @@ jobs:
           mkdir -p ./deploy_temp
           rsync -av --exclude='.git/' --exclude='.github/' --exclude='.DS_Store' --exclude='*.log' --exclude='node_modules/' --exclude='vendor/' --exclude='deploy_temp/' ./ ./deploy_temp/
           
-          # Deploy only the clean module files with proper SSH options
-          sshpass -p "100xCjYLP8Bv2UfGbGPg" rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ./deploy_temp/ dist-ashfaq@3.18.97.222:~/htdocs/dist.crm.ellasbubbles.com/modules/ella_contractors/
+          # Deploy only the clean module files with proper SSH options and no deletion
+          sshpass -p "100xCjYLP8Bv2UfGbGPg" rsync -avz --no-times --no-perms --chmod=Du=rwx,Dg=rx,Fu=rw,Fg=r -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ./deploy_temp/ dist-ashfaq@3.18.97.222:~/htdocs/dist.crm.ellasbubbles.com/modules/ella_contractors/
           
           # Clean up temp directory
           rm -rf ./deploy_temp
