@@ -1,0 +1,32 @@
+{
+    "name": "ella/contractors-module",
+    "description": "EllaContractors CRM module with document management and PDF generation",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "tecnickcom/tcpdf": "^6.4",
+        "phpoffice/phpspreadsheet": "^1.24",
+        "phpoffice/phppresentation": "^1.0",
+        "intervention/image": "^2.7",
+        "league/flysystem": "^3.0",
+        "mikehaertl/phpwkhtmltopdf": "^2.5",
+        "dompdf/dompdf": "^2.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "EllaContractors\\": "src/"
+        }
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "echo 'EllaContractors dependencies installed successfully'"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}

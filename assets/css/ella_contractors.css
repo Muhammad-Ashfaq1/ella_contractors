@@ -1,0 +1,387 @@
+/* Ella Contractors Module Styles */
+
+.contractor-dashboard {
+    padding: 20px 0;
+}
+
+.contractor-stats-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.contractor-stats-card:hover {
+    transform: translateY(-5px);
+}
+
+.contractor-stats-card .stat-icon {
+    font-size: 2.5em;
+    opacity: 0.8;
+    float: left;
+    margin-right: 15px;
+}
+
+.contractor-stats-card .stat-content {
+    overflow: hidden;
+}
+
+.contractor-stats-card .stat-number {
+    font-size: 2em;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.contractor-stats-card .stat-label {
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+/* Status Badges */
+.status-badge {
+    border-radius: 12px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-active {
+    background-color: #28a745;
+    color: white;
+}
+
+.status-inactive {
+    background-color: #6c757d;
+    color: white;
+}
+
+.status-pending {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.status-blacklisted {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Contractor Profile */
+.contractor-profile-header {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 10px 10px 0 0;
+    margin-bottom: 0;
+}
+
+.contractor-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    margin-right: 20px;
+}
+
+.contractor-profile-info h1 {
+    margin: 0;
+    font-size: 2em;
+    font-weight: 300;
+}
+
+.contractor-profile-info .subtitle {
+    opacity: 0.9;
+    margin-top: 5px;
+}
+
+.contractor-quick-stats {
+    background: white;
+    border: 1px solid #e3e6f0;
+    border-top: none;
+    padding: 20px;
+    border-radius: 0 0 10px 10px;
+}
+
+.quick-stat-item {
+    text-align: center;
+    padding: 10px;
+}
+
+.quick-stat-number {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #5a5c69;
+}
+
+.quick-stat-label {
+    font-size: 0.8em;
+    color: #858796;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* Contract Cards */
+.contract-card {
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: box-shadow 0.3s ease;
+}
+
+.contract-card:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.contract-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.contract-number {
+    font-weight: bold;
+    color: #5a5c69;
+}
+
+.contract-value {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #28a745;
+}
+
+.contract-progress {
+    margin-top: 10px;
+}
+
+.progress {
+    height: 8px;
+    border-radius: 4px;
+}
+
+/* Payment Cards */
+.payment-card {
+    border-left: 4px solid #4e73df;
+    background: white;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 0 8px 8px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.payment-card.overdue {
+    border-left-color: #e74a3b;
+}
+
+.payment-card.paid {
+    border-left-color: #28a745;
+}
+
+.payment-amount {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.payment-due-date {
+    color: #858796;
+    font-size: 0.9em;
+}
+
+.payment-due-date.overdue {
+    color: #e74a3b;
+    font-weight: bold;
+}
+
+/* Form Enhancements */
+.contractor-form .panel {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: none;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.contractor-form .panel-heading {
+    background: linear-gradient(135deg, #f8f9fc 0%, #e9ecef 100%);
+    border-radius: 8px 8px 0 0;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.contractor-form .form-group {
+    margin-bottom: 20px;
+}
+
+.contractor-form .control-label {
+    font-weight: 600;
+    color: #5a5c69;
+    margin-bottom: 8px;
+}
+
+.contractor-form .form-control {
+    border-radius: 6px;
+    border: 1px solid #d1d3e2;
+    padding: 10px 12px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.contractor-form .form-control:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+/* Data Tables */
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+    border-radius: 6px;
+    border: 1px solid #d1d3e2;
+}
+
+.table th {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+    font-weight: 600;
+    color: #5a5c69;
+    padding: 12px 8px;
+}
+
+.table td {
+    padding: 12px 8px;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fc;
+}
+
+/* Action Buttons */
+.btn-group-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.btn-xs {
+    padding: 3px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+}
+
+/* Reports and Charts */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 20px 0;
+}
+
+.report-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.report-card h3 {
+    margin-top: 0;
+    color: #5a5c69;
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .contractor-profile-header {
+        text-align: center;
+    }
+    
+    .contractor-avatar {
+        margin: 0 auto 15px auto;
+        display: block;
+    }
+    
+    .quick-stat-item {
+        margin-bottom: 15px;
+    }
+    
+    .btn-group-actions {
+        flex-direction: column;
+    }
+    
+    .btn-group-actions .btn {
+        margin-bottom: 5px;
+    }
+}
+
+/* Loading States */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #4e73df;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Notification Styles */
+.notification-panel {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.notification-panel.success {
+    background: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.notification-panel.error {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.notification-panel.info {
+    background: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
