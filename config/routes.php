@@ -2,7 +2,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 // Main dashboard route
-$route['ella_contractors'] = 'ella_contractors/index';
+$route['ella_contractors'] = 'ella_contractors/dashboard';
 
 // Contractor management routes (commented for now)
 // $route['ella_contractors/contractors'] = 'ella_contractors/Ella_contractors/contractors';
