@@ -28,6 +28,13 @@
                 
                 <div class="card">
                     <div class="card-body">
+                        <?php if (isset($errors) && $errors): ?>
+                            <div class="alert alert-danger">
+                                <h5><i class="fa fa-exclamation-triangle"></i> Please fix the following errors:</h5>
+                                <?= $errors ?>
+                            </div>
+                        <?php endif; ?>
+                        
                         <form method="POST" class="needs-validation" novalidate>
                             <!-- Basic Information -->
                             <div class="form-section">
@@ -95,8 +102,16 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="state">State/Province</label>
-                                            <input type="text" class="form-control" id="state" name="state" 
-                                                   value="<?= htmlspecialchars($contractor->state ?? '') ?>">
+                                            <select class="form-control" id="state" name="state">
+                                                <option value="">Select State</option>
+                                                <?php if (isset($states)): ?>
+                                                    <?php foreach ($states as $code => $name): ?>
+                                                        <option value="<?= $code ?>" <?= (($contractor->state ?? '') == $code) ? 'selected' : '' ?>>
+                                                            <?= $name ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                <?php endif; ?>
+                                            </select>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
@@ -114,14 +129,21 @@
                                             <label for="country">Country</label>
                                             <select class="form-control" id="country" name="country">
                                                 <option value="">Select Country</option>
-                                                <option value="US" <?= (($contractor->country ?? '') == 'US') ? 'selected' : '' ?>>United States</option>
-                                                <option value="CA" <?= (($contractor->country ?? '') == 'CA') ? 'selected' : '' ?>>Canada</option>
-                                                <option value="UK" <?= (($contractor->country ?? '') == 'UK') ? 'selected' : '' ?>>United Kingdom</option>
-                                                <option value="AU" <?= (($contractor->country ?? '') == 'AU') ? 'selected' : '' ?>>Australia</option>
-                                                <option value="DE" <?= (($contractor->country ?? '') == 'DE') ? 'selected' : '' ?>>Germany</option>
-                                                <option value="FR" <?= (($contractor->country ?? '') == 'FR') ? 'selected' : '' ?>>France</option>
-                                                <option value="Other" <?= (($contractor->country ?? '') == 'Other') ? 'selected' : '' ?>>Other</option>
+                                                <?php if (isset($countries)): ?>
+                                                    <?php foreach ($countries as $code => $name): ?>
+                                                        <option value="<?= $code ?>" <?= (($contractor->country ?? '') == $code) ? 'selected' : '' ?>>
+                                                            <?= $name ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                <?php endif; ?>
                                             </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="website">Website</label>
+                                            <input type="url" class="form-control" id="website" name="website" 
+                                                   value="<?= htmlspecialchars($contractor->website ?? '') ?>">
                                         </div>
                                     </div>
                                 </div>
@@ -162,10 +184,18 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="status">Status</label>
-                                            <select class="form-control" id="status" name="status" required>
-                                                <option value="active" <?= (($contractor->status ?? 'active') == 'active') ? 'selected' : '' ?>>Active</option>
-                                                <option value="inactive" <?= (($contractor->status ?? '') == 'inactive') ? 'selected' : '' ?>>Inactive</option>
-                                                <option value="pending" <?= (($contractor->status ?? '') == 'pending') ? 'selected' : '' ?>>Pending</option>
+                                            <select class="form-control" id="status" name="status">
+                                                <?php if (isset($status_options)): ?>
+                                                    <?php foreach ($status_options as $value => $label): ?>
+                                                        <option value="<?= $value ?>" <?= (($contractor->status ?? 'pending') == $value) ? 'selected' : '' ?>>
+                                                            <?= $label ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <option value="active" <?= (($contractor->status ?? 'active') == 'active') ? 'selected' : '' ?>>Active</option>
+                                                    <option value="inactive" <?= (($contractor->status ?? '') == 'inactive') ? 'selected' : '' ?>>Inactive</option>
+                                                    <option value="pending" <?= (($contractor->status ?? '') == 'pending') ? 'selected' : '' ?>>Pending</option>
+                                                <?php endif; ?>
                                             </select>
                                         </div>
                                     </div>

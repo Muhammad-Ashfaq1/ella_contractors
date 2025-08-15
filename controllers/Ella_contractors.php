@@ -313,6 +313,25 @@ class Ella_contractors extends AdminController
      */
     public function add_contractor() {
         if ($this->input->post()) {
+            // Validate required fields
+            $this->load->library('form_validation');
+            $this->form_validation->set_rules('company_name', 'Company Name', 'required|trim');
+            $this->form_validation->set_rules('contact_person', 'Contact Person', 'required|trim');
+            $this->form_validation->set_rules('email', 'Email', 'valid_email|trim');
+            $this->form_validation->set_rules('phone', 'Phone', 'trim');
+            
+            if ($this->form_validation->run() == FALSE) {
+                // Validation failed, show form with errors
+                $data['title'] = 'Add New Contractor';
+                $data['countries'] = $this->ella_contractors_model->getCountries();
+                $data['states'] = $this->ella_contractors_model->getUSStates();
+                $data['status_options'] = $this->ella_contractors_model->getContractorStatusOptions();
+                $data['errors'] = validation_errors();
+                $this->load->view('contractor_form', $data);
+                return;
+            }
+            
+            // Prepare contractor data
             $contractor_data = [
                 'company_name' => $this->input->post('company_name'),
                 'contact_person' => $this->input->post('contact_person'),
@@ -328,19 +347,22 @@ class Ella_contractors extends AdminController
                 'business_license' => $this->input->post('business_license'),
                 'insurance_info' => $this->input->post('insurance_info'),
                 'specialties' => $this->input->post('specialties'),
-                'hourly_rate' => $this->input->post('hourly_rate'),
-                'status' => $this->input->post('status'),
-                'notes' => $this->input->post('notes')
+                'hourly_rate' => $this->input->post('hourly_rate') ? floatval($this->input->post('hourly_rate')) : null,
+                'status' => $this->input->post('status') ?: 'pending',
+                'notes' => $this->input->post('notes'),
+                'date_created' => date('Y-m-d H:i:s'),
+                'date_updated' => date('Y-m-d H:i:s'),
+                'created_by' => get_staff_user_id() ?: 1
             ];
             
             try {
                 $contractor_id = $this->ella_contractors_model->createContractor($contractor_data);
                 
                 if ($contractor_id) {
-                    set_alert('success', 'Contractor added successfully');
+                    set_alert('success', 'Contractor added successfully!');
                     redirect('admin/ella_contractors/contractors');
                 } else {
-                    set_alert('danger', 'Failed to add contractor');
+                    set_alert('danger', 'Failed to add contractor. Please try again.');
                 }
             } catch (Exception $e) {
                 log_message('error', 'Error adding contractor: ' . $e->getMessage());
@@ -348,7 +370,14 @@ class Ella_contractors extends AdminController
             }
         }
         
-        $this->load->view('contractor_form');
+        // Load form data for dropdowns
+        $data['title'] = 'Add New Contractor';
+        $data['countries'] = $this->ella_contractors_model->getCountries();
+        $data['states'] = $this->ella_contractors_model->getUSStates();
+        $data['status_options'] = $this->ella_contractors_model->getContractorStatusOptions();
+        $data['errors'] = '';
+        
+        $this->load->view('contractor_form', $data);
     }
     
     /**
