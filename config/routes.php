@@ -4,6 +4,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 // Main dashboard route
 $route['ella_contractors'] = 'ella_contractors/dashboard';
 
+// Test route for debugging
+$route['ella_contractors/test'] = 'ella_contractors/test';
+
 // Contractor management routes (commented for now)
 // $route['ella_contractors/contractors'] = 'ella_contractors/Ella_contractors/contractors';
 // $route['ella_contractors/contractor/(:num)'] = 'ella_contractors/Ella_contractors/contractor_profile/$1';

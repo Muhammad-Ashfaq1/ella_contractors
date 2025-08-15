@@ -4,8 +4,20 @@ class Ella_contractors extends AdminController
 {
     public function __construct() {
         parent::__construct();
-        $this->load->model('Ella_contractors_model');
-        $this->load->library('DocumentManager');
+        
+        // Load model with proper error handling
+        try {
+            $this->load->model('ella_contractors/Ella_contractors_model');
+        } catch (Exception $e) {
+            log_message('error', 'Failed to load Ella_contractors_model: ' . $e->getMessage());
+        }
+        
+        // Load library with error handling
+        try {
+            $this->load->library('DocumentManager');
+        } catch (Exception $e) {
+            log_message('error', 'Failed to load DocumentManager library: ' . $e->getMessage());
+        }
         
         // Check if user is logged in (basic auth check)
         if (!$this->session->userdata('user_id')) {
@@ -16,16 +28,56 @@ class Ella_contractors extends AdminController
     }
     
     /**
+     * Test method to debug model loading
+     */
+    public function test() {
+        echo "<h2>Debug Information</h2>";
+        echo "<p>Model loaded: " . (isset($this->ella_contractors_model) ? 'YES' : 'NO') . "</p>";
+        echo "<p>Model class: " . get_class($this->ella_contractors_model) . "</p>";
+        echo "<p>Methods available: " . implode(', ', get_class_methods($this->ella_contractors_model)) . "</p>";
+        echo "<hr>";
+        echo "<p><a href='" . admin_url('ella_contractors/dashboard') . "'>Go to Dashboard</a></p>";
+    }
+    
+    /**
      * Main dashboard
      */
     public function dashboard() {
-        $data['title'] = 'Ella Contractors Dashboard';
-        $data['stats'] = $this->ella_contractors_model->getDashboardStats();
-        $data['recent_contractors'] = $this->ella_contractors_model->getRecentContractors(5);
-        $data['active_contracts'] = $this->ella_contractors_model->getActiveContracts(5);
-        $data['pending_payments'] = $this->ella_contractors_model->getPendingPayments(5);
-        
-        $this->load->view('dashboard', $data);
+        try {
+            $data['title'] = 'Ella Contractors Dashboard';
+            
+            // Check if model is loaded before calling methods
+            if (isset($this->ella_contractors_model) && method_exists($this->ella_contractors_model, 'getDashboardStats')) {
+                $data['stats'] = $this->ella_contractors_model->getDashboardStats();
+                $data['recent_contractors'] = $this->ella_contractors_model->getRecentContractors(5);
+                $data['active_contracts'] = $this->ella_contractors_model->getActiveContracts(5);
+                $data['pending_payments'] = $this->ella_contractors_model->getPendingPayments(5);
+            } else {
+                // Fallback data if model fails
+                $data['stats'] = [
+                    'total_contractors' => 0,
+                    'active_contracts' => 0,
+                    'total_projects' => 0,
+                    'pending_payments' => 0
+                ];
+                $data['recent_contractors'] = [];
+                $data['active_contracts'] = [];
+                $data['pending_payments'] = [];
+                $data['error'] = 'Model not loaded properly';
+            }
+            
+            $this->load->view('dashboard', $data);
+            
+        } catch (Exception $e) {
+            log_message('error', 'Dashboard error: ' . $e->getMessage());
+            
+            // Show error page or fallback
+            $data['title'] = 'Error - Ella Contractors';
+            $data['error_message'] = 'An error occurred while loading the dashboard. Please try again.';
+            $data['error_details'] = $e->getMessage();
+            
+            $this->load->view('error_page', $data);
+        }
     }
     
     /**
