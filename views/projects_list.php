@@ -181,7 +181,7 @@
                                            class="btn btn-outline-warning" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <a href="<?= admin_url('ella_contractors/projects/generate_ppt/' . $project->id) ?>" 
+                                        <a href="<?= admin_url('ella_contractors/presentation/project/' . $project->id) ?>" 
                                            class="btn btn-outline-secondary" title="Generate PPT">
                                             <i class="fas fa-file-powerpoint"></i>
                                         </a>

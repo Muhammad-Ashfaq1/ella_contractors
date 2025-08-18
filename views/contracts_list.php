@@ -169,11 +169,11 @@
                                                class="btn btn-sm btn-outline-warning" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <a href="<?= admin_url('ella_contractors/contracts/generate_pdf/' . $contract->id) ?>" 
+                                            <a href="<?= admin_url('ella_contractors/pdf/contract/' . $contract->id) ?>" 
                                                class="btn btn-sm btn-outline-danger" title="Generate PDF">
                                                 <i class="fas fa-file-pdf"></i>
                                             </a>
-                                            <a href="<?= admin_url('ella_contractors/contracts/generate_ppt/' . $contract->id) ?>" 
+                                            <a href="<?= admin_url('ella_contractors/presentation/contract/' . $contract->id) ?>" 
                                                class="btn btn-sm btn-outline-secondary" title="Generate PPT">
                                                 <i class="fas fa-file-powerpoint"></i>
                                             </a>
