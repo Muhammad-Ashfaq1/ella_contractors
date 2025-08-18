@@ -1194,5 +1194,112 @@ class Ella_contractors extends AdminController
         
         $this->load->view('project_pdf_report', $data);
     }
+    
+    /**
+     * Generate PowerPoint for contract
+     */
+    public function generateContractPPT($id) {
+        $contract = $this->ella_contractors_model->getContractById($id);
+        if (!$contract) {
+            show_404();
+        }
+        
+        // Get contractor info
+        $contractor = $this->ella_contractors_model->getContractorById($contract->contractor_id);
+        
+        // Generate text report for now
+        $this->generateContractTextReport($contract, $contractor);
+    }
+    
+    /**
+     * Generate PowerPoint for project
+     */
+    public function generateProjectPPT($id) {
+        $project = $this->ella_contractors_model->getProjectById($id);
+        if (!$project) {
+            show_404();
+        }
+        
+        // Get contractor info
+        $contractor = $this->ella_contractors_model->getContractorById($project->contractor_id);
+        
+        // Generate text report for now
+        $this->generateProjectTextReport($project, $contractor);
+    }
+    
+    /**
+     * Generate text report for contract (fallback for PPT generation)
+     */
+    private function generateContractTextReport($contract, $contractor) {
+        $filename = 'contract_' . $contract->id . '_' . date('Y-m-d') . '.txt';
+        
+        header('Content-Type: text/plain');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        
+        $content = "CONTRACT DETAILS\n";
+        $content .= "================\n\n";
+        $content .= "Title: " . $contract->title . "\n";
+        $content .= "Contractor: " . $contractor->company_name . "\n";
+        $content .= "Amount: $" . number_format($contract->amount, 2) . "\n";
+        $content .= "Start Date: " . date('F j, Y', strtotime($contract->start_date)) . "\n";
+        $content .= "End Date: " . date('F j, Y', strtotime($contract->end_date)) . "\n";
+        $content .= "Status: " . ucfirst($contract->status) . "\n\n";
+        
+        if ($contract->description) {
+            $content .= "Description:\n" . $contract->description . "\n\n";
+        }
+        
+        if ($contract->terms) {
+            $content .= "Terms & Conditions:\n" . $contract->terms . "\n\n";
+        }
+        
+        if ($contract->notes) {
+            $content .= "Notes:\n" . $contract->notes . "\n\n";
+        }
+        
+        $content .= "Generated on " . date('F j, Y \a\t g:i A') . " by Ella Contractors CRM\n";
+        
+        echo $content;
+        exit;
+    }
+    
+    /**
+     * Generate text report for project (fallback for PPT generation)
+     */
+    private function generateProjectTextReport($project, $contractor) {
+        $filename = 'project_' . $project->id . '_' . date('Y-m-d') . '.txt';
+        
+        header('Content-Type: text/plain');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        
+        $content = "PROJECT DETAILS\n";
+        $content .= "===============\n\n";
+        $content .= "Name: " . $project->name . "\n";
+        $content .= "Contractor: " . $contractor->company_name . "\n";
+        $content .= "Budget: $" . number_format($project->budget, 2) . "\n";
+        $content .= "Start Date: " . date('F j, Y', strtotime($project->start_date)) . "\n";
+        if ($project->end_date) {
+            $content .= "End Date: " . date('F j, Y', strtotime($project->end_date)) . "\n";
+        }
+        $content .= "Status: " . ucfirst($project->status) . "\n";
+        $content .= "Progress: " . $project->progress . "%\n";
+        if ($project->location) {
+            $content .= "Location: " . $project->location . "\n";
+        }
+        $content .= "\n";
+        
+        if ($project->description) {
+            $content .= "Description:\n" . $project->description . "\n\n";
+        }
+        
+        if ($project->notes) {
+            $content .= "Notes:\n" . $project->notes . "\n\n";
+        }
+        
+        $content .= "Generated on " . date('F j, Y \a\t g:i A') . " by Ella Contractors CRM\n";
+        
+        echo $content;
+        exit;
+    }
 }
 
