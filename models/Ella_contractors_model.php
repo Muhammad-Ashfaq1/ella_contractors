@@ -43,6 +43,28 @@ class ella_contractors_model extends App_Model {
     }
     
     /**
+     * Get contractors count for pagination
+     */
+    public function getContractorsCount($search = '', $status = '') {
+        $this->db->from('tblella_contractors');
+        
+        if (!empty($search)) {
+            $this->db->group_start();
+            $this->db->like('company_name', $search);
+            $this->db->or_like('contact_person', $search);
+            $this->db->or_like('email', $search);
+            $this->db->or_like('phone', $search);
+            $this->db->group_end();
+        }
+        
+        if (!empty($status)) {
+            $this->db->where('status', $status);
+        }
+        
+        return $this->db->count_all_results();
+    }
+    
+    /**
      * Get all contractors without pagination (for dropdowns)
      */
     public function getAllContractors() {
@@ -137,21 +159,36 @@ class ella_contractors_model extends App_Model {
     }
     
     /**
-     * Get contractors count for pagination
+     * Search contractors for AJAX
      */
-    public function getContractorsCount($search = '', $status = '') {
-        if (!empty($search)) {
-            $this->db->group_start();
-            $this->db->like('company_name', $search);
-            $this->db->or_like('contact_person', $search);
-            $this->db->or_like('email', $search);
-            $this->db->group_end();
-        }
-        
-        if (!empty($status)) {
-            $this->db->where('status', $status);
-        }
-        
+    public function searchContractors($search) {
+        $this->db->select('id, company_name, contact_person, email, phone');
+        $this->db->from('tblella_contractors');
+        $this->db->like('company_name', $search);
+        $this->db->or_like('contact_person', $search);
+        $this->db->or_like('email', $search);
+        $this->db->limit(10);
+        $query = $this->db->get();
+        return $query->result();
+    }
+    
+    /**
+     * Get recent contractors
+     */
+    public function getRecentContractors($limit = 5) {
+        $this->db->select('*');
+        $this->db->from('tblella_contractors');
+        $this->db->order_by('date_created', 'DESC');
+        $this->db->limit($limit);
+        $query = $this->db->get();
+        return $query->result();
+    }
+    
+    /**
+     * Get contractors by status count
+     */
+    public function getContractorsByStatusCount($status) {
+        $this->db->where('status', $status);
         return $this->db->count_all_results('tblella_contractors');
     }
     
@@ -160,43 +197,25 @@ class ella_contractors_model extends App_Model {
     // ========================================
     
     /**
-     * Get all contracts with pagination and filters
+     * Get all contracts with pagination and search
      */
-    public function getContracts($limit = 10, $offset = 0, $search = '', $status = '', $contractor_id = '') {
-        // Ensure offset is never negative
+    public function getContracts($limit = 10, $offset = 0, $search = '', $status = '') {
         $offset = max(0, (int)$offset);
         $limit = max(1, (int)$limit);
         
-        // Check if required tables exist
-        if (!$this->db->table_exists('tblella_contracts')) {
-            return [];
-        }
-        
-        $this->db->select('c.*');
+        $this->db->select('c.*, co.company_name');
         $this->db->from('tblella_contracts c');
-        
-        // Only join with contractors table if it exists
-        if ($this->db->table_exists('tblella_contractors')) {
-            $this->db->select('co.company_name as contractor_name');
-            $this->db->join('tblella_contractors co', 'c.contractor_id = co.id', 'left');
-        }
+        $this->db->join('tblella_contractors co', 'co.id = c.contractor_id', 'left');
         
         if (!empty($search)) {
             $this->db->group_start();
             $this->db->like('c.title', $search);
-            $this->db->or_like('c.contract_number', $search);
-            if ($this->db->table_exists('tblella_contractors')) {
-                $this->db->or_like('co.company_name', $search);
-            }
+            $this->db->or_like('co.company_name', $search);
             $this->db->group_end();
         }
         
         if (!empty($status)) {
             $this->db->where('c.status', $status);
-        }
-        
-        if (!empty($contractor_id)) {
-            $this->db->where('c.contractor_id', $contractor_id);
         }
         
         $this->db->order_by('c.date_created', 'DESC');
@@ -207,25 +226,34 @@ class ella_contractors_model extends App_Model {
     }
     
     /**
-     * Get contract by ID with contractor details
+     * Get contracts count for pagination
+     */
+    public function getContractsCount($search = '', $status = '') {
+        $this->db->from('tblella_contracts c');
+        $this->db->join('tblella_contractors co', 'co.id = c.contractor_id', 'left');
+        
+        if (!empty($search)) {
+            $this->db->group_start();
+            $this->db->like('c.title', $search);
+            $this->db->or_like('co.company_name', $search);
+            $this->db->group_end();
+        }
+        
+        if (!empty($status)) {
+            $this->db->where('c.status', $status);
+        }
+        
+        return $this->db->count_all_results();
+    }
+    
+    /**
+     * Get contract by ID
      */
     public function getContractById($id) {
-        // Check if required tables exist
-        if (!$this->db->table_exists('tblella_contracts')) {
-            return null;
-        }
-        
-        $this->db->select('c.*');
+        $this->db->select('c.*, co.company_name');
         $this->db->from('tblella_contracts c');
-        
-        // Only join with contractors table if it exists
-        if ($this->db->table_exists('tblella_contractors')) {
-            $this->db->select('co.company_name, co.contact_person, co.email, co.phone');
-            $this->db->join('tblella_contractors co', 'c.contractor_id = co.id', 'left');
-        }
-        
+        $this->db->join('tblella_contractors co', 'co.id = c.contractor_id', 'left');
         $this->db->where('c.id', $id);
-        
         $query = $this->db->get();
         return $query->row();
     }
@@ -234,23 +262,17 @@ class ella_contractors_model extends App_Model {
      * Create new contract
      */
     public function createContract($data) {
-        // Map the form fields to the actual database columns
         $db_data = [
+            'title' => $data['title'] ?? '',
             'contractor_id' => $data['contractor_id'] ?? '',
-            'contract_number' => $data['contract_number'] ?? '',
-            'title' => $data['title'] ?? $data['project_name'] ?? '',
             'description' => $data['description'] ?? '',
             'start_date' => $data['start_date'] ?? '',
             'end_date' => $data['end_date'] ?? '',
-            'hourly_rate' => $data['hourly_rate'] ?? null,
-            'estimated_hours' => $data['estimated_hours'] ?? null,
-            'fixed_amount' => $data['fixed_amount'] ?? $data['contract_value'] ?? 0.00,
-            'payment_terms' => $data['payment_terms'] ?? '',
+            'amount' => $data['amount'] ?? 0,
             'status' => $data['status'] ?? 'draft',
-            'terms_conditions' => $data['terms_conditions'] ?? '',
-            'attachments' => $data['attachments'] ?? '',
+            'terms' => $data['terms'] ?? '',
+            'notes' => $data['notes'] ?? '',
             'date_created' => date('Y-m-d H:i:s'),
-            'date_updated' => date('Y-m-d H:i:s'),
             'created_by' => get_staff_user_id()
         ];
         
@@ -262,61 +284,54 @@ class ella_contractors_model extends App_Model {
      * Update contract
      */
     public function updateContract($id, $data) {
-        // Map the form fields to the actual database columns
-        $db_data = [
-            'contractor_id' => $data['contractor_id'] ?? '',
-            'contract_number' => $data['contract_number'] ?? '',
-            'title' => $data['title'] ?? $data['project_name'] ?? '',
-            'description' => $data['description'] ?? '',
-            'start_date' => $data['start_date'] ?? '',
-            'end_date' => $data['end_date'] ?? '',
-            'hourly_rate' => $data['hourly_rate'] ?? null,
-            'estimated_hours' => $data['estimated_hours'] ?? null,
-            'fixed_amount' => $data['fixed_amount'] ?? $data['contract_value'] ?? 0.00,
-            'payment_terms' => $data['payment_terms'] ?? '',
-            'status' => $data['status'] ?? 'draft',
-            'terms_conditions' => $data['terms_conditions'] ?? '',
-            'attachments' => $data['attachments'] ?? '',
-            'date_updated' => date('Y-m-d H:i:s'),
-            'updated_by' => get_staff_user_id()
-        ];
-        
         $this->db->where('id', $id);
-        return $this->db->update('tblella_contracts', $db_data);
+        return $this->db->update('tblella_contracts', $data);
     }
     
     /**
-     * Delete contract
+     * Get contracts by contractor
      */
-    public function deleteContract($id) {
-        $this->db->where('id', $id);
-        return $this->db->delete('tblella_contracts');
+    public function getContractsByContractor($contractor_id) {
+        $this->db->select('*');
+        $this->db->from('tblella_contracts');
+        $this->db->where('contractor_id', $contractor_id);
+        $this->db->order_by('date_created', 'DESC');
+        $query = $this->db->get();
+        return $query->result();
     }
     
     /**
-     * Get contracts count for pagination
+     * Get active contracts by contractor
      */
-    public function getContractsCount($search = '', $status = '', $contractor_id = '') {
+    public function getActiveContractsByContractor($contractor_id) {
+        $this->db->where('contractor_id', $contractor_id);
+        $this->db->where('status', 'active');
+        return $this->db->get('tblella_contracts')->result();
+    }
+    
+    /**
+     * Get recent contracts
+     */
+    public function getRecentContracts($limit = 5) {
+        $this->db->select('c.*, co.company_name');
         $this->db->from('tblella_contracts c');
-        $this->db->join('tblella_contractors co', 'c.contractor_id = co.id', 'left');
-        
-        if (!empty($search)) {
-            $this->db->group_start();
-            $this->db->like('c.project_name', $search);
-            $this->db->or_like('c.contract_number', $search);
-            $this->db->or_like('co.company_name', $search);
-            $this->db->group_end();
-        }
-        
-        if (!empty($status)) {
-            $this->db->where('c.status', $status);
-        }
-        
-        if (!empty($contractor_id)) {
-            $this->db->where('c.contractor_id', $contractor_id);
-        }
-        
-        return $this->db->count_all_results();
+        $this->db->join('tblella_contractors co', 'co.id = c.contractor_id', 'left');
+        $this->db->order_by('c.date_created', 'DESC');
+        $this->db->limit($limit);
+        $query = $this->db->get();
+        return $query->result();
+    }
+    
+    /**
+     * Get all contracts for export
+     */
+    public function getAllContractsForExport() {
+        $this->db->select('c.*, co.company_name');
+        $this->db->from('tblella_contracts c');
+        $this->db->join('tblella_contractors co', 'co.id = c.contractor_id', 'left');
+        $this->db->order_by('c.date_created', 'DESC');
+        $query = $this->db->get();
+        return $query->result();
     }
     
     // ========================================
@@ -324,42 +339,25 @@ class ella_contractors_model extends App_Model {
     // ========================================
     
     /**
-     * Get all projects with pagination and filters
+     * Get all projects with pagination and search
      */
-    public function getProjects($limit = 10, $offset = 0, $search = '', $status = '', $contractor_id = '') {
-        // Ensure offset is never negative
+    public function getProjects($limit = 10, $offset = 0, $search = '', $status = '') {
         $offset = max(0, (int)$offset);
         $limit = max(1, (int)$limit);
         
-        // Check if required tables exist
-        if (!$this->db->table_exists('tblella_projects')) {
-            return [];
-        }
-        
-        $this->db->select('p.*');
+        $this->db->select('p.*, co.company_name');
         $this->db->from('tblella_projects p');
-        
-        // Only join with contractors table if it exists
-        if ($this->db->table_exists('tblella_contractors')) {
-            $this->db->select('co.company_name as contractor_name');
-            $this->db->join('tblella_contractors co', 'p.contractor_id = co.id', 'left');
-        }
+        $this->db->join('tblella_contractors co', 'co.id = p.contractor_id', 'left');
         
         if (!empty($search)) {
             $this->db->group_start();
             $this->db->like('p.name', $search);
-            if ($this->db->table_exists('tblella_contractors')) {
-                $this->db->or_like('co.company_name', $search);
-            }
+            $this->db->or_like('co.company_name', $search);
             $this->db->group_end();
         }
         
         if (!empty($status)) {
             $this->db->where('p.status', $status);
-        }
-        
-        if (!empty($contractor_id)) {
-            $this->db->where('p.contractor_id', $contractor_id);
         }
         
         $this->db->order_by('p.date_created', 'DESC');
@@ -370,25 +368,34 @@ class ella_contractors_model extends App_Model {
     }
     
     /**
-     * Get project by ID with contractor details
+     * Get projects count for pagination
+     */
+    public function getProjectsCount($search = '', $status = '') {
+        $this->db->from('tblella_projects p');
+        $this->db->join('tblella_contractors co', 'co.id = p.contractor_id', 'left');
+        
+        if (!empty($search)) {
+            $this->db->group_start();
+            $this->db->like('p.name', $search);
+            $this->db->or_like('co.company_name', $search);
+            $this->db->group_end();
+        }
+        
+        if (!empty($status)) {
+            $this->db->where('p.status', $status);
+        }
+        
+        return $this->db->count_all_results();
+    }
+    
+    /**
+     * Get project by ID
      */
     public function getProjectById($id) {
-        // Check if required tables exist
-        if (!$this->db->table_exists('tblella_projects')) {
-            return null;
-        }
-        
-        $this->db->select('p.*');
+        $this->db->select('p.*, co.company_name');
         $this->db->from('tblella_projects p');
-        
-        // Only join with contractors table if it exists
-        if ($this->db->table_exists('tblella_contractors')) {
-            $this->db->select('co.company_name, co.contact_person, co.email, co.phone');
-            $this->db->join('tblella_contractors co', 'p.contractor_id = co.id', 'left');
-        }
-        
+        $this->db->join('tblella_contractors co', 'co.id = p.contractor_id', 'left');
         $this->db->where('p.id', $id);
-        
         $query = $this->db->get();
         return $query->row();
     }
@@ -397,23 +404,18 @@ class ella_contractors_model extends App_Model {
      * Create new project
      */
     public function createProject($data) {
-        // Map the form fields to the actual database columns
         $db_data = [
+            'name' => $data['name'] ?? '',
             'contractor_id' => $data['contractor_id'] ?? '',
-            'contract_id' => $data['contract_id'] ?? null,
-            'name' => $data['name'] ?? $data['project_name'] ?? '',
             'description' => $data['description'] ?? '',
-            'budget' => $data['budget'] ?? null,
-            'estimated_hours' => $data['estimated_hours'] ?? null,
-            'actual_hours' => $data['actual_hours'] ?? null,
             'start_date' => $data['start_date'] ?? '',
             'end_date' => $data['end_date'] ?? '',
+            'budget' => $data['budget'] ?? 0,
             'status' => $data['status'] ?? 'planning',
-            'priority' => $data['priority'] ?? 'medium',
             'location' => $data['location'] ?? '',
+            'progress' => $data['progress'] ?? 0,
             'notes' => $data['notes'] ?? '',
             'date_created' => date('Y-m-d H:i:s'),
-            'date_updated' => date('Y-m-d H:i:s'),
             'created_by' => get_staff_user_id()
         ];
         
@@ -425,35 +427,41 @@ class ella_contractors_model extends App_Model {
      * Update project
      */
     public function updateProject($id, $data) {
-        // Map the form fields to the actual database columns
-        $db_data = [
-            'contractor_id' => $data['contractor_id'] ?? '',
-            'contract_id' => $data['contract_id'] ?? null,
-            'name' => $data['name'] ?? $data['project_name'] ?? '',
-            'description' => $data['description'] ?? '',
-            'budget' => $data['budget'] ?? null,
-            'estimated_hours' => $data['estimated_hours'] ?? null,
-            'actual_hours' => $data['actual_hours'] ?? null,
-            'start_date' => $data['start_date'] ?? '',
-            'end_date' => $data['end_date'] ?? '',
-            'status' => $data['status'] ?? 'planning',
-            'priority' => $data['priority'] ?? 'medium',
-            'location' => $data['location'] ?? '',
-            'notes' => $data['notes'] ?? '',
-            'date_updated' => date('Y-m-d H:i:s'),
-            'updated_by' => get_staff_user_id()
-        ];
-        
         $this->db->where('id', $id);
-        return $this->db->update('tblella_projects', $db_data);
+        return $this->db->update('tblella_projects', $data);
     }
     
     /**
-     * Delete project
+     * Get projects by contractor
      */
-    public function deleteProject($id) {
-        $this->db->where('id', $id);
-        return $this->db->delete('tblella_projects');
+    public function getProjectsByContractor($contractor_id) {
+        $this->db->select('*');
+        $this->db->from('tblella_projects');
+        $this->db->where('contractor_id', $contractor_id);
+        $this->db->order_by('date_created', 'DESC');
+        $query = $this->db->get();
+        return $query->result();
+    }
+    
+    /**
+     * Get active projects by contractor
+     */
+    public function getActiveProjectsByContractor($contractor_id) {
+        $this->db->where('contractor_id', $contractor_id);
+        $this->db->where('status', 'active');
+        return $this->db->get('tblella_projects')->result();
+    }
+    
+    /**
+     * Get all projects for export
+     */
+    public function getAllProjectsForExport() {
+        $this->db->select('p.*, co.company_name');
+        $this->db->from('tblella_projects p');
+        $this->db->join('tblella_contractors co', 'co.id = p.contractor_id', 'left');
+        $this->db->order_by('p.date_created', 'DESC');
+        $query = $this->db->get();
+        return $query->result();
     }
     
     // ========================================
@@ -461,44 +469,27 @@ class ella_contractors_model extends App_Model {
     // ========================================
     
     /**
-     * Get all payments with pagination and filters
+     * Get all payments with pagination and search
      */
-    public function getPayments($limit = 10, $offset = 0, $search = '', $status = '', $contractor_id = '') {
-        // Ensure offset is never negative
+    public function getPayments($limit = 10, $offset = 0, $search = '', $status = '') {
         $offset = max(0, (int)$offset);
         $limit = max(1, (int)$limit);
         
-        // Check if required tables exist
-        if (!$this->db->table_exists('tblella_payments')) {
-            return [];
-        }
-        
-        $this->db->select('p.*, co.company_name');
+        $this->db->select('p.*, co.company_name, c.title as contract_title');
         $this->db->from('tblella_payments p');
-        $this->db->join('tblella_contractors co', 'p.contractor_id = co.id', 'left');
-        
-        // Only join with contracts table if it exists
-        if ($this->db->table_exists('tblella_contracts')) {
-            $this->db->select('c.title as project_name');
-            $this->db->join('tblella_contracts c', 'p.contract_id = c.id', 'left');
-        }
+        $this->db->join('tblella_contractors co', 'co.id = p.contractor_id', 'left');
+        $this->db->join('tblella_contracts c', 'c.id = p.contract_id', 'left');
         
         if (!empty($search)) {
             $this->db->group_start();
-            $this->db->like('p.invoice_number', $search);
-            $this->db->or_like('co.company_name', $search);
-            if ($this->db->table_exists('tblella_contracts')) {
-                $this->db->or_like('c.title', $search);
-            }
+            $this->db->like('co.company_name', $search);
+            $this->db->or_like('c.title', $search);
+            $this->db->or_like('p.reference_number', $search);
             $this->db->group_end();
         }
         
         if (!empty($status)) {
             $this->db->where('p.status', $status);
-        }
-        
-        if (!empty($contractor_id)) {
-            $this->db->where('p.contractor_id', $contractor_id);
         }
         
         $this->db->order_by('p.date_created', 'DESC');
@@ -509,26 +500,37 @@ class ella_contractors_model extends App_Model {
     }
     
     /**
-     * Get payment by ID with full details
+     * Get payments count for pagination
+     */
+    public function getPaymentsCount($search = '', $status = '') {
+        $this->db->from('tblella_payments p');
+        $this->db->join('tblella_contractors co', 'co.id = p.contractor_id', 'left');
+        $this->db->join('tblella_contracts c', 'c.id = p.contract_id', 'left');
+        
+        if (!empty($search)) {
+            $this->db->group_start();
+            $this->db->like('co.company_name', $search);
+            $this->db->or_like('c.title', $search);
+            $this->db->or_like('p.reference_number', $search);
+            $this->db->group_end();
+        }
+        
+        if (!empty($status)) {
+            $this->db->where('p.status', $status);
+        }
+        
+        return $this->db->count_all_results();
+    }
+    
+    /**
+     * Get payment by ID
      */
     public function getPaymentById($id) {
-        // Check if required tables exist
-        if (!$this->db->table_exists('tblella_payments')) {
-            return null;
-        }
-        
-        $this->db->select('p.*, co.company_name, co.contact_person, co.email');
+        $this->db->select('p.*, co.company_name, c.title as contract_title');
         $this->db->from('tblella_payments p');
-        $this->db->join('tblella_contractors co', 'p.contractor_id = co.id', 'left');
-        
-        // Only join with contracts table if it exists
-        if ($this->db->table_exists('tblella_contracts')) {
-            $this->db->select('c.title as project_name, c.contract_number');
-            $this->db->join('tblella_contracts c', 'p.contract_id = c.id', 'left');
-        }
-        
+        $this->db->join('tblella_contractors co', 'co.id = p.contractor_id', 'left');
+        $this->db->join('tblella_contracts c', 'c.id = p.contract_id', 'left');
         $this->db->where('p.id', $id);
-        
         $query = $this->db->get();
         return $query->row();
     }
@@ -537,11 +539,20 @@ class ella_contractors_model extends App_Model {
      * Create new payment
      */
     public function createPayment($data) {
-        $data['date_created'] = date('Y-m-d H:i:s');
-        $data['date_updated'] = date('Y-m-d H:i:s');
-        $data['created_by'] = get_staff_user_id();
+        $db_data = [
+            'contractor_id' => $data['contractor_id'] ?? '',
+            'contract_id' => $data['contract_id'] ?? null,
+            'amount' => $data['amount'] ?? 0,
+            'payment_date' => $data['payment_date'] ?? '',
+            'payment_method' => $data['payment_method'] ?? 'check',
+            'reference_number' => $data['reference_number'] ?? '',
+            'status' => $data['status'] ?? 'pending',
+            'notes' => $data['notes'] ?? '',
+            'date_created' => date('Y-m-d H:i:s'),
+            'created_by' => get_staff_user_id()
+        ];
         
-        $this->db->insert('tblella_payments', $data);
+        $this->db->insert('tblella_payments', $db_data);
         return $this->db->insert_id();
     }
     
@@ -549,19 +560,47 @@ class ella_contractors_model extends App_Model {
      * Update payment
      */
     public function updatePayment($id, $data) {
-        $data['date_updated'] = date('Y-m-d H:i:s');
-        $data['updated_by'] = get_staff_user_id();
-        
         $this->db->where('id', $id);
         return $this->db->update('tblella_payments', $data);
     }
     
     /**
-     * Delete payment
+     * Get payments by contractor
      */
-    public function deletePayment($id) {
-        $this->db->where('id', $id);
-        return $this->db->delete('tblella_payments');
+    public function getPaymentsByContractor($contractor_id) {
+        $this->db->select('p.*, c.title as contract_title');
+        $this->db->from('tblella_payments p');
+        $this->db->join('tblella_contracts c', 'c.id = p.contract_id', 'left');
+        $this->db->where('p.contractor_id', $contractor_id);
+        $this->db->order_by('p.date_created', 'DESC');
+        $query = $this->db->get();
+        return $query->result();
+    }
+    
+    /**
+     * Get recent payments
+     */
+    public function getRecentPayments($limit = 5) {
+        $this->db->select('p.*, co.company_name');
+        $this->db->from('tblella_payments p');
+        $this->db->join('tblella_contractors co', 'co.id = p.contractor_id', 'left');
+        $this->db->order_by('p.date_created', 'DESC');
+        $this->db->limit($limit);
+        $query = $this->db->get();
+        return $query->result();
+    }
+    
+    /**
+     * Get all payments for export
+     */
+    public function getAllPaymentsForExport() {
+        $this->db->select('p.*, co.company_name, c.title as contract_title');
+        $this->db->from('tblella_payments p');
+        $this->db->join('tblella_contractors co', 'co.id = p.contractor_id', 'left');
+        $this->db->join('tblella_contracts c', 'c.id = p.contract_id', 'left');
+        $this->db->order_by('p.date_created', 'DESC');
+        $query = $this->db->get();
+        return $query->result();
     }
     
     // ========================================
@@ -569,14 +608,26 @@ class ella_contractors_model extends App_Model {
     // ========================================
     
     /**
-     * Get documents for a contractor
+     * Get documents by contractor
      */
-    public function getContractorDocuments($contractor_id, $limit = 20, $offset = 0) {
+    public function getDocumentsByContractor($contractor_id) {
+        $this->db->select('*');
+        $this->db->from('tblella_contractor_documents');
         $this->db->where('contractor_id', $contractor_id);
         $this->db->order_by('date_uploaded', 'DESC');
-        $this->db->limit($limit, $offset);
-        
-        $query = $this->db->get('tblella_contractor_documents');
+        $query = $this->db->get();
+        return $query->result();
+    }
+    
+    /**
+     * Get all documents
+     */
+    public function getAllDocuments() {
+        $this->db->select('d.*, co.company_name');
+        $this->db->from('tblella_contractor_documents d');
+        $this->db->join('tblella_contractors co', 'co.id = d.contractor_id', 'left');
+        $this->db->order_by('d.date_uploaded', 'DESC');
+        $query = $this->db->get();
         return $query->result();
     }
     
@@ -590,21 +641,24 @@ class ella_contractors_model extends App_Model {
     }
     
     /**
-     * Save document record
+     * Create new document
      */
-    public function saveDocument($data) {
-        $data['date_uploaded'] = date('Y-m-d H:i:s');
+    public function createDocument($data) {
+        $db_data = [
+            'contractor_id' => $data['contractor_id'] ?? '',
+            'title' => $data['title'] ?? '',
+            'document_type' => $data['document_type'] ?? 'other',
+            'file_name' => $data['file_name'] ?? '',
+            'file_path' => $data['file_path'] ?? '',
+            'file_size' => $data['file_size'] ?? 0,
+            'file_type' => $data['file_type'] ?? '',
+            'description' => $data['description'] ?? '',
+            'date_uploaded' => date('Y-m-d H:i:s'),
+            'uploaded_by' => get_staff_user_id()
+        ];
         
-        if (isset($data['id'])) {
-            // Update existing
-            $id = $data['id'];
-            unset($data['id']);
-            $this->db->where('id', $id);
-            return $this->db->update('tblella_contractor_documents', $data);
-        } else {
-            // Create new
-            return $this->db->insert('tblella_contractor_documents', $data);
-        }
+        $this->db->insert('tblella_contractor_documents', $db_data);
+        return $this->db->insert_id();
     }
     
     /**
@@ -620,316 +674,75 @@ class ella_contractors_model extends App_Model {
     // ========================================
     
     /**
-     * Get dashboard statistics
+     * Get active contracts count
      */
-    public function getDashboardStats() {
-        $stats = [];
-        
-        // Total contractors
-        $stats['total_contractors'] = $this->db->count_all('tblella_contractors');
-        
-        // Active contractors
+    public function getActiveContractsCount() {
         $this->db->where('status', 'active');
-        $stats['active_contractors'] = $this->db->count_all_results('tblella_contractors');
-        
-        // Total contracts
-        $stats['total_contracts'] = $this->db->count_all('tblella_contracts');
-        
-        // Active contracts
-        $this->db->where('status', 'active');
-        $stats['active_contracts'] = $this->db->count_all_results('tblella_contracts');
-        
-        // Total projects
-        $stats['total_projects'] = $this->db->count_all('tblella_projects');
-        
-        // Active projects
-        $this->db->where('status', 'in_progress');
-        $stats['active_projects'] = $this->db->count_all_results('tblella_projects');
-        
-        // Total revenue
-        $this->db->select('SUM(amount) as total_revenue');
-        $this->db->where('status', 'paid');
-        $query = $this->db->get('tblella_payments');
-        $result = $query->row();
-        $stats['total_revenue'] = $result->total_revenue ?? 0;
-        
-        // Pending payments
-        $this->db->select('SUM(amount) as pending_amount');
-        $this->db->where('status', 'pending');
-        $query = $this->db->get('tblella_payments');
-        $result = $query->row();
-        $stats['pending_payments'] = $result->pending_amount ?? 0;
-        
-        return $stats;
+        return $this->db->count_all_results('tblella_contracts');
     }
     
     /**
-     * Get recent contractors
+     * Get pending payments count
      */
-    public function getRecentContractors($limit = 5) {
+    public function getPendingPaymentsCount() {
+        $this->db->where('status', 'pending');
+        return $this->db->count_all_results('tblella_payments');
+    }
+    
+    /**
+     * Get active projects count
+     */
+    public function getActiveProjectsCount() {
+        $this->db->where('status', 'active');
+        return $this->db->count_all_results('tblella_projects');
+    }
+    
+    /**
+     * Get contractors by status counts
+     */
+    public function getContractorsByStatusCounts() {
+        $this->db->select('status, COUNT(*) as count');
+        $this->db->from('tblella_contractors');
+        $this->db->group_by('status');
+        $query = $this->db->get();
+        
+        $result = [];
+        foreach ($query->result() as $row) {
+            $result[$row->status] = $row->count;
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Get contracts by status counts
+     */
+    public function getContractsByStatusCounts() {
+        $this->db->select('status, COUNT(*) as count');
+        $this->db->from('tblella_contracts');
+        $this->db->group_by('status');
+        $query = $this->db->get();
+        
+        $result = [];
+        foreach ($query->result() as $row) {
+            $result[$row->status] = $row->count;
+        }
+        
+        return $result;
+    }
+    
+    // ========================================
+    // EXPORT FUNCTIONS
+    // ========================================
+    
+    /**
+     * Get all contractors for export
+     */
+    public function getAllContractorsForExport() {
         $this->db->select('*');
         $this->db->from('tblella_contractors');
         $this->db->order_by('date_created', 'DESC');
-        $this->db->limit($limit);
-        
         $query = $this->db->get();
         return $query->result();
-    }
-    
-    /**
-     * Get active contracts
-     */
-    public function getActiveContracts($limit = 5) {
-        // Check if required tables exist
-        if (!$this->db->table_exists('tblella_contracts')) {
-            return [];
-        }
-        
-        $this->db->select('c.*');
-        $this->db->from('tblella_contracts c');
-        
-        // Only join with contractors table if it exists
-        if ($this->db->table_exists('tblella_contractors')) {
-            $this->db->select('co.company_name');
-            $this->db->join('tblella_contractors co', 'c.contractor_id = co.id', 'left');
-        }
-        
-        $this->db->where('c.status', 'active');
-        $this->db->order_by('c.start_date', 'ASC');
-        $this->db->limit($limit);
-        
-        $query = $this->db->get();
-        return $query->result();
-    }
-    
-    /**
-     * Get pending payments
-     */
-    public function getPendingPayments($limit = 5) {
-        // Check if required tables exist
-        if (!$this->db->table_exists('tblella_payments')) {
-            return [];
-        }
-        
-        $this->db->select('p.*, co.company_name');
-        $this->db->from('tblella_payments p');
-        $this->db->join('tblella_contractors co', 'p.contractor_id = co.id', 'left');
-        
-        // Only join with contracts table if it exists
-        if ($this->db->table_exists('tblella_contracts')) {
-            $this->db->select('c.title as project_name');
-            $this->db->join('tblella_contracts c', 'p.contract_id = c.id', 'left');
-        }
-        
-        $this->db->where('p.status', 'pending');
-        $this->db->order_by('p.due_date', 'ASC');
-        $this->db->limit($limit);
-        
-        $query = $this->db->get();
-        return $query->result();
-    }
-    
-    // ========================================
-    // SEARCH AND FILTERS
-    // ========================================
-    
-    /**
-     * Search across all entities
-     */
-    public function globalSearch($search_term, $limit = 20) {
-        $results = [];
-        
-        // Search contractors
-        if ($this->db->table_exists('tblella_contractors')) {
-            $this->db->select('id, company_name, contact_person, "contractor" as type');
-            $this->db->from('tblella_contractors');
-            $this->db->like('company_name', $search_term);
-            $this->db->or_like('contact_person', $search_term);
-            $this->db->limit($limit);
-            $contractors = $this->db->get()->result();
-            $results = array_merge($results, $contractors);
-        }
-        
-        // Search contracts
-        if ($this->db->table_exists('tblella_contracts')) {
-            $this->db->select('id, title, contract_number, "contract" as type');
-            $this->db->from('tblella_contracts');
-            $this->db->like('title', $search_term);
-            $this->db->or_like('contract_number', $search_term);
-            $this->db->limit($limit);
-            $contracts = $this->db->get()->result();
-            $results = array_merge($results, $contracts);
-        }
-        
-        // Search projects
-        if ($this->db->table_exists('tblella_projects')) {
-            $this->db->select('id, name, description, "project" as type');
-            $this->db->from('tblella_projects');
-            $this->db->like('name', $search_term);
-            $this->db->or_like('description', $search_term);
-            $this->db->limit($limit);
-            $projects = $this->db->get()->result();
-            $results = array_merge($results, $projects);
-        }
-        
-        return $results;
-    }
-    
-    /**
-     * Get all contracts without pagination (for dropdowns)
-     */
-    public function getAllContracts() {
-        $this->db->select('id, title, contractor_id, status');
-        $this->db->from('tblella_contracts');
-        $this->db->where('status !=', 'deleted');
-        $this->db->order_by('title', 'ASC');
-        $query = $this->db->get();
-        return $query->result();
-    }
-    
-    /**
-     * Get all projects without pagination (for dropdowns)
-     */
-    public function getAllProjects() {
-        $this->db->select('id, name, contractor_id, status');
-        $this->db->from('tblella_projects');
-        $this->db->where('status !=', 'deleted');
-        $this->db->order_by('name', 'ASC');
-        $query = $this->db->get();
-        return $query->result();
-    }
-    
-    /**
-     * Get all payments without pagination (for dropdowns)
-     */
-    public function getAllPayments() {
-        $this->db->select('id, amount, contractor_id, status');
-        $this->db->from('tblella_payments');
-        $this->db->where('status !=', 'deleted');
-        $this->db->order_by('payment_date', 'DESC');
-        $query = $this->db->get();
-        return $query->result();
-    }
-    
-    /**
-     * Get contractor status options
-     */
-    public function getContractorStatusOptions() {
-        return [
-            'active' => 'Active',
-            'inactive' => 'Inactive',
-            'pending' => 'Pending',
-            'blacklisted' => 'Blacklisted'
-        ];
-    }
-    
-    /**
-     * Get contract status options
-     */
-    public function getContractStatusOptions() {
-        return [
-            'active' => 'Active',
-            'completed' => 'Completed',
-            'terminated' => 'Terminated',
-            'pending' => 'Pending'
-        ];
-    }
-    
-    /**
-     * Get project status options
-     */
-    public function getProjectStatusOptions() {
-        return [
-            'planning' => 'Planning',
-            'active' => 'Active',
-            'on_hold' => 'On Hold',
-            'completed' => 'Completed',
-            'cancelled' => 'Cancelled'
-        ];
-    }
-    
-    /**
-     * Get payment status options
-     */
-    public function getPaymentStatusOptions() {
-        return [
-            'pending' => 'Pending',
-            'approved' => 'Approved',
-            'paid' => 'Paid',
-            'cancelled' => 'Cancelled'
-        ];
-    }
-    
-    /**
-     * Get project priority options
-     */
-    public function getProjectPriorityOptions() {
-        return [
-            'low' => 'Low',
-            'medium' => 'Medium',
-            'high' => 'High',
-            'urgent' => 'Urgent'
-        ];
-    }
-    
-    /**
-     * Get countries list
-     */
-    public function getCountries() {
-        return [
-            'US' => 'United States',
-            'CA' => 'Canada',
-            'UK' => 'United Kingdom',
-            'AU' => 'Australia',
-            'DE' => 'Germany',
-            'FR' => 'France',
-            'JP' => 'Japan',
-            'CN' => 'China',
-            'IN' => 'India',
-            'BR' => 'Brazil'
-        ];
-    }
-    
-    /**
-     * Get US states
-     */
-    public function getUSStates() {
-        return [
-            'AL' => 'Alabama', 'AK' => 'Alaska', 'AZ' => 'Arizona', 'AR' => 'Arkansas',
-            'CA' => 'California', 'CO' => 'Colorado', 'CT' => 'Connecticut',
-            'DE' => 'Delaware', 'FL' => 'Florida', 'GA' => 'Georgia',
-            'HI' => 'Hawaii', 'ID' => 'Idaho', 'IL' => 'Illinois',
-            'IN' => 'Indiana', 'IA' => 'Iowa', 'KS' => 'Kansas',
-            'KY' => 'Kentucky', 'LA' => 'Louisiana', 'ME' => 'Maine',
-            'MD' => 'Maryland', 'MA' => 'Massachusetts', 'MI' => 'Michigan',
-            'MN' => 'Minnesota', 'MS' => 'Mississippi', 'MO' => 'Missouri',
-            'MT' => 'Montana', 'NE' => 'Nebraska', 'NV' => 'Nevada',
-            'NH' => 'New Hampshire', 'NJ' => 'New Jersey', 'NM' => 'New Mexico',
-            'NY' => 'New York', 'NC' => 'North Carolina', 'ND' => 'North Dakota',
-            'OH' => 'Ohio', 'OK' => 'Oklahoma', 'OR' => 'Oregon',
-            'PA' => 'Pennsylvania', 'RI' => 'Rhode Island', 'SC' => 'South Carolina',
-            'SD' => 'South Dakota', 'TN' => 'Tennessee', 'TX' => 'Texas',
-            'UT' => 'Utah', 'VT' => 'Vermont', 'VA' => 'Virginia',
-            'WA' => 'Washington', 'WV' => 'West Virginia', 'WI' => 'Wisconsin',
-            'WY' => 'Wyoming'
-        ];
-    }
-    
-    /**
-     * Get report data for different report types
-     */
-    public function getReportData($report_type) {
-        switch ($report_type) {
-            case 'contractors':
-                return $this->db->get('tblella_contractors')->result();
-            case 'contracts':
-                return $this->db->get('tblella_contracts')->result();
-            case 'projects':
-                return $this->db->get('tblella_projects')->result();
-            case 'payments':
-                return $this->db->get('tblella_payments')->result();
-            default:
-                return [];
-        }
     }
 }

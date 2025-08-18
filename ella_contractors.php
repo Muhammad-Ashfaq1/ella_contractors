@@ -66,7 +66,7 @@ function ella_contractors_init_menu() {
             [
                 'slug' => 'ella_contractors_documents',
                 'name' => 'Documents',
-                'href' => admin_url('ella_contractors/documents/gallery/1'),
+                'href' => admin_url('ella_contractors/documents'),
                 'position' => 30,
             ]
         ];
@@ -98,7 +98,7 @@ function ella_contractors_activate_module()
 {
     $CI = &get_instance();
     
-    // Create tables if they don't exist
+    // Create database tables if they don't exist
     $CI->load->dbforge();
     
     // Table: tblella_contractors
@@ -118,12 +118,12 @@ function ella_contractors_activate_module()
             'contact_person' => [
                 'type' => 'VARCHAR',
                 'constraint' => 255,
-                'null' => TRUE
+                'null' => FALSE
             ],
             'email' => [
                 'type' => 'VARCHAR',
                 'constraint' => 255,
-                'null' => TRUE
+                'null' => FALSE
             ],
             'phone' => [
                 'type' => 'VARCHAR',
@@ -166,7 +166,7 @@ function ella_contractors_activate_module()
             ],
             'business_license' => [
                 'type' => 'VARCHAR',
-                'constraint' => 255,
+                'constraint' => 100,
                 'null' => TRUE
             ],
             'insurance_info' => [
@@ -183,17 +183,16 @@ function ella_contractors_activate_module()
                 'null' => TRUE
             ],
             'status' => [
-                'type' => 'ENUM("active","inactive","pending","blacklisted")',
-                'default' => 'pending',
-                'null' => TRUE
-            ],
-            'notes' => [
-                'type' => 'TEXT',
-                'null' => TRUE
+                'type' => 'ENUM("active","inactive","pending","suspended")',
+                'default' => 'pending'
             ],
             'profile_image' => [
                 'type' => 'VARCHAR',
                 'constraint' => 255,
+                'null' => TRUE
+            ],
+            'notes' => [
+                'type' => 'TEXT',
                 'null' => TRUE
             ],
             'date_created' => [
@@ -218,9 +217,6 @@ function ella_contractors_activate_module()
         
         $CI->dbforge->add_field($fields);
         $CI->dbforge->add_key('id', TRUE);
-        $CI->dbforge->add_key('status');
-        $CI->dbforge->add_key('company_name');
-        $CI->dbforge->add_key('email');
         $CI->dbforge->create_table('tblella_contractors');
     }
     
@@ -233,157 +229,39 @@ function ella_contractors_activate_module()
                 'unsigned' => TRUE,
                 'auto_increment' => TRUE
             ],
-            'contractor_id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'null' => FALSE
-            ],
-            'contract_number' => [
-                'type' => 'VARCHAR',
-                'constraint' => 100,
-                'null' => FALSE
-            ],
             'title' => [
                 'type' => 'VARCHAR',
                 'constraint' => 255,
                 'null' => FALSE
             ],
-            'description' => [
-                'type' => 'TEXT',
-                'null' => TRUE
-            ],
-            'start_date' => [
-                'type' => 'DATE',
-                'null' => TRUE
-            ],
-            'end_date' => [
-                'type' => 'DATE',
-                'null' => TRUE
-            ],
-            'hourly_rate' => [
-                'type' => 'DECIMAL',
-                'constraint' => '10,2',
-                'null' => TRUE
-            ],
-            'estimated_hours' => [
-                'type' => 'DECIMAL',
-                'constraint' => '10,2',
-                'null' => TRUE
-            ],
-            'fixed_amount' => [
-                'type' => 'DECIMAL',
-                'constraint' => '15,2',
-                'null' => TRUE
-            ],
-            'payment_terms' => [
-                'type' => 'TEXT',
-                'null' => TRUE
-            ],
-            'status' => [
-                'type' => 'ENUM("draft","active","completed","terminated")',
-                'default' => 'draft',
-                'null' => FALSE
-            ],
-            'terms_conditions' => [
-                'type' => 'TEXT',
-                'null' => TRUE
-            ],
-            'attachments' => [
-                'type' => 'TEXT',
-                'null' => TRUE
-            ],
-            'date_created' => [
-                'type' => 'DATETIME',
-                'null' => FALSE
-            ],
-            'date_updated' => [
-                'type' => 'DATETIME',
-                'null' => TRUE
-            ],
-            'created_by' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'null' => FALSE
-            ],
-            'updated_by' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'null' => TRUE
-            ]
-        ];
-        
-        $CI->dbforge->add_field($fields);
-        $CI->dbforge->add_key('id', TRUE);
-        $CI->dbforge->add_key('contractor_id');
-        $CI->dbforge->add_key('contract_number');
-        $CI->dbforge->add_key('status');
-        $CI->dbforge->create_table('tblella_contracts');
-    }
-    
-    // Table: tblella_projects
-    if (!$CI->db->table_exists('tblella_projects')) {
-        $fields = [
-            'id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'unsigned' => TRUE,
-                'auto_increment' => TRUE
-            ],
             'contractor_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
                 'null' => FALSE
             ],
-            'contract_id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'null' => TRUE
-            ],
-            'name' => [
-                'type' => 'VARCHAR',
-                'constraint' => 255,
-                'null' => FALSE
-            ],
             'description' => [
                 'type' => 'TEXT',
                 'null' => TRUE
             ],
-            'budget' => [
-                'type' => 'DECIMAL',
-                'constraint' => '15,2',
-                'null' => TRUE
-            ],
-            'estimated_hours' => [
-                'type' => 'DECIMAL',
-                'constraint' => '10,2',
-                'null' => TRUE
-            ],
-            'actual_hours' => [
-                'type' => 'DECIMAL',
-                'constraint' => '10,2',
-                'null' => TRUE
-            ],
             'start_date' => [
                 'type' => 'DATE',
-                'null' => TRUE
+                'null' => FALSE
             ],
             'end_date' => [
                 'type' => 'DATE',
-                'null' => TRUE
+                'null' => FALSE
+            ],
+            'amount' => [
+                'type' => 'DECIMAL',
+                'constraint' => '15,2',
+                'null' => FALSE
             ],
             'status' => [
-                'type' => 'VARCHAR',
-                'constraint' => 50,
-                'null' => TRUE
+                'type' => 'ENUM("draft","active","completed","terminated")',
+                'default' => 'draft'
             ],
-            'priority' => [
-                'type' => 'VARCHAR',
-                'constraint' => 50,
-                'null' => TRUE
-            ],
-            'location' => [
-                'type' => 'VARCHAR',
-                'constraint' => 255,
+            'terms' => [
+                'type' => 'TEXT',
                 'null' => TRUE
             ],
             'notes' => [
@@ -413,7 +291,86 @@ function ella_contractors_activate_module()
         $CI->dbforge->add_field($fields);
         $CI->dbforge->add_key('id', TRUE);
         $CI->dbforge->add_key('contractor_id');
-        $CI->dbforge->add_key('contract_id');
+        $CI->dbforge->create_table('tblella_contracts');
+    }
+    
+    // Table: tblella_projects
+    if (!$CI->db->table_exists('tblella_projects')) {
+        $fields = [
+            'id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'unsigned' => TRUE,
+                'auto_increment' => TRUE
+            ],
+            'name' => [
+                'type' => 'VARCHAR',
+                'constraint' => 255,
+                'null' => FALSE
+            ],
+            'contractor_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => FALSE
+            ],
+            'description' => [
+                'type' => 'TEXT',
+                'null' => TRUE
+            ],
+            'start_date' => [
+                'type' => 'DATE',
+                'null' => FALSE
+            ],
+            'end_date' => [
+                'type' => 'DATE',
+                'null' => TRUE
+            ],
+            'budget' => [
+                'type' => 'DECIMAL',
+                'constraint' => '15,2',
+                'null' => FALSE
+            ],
+            'status' => [
+                'type' => 'ENUM("planning","active","on_hold","completed","cancelled")',
+                'default' => 'planning'
+            ],
+            'location' => [
+                'type' => 'VARCHAR',
+                'constraint' => 255,
+                'null' => TRUE
+            ],
+            'progress' => [
+                'type' => 'INT',
+                'constraint' => 3,
+                'default' => 0
+            ],
+            'notes' => [
+                'type' => 'TEXT',
+                'null' => TRUE
+            ],
+            'date_created' => [
+                'type' => 'DATETIME',
+                'null' => FALSE
+            ],
+            'date_updated' => [
+                'type' => 'DATETIME',
+                'null' => TRUE
+            ],
+            'created_by' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => FALSE
+            ],
+            'updated_by' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => TRUE
+            ]
+        ];
+        
+        $CI->dbforge->add_field($fields);
+        $CI->dbforge->add_key('id', TRUE);
+        $CI->dbforge->add_key('contractor_id');
         $CI->dbforge->create_table('tblella_projects');
     }
     
@@ -443,35 +400,20 @@ function ella_contractors_activate_module()
             ],
             'payment_date' => [
                 'type' => 'DATE',
-                'null' => TRUE
-            ],
-            'due_date' => [
-                'type' => 'DATE',
-                'null' => TRUE
+                'null' => FALSE
             ],
             'payment_method' => [
+                'type' => 'ENUM("check","bank_transfer","credit_card","cash","other")',
+                'default' => 'check'
+            ],
+            'reference_number' => [
                 'type' => 'VARCHAR',
                 'constraint' => 100,
-                'null' => TRUE
-            ],
-            'payment_reference' => [
-                'type' => 'VARCHAR',
-                'constraint' => 255,
-                'null' => TRUE
-            ],
-            'invoice_number' => [
-                'type' => 'VARCHAR',
-                'constraint' => 100,
-                'null' => TRUE
-            ],
-            'description' => [
-                'type' => 'TEXT',
                 'null' => TRUE
             ],
             'status' => [
-                'type' => 'VARCHAR',
-                'constraint' => 50,
-                'null' => TRUE
+                'type' => 'ENUM("pending","approved","paid","cancelled")',
+                'default' => 'pending'
             ],
             'notes' => [
                 'type' => 'TEXT',
@@ -518,15 +460,14 @@ function ella_contractors_activate_module()
                 'constraint' => 11,
                 'null' => FALSE
             ],
-            'document_name' => [
+            'title' => [
                 'type' => 'VARCHAR',
                 'constraint' => 255,
                 'null' => FALSE
             ],
             'document_type' => [
-                'type' => 'VARCHAR',
-                'constraint' => 100,
-                'null' => TRUE
+                'type' => 'ENUM("contract","license","insurance","certificate","other")',
+                'default' => 'other'
             ],
             'file_name' => [
                 'type' => 'VARCHAR',
@@ -543,7 +484,7 @@ function ella_contractors_activate_module()
                 'constraint' => 11,
                 'null' => TRUE
             ],
-            'mime_type' => [
+            'file_type' => [
                 'type' => 'VARCHAR',
                 'constraint' => 100,
                 'null' => TRUE
@@ -566,235 +507,36 @@ function ella_contractors_activate_module()
         $CI->dbforge->add_field($fields);
         $CI->dbforge->add_key('id', TRUE);
         $CI->dbforge->add_key('contractor_id');
-        $CI->dbforge->add_key('document_type');
         $CI->dbforge->create_table('tblella_contractor_documents');
     }
     
-    // Table: tblella_contractor_activity
-    if (!$CI->db->table_exists('tblella_contractor_activity')) {
-        $fields = [
-            'id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'unsigned' => TRUE,
-                'auto_increment' => TRUE
-            ],
-            'contractor_id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'null' => FALSE
-            ],
-            'activity' => [
-                'type' => 'VARCHAR',
-                'constraint' => 255,
-                'null' => FALSE
-            ],
-            'description' => [
-                'type' => 'TEXT',
-                'null' => TRUE
-            ],
-            'staff_id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'null' => FALSE
-            ],
-            'date_created' => [
-                'type' => 'DATETIME',
-                'null' => FALSE
-            ]
-        ];
-        
-        $CI->dbforge->add_field($fields);
-        $CI->dbforge->add_key('id', TRUE);
-        $CI->dbforge->add_key('contractor_id');
-        $CI->dbforge->add_key('staff_id');
-        $CI->dbforge->create_table('tblella_contractor_activity');
-    }
+    // Create upload directories
+    $upload_dirs = [
+        'uploads/contractors',
+        'uploads/contractors/documents',
+        'uploads/contractors/temp'
+    ];
     
-    // Table: tblella_document_shares
-    if (!$CI->db->table_exists('tblella_document_shares')) {
-        $fields = [
-            'id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'unsigned' => TRUE,
-                'auto_increment' => TRUE
-            ],
-            'document_id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'null' => FALSE
-            ],
-            'share_token' => [
-                'type' => 'VARCHAR',
-                'constraint' => 255,
-                'null' => FALSE
-            ],
-            'expires_at' => [
-                'type' => 'DATETIME',
-                'null' => TRUE
-            ],
-            'created_by' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'null' => FALSE
-            ],
-            'created_at' => [
-                'type' => 'DATETIME',
-                'null' => FALSE
-            ],
-            'accessed_count' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'default' => 0,
-                'null' => FALSE
-            ],
-            'last_accessed' => [
-                'type' => 'DATETIME',
-                'null' => TRUE
-            ]
-        ];
-        
-        $CI->dbforge->add_field($fields);
-        $CI->dbforge->add_key('id', TRUE);
-        $CI->dbforge->add_key('document_id');
-        $CI->dbforge->add_key('share_token');
-        $CI->dbforge->create_table('tblella_document_shares');
-    }
-    
-    // Insert sample data if tables are empty
-    if ($CI->db->count_all('tblella_contractors') == 0) {
-        $sample_contractors = [
-            [
-                'company_name' => 'ABC Construction Co.',
-                'contact_person' => 'John Smith',
-                'email' => 'john@abcconstruction.com',
-                'phone' => '(555) 123-4567',
-                'address' => '123 Main Street',
-                'city' => 'New York',
-                'state' => 'NY',
-                'zip_code' => '10001',
-                'country' => 'US',
-                'website' => 'https://abcconstruction.com',
-                'tax_id' => '12-3456789',
-                'business_license' => 'LIC-2024-001',
-                'specialties' => 'construction, renovation, remodeling',
-                'hourly_rate' => 75.00,
-                'status' => 'active',
-                'notes' => 'Reliable construction company with 15+ years experience',
-                'date_created' => date('Y-m-d H:i:s'),
-                'date_updated' => date('Y-m-d H:i:s'),
-                'created_by' => get_staff_user_id()
-            ],
-            [
-                'company_name' => 'Elite Electrical Services',
-                'contact_person' => 'Sarah Johnson',
-                'email' => 'sarah@eliteelectrical.com',
-                'phone' => '(555) 234-5678',
-                'address' => '456 Oak Avenue',
-                'city' => 'Los Angeles',
-                'state' => 'CA',
-                'zip_code' => '90210',
-                'country' => 'US',
-                'website' => 'https://eliteelectrical.com',
-                'tax_id' => '98-7654321',
-                'business_license' => 'LIC-2024-002',
-                'specialties' => 'electrical, wiring, lighting, maintenance',
-                'hourly_rate' => 65.00,
-                'status' => 'active',
-                'notes' => 'Licensed electrical contractor specializing in commercial and residential',
-                'date_created' => date('Y-m-d H:i:s'),
-                'date_updated' => date('Y-m-d H:i:s'),
-                'created_by' => get_staff_user_id()
-            ]
-        ];
-        
-        foreach ($sample_contractors as $contractor) {
-            $CI->db->insert('tblella_contractors', $contractor);
+    foreach ($upload_dirs as $dir) {
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
         }
     }
     
-    // Insert sample contracts if table is empty
-    if ($CI->db->count_all('tblella_contracts') == 0) {
-        $sample_contracts = [
-            [
-                'contractor_id' => 1,
-                'contract_number' => 'CON-2024-001',
-                'title' => 'Office Building Renovation',
-                'description' => 'Complete renovation of 3-story office building including electrical, plumbing, and HVAC systems.',
-                'start_date' => '2024-01-15',
-                'end_date' => '2024-06-30',
-                'hourly_rate' => 75.00,
-                'estimated_hours' => 1667.00,
-                'fixed_amount' => 125000.00,
-                'payment_terms' => 'Payment schedule: 30% upfront, 40% at 50% completion, 30% upon final inspection.',
-                'status' => 'active',
-                'terms_conditions' => 'Standard construction terms and conditions apply.',
-                'attachments' => '',
-                'date_created' => date('Y-m-d H:i:s'),
-                'date_updated' => date('Y-m-d H:i:s'),
-                'created_by' => get_staff_user_id()
-            ]
-        ];
-        
-        foreach ($sample_contracts as $contract) {
-            $CI->db->insert('tblella_contracts', $contract);
-        }
-    }
+    // Add module to database
+    $CI->db->insert('tblmodules', [
+        'module_name' => ELLA_CONTRACTORS_MODULE_NAME,
+        'installed_version' => '1.0.0',
+        'active' => 1
+    ]);
     
-    // Insert sample payments if table is empty
-    if ($CI->db->count_all('tblella_payments') == 0) {
-        $sample_payments = [
-            [
-                'contractor_id' => 1,
-                'contract_id' => 1,
-                'amount' => 37500.00,
-                'payment_date' => null,
-                'due_date' => '2024-02-15',
-                'payment_method' => 'check',
-                'payment_reference' => '',
-                'invoice_number' => 'INV-2024-001',
-                'description' => 'Upfront payment for office renovation project',
-                'status' => 'pending',
-                'notes' => '30% upfront payment as per contract terms',
-                'date_created' => date('Y-m-d H:i:s'),
-                'date_updated' => date('Y-m-d H:i:s'),
-                'created_by' => get_staff_user_id()
-            ]
-        ];
-        
-        foreach ($sample_payments as $payment) {
-            $CI->db->insert('tblella_payments', $payment);
-        }
-    }
-
-    // Insert sample projects if table is empty
-    if ($CI->db->count_all('tblella_projects') == 0) {
-        $sample_projects = [
-            [
-                'contractor_id' => 1,
-                'contract_id' => 1,
-                'name' => 'Office Building Renovation',
-                'description' => 'Complete renovation of 3-story office building including electrical, plumbing, and HVAC systems.',
-                'budget' => 125000.00,
-                'estimated_hours' => 1667.00,
-                'actual_hours' => null,
-                'start_date' => '2024-01-15',
-                'end_date' => '2024-06-30',
-                'status' => 'in_progress',
-                'priority' => 'high',
-                'location' => 'Downtown Business District',
-                'notes' => 'High priority project for downtown office complex',
-                'date_created' => date('Y-m-d H:i:s'),
-                'date_updated' => date('Y-m-d H:i:s'),
-                'created_by' => get_staff_user_id()
-            ]
-        ];
-        
-        foreach ($sample_projects as $project) {
-            $CI->db->insert('tblella_projects', $project);
-        }
-    }
+    // Set default options
+    add_option('ella_contractors_default_status', 'pending');
+    add_option('ella_contractors_auto_approve', 0);
+    add_option('ella_contractors_notification_email', '');
+    add_option('ella_contractors_document_types', 'contract,license,insurance,certificate,other');
+    
+    log_activity('Ella Contractors module activated');
 }
 
 /**
@@ -803,13 +545,18 @@ function ella_contractors_activate_module()
 function ella_contractors_uninstall()
 {
     $CI = &get_instance();
-
+    
     // Deactivate the module in tblmodules
     $CI->db->where('module_name', ELLA_CONTRACTORS_MODULE_NAME);
     $CI->db->update('tblmodules', ['active' => 0]);
     
-    // Note: We don't drop tables to preserve data
-    // Tables can be manually dropped if needed
+    // Remove options
+    delete_option('ella_contractors_default_status');
+    delete_option('ella_contractors_auto_approve');
+    delete_option('ella_contractors_notification_email');
+    delete_option('ella_contractors_document_types');
+    
+    log_activity('Ella Contractors module deactivated');
 }
 
 /**
