@@ -339,20 +339,26 @@
                                             <td>
                                                 <small><?= _dt($contractor->date_created) ?></small>
                                             </td>
-                                            <td class="action-buttons">
+                                            <td>
                                                 <div class="btn-group" role="group">
                                                     <a href="<?= admin_url('ella_contractors/contractors/view/' . $contractor->id) ?>" 
-                                                       class="btn btn-info btn-sm" title="View">
+                                                       class="btn btn-sm btn-info" title="View">
                                                         <i class="fa fa-eye"></i>
                                                     </a>
                                                     <a href="<?= admin_url('ella_contractors/contractors/edit/' . $contractor->id) ?>" 
-                                                       class="btn btn-warning btn-sm" title="Edit">
+                                                       class="btn btn-sm btn-warning" title="Edit">
                                                         <i class="fa fa-edit"></i>
                                                     </a>
-                                                    <button type="button" class="btn btn-danger btn-sm delete-contractor" 
-                                                            data-id="<?= $contractor->id ?>" 
-                                                            data-name="<?= htmlspecialchars($contractor->company_name) ?>"
-                                                            title="Delete">
+                                                    <a href="<?= admin_url('ella_contractors/contractors/generate_pdf/' . $contractor->id) ?>" 
+                                                       class="btn btn-sm btn-danger" title="Generate PDF" target="_blank">
+                                                        <i class="fa fa-file-pdf-o"></i>
+                                                    </a>
+                                                    <a href="<?= admin_url('ella_contractors/contractors/generate_ppt/' . $contractor->id) ?>" 
+                                                       class="btn btn-sm btn-info" title="Generate PPT" target="_blank">
+                                                        <i class="fa fa-file-powerpoint-o"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-danger delete-contractor" 
+                                                            data-id="<?= $contractor->id ?>" title="Delete">
                                                         <i class="fa fa-trash"></i>
                                                     </button>
                                                 </div>

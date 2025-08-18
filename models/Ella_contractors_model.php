@@ -289,6 +289,14 @@ class ella_contractors_model extends App_Model {
     }
     
     /**
+     * Delete contract
+     */
+    public function deleteContract($id) {
+        $this->db->where('id', $id);
+        return $this->db->delete('tblella_contracts');
+    }
+    
+    /**
      * Get contracts by contractor
      */
     public function getContractsByContractor($contractor_id) {
@@ -432,6 +440,14 @@ class ella_contractors_model extends App_Model {
     }
     
     /**
+     * Delete project
+     */
+    public function deleteProject($id) {
+        $this->db->where('id', $id);
+        return $this->db->delete('tblella_projects');
+    }
+    
+    /**
      * Get projects by contractor
      */
     public function getProjectsByContractor($contractor_id) {
@@ -562,6 +578,14 @@ class ella_contractors_model extends App_Model {
     public function updatePayment($id, $data) {
         $this->db->where('id', $id);
         return $this->db->update('tblella_payments', $data);
+    }
+    
+    /**
+     * Delete payment
+     */
+    public function deletePayment($id) {
+        $this->db->where('id', $id);
+        return $this->db->delete('tblella_payments');
     }
     
     /**

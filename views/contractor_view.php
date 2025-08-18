@@ -260,6 +260,12 @@
                             <a href="<?= admin_url('ella_contractors/contractors/edit/' . $contractor->id) ?>" class="btn btn-warning">
                                 <i class="fa fa-edit"></i> Edit
                             </a>
+                            <a href="<?= admin_url('ella_contractors/contractors/generate_pdf/' . $contractor->id) ?>" class="btn btn-danger" target="_blank">
+                                <i class="fa fa-file-pdf-o"></i> Generate PDF
+                            </a>
+                            <a href="<?= admin_url('ella_contractors/contractors/generate_ppt/' . $contractor->id) ?>" class="btn btn-info" target="_blank">
+                                <i class="fa fa-file-powerpoint-o"></i> Generate PPT
+                            </a>
                             <a href="<?= admin_url('ella_contractors/contractors') ?>" class="btn btn-secondary">
                                 <i class="fa fa-arrow-left"></i> Back to List
                             </a>
