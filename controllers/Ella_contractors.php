@@ -424,6 +424,17 @@ class Ella_contractors extends AdminController
         
         $data['errors'] = '';
         
+        // Debug: Show form data in browser for testing
+        if ($this->input->get('debug') == '1') {
+            echo "<h2>Form Data Debug</h2>";
+            echo "<p><strong>Title:</strong> " . $data['title'] . "</p>";
+            echo "<p><strong>Countries:</strong> " . count($data['countries']) . " loaded</p>";
+            echo "<p><strong>States:</strong> " . count($data['states']) . " loaded</p>";
+            echo "<p><strong>Status Options:</strong> " . count($data['status_options']) . " loaded</p>";
+            echo "<hr>";
+            echo "<p><a href='?debug=0'>Hide Debug Info</a></p>";
+        }
+        
         log_message('debug', 'About to load contractor_form view with data: ' . json_encode(array_keys($data)));
         $this->load->view('contractor_form', $data);
     }
@@ -1819,6 +1830,155 @@ class Ella_contractors extends AdminController
         } catch (Exception $e) {
             echo "<p style='color: red;'>❌ Exception: " . $e->getMessage() . "</p>";
             echo "<p>Stack trace: <pre>" . $e->getTraceAsString() . "</pre></p>";
+        }
+        
+        echo "<hr>";
+        echo "<p><a href='" . admin_url('ella_contractors/contractors') . "'>Back to Contractors</a></p>";
+    }
+
+    /**
+     * Test form data loading
+     */
+    public function test_form_data() {
+        echo "<h2>Testing Form Data Loading</h2>";
+        
+        // Check if model is loaded
+        if (!isset($this->ella_contractors_model)) {
+            echo "<p style='color: red;'>❌ Model not loaded</p>";
+            return;
+        }
+        
+        echo "<p style='color: green;'>✅ Model is loaded</p>";
+        
+        // Load form data
+        $data = [];
+        
+        try {
+            $data['countries'] = $this->ella_contractors_model->getCountries();
+            echo "<p style='color: green;'>✅ Countries: " . count($data['countries']) . " loaded</p>";
+        } catch (Exception $e) {
+            echo "<p style='color: red;'>❌ Countries: " . $e->getMessage() . "</p>";
+            $data['countries'] = [];
+        }
+        
+        try {
+            $data['states'] = $this->ella_contractors_model->getUSStates();
+            echo "<p style='color: green;'>✅ States: " . count($data['states']) . " loaded</p>";
+        } catch (Exception $e) {
+            echo "<p style='color: red;'>❌ States: " . $e->getMessage() . "</p>";
+            $data['states'] = [];
+        }
+        
+        try {
+            $data['status_options'] = $this->ella_contractors_model->getContractorStatusOptions();
+            echo "<p style='color: green;'>✅ Status Options: " . count($data['status_options']) . " loaded</p>";
+        } catch (Exception $e) {
+            echo "<p style='color: red;'>❌ Status Options: " . $e->getMessage() . "</p>";
+            $data['status_options'] = [];
+        }
+        
+        // Show sample data
+        echo "<h3>Sample Data:</h3>";
+        
+        if (!empty($data['countries'])) {
+            echo "<p><strong>First 3 Countries:</strong></p>";
+            echo "<ul>";
+            $count = 0;
+            foreach ($data['countries'] as $code => $name) {
+                if ($count++ < 3) {
+                    echo "<li>{$code} => {$name}</li>";
+                }
+            }
+            echo "</ul>";
+        }
+        
+        if (!empty($data['states'])) {
+            echo "<p><strong>First 3 States:</strong></p>";
+            echo "<ul>";
+            $count = 0;
+            foreach ($data['states'] as $code => $name) {
+                if ($count++ < 3) {
+                    echo "<li>{$code} => {$name}</li>";
+                }
+            }
+            echo "</ul>";
+        }
+        
+        if (!empty($data['status_options'])) {
+            echo "<p><strong>Status Options:</strong></p>";
+            echo "<ul>";
+            foreach ($data['status_options'] as $value => $label) {
+                echo "<li>{$value} => {$label}</li>";
+            }
+            echo "</ul>";
+        }
+        
+        echo "<hr>";
+        echo "<p><a href='" . admin_url('ella_contractors/contractors') . "'>Back to Contractors</a></p>";
+    }
+
+    /**
+     * Test database tables and connection
+     */
+    public function test_database() {
+        echo "<h2>Testing Database Connection and Tables</h2>";
+        
+        try {
+            // Test basic connection
+            $this->load->database();
+            $result = $this->db->query("SELECT 1 as test")->row();
+            echo "<p style='color: green;'>✅ Database connection: OK</p>";
+            
+            // Test if tables exist
+            $tables = [
+                'tblella_contractors',
+                'tblella_contracts', 
+                'tblella_projects',
+                'tblella_payments',
+                'tblella_contractor_documents'
+            ];
+            
+            echo "<h3>Table Check:</h3>";
+            foreach ($tables as $table) {
+                try {
+                    $result = $this->db->query("SELECT COUNT(*) as count FROM {$table}")->row();
+                    echo "<p style='color: green;'>✅ {$table}: " . $result->count . " records</p>";
+                } catch (Exception $e) {
+                    echo "<p style='color: red;'>❌ {$table}: " . $e->getMessage() . "</p>";
+                }
+            }
+            
+            // Test if we can insert a test record
+            echo "<h3>Insert Test:</h3>";
+            try {
+                $test_data = [
+                    'company_name' => 'TEST_' . date('Y-m-d-H-i-s'),
+                    'contact_person' => 'Test Person',
+                    'email' => 'test@test.com',
+                    'status' => 'pending',
+                    'date_created' => date('Y-m-d H:i:s'),
+                    'created_by' => 1
+                ];
+                
+                $this->db->insert('tblella_contractors', $test_data);
+                $insert_id = $this->db->insert_id();
+                
+                if ($insert_id) {
+                    echo "<p style='color: green;'>✅ Insert test: SUCCESS (ID: {$insert_id})</p>";
+                    
+                    // Clean up test record
+                    $this->db->where('id', $insert_id)->delete('tblella_contractors');
+                    echo "<p style='color: blue;'>ℹ️ Test record cleaned up</p>";
+                } else {
+                    echo "<p style='color: red;'>❌ Insert test: FAILED</p>";
+                }
+                
+            } catch (Exception $e) {
+                echo "<p style='color: red;'>❌ Insert test: " . $e->getMessage() . "</p>";
+            }
+            
+        } catch (Exception $e) {
+            echo "<p style='color: red;'>❌ Database error: " . $e->getMessage() . "</p>";
         }
         
         echo "<hr>";

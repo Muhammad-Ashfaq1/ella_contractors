@@ -117,3 +117,5 @@ $route['ella_contractors/payments/delete/(:num)'] = 'ella_contractors/Ella_contr
 
 $route['ella_contractors/debug'] = 'ella_contractors/debug_model';
 $route['ella_contractors/test_create'] = 'ella_contractors/test_create';
+$route['ella_contractors/test_form_data'] = 'ella_contractors/test_form_data';
+$route['ella_contractors/test_database'] = 'ella_contractors/test_database';
