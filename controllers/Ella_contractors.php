@@ -178,14 +178,15 @@ class Ella_contractors extends AdminController
     /**
      * View contractor details
      */
-    private function contractor_view($id) {
+    public function view_contractor($id) {
+        $data['title'] = 'Contractor Details';
         $data['contractor'] = $this->ella_contractors_model->getContractorById($id);
+        
         if (!$data['contractor']) {
-            set_alert('warning', 'Contractor not found');
-            redirect(admin_url('ella_contractors/contractors'));
+            show_404();
         }
         
-        $data['title'] = 'Contractor: ' . $data['contractor']->company_name;
+        // Get related data
         $data['contracts'] = $this->ella_contractors_model->getContractsByContractor($id);
         $data['projects'] = $this->ella_contractors_model->getProjectsByContractor($id);
         $data['payments'] = $this->ella_contractors_model->getPaymentsByContractor($id);
@@ -197,35 +198,13 @@ class Ella_contractors extends AdminController
     /**
      * Delete contractor
      */
-    private function contractor_delete($id) {
-        if (!$this->input->is_ajax_request()) {
-            show_404();
-        }
-        
-        $contractor = $this->ella_contractors_model->getContractorById($id);
-        if (!$contractor) {
-            $this->output->set_content_type('application/json')
-                         ->set_output(json_encode(['success' => false, 'message' => 'Contractor not found']));
-            return;
-        }
-        
-        // Check if contractor has active contracts or projects
-        $active_contracts = $this->ella_contractors_model->getActiveContractsByContractor($id);
-        $active_projects = $this->ella_contractors_model->getActiveProjectsByContractor($id);
-        
-        if (!empty($active_contracts) || !empty($active_projects)) {
-            $this->output->set_content_type('application/json')
-                         ->set_output(json_encode(['success' => false, 'message' => 'Cannot delete contractor with active contracts or projects']));
-            return;
-        }
-        
+    public function contractor_delete($id) {
         if ($this->ella_contractors_model->deleteContractor($id)) {
-            $this->output->set_content_type('application/json')
-                         ->set_output(json_encode(['success' => true, 'message' => 'Contractor deleted successfully']));
+            set_alert('success', 'Contractor deleted successfully');
         } else {
-            $this->output->set_content_type('application/json')
-                         ->set_output(json_encode(['success' => false, 'message' => 'Failed to delete contractor']));
+            set_alert('danger', 'Failed to delete contractor');
         }
+        redirect(admin_url('ella_contractors/contractors'));
     }
     
     // ========================================
@@ -933,180 +912,14 @@ class Ella_contractors extends AdminController
         $payments = $this->ella_contractors_model->getPaymentsByContractor($id);
         $documents = $this->ella_contractors_model->getDocumentsByContractor($id);
         
-        // Load TCPDF library
-        $this->load->library('pdf');
+        // For now, generate a simple HTML report that can be printed as PDF
+        $data['contractor'] = $contractor;
+        $data['contracts'] = $contracts;
+        $data['projects'] = $projects;
+        $data['payments'] = $payments;
+        $data['documents'] = $documents;
         
-        // Create new PDF document
-        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-        
-        // Set document information
-        $pdf->SetCreator('Ella Contractors CRM');
-        $pdf->SetAuthor('CRM System');
-        $pdf->SetTitle('Contractor Profile - ' . $contractor->company_name);
-        $pdf->SetSubject('Contractor Information');
-        
-        // Set default header data
-        $pdf->SetHeaderData('', 0, 'Ella Contractors CRM', 'Contractor Profile Report', array(64, 117, 161), array(64, 117, 161));
-        $pdf->setFooterData(array(0, 0, 0), array(0, 0, 0));
-        
-        // Set header and footer fonts
-        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
-        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
-        
-        // Set default monospaced font
-        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
-        
-        // Set margins
-        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
-        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
-        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
-        
-        // Set auto page breaks
-        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
-        
-        // Add a page
-        $pdf->AddPage();
-        
-        // Set font
-        $pdf->SetFont('helvetica', '', 12);
-        
-        // Contractor Header
-        $pdf->SetFillColor(64, 117, 161);
-        $pdf->SetTextColor(255, 255, 255);
-        $pdf->Cell(0, 15, 'CONTRACTOR PROFILE', 0, 1, 'C', true);
-        $pdf->Ln(5);
-        
-        // Reset colors
-        $pdf->SetFillColor(255, 255, 255);
-        $pdf->SetTextColor(0, 0, 0);
-        
-        // Company Information
-        $pdf->SetFont('helvetica', 'B', 14);
-        $pdf->Cell(0, 10, $contractor->company_name, 0, 1, 'L');
-        $pdf->SetFont('helvetica', '', 10);
-        $pdf->Cell(0, 8, 'Contact: ' . $contractor->contact_person, 0, 1, 'L');
-        $pdf->Cell(0, 8, 'Email: ' . $contractor->email, 0, 1, 'L');
-        if ($contractor->phone) {
-            $pdf->Cell(0, 8, 'Phone: ' . $contractor->phone, 0, 1, 'L');
-        }
-        if ($contractor->website) {
-            $pdf->Cell(0, 8, 'Website: ' . $contractor->website, 0, 1, 'L');
-        }
-        $pdf->Ln(5);
-        
-        // Address Information
-        if ($contractor->address || $contractor->city || $contractor->state) {
-            $pdf->SetFont('helvetica', 'B', 12);
-            $pdf->Cell(0, 10, 'Address Information', 0, 1, 'L');
-            $pdf->SetFont('helvetica', '', 10);
-            if ($contractor->address) $pdf->Cell(0, 8, $contractor->address, 0, 1, 'L');
-            $address_line = '';
-            if ($contractor->city) $address_line .= $contractor->city;
-            if ($contractor->state) $address_line .= ($address_line ? ', ' : '') . $contractor->state;
-            if ($contractor->zip_code) $address_line .= ($address_line ? ' ' : '') . $contractor->zip_code;
-            if ($address_line) $pdf->Cell(0, 8, $address_line, 0, 1, 'L');
-            if ($contractor->country) $pdf->Cell(0, 8, $contractor->country, 0, 1, 'L');
-            $pdf->Ln(5);
-        }
-        
-        // Business Information
-        $pdf->SetFont('helvetica', 'B', 12);
-        $pdf->Cell(0, 10, 'Business Information', 0, 1, 'L');
-        $pdf->SetFont('helvetica', '', 10);
-        if ($contractor->tax_id) $pdf->Cell(0, 8, 'Tax ID: ' . $contractor->tax_id, 0, 1, 'L');
-        if ($contractor->business_license) $pdf->Cell(0, 8, 'License: ' . $contractor->business_license, 0, 1, 'L');
-        if ($contractor->specialties) $pdf->Cell(0, 8, 'Specialties: ' . $contractor->specialties, 0, 1, 'L');
-        if ($contractor->hourly_rate) $pdf->Cell(0, 8, 'Hourly Rate: $' . number_format($contractor->hourly_rate, 2) . '/hr', 0, 1, 'L');
-        $pdf->Ln(5);
-        
-        // Status and Dates
-        $pdf->SetFont('helvetica', 'B', 12);
-        $pdf->Cell(0, 10, 'Status & Dates', 0, 1, 'L');
-        $pdf->SetFont('helvetica', '', 10);
-        $pdf->Cell(0, 8, 'Status: ' . ucfirst($contractor->status), 0, 1, 'L');
-        $pdf->Cell(0, 8, 'Created: ' . date('F j, Y', strtotime($contractor->date_created)), 0, 1, 'L');
-        $pdf->Ln(5);
-        
-        // Contracts Summary
-        if (!empty($contracts)) {
-            $pdf->SetFont('helvetica', 'B', 12);
-            $pdf->Cell(0, 10, 'Contracts Summary (' . count($contracts) . ')', 0, 1, 'L');
-            $pdf->SetFont('helvetica', '', 10);
-            
-            $total_contract_value = 0;
-            foreach ($contracts as $contract) {
-                $total_contract_value += $contract->amount;
-                $pdf->Cell(0, 8, '• ' . $contract->title . ' - $' . number_format($contract->amount, 2) . ' (' . ucfirst($contract->status) . ')', 0, 1, 'L');
-            }
-            $pdf->Cell(0, 8, 'Total Contract Value: $' . number_format($total_contract_value, 2), 0, 1, 'L');
-            $pdf->Ln(5);
-        }
-        
-        // Projects Summary
-        if (!empty($projects)) {
-            $pdf->SetFont('helvetica', 'B', 12);
-            $pdf->Cell(0, 10, 'Projects Summary (' . count($projects) . ')', 0, 1, 'L');
-            $pdf->SetFont('helvetica', '', 10);
-            
-            $total_project_budget = 0;
-            foreach ($projects as $project) {
-                $total_project_budget += $project->budget;
-                $pdf->Cell(0, 8, '• ' . $project->name . ' - $' . number_format($project->budget, 2) . ' (' . ucfirst($project->status) . ')', 0, 1, 'L');
-            }
-            $pdf->Cell(0, 8, 'Total Project Budget: $' . number_format($total_project_budget, 2), 0, 1, 'L');
-            $pdf->Ln(5);
-        }
-        
-        // Payments Summary
-        if (!empty($payments)) {
-            $pdf->SetFont('helvetica', 'B', 12);
-            $pdf->Cell(0, 10, 'Payments Summary (' . count($payments) . ')', 0, 1, 'L');
-            $pdf->SetFont('helvetica', '', 10);
-            
-            $total_paid = 0;
-            $total_pending = 0;
-            foreach ($payments as $payment) {
-                if ($payment->status == 'paid') {
-                    $total_paid += $payment->amount;
-                } elseif ($payment->status == 'pending') {
-                    $total_pending += $payment->amount;
-                }
-                $pdf->Cell(0, 8, '• $' . number_format($payment->amount, 2) . ' - ' . ucfirst($payment->status) . ' (' . date('M j, Y', strtotime($payment->payment_date)) . ')', 0, 1, 'L');
-            }
-            $pdf->Cell(0, 8, 'Total Paid: $' . number_format($total_paid, 2), 0, 1, 'L');
-            $pdf->Cell(0, 8, 'Total Pending: $' . number_format($total_pending, 2), 0, 1, 'L');
-            $pdf->Ln(5);
-        }
-        
-        // Documents Summary
-        if (!empty($documents)) {
-            $pdf->SetFont('helvetica', 'B', 12);
-            $pdf->Cell(0, 10, 'Documents (' . count($documents) . ')', 0, 1, 'L');
-            $pdf->SetFont('helvetica', '', 10);
-            
-            foreach ($documents as $document) {
-                $pdf->Cell(0, 8, '• ' . $document->title . ' (' . ucfirst($document->document_type) . ')', 0, 1, 'L');
-            }
-            $pdf->Ln(5);
-        }
-        
-        // Notes
-        if ($contractor->notes) {
-            $pdf->SetFont('helvetica', 'B', 12);
-            $pdf->Cell(0, 10, 'Notes & Comments', 0, 1, 'L');
-            $pdf->SetFont('helvetica', '', 10);
-            $pdf->MultiCell(0, 8, $contractor->notes, 0, 'L');
-            $pdf->Ln(5);
-        }
-        
-        // Footer
-        $pdf->SetY(-20);
-        $pdf->SetFont('helvetica', 'I', 8);
-        $pdf->Cell(0, 10, 'Generated on ' . date('F j, Y \a\t g:i A') . ' by Ella Contractors CRM', 0, 0, 'C');
-        
-        // Output PDF
-        $filename = 'contractor_' . $contractor->id . '_' . date('Y-m-d') . '.pdf';
-        $pdf->Output($filename, 'D');
+        $this->load->view('contractor_pdf_report', $data);
     }
     
     /**
@@ -1122,6 +935,13 @@ class Ella_contractors extends AdminController
         $contracts = $this->ella_contractors_model->getContractsByContractor($id);
         $projects = $this->ella_contractors_model->getProjectsByContractor($id);
         $payments = $this->ella_contractors_model->getPaymentsByContractor($id);
+        
+        // Check if PHPPresentation library is available
+        if (!class_exists('\PhpOffice\PhpPresentation\PhpPresentation')) {
+            // Fallback: Generate a simple text file with presentation content
+            $this->generateContractorTextReport($contractor, $contracts, $projects, $payments);
+            return;
+        }
         
         // Load PHPPresentation library
         $this->load->library('presentation');
@@ -1406,6 +1226,69 @@ class Ella_contractors extends AdminController
         
         // Output to browser
         $writer->save('php://output');
+        exit;
+    }
+    
+    /**
+     * Fallback method to generate text report when PowerPoint library is not available
+     */
+    private function generateContractorTextReport($contractor, $contracts, $projects, $payments) {
+        $filename = 'contractor_' . $contractor->id . '_' . date('Y-m-d') . '.txt';
+        
+        header('Content-Type: text/plain');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        
+        $content = "CONTRACTOR PROFILE\n";
+        $content .= "==================\n\n";
+        $content .= "Company: " . $contractor->company_name . "\n";
+        $content .= "Contact: " . $contractor->contact_person . "\n";
+        $content .= "Email: " . $contractor->email . "\n";
+        $content .= "Phone: " . ($contractor->phone ?: 'Not provided') . "\n";
+        $content .= "Status: " . ucfirst($contractor->status) . "\n";
+        $content .= "Created: " . date('F j, Y', strtotime($contractor->date_created)) . "\n\n";
+        
+        if (!empty($contracts)) {
+            $content .= "CONTRACTS (" . count($contracts) . ")\n";
+            $content .= "==========\n";
+            $total_value = 0;
+            foreach ($contracts as $contract) {
+                $total_value += $contract->amount;
+                $content .= "• " . $contract->title . " - $" . number_format($contract->amount, 2) . " (" . ucfirst($contract->status) . ")\n";
+            }
+            $content .= "Total Contract Value: $" . number_format($total_value, 2) . "\n\n";
+        }
+        
+        if (!empty($projects)) {
+            $content .= "PROJECTS (" . count($projects) . ")\n";
+            $content .= "==========\n";
+            $total_budget = 0;
+            foreach ($projects as $project) {
+                $total_budget += $project->budget;
+                $content .= "• " . $project->name . " - $" . number_format($project->budget, 2) . " (" . ucfirst($project->status) . ")\n";
+            }
+            $content .= "Total Project Budget: $" . number_format($total_budget, 2) . "\n\n";
+        }
+        
+        if (!empty($payments)) {
+            $content .= "PAYMENTS (" . count($payments) . ")\n";
+            $content .= "==========\n";
+            $total_paid = 0;
+            $total_pending = 0;
+            foreach ($payments as $payment) {
+                if ($payment->status == 'paid') {
+                    $total_paid += $payment->amount;
+                } elseif ($payment->status == 'pending') {
+                    $total_pending += $payment->amount;
+                }
+                $content .= "• $" . number_format($payment->amount, 2) . " - " . ucfirst($payment->status) . "\n";
+            }
+            $content .= "Total Paid: $" . number_format($total_paid, 2) . "\n";
+            $content .= "Total Pending: $" . number_format($total_pending, 2) . "\n\n";
+        }
+        
+        $content .= "Generated on " . date('F j, Y \a\t g:i A') . " by Ella Contractors CRM\n";
+        
+        echo $content;
         exit;
     }
     

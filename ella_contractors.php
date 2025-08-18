@@ -23,7 +23,7 @@ function ella_contractors_init_menu_items() {
     $CI = &get_instance();
     
     // Check if user has permission to view contractors
-    if (has_permission('ella_contractors', '', 'view')) {
+    if (has_permission('ella_contractors', '', 'view') || is_admin()) {
         
         // Add main Ella Contractors menu item with dropdown
         $CI->app_menu->add_sidebar_menu_item('ella_contractors', [

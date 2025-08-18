@@ -12,8 +12,12 @@ $route['ella_contractors/contractors/add'] = 'ella_contractors/add_contractor';
 $route['ella_contractors/contractors/edit/(:num)'] = 'ella_contractors/edit_contractor/$1';
 $route['ella_contractors/contractors/view/(:num)'] = 'ella_contractors/view_contractor/$1';
 $route['ella_contractors/contractors/delete/(:num)'] = 'ella_contractors/delete_contractor/$1';
+
+// PDF and PPT generation routes
 $route['ella_contractors/contractors/generate_pdf/(:num)'] = 'ella_contractors/generateContractorPDF/$1';
 $route['ella_contractors/contractors/generate_ppt/(:num)'] = 'ella_contractors/generateContractorPPT/$1';
+$route['ella_contractors/contracts/generate_pdf/(:num)'] = 'ella_contractors/generateContractPDF/$1';
+$route['ella_contractors/projects/generate_pdf/(:num)'] = 'ella_contractors/generateProjectPDF/$1';
 
 // Contracts routes
 $route['ella_contractors/contracts'] = 'ella_contractors/contracts';
@@ -21,7 +25,6 @@ $route['ella_contractors/contracts/add'] = 'ella_contractors/add_contract';
 $route['ella_contractors/contracts/edit/(:num)'] = 'ella_contractors/edit_contract/$1';
 $route['ella_contractors/contracts/view/(:num)'] = 'ella_contractors/view_contract/$1';
 $route['ella_contractors/contracts/delete/(:num)'] = 'ella_contractors/delete_contract/$1';
-$route['ella_contractors/contracts/generate_pdf/(:num)'] = 'ella_contractors/generateContractPDF/$1';
 
 // Projects routes
 $route['ella_contractors/projects'] = 'ella_contractors/projects';
@@ -29,7 +32,6 @@ $route['ella_contractors/projects/add'] = 'ella_contractors/add_project';
 $route['ella_contractors/projects/edit/(:num)'] = 'ella_contractors/edit_project/$1';
 $route['ella_contractors/projects/view/(:num)'] = 'ella_contractors/view_project/$1';
 $route['ella_contractors/projects/delete/(:num)'] = 'ella_contractors/delete_project/$1';
-$route['ella_contractors/projects/generate_pdf/(:num)'] = 'ella_contractors/generateProjectPDF/$1';
 
 // Payments routes
 $route['ella_contractors/payments'] = 'ella_contractors/payments';
