@@ -23,7 +23,8 @@
                             </div>
                         <?php endif; ?>
                         
-                        <form method="POST" class="needs-validation" novalidate>
+                        <form method="POST" class="needs-validation" id="payment-form" novalidate>
+                            <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>" />
                             <!-- Basic Information -->
                             <div class="row">
                                 <div class="col-md-12">
@@ -211,3 +212,14 @@
 </div>
 
 <?php init_tail(); ?>
+
+<!-- Load Ella Contractors JavaScript -->
+<script src="<?= module_dir_url('ella_contractors', 'assets/js/ella_contractors.js') ?>"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize the module
+        if (typeof EllaContractors !== 'undefined') {
+            EllaContractors.init();
+        }
+    });
+</script>

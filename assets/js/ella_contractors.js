@@ -176,6 +176,31 @@ var EllaContractors = {
             }
         });
 
+        // Project form validation
+        $('#project-form').validate({
+            rules: {
+                contractor_id: {
+                    required: true
+                },
+                name: {
+                    required: true,
+                    minlength: 3
+                },
+                start_date: {
+                    required: true,
+                    date: true
+                }
+            },
+            messages: {
+                contractor_id: "Please select a contractor",
+                name: {
+                    required: "Project name is required",
+                    minlength: "Project name must be at least 3 characters"
+                },
+                start_date: "Please enter a valid start date"
+            }
+        });
+
         // Payment form validation
         $('#payment-form').validate({
             rules: {
