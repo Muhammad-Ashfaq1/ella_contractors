@@ -30,6 +30,7 @@ function ella_contractors_init_menu() {
             'name' => 'Ella Contractors',
             'icon' => 'fa fa-users',
             'position' => 30,
+            'collapse' => true,
         ]);
 
         $submenu = [
