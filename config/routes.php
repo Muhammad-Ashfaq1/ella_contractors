@@ -11,7 +11,20 @@ $route['ella_contractors/contractors/(:num)'] = 'ella_contractors/contractors/$1
 
 // Contracts management routes
 $route['ella_contractors/contracts'] = 'ella_contractors/contracts';
+$route['ella_contractors/contracts/view/(:num)'] = 'ella_contractors/view_contract/$1';
 $route['ella_contractors/contracts/(:num)'] = 'ella_contractors/contracts/$1';
+
+// Media management routes
+$route['ella_contractors/upload_media/(:num)'] = 'ella_contractors/upload_media/$1';
+$route['ella_contractors/upload_media'] = 'ella_contractors/upload_media';
+$route['ella_contractors/delete_media/(:num)'] = 'ella_contractors/delete_media/$1';
+$route['ella_contractors/media_gallery/(:num)'] = 'ella_contractors/media_gallery/$1';
+$route['ella_contractors/media_gallery'] = 'ella_contractors/media_gallery';
+
+// Module management routes
+$route['ella_contractors/activate'] = 'ella_contractors/activate_module';
+
+
 
 // Projects management routes
 $route['ella_contractors/projects'] = 'ella_contractors/projects';

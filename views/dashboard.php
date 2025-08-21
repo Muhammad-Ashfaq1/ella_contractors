@@ -49,6 +49,9 @@
                                     
                                     <?php if (is_super_admin()): ?>
                                     <div style="margin-top: 1rem;">
+                                        <a href="<?= admin_url('ella_contractors/activate') ?>" class="btn btn-warning">
+                                            <i class="fa fa-database"></i> Activate Module
+                                        </a>
                                         <a href="<?= admin_url('ella_contractors/settings') ?>" class="btn btn-outline-light">
                                             <i class="fa fa-cog"></i> Settings
                                         </a>

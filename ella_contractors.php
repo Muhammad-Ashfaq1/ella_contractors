@@ -91,8 +91,81 @@ register_activation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_activat
  */
 function ella_contractors_activate_module()
 {
-    // Module activated - no database tables or sample data creation
-    // This module is now purely for display purposes
+    $CI = &get_instance();
+    $CI->load->dbforge();
+    
+    // Create media table for contract attachments
+    $table_name = 'ella_contractor_media';
+    
+    // Check if table exists
+    if (!$CI->db->table_exists($table_name)) {
+        $fields = [
+            'id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'unsigned' => TRUE,
+                'auto_increment' => TRUE
+            ],
+            'contract_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => TRUE
+            ],
+            'file_name' => [
+                'type' => 'VARCHAR',
+                'constraint' => 255,
+                'null' => FALSE
+            ],
+            'original_name' => [
+                'type' => 'VARCHAR',
+                'constraint' => 255,
+                'null' => FALSE
+            ],
+            'file_type' => [
+                'type' => 'VARCHAR',
+                'constraint' => 100,
+                'null' => FALSE
+            ],
+            'file_size' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => FALSE
+            ],
+            'file_path' => [
+                'type' => 'VARCHAR',
+                'constraint' => 500,
+                'null' => FALSE
+            ],
+            'is_default' => [
+                'type' => 'TINYINT',
+                'constraint' => 1,
+                'default' => 0
+            ],
+            'description' => [
+                'type' => 'TEXT',
+                'null' => TRUE
+            ],
+            'uploaded_by' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => FALSE
+            ],
+            'date_uploaded' => [
+                'type' => 'DATETIME',
+                'null' => FALSE
+            ]
+        ];
+        $CI->dbforge->add_field($fields);
+        $CI->dbforge->add_key('id', TRUE);
+        $CI->dbforge->add_key('contract_id');
+        $CI->dbforge->add_key('is_default');
+        $CI->dbforge->create_table($table_name);
+        
+        log_message('info', 'Ella Contractors: Created table ' . $table_name);
+    } else {
+        // Table already exists, log it
+        log_message('info', 'Ella Contractors: Table ' . $table_name . ' already exists');
+    }
 }
 
 /**
@@ -107,4 +180,11 @@ function ella_contractors_uninstall()
     $CI->db->update('tblmodules', ['active' => 0]);
     
     // Note: No tables to drop since none are created
+}
+
+/**
+ * Include helper functions
+ */
+if (file_exists(__DIR__ . '/helpers/ella_contractors_helper.php')) {
+    require_once(__DIR__ . '/helpers/ella_contractors_helper.php');
 }

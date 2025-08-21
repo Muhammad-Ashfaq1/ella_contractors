@@ -97,8 +97,19 @@
                                                         </button>
                                                         <ul class="dropdown-menu dropdown-menu-right">
                                                             <li>
+                                                                <a href="<?= admin_url('ella_contractors/contracts/view/' . $proposal->id) ?>">
+                                                                    <i class="fa fa-eye text-primary"></i> View Contract Details
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a href="<?= admin_url('ella_contractors/upload_media/' . $proposal->id) ?>">
+                                                                    <i class="fa fa-upload text-success"></i> Upload Media
+                                                                </a>
+                                                            </li>
+                                                            <li class="divider"></li>
+                                                            <li>
                                                                 <a href="<?= admin_url('proposals/list_proposals/' . $proposal->id) ?>" target="_blank">
-                                                                    <i class="fa fa-eye"></i> View Original Proposal
+                                                                    <i class="fa fa-external-link"></i> View Original Proposal
                                                                 </a>
                                                             </li>
                                                             <?php if ($proposal->rel_type == 'lead'): ?>
