@@ -31,12 +31,27 @@ class Ella_contractors extends AdminController
     }
     
     /**
-     * Contracts listing page
+     * Contracts listing page - shows accepted proposals
      */
     public function contracts($page = 1) {
         $data['title'] = 'Contracts Management';
-        $data['message'] = 'Hello from Contracts page';
-        $this->load->view('simple_page', $data);
+        
+        // Load the proposals model to get accepted proposals
+        $this->load->model('proposals_model');
+        
+        // Get accepted proposals (status = 3 means accepted)
+        $this->db->select('tblproposals.*, tblleads.name as lead_name, tblleads.email as lead_email, 
+                          tblleads.phonenumber as lead_phone, tblleads.company as lead_company,
+                          tblstaff.firstname, tblstaff.lastname');
+        $this->db->from('tblproposals');
+        $this->db->join('tblleads', 'tblproposals.rel_id = tblleads.id AND tblproposals.rel_type = "lead"', 'left');
+        $this->db->join('tblstaff', 'tblleads.assigned = tblstaff.staffid', 'left');
+        $this->db->where('tblproposals.status', 3); // Status 3 = Accepted
+        $this->db->order_by('tblproposals.date', 'DESC');
+        
+        $data['accepted_proposals'] = $this->db->get()->result();
+        
+        $this->load->view('contracts_table', $data);
     }
     
     /**

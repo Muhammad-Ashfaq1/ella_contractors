@@ -10,11 +10,11 @@
                         
                         <!-- Page Header -->
                         <div class="row">
-                            <div class="col-md-12">
+                        <div class="col-md-12">
                                 <h4 class="customer-profile-group-heading"><?= $title ?></h4>
                                 <hr class="hr-panel-heading" />
-                            </div>
-                        </div>
+                                        </div>
+                                    </div>
 
                         <!-- Dashboard Content -->
                         <div class="row">
