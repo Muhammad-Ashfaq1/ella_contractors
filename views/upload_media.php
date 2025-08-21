@@ -1,7 +1,32 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+
+<script>
+// Ensure jQuery is loaded before any CSRF setup
+if (typeof jQuery === 'undefined') {
+    document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"><\/script>');
+}
+
+// Override the problematic CSRF function to prevent errors
+window.csrf_jquery_ajax_setup = function() {
+    // Do nothing - prevent the error from general_helper.php
+    return false;
+};
+</script>
+
 <?php init_head(); ?>
-<div id="wrapper">
-    <div class="content">
+
+<!-- Include module CSS -->
+<link rel="stylesheet" href="<?php echo base_url('modules/ella_contractors/assets/css/ella_contractors.css'); ?>">
+
+<!-- Include Toastr CSS and JS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+<!-- Include SweetAlert2 CSS and JS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.32/sweetalert2.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.32/sweetalert2.min.js"></script>
+
+<div class="content">
         <div class="row">
             <div class="col-md-12">
                 <div class="panel_s">
@@ -58,29 +83,55 @@
                                                       placeholder="Optional description for this file"></textarea>
                                         </div>
 
-                                        <?php if (!$contract_id): ?>
-                                        <!-- Only show default checkbox when uploading general media -->
+                                        <!-- Dynamic Default Media Checkbox -->
                                         <div class="form-group">
-                                            <div class="checkbox">
+                                            <div class="checkbox checkbox-default-media">
                                                 <label>
-                                                    <input type="checkbox" name="is_default" value="1" checked>
-                                                    <strong>Use as default media for all contracts</strong>
-                                                    <br><small class="text-muted">This file will be available in all contract media galleries</small>
+                                                    <input type="checkbox" 
+                                                           name="is_default" 
+                                                           value="1" 
+                                                           id="is_default_checkbox"
+                                                           <?php echo !$contract_id ? 'checked' : ''; ?>>
+                                                    <strong id="checkbox_label">
+                                                        <?php if (!$contract_id): ?>
+                                                            Use as default media for all contracts
+                                                        <?php else: ?>
+                                                            Also use as default media for all contracts
+                                                        <?php endif; ?>
+                                                    </strong>
+                                                    <br><small class="text-muted" id="checkbox_description">
+                                                        <?php if (!$contract_id): ?>
+                                                            This file will be available in all contract media galleries
+                                                        <?php else: ?>
+                                                            This file will be available in all contract media galleries, not just this contract
+                                                        <?php endif; ?>
+                                                    </small>
                                                 </label>
                                             </div>
-                                        </div>
-                                        <?php else: ?>
-                                        <!-- Ask if this should be default when uploading for specific contract -->
-                                        <div class="form-group">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="is_default" value="1">
-                                                    <strong>Also use as default media for all contracts</strong>
-                                                    <br><small class="text-muted">This file will be available in all contract media galleries, not just this contract</small>
-                                                </label>
+                                            
+                                            <!-- Additional Info Panel -->
+                                            <div class="alert alert-info checkbox-info-panel" id="default_info_panel" style="display: none; margin-top: 10px;">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <h6><i class="fa fa-info-circle"></i> What this means:</h6>
+                                                        <ul class="list-unstyled" style="margin-bottom: 0;">
+                                                            <li><i class="fa fa-check text-success"></i> File will appear in all contract galleries</li>
+                                                            <li><i class="fa fa-check text-success"></i> Available for new and existing contracts</li>
+                                                            <li><i class="fa fa-check text-success"></i> Can be managed from default media gallery</li>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <h6><i class="fa fa-lightbulb-o"></i> Best for:</h6>
+                                                        <ul class="list-unstyled" style="margin-bottom: 0;">
+                                                            <li>• Company brochures</li>
+                                                            <li>• Standard contracts</li>
+                                                            <li>• Policy documents</li>
+                                                            <li>• Common forms</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <?php endif; ?>
 
                                         <div class="form-group">
                                             <button type="submit" class="btn btn-primary btn-lg">
@@ -106,26 +157,26 @@
                         <!-- File Type Information -->
                         <div class="row">
                             <div class="col-md-12">
-                                <div class="alert alert-info">
+                                <div class="file-type-info">
                                     <h5><i class="fa fa-info-circle"></i> Supported File Types</h5>
                                     <div class="row">
                                         <div class="col-md-3">
                                             <strong>Documents:</strong><br>
-                                            <i class="fa fa-file-pdf-o text-danger"></i> PDF<br>
-                                            <i class="fa fa-file-word-o text-primary"></i> DOC, DOCX
+                                            <i class="fa fa-file-pdf-o"></i> PDF<br>
+                                            <i class="fa fa-file-word-o"></i> DOC, DOCX
                                         </div>
                                         <div class="col-md-3">
                                             <strong>Spreadsheets:</strong><br>
-                                            <i class="fa fa-file-excel-o text-success"></i> XLS, XLSX
+                                            <i class="fa fa-file-excel-o"></i> XLS, XLSX
                                         </div>
                                         <div class="col-md-3">
                                             <strong>Presentations:</strong><br>
-                                            <i class="fa fa-file-powerpoint-o text-warning"></i> PPT, PPTX
+                                            <i class="fa fa-file-powerpoint-o"></i> PPT, PPTX
                                         </div>
                                         <div class="col-md-3">
                                             <strong>Images & Archives:</strong><br>
-                                            <i class="fa fa-file-image-o text-info"></i> JPG, PNG, GIF<br>
-                                            <i class="fa fa-file-archive-o text-muted"></i> ZIP, RAR
+                                            <i class="fa fa-file-image-o"></i> JPG, PNG, GIF<br>
+                                            <i class="fa fa-file-archive-o"></i> ZIP, RAR
                                         </div>
                                     </div>
                                 </div>
@@ -136,39 +187,173 @@
             </div>
         </div>
     </div>
-</div>
+
+<!-- Include module JavaScript -->
+<script src="<?php echo base_url('modules/ella_contractors/assets/js/ella_contractors.js'); ?>"></script>
 
 <script>
-$(document).ready(function() {
-    // File upload preview
-    $('#media_file').on('change', function() {
-        var file = this.files[0];
+// Configure Toastr options
+toastr.options = {
+    "closeButton": true,
+    "debug": false,
+    "newestOnTop": true,
+    "progressBar": true,
+    "positionClass": "toast-top-right",
+    "preventDuplicates": false,
+    "onclick": null,
+    "showDuration": "300",
+    "hideDuration": "1000",
+    "timeOut": "5000",
+    "extendedTimeOut": "1000",
+    "showEasing": "swing",
+    "hideEasing": "linear",
+    "showMethod": "fadeIn",
+    "hideMethod": "fadeOut"
+};
+
+// Form validation and submission handling
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadForm = document.getElementById('upload-form');
+    const fileInput = document.getElementById('media_file');
+    const submitButton = uploadForm.querySelector('button[type="submit"]');
+    
+    // File size validation (50MB = 50 * 1024 * 1024 bytes)
+    const maxFileSize = 50 * 1024 * 1024;
+    
+    // File type validation
+    const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/gif',
+        'application/zip',
+        'application/x-rar-compressed'
+    ];
+    
+    // File input change handler
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
         if (file) {
-            var fileSize = (file.size / 1024 / 1024).toFixed(2); // Convert to MB
-            var fileName = file.name;
-            
-            if (fileSize > 50) {
-                alert('File size exceeds 50MB limit. Please choose a smaller file.');
-                $(this).val('');
+            // Validate file size
+            if (file.size > maxFileSize) {
+                showErrorToast('File size exceeds 50MB limit. Please select a smaller file.', 'File Too Large');
+                fileInput.value = '';
                 return;
             }
             
-            // Show file info
-            var fileInfo = '<div class="alert alert-success"><strong>Selected File:</strong> ' + fileName + ' (' + fileSize + ' MB)</div>';
-            $('.help-block').after(fileInfo);
+            // Validate file type
+            if (!allowedTypes.includes(file.type)) {
+                showErrorToast('File type not supported. Please select a valid file format.', 'Invalid File Type');
+                fileInput.value = '';
+                return;
+            }
+            
+            // Show success message for valid file
+            showSuccessToast(`File "${file.name}" selected successfully!`, 'File Selected');
+            
+            // Update submit button text
+            updateSubmitButtonText();
         }
     });
     
-    // Form validation
-    $('#upload-form').on('submit', function(e) {
-        var file = $('#media_file')[0].files[0];
-        if (!file) {
-            alert('Please select a file to upload.');
-            e.preventDefault();
-            return false;
+    // Form submission handler
+    uploadForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate file is selected
+        if (!fileInput.files[0]) {
+            showErrorToast('Please select a file to upload.', 'No File Selected');
+            return;
         }
+        
+        // Show loading state
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Uploading...';
+        submitButton.disabled = true;
+        
+        // Submit form
+        uploadForm.submit();
     });
+    
+    // Function to update submit button text based on checkbox state
+    function updateSubmitButtonText() {
+        const isDefaultCheckbox = document.getElementById('is_default_checkbox');
+        const submitButton = document.querySelector('button[type="submit"]');
+        
+        if (isDefaultCheckbox.checked) {
+            submitButton.innerHTML = '<i class="fa fa-upload"></i> Upload as Default Media';
+        } else {
+            submitButton.innerHTML = '<i class="fa fa-upload"></i> Upload File';
+        }
+    }
+    
+    // Add event listener to checkbox
+    const isDefaultCheckbox = document.getElementById('is_default_checkbox');
+    if (isDefaultCheckbox) {
+        isDefaultCheckbox.addEventListener('change', updateSubmitButtonText);
+        updateSubmitButtonText(); // Initial call
+    }
+    
+    // Check for URL parameters to show notifications
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (urlParams.get('upload_success') === '1') {
+        showSuccessToast('Media file uploaded successfully!', 'Upload Complete');
+        // Remove parameter from URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
+    if (urlParams.get('upload_error') === '1') {
+        const errorMessage = urlParams.get('message') || 'An error occurred during upload. Please try again.';
+        showErrorToast(errorMessage, 'Upload Failed');
+        // Remove parameter from URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
 });
+
+// Toastr notification functions
+function showSuccessToast(message, title = 'Success!') {
+    toastr.success(message, title, {
+        timeOut: 4000,
+        extendedTimeOut: 2000,
+        progressBar: true,
+        closeButton: true
+    });
+}
+
+function showErrorToast(message, title = 'Error!') {
+    toastr.error(message, title, {
+        timeOut: 6000,
+        extendedTimeOut: 3000,
+        progressBar: true,
+        closeButton: true
+    });
+}
+
+function showInfoToast(message, title = 'Info') {
+    toastr.info(message, title, {
+        timeOut: 5000,
+        extendedTimeOut: 2000,
+        progressBar: true,
+        closeButton: true
+    });
+}
+
+function showWarningToast(message, title = 'Warning!') {
+    toastr.warning(message, title, {
+        timeOut: 5000,
+        extendedTimeOut: 2000,
+        progressBar: true,
+        closeButton: true
+    });
+}
 </script>
 
 <?php init_tail(); ?>

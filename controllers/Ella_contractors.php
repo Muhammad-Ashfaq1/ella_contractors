@@ -2,8 +2,12 @@
 
 class Ella_contractors extends AdminController
 {
+    public $active_status = 3;
     public function __construct() {
         parent::__construct();
+        
+        // Load CodeIgniter system helpers
+        $this->load->helper(['text', 'date']);
         
         // Load helper functions from module directory
         $helper_path = __DIR__ . '/../helpers/ella_contractors_helper.php';
@@ -13,11 +17,6 @@ class Ella_contractors extends AdminController
         
         // Ensure database table exists
         $this->ensure_contract_media_table();
-        
-        // Debug: Check if helper functions are loaded
-        if (!function_exists('upload_contract_media')) {
-            log_message('error', 'Ella Contractors: Helper function upload_contract_media not found');
-        }
     }
     
     /**
@@ -60,7 +59,7 @@ class Ella_contractors extends AdminController
         $this->db->from('tblproposals');
         $this->db->join('tblleads', 'tblproposals.rel_id = tblleads.id AND tblproposals.rel_type = "lead"', 'left');
         $this->db->join('tblstaff', 'tblleads.assigned = tblstaff.staffid', 'left');
-        $this->db->where('tblproposals.status', 3); // Status 3 = Accepted
+        $this->db->where('tblproposals.status', $this->active_status); // Status 3 = Accepted
         $this->db->order_by('tblproposals.date', 'DESC');
         
         $data['accepted_proposals'] = $this->db->get()->result();
@@ -104,12 +103,23 @@ class Ella_contractors extends AdminController
         
         if (!$contract) {
             show_404();
-            return;
-        }
+                return;
+            }
+            
+                        // Get media files for this contract
+        $contract_media = get_contract_media($contract_id, false);
+        
+        // Get default media files
+        $default_media = get_default_contract_media();
+        
+        // Get base currency for formatting
+        $base_currency = get_base_currency();
         
         $data['title'] = 'Contract Details - ' . $contract->subject;
         $data['contract'] = $contract;
-        $data['media_files'] = get_contract_media($contract_id);
+        $data['contract_media'] = $contract_media;
+        $data['default_media'] = $default_media;
+        $data['base_currency'] = $base_currency;
         
         $this->load->view('view_contract', $data);
     }
@@ -130,12 +140,12 @@ class Ella_contractors extends AdminController
                 } else {
                     set_alert('danger', 'Upload failed: ' . $result['error']);
                 }
-            } else {
+                } else {
                 set_alert('danger', 'Please select a file to upload.');
             }
             
             if ($contract_id) {
-                redirect(admin_url('ella_contractors/contracts/view/' . $contract_id));
+                redirect(admin_url('ella_contractors/view_contract/' . $contract_id));
             } else {
                 redirect(admin_url('ella_contractors/media_gallery'));
             }
@@ -179,18 +189,26 @@ class Ella_contractors extends AdminController
      * Media gallery - shows all default media files
      */
     public function media_gallery($contract_id = null) {
-        if ($contract_id) {
-            $data['title'] = 'Contract Media Gallery';
-            $data['media_files'] = get_contract_media($contract_id, false);
-            $data['contract_id'] = $contract_id;
+                // Check if helper functions are loaded
+        if (!function_exists('get_default_contract_media')) {
+            $data['error'] = 'Helper functions not loaded';
+            $data['media_files'] = [];
         } else {
-            $data['title'] = 'Default Media Gallery';
-            $data['media_files'] = get_default_contract_media();
-            $data['contract_id'] = null;
+            if ($contract_id) {
+                $data['title'] = 'Contract Media Gallery';
+                $data['media_files'] = get_contract_media($contract_id, false);
+                $data['contract_id'] = $contract_id;
+        } else {
+                $data['title'] = 'Default Media Gallery';
+                $data['media_files'] = get_default_contract_media();
+                $data['contract_id'] = null;
+            }
         }
         
         $this->load->view('media_gallery', $data);
     }
+    
+
     
     /**
      * Activate module manually
@@ -201,7 +219,7 @@ class Ella_contractors extends AdminController
             show_error('Access denied. Admin privileges required.');
             return;
         }
-        
+
         // Clean up any duplicate tables first
         $this->cleanup_duplicate_tables();
         
@@ -225,8 +243,8 @@ class Ella_contractors extends AdminController
     private function ensure_contract_media_table() {
         $table_name = 'ella_contractor_media';
         
-        // Check if table exists
-        if (!$this->db->table_exists($table_name)) {
+        // Check if table exists (with and without tbl prefix)
+        if (!$this->db->table_exists($table_name) && !$this->db->table_exists('tblella_contractor_media')) {
             $this->load->dbforge();
             
             $fields = [
@@ -291,10 +309,6 @@ class Ella_contractors extends AdminController
             $this->dbforge->add_key('contract_id');
             $this->dbforge->add_key('is_default');
             $this->dbforge->create_table($table_name);
-            
-            log_message('info', 'Ella Contractors: Created ' . $table_name . ' table');
-        } else {
-            log_message('info', 'Ella Contractors: Table ' . $table_name . ' already exists');
         }
     }
     
@@ -310,9 +324,20 @@ class Ella_contractors extends AdminController
                 // Drop the old table
                 $this->load->dbforge();
                 $this->dbforge->drop_table($old_table);
-                log_message('info', 'Ella Contractors: Dropped old table: ' . $old_table);
             }
         }
+    }
+    
+    /**
+     * Default Media Gallery - shows media files available for all contracts
+     */
+    public function default_media() {
+        $data['title'] = 'Default Media Gallery';
+        $data['media_files'] = get_default_contract_media();
+        $data['contract_id'] = null;
+        $data['is_default_gallery'] = true;
+        
+        $this->load->view('media_gallery', $data);
     }
     
     /**

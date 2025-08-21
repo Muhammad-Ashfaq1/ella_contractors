@@ -1,7 +1,47 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+
+<script>
+// Ensure jQuery is loaded before any CSRF setup
+if (typeof jQuery === 'undefined') {
+    document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"><\/script>');
+}
+
+// Override the problematic CSRF function to prevent errors
+window.csrf_jquery_ajax_setup = function() {
+    // Do nothing - prevent the error from general_helper.php
+    return false;
+};
+</script>
+
 <?php init_head(); ?>
-<div id="wrapper">
-    <div class="content">
+
+<style>
+/* Fix sidebar overlap issues */
+.content {
+    margin-left: 250px !important;
+    padding: 20px !important;
+    min-height: calc(100vh - 60px);
+}
+
+@media (max-width: 768px) {
+    .content {
+        margin-left: 0 !important;
+        padding: 15px !important;
+    }
+}
+
+/* Ensure proper spacing for panels */
+.panel_s {
+    margin-bottom: 20px;
+}
+
+/* Page specific styling */
+.well {
+    margin-top: 20px;
+}
+</style>
+
+<div class="content">
         <div class="row">
             <div class="col-md-12">
                 <div class="panel_s">
@@ -32,5 +72,4 @@
             </div>
         </div>
     </div>
-</div>
 <?php init_tail(); ?>

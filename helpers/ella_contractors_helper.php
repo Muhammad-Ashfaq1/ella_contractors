@@ -6,6 +6,8 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * Helper functions for Ella Contractors module
  */
 
+
+
 /**
  * Get module version
  */
@@ -31,7 +33,7 @@ function has_contractor_permission($permission, $contractor_id = null)
  */
 function get_contract_media_upload_path($contract_id = null)
 {
-    $base_path = FCPATH . 'modules/ella_contractors/uploads/contracts/';
+    $base_path = FCPATH . 'uploads/contracts/';
     
     if ($contract_id) {
         return $base_path . 'media/contract_' . $contract_id . '/';
@@ -45,7 +47,7 @@ function get_contract_media_upload_path($contract_id = null)
  */
 function get_contract_media_url($contract_id = null)
 {
-    $base_url = base_url('modules/ella_contractors/uploads/contracts/');
+    $base_url = base_url('uploads/contracts/');
     
     if ($contract_id) {
         return $base_url . 'media/contract_' . $contract_id . '/';
@@ -96,14 +98,14 @@ function upload_contract_media($contract_id, $file_input_name, $description = ''
         'original_name' => $upload_data['orig_name'],
         'file_type' => $upload_data['file_type'],
         'file_size' => $upload_data['file_size'],
-        'file_path' => $upload_data['full_path'],
+        'file_path' => 'uploads/contracts/' . ($is_default ? 'default/' : 'media/contract_' . $contract_id . '/') . $upload_data['file_name'],
         'is_default' => $is_default ? 1 : 0,
         'description' => $description,
         'uploaded_by' => get_staff_user_id(),
         'date_uploaded' => date('Y-m-d H:i:s')
     ];
     
-    $CI->db->insert('ella_contractor_media', $media_data);
+    $CI->db->insert('tblella_contractor_media', $media_data);
     $media_id = $CI->db->insert_id();
     
     return [
@@ -124,21 +126,28 @@ function get_contract_media($contract_id, $include_defaults = true)
     // Ensure the table exists before querying
     ensure_contract_media_table_exists();
     
-    $CI->db->select('*');
-    $CI->db->from('ella_contractor_media');
-    
-    if ($include_defaults) {
-        $CI->db->group_start();
-        $CI->db->where('contract_id', $contract_id);
-        $CI->db->or_where('is_default', 1);
-        $CI->db->group_end();
-    } else {
-        $CI->db->where('contract_id', $contract_id);
+    try {
+        $CI->db->select('*');
+        $CI->db->from('ella_contractor_media');
+        
+        if ($include_defaults) {
+            $CI->db->group_start();
+            $CI->db->where('contract_id', $contract_id);
+            $CI->db->or_where('is_default', 1);
+            $CI->db->group_end();
+        } else {
+            $CI->db->where('contract_id', $contract_id);
+        }
+        
+        $CI->db->order_by('date_uploaded', 'DESC');
+        
+        $result = $CI->db->get()->result();
+        
+        return $result;
+    } catch (Exception $e) {
+        error_log("Error in get_contract_media(): " . $e->getMessage());
+        return [];
     }
-    
-    $CI->db->order_by('date_uploaded', 'DESC');
-    
-    return $CI->db->get()->result();
 }
 
 /**
@@ -151,12 +160,19 @@ function get_default_contract_media()
     // Ensure the table exists before querying
     ensure_contract_media_table_exists();
     
-    $CI->db->select('*');
-    $CI->db->from('ella_contractor_media');
-    $CI->db->where('is_default', 1);
-    $CI->db->order_by('date_uploaded', 'DESC');
-    
-    return $CI->db->get()->result();
+    try {
+        $CI->db->select('*');
+        $CI->db->from('ella_contractor_media');
+        $CI->db->where('is_default', 1);
+        $CI->db->order_by('date_uploaded', 'DESC');
+        
+        $result = $CI->db->get()->result();
+        
+        return $result;
+    } catch (Exception $e) {
+        error_log("Error in get_default_contract_media(): " . $e->getMessage());
+        return [];
+    }
 }
 
 /**
@@ -177,8 +193,9 @@ function delete_contract_media($media_id)
     }
     
     // Delete file
-    if (file_exists($media->file_path)) {
-        unlink($media->file_path);
+    $file_path = FCPATH . $media->file_path;
+    if (file_exists($file_path) && is_file($file_path)) {
+        unlink($file_path);
     }
     
     // Delete from database
@@ -219,8 +236,8 @@ function ensure_contract_media_table_exists()
     $CI = &get_instance();
     $table_name = 'ella_contractor_media';
     
-    // Check if table exists
-    if (!$CI->db->table_exists($table_name)) {
+    // Check if table exists (with and without tbl prefix)
+    if (!$CI->db->table_exists($table_name) && !$CI->db->table_exists('tbl' . $table_name)) {
         $CI->load->dbforge();
         
         $fields = [
@@ -285,8 +302,6 @@ function ensure_contract_media_table_exists()
         $CI->dbforge->add_key('contract_id');
         $CI->dbforge->add_key('is_default');
         $CI->dbforge->create_table($table_name);
-        
-        log_message('info', 'Ella Contractors: Created ' . $table_name . ' table from helper');
     }
 }
 

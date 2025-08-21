@@ -53,6 +53,12 @@ function ella_contractors_init_menu() {
                 'position' => 15,
             ],
             [
+                'slug' => 'ella_contractors_default_media',
+                'name' => 'Default Media',
+                'href' => admin_url('ella_contractors/default_media'),
+                'position' => 18,
+            ],
+            [
                 'slug' => 'ella_contractors_projects',
                 'name' => 'Projects',
                 'href' => admin_url('ella_contractors/projects'),
