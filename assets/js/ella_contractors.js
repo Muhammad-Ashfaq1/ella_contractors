@@ -10,12 +10,12 @@
     window.EllaContractors = {
         
         // Initialize module
-        init: function() {
+    init: function() {
             this.initUploadForm();
             this.initMediaGallery();
             this.initCheckboxBehavior();
             this.initFilePreview();
-            this.initFormValidation();
+        this.initFormValidation();
             this.initHoverEffects();
         },
 
@@ -124,9 +124,9 @@
                     // Show file info with smart suggestions
                     var fileInfo = self.createFilePreview(fileName, fileSize, fileExt);
                     $('.help-block').after(fileInfo);
-                }
-            });
-        },
+            }
+        });
+    },
 
         // Create file preview with smart suggestions
         createFilePreview: function(fileName, fileSize, fileExt) {
@@ -176,8 +176,8 @@
                 setTimeout(function() {
                     $submitBtn.html(originalText).prop('disabled', false);
                 }, 30000);
-            });
-        },
+        });
+    },
 
         // Hover effects
         initHoverEffects: function() {
@@ -242,12 +242,12 @@
                     }
                 }
             }
-        }
-    };
+    }
+};
 
-    // Initialize when document is ready
-    $(document).ready(function() {
+// Initialize when document is ready
+$(document).ready(function() {
         window.EllaContractors.init();
-    });
+});
 
 })(jQuery);

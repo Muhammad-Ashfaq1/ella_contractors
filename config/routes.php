@@ -38,3 +38,6 @@ $route['ella_contractors/payments/(:num)'] = 'ella_contractors/payments/$1';
 
 // Settings routes
 $route['ella_contractors/settings'] = 'ella_contractors/settings';
+
+// Public Media Gallery Routes are now defined in application/config/routes.php
+// for proper public access outside the admin panel

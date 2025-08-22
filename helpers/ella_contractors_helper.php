@@ -205,27 +205,125 @@ function delete_contract_media($media_id)
 }
 
 /**
- * Get file icon based on file type
+ * Get appropriate file icon based on file type
+ * @param string $file_type MIME type of the file
+ * @return string FontAwesome icon class
  */
 function get_file_icon($file_type)
 {
-    $icons = [
-        'application/pdf' => 'fa-file-pdf-o text-danger',
-        'application/msword' => 'fa-file-word-o text-primary',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'fa-file-word-o text-primary',
-        'application/vnd.ms-excel' => 'fa-file-excel-o text-success',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'fa-file-excel-o text-success',
-        'application/vnd.ms-powerpoint' => 'fa-file-powerpoint-o text-warning',
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'fa-file-powerpoint-o text-warning',
-        'image/jpeg' => 'fa-file-image-o text-info',
-        'image/jpg' => 'fa-file-image-o text-info',
-        'image/png' => 'fa-file-image-o text-info',
-        'image/gif' => 'fa-file-image-o text-info',
-        'application/zip' => 'fa-file-archive-o text-muted',
-        'application/x-rar-compressed' => 'fa-file-archive-o text-muted'
+    $icon_map = [
+        // Images
+        'image/jpeg' => 'fa-file-image',
+        'image/png' => 'fa-file-image',
+        'image/gif' => 'fa-file-image',
+        'image/webp' => 'fa-file-image',
+        'image/svg+xml' => 'fa-file-image',
+        'image/tiff' => 'fa-file-image',
+        'image/bmp' => 'fa-file-image',
+        
+        // Documents
+        'application/pdf' => 'fa-file-pdf',
+        'application/msword' => 'fa-file-word',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'fa-file-word',
+        'application/vnd.ms-excel' => 'fa-file-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'fa-file-excel',
+        'application/vnd.ms-powerpoint' => 'fa-file-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'fa-file-powerpoint',
+        
+        // Archives
+        'application/zip' => 'fa-file-archive',
+        'application/x-rar-compressed' => 'fa-file-archive',
+        'application/x-7z-compressed' => 'fa-file-archive',
+        'application/gzip' => 'fa-file-archive',
+        'application/tar' => 'fa-file-archive',
+        
+        // Text files
+        'text/plain' => 'fa-file-text',
+        'text/html' => 'fa-file-code',
+        'text/css' => 'fa-file-code',
+        'text/javascript' => 'fa-file-code',
+        'application/json' => 'fa-file-code',
+        'application/xml' => 'fa-file-code',
+        
+        // Audio
+        'audio/mpeg' => 'fa-file-audio',
+        'audio/wav' => 'fa-file-audio',
+        'audio/ogg' => 'fa-file-audio',
+        'audio/mp4' => 'fa-file-audio',
+        
+        // Video
+        'video/mp4' => 'fa-file-video',
+        'video/avi' => 'fa-file-video',
+        'video/mov' => 'fa-file-video',
+        'video/wmv' => 'fa-file-video',
+        'video/webm' => 'fa-file-video',
+        
+        // CAD files
+        'application/dxf' => 'fa-drafting-compass',
+        'application/dwg' => 'fa-drafting-compass',
+        
+        // 3D files
+        'model/stl' => 'fa-cube',
+        'model/obj' => 'fa-cube',
+        'model/fbx' => 'fa-cube',
+        
+        // Default
+        'default' => 'fa-file'
     ];
     
-    return isset($icons[$file_type]) ? $icons[$file_type] : 'fa-file-o text-muted';
+    // Check if we have a specific icon for this file type
+    if (isset($icon_map[$file_type])) {
+        return $icon_map[$file_type];
+    }
+    
+    // Check by file extension if MIME type not found
+    $extension = pathinfo($file_type, PATHINFO_EXTENSION);
+    if ($extension) {
+        $extension_icons = [
+            'jpg' => 'fa-file-image',
+            'jpeg' => 'fa-file-image',
+            'png' => 'fa-file-image',
+            'gif' => 'fa-file-image',
+            'webp' => 'fa-file-image',
+            'svg' => 'fa-file-image',
+            'pdf' => 'fa-file-pdf',
+            'doc' => 'fa-file-word',
+            'docx' => 'fa-file-word',
+            'xls' => 'fa-file-excel',
+            'xlsx' => 'fa-file-excel',
+            'ppt' => 'fa-file-powerpoint',
+            'pptx' => 'fa-file-powerpoint',
+            'zip' => 'fa-file-archive',
+            'rar' => 'fa-file-archive',
+            '7z' => 'fa-file-archive',
+            'txt' => 'fa-file-text',
+            'html' => 'fa-file-code',
+            'css' => 'fa-file-code',
+            'js' => 'fa-file-code',
+            'json' => 'fa-file-code',
+            'xml' => 'fa-file-code',
+            'mp3' => 'fa-file-audio',
+            'wav' => 'fa-file-audio',
+            'ogg' => 'fa-file-audio',
+            'mp4' => 'fa-file-video',
+            'avi' => 'fa-file-video',
+            'mov' => 'fa-file-video',
+            'wmv' => 'fa-file-video',
+            'webm' => 'fa-file-video',
+            'stl' => 'fa-cube',
+            'obj' => 'fa-cube',
+            'fbx' => 'fa-cube',
+            'dxf' => 'fa-drafting-compass',
+            'dwg' => 'fa-drafting-compass'
+        ];
+        
+        if (isset($extension_icons[$extension])) {
+            return $extension_icons[$extension];
+        }
+    }
+    
+    // Return default icon
+    return $icon_map['default'];
 }
 
 /**
@@ -316,5 +414,123 @@ function format_file_size($size_kb)
         return round($size_kb / 1024, 2) . ' MB';
     } else {
         return round($size_kb / 1048576, 2) . ' GB';
+    }
+}
+
+/**
+ * Generate a shareable URL for media gallery
+ * @param int $contract_id Contract ID
+ * @param string $hash Access hash
+ * @return string Shareable URL
+ */
+function get_media_gallery_shareable_url($contract_id, $hash)
+{
+    return site_url("media-gallery/{$contract_id}/{$hash}");
+}
+
+/**
+ * Generate a shareable URL for default media gallery
+ * @param string $hash Access hash
+ * @return string Shareable URL
+ */
+function get_default_media_gallery_shareable_url($hash)
+{
+    return site_url("default-media-gallery/{$hash}");
+}
+
+/**
+ * Check if media gallery hash is valid for access
+ * @param int $contract_id Contract ID
+ * @param string $hash Access hash
+ * @return bool True if valid, false otherwise
+ */
+function check_media_gallery_access($contract_id, $hash)
+{
+    $CI = &get_instance();
+    
+    if (!$hash || !$contract_id) {
+        return false;
+    }
+    
+    // Check if this is a contract-specific gallery
+    if ($contract_id > 0) {
+        $CI->db->where('id', $contract_id);
+        $CI->db->where('hash', $hash);
+        $proposal = $CI->db->get(db_prefix() . 'proposals')->row();
+        
+        if ($proposal && $proposal->hash == $hash) {
+            return true;
+        }
+    }
+    
+    // Check if this is a default media gallery access
+    if ($contract_id == 0) {
+        // For default media, we'll use a special hash system
+        // You can implement your own hash validation logic here
+        $CI->db->where('hash', $hash);
+        $CI->db->where('is_default', 1);
+        $media = $CI->db->get(db_prefix() . 'ella_contractor_media')->row();
+        
+        if ($media && $media->hash == $hash) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Generate a unique hash for media gallery access
+ * @param int $contract_id Contract ID (0 for default media)
+ * @return string Unique hash
+ */
+function generate_media_gallery_hash($contract_id = 0)
+{
+    $CI = &get_instance();
+    
+    if ($contract_id > 0) {
+        // For contract-specific galleries, use the proposal hash
+        $CI->db->where('id', $contract_id);
+        $proposal = $CI->db->get(db_prefix() . 'proposals')->row();
+        
+        if ($proposal) {
+            return $proposal->hash;
+        }
+    }
+    
+    // For default media gallery, generate a new hash
+    $hash = app_generate_hash();
+    
+    // Store this hash in the database for validation
+    $CI->db->insert(db_prefix() . 'ella_contractor_media', [
+        'contract_id' => 0,
+        'hash' => $hash,
+        'is_default' => 1,
+        'date_uploaded' => date('Y-m-d H:i:s')
+    ]);
+    
+    return $hash;
+}
+
+/**
+ * Get media files for public gallery (filtered for public access)
+ * @param int $contract_id Contract ID (0 for default media)
+ * @param string $hash Access hash
+ * @return array Media files
+ */
+function get_public_media_gallery($contract_id, $hash)
+{
+    if (!check_media_gallery_access($contract_id, $hash)) {
+        return [];
+    }
+    
+    $CI = &get_instance();
+    
+    if ($contract_id > 0) {
+        // Get contract-specific media
+        return get_contract_media($contract_id);
+    } else {
+        // Get default media
+        return get_default_contract_media();
     }
 }

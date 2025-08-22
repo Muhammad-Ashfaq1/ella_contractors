@@ -138,14 +138,21 @@ window.csrf_jquery_ajax_setup = function() {
                                                                 </button>
                                                                 <ul class="dropdown-menu dropdown-menu-right">
                                                                     <li>
-                                                                        <a href="<?= admin_url('ella_contractors/view_contract/' . $proposal->id) ?>">
-                                                                            <i class="fa fa-eye text-primary"></i> View Contract Details
+                                                                        <a href="<?= admin_url('ella_contractors/view_contract/' . $proposal->id) ?>" class="btn btn-info btn-sm">
+                                                                            <i class="fa fa-eye"></i> View Contract Details
                                                                         </a>
                                                                     </li>
                                                                     <li>
-                                                                        <a href="<?= admin_url('ella_contractors/upload_media/' . $proposal->id) ?>">
-                                                                            <i class="fa fa-upload text-success"></i> Upload Media
+                                                                        <a href="<?= admin_url('ella_contractors/upload_media/' . $proposal->id) ?>" class="btn btn-success btn-sm">
+                                                                            <i class="fa fa-upload"></i> Upload Media
                                                                         </a>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button type="button" class="btn btn-primary btn-sm" 
+                                                                                onclick="copyShareableLink(<?= $proposal->id ?>, '<?= $proposal->hash ?>')"
+                                                                                title="Copy shareable media gallery link" id="share-gallery-button">
+                                                                            <i class="fa fa-share"></i> Share Gallery
+                                                                        </button>
                                                                     </li>
                                                                     <li class="divider"></li>
                                                                     <li>
@@ -235,6 +242,9 @@ window.csrf_jquery_ajax_setup = function() {
                                                     <a href="javascript:void(0)" onclick="loadDefaultMedia()" class="btn btn-success">
                                                         <i class="fa fa-refresh"></i> Refresh
                                                     </a>
+                                                    <a href="javascript:void(0)" onclick="copyDefaultMediaLink()" class="btn btn-warning">
+                                                        <i class="fa fa-share"></i> Share Gallery
+                                                    </a>
                                                     <a href="<?= admin_url('ella_contractors/default_media') ?>" class="btn btn-info" target="_blank">
                                                         <i class="fa fa-external-link"></i> Full Gallery
                                                     </a>
@@ -282,7 +292,6 @@ window.csrf_jquery_ajax_setup = function() {
 
 <script>
 $(document).ready(function() {
-    console.log('jQuery is ready');
     
     // Load default media count and content when tab is clicked
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
@@ -290,6 +299,25 @@ $(document).ready(function() {
             loadDefaultMedia();
         }
     });
+    
+    // Load default media count on page load
+    loadDefaultMediaCount();
+    
+    // Function to load default media count only
+    function loadDefaultMediaCount() {
+        $.ajax({
+            url: '<?= admin_url('ella_contractors/default_media') ?>',
+            type: 'GET',
+            dataType: 'html',
+            success: function(response) {
+                var mediaCount = $(response).find('.media-grid-item').length;
+                $('#default-media-count').text(mediaCount);
+            },
+            error: function() {
+                $('#default-media-count').text('0');
+            }
+        });
+    }
     
     // Function to load default media
     function loadDefaultMedia() {
@@ -308,13 +336,22 @@ $(document).ready(function() {
             type: 'GET',
             dataType: 'html',
             success: function(response) {
-                                // Extract the media content from the response
-                var mediaContent = $(response).find('.media-gallery-content').html();
+                // Extract the media content from the response
+                var mediaContent = $(response).find('.media-grid').html();
                 if (mediaContent) {
-                    $('#default-media-content').html(mediaContent);
+                    // Create a proper container for the media content
+                    var formattedContent = `
+                        <div class="media-gallery-content">
+                            <div class="media-grid">
+                                ${mediaContent}
+                            </div>
+                        </div>
+                    `;
+                    
+                    $('#default-media-content').html(formattedContent);
                     
                     // Update the count badge
-                    var mediaCount = $(response).find('.media-item').length;
+                    var mediaCount = $(response).find('.media-grid-item').length;
                     $('#default-media-count').text(mediaCount);
                     
                     // Show refresh success message
@@ -324,49 +361,83 @@ $(document).ready(function() {
                         showNotification('Default media refreshed. No files found.', 'info');
                     }
                 } else {
-                     $('#default-media-content').html(`
-                         <div class="text-center empty-state-large">
-                             <div style="font-size: 3rem; color: #ddd; margin-bottom: 20px;">
-                                 <i class="fa fa-star"></i>
-                             </div>
-                             <h3 class="text-muted">No Default Media Found</h3>
-                             <p class="text-muted">No default media files have been uploaded yet. These files will be available for all contracts.</p>
-                             <div style="margin-top: 30px;">
-                                 <a href="<?= admin_url('ella_contractors/upload_media') ?>" class="btn btn-primary btn-lg">
-                                     <i class="fa fa-upload"></i> Upload Your First Default Media
-                                 </a>
-                                 <br><br>
-                                 <small class="text-muted">
-                                     <i class="fa fa-info-circle"></i> 
-                                     Default media files are available for all contracts and can include company brochures, 
-                                     standard contracts, policy documents, and common forms.
-                                 </small>
-                             </div>
-                         </div>
-                     `);
-                     $('#default-media-count').text('0');
-                 }
+                    // No media found - show empty state
+                    $('#default-media-content').html(`
+                        <div class="text-center empty-state-large">
+                            <div style="font-size: 3rem; color: #ddd; margin-bottom: 20px;">
+                                <i class="fa fa-star"></i>
+                            </div>
+                            <h3 class="text-muted">No Default Media Found</h3>
+                            <p class="text-muted">No default media files have been uploaded yet. These files will be available for all contracts.</p>
+                            <div style="margin-top: 30px;">
+                                <a href="<?= admin_url('ella_contractors/upload_media') ?>" class="btn btn-primary btn-lg">
+                                    <i class="fa fa-upload"></i> Upload Your First Default Media
+                                </a>
+                                <br><br>
+                                <small class="text-muted">
+                                    <i class="fa fa-info-circle"></i> 
+                                    Default media files are available for all contracts and can include company brochures, 
+                                    standard contracts, policy documents, and common forms.
+                                </small>
+                            </div>
+                        </div>
+                    `);
+                    $('#default-media-count').text('0');
+                }
             },
-                         error: function() {
-                 $('#default-media-content').html(`
-                     <div class="text-center" style="padding: 40px 20px;">
-                         <div style="font-size: 3rem; color: #ddd; margin-bottom: 20px;">
-                             <i class="fa fa-exclamation-triangle"></i>
-                         </div>
-                         <h3 class="text-muted">Error Loading Default Media</h3>
-                         <p class="text-muted">There was an error loading the default media. Please try again.</p>
-                         <div style="margin-top: 30px;">
-                             <a href="<?= admin_url('ella_contractors/upload_media') ?>" class="btn btn-primary">
-                                 <i class="fa fa-upload"></i> Upload Default Media
-                             </a>
-                             <a href="javascript:void(0)" onclick="loadDefaultMedia()" class="btn btn-default">
-                                 <i class="fa fa-refresh"></i> Try Again
-                             </a>
-                         </div>
-                     </div>
-                 `);
-             }
+            error: function() {
+                $('#default-media-content').html(`
+                    <div class="text-center" style="padding: 40px 20px;">
+                        <div style="font-size: 3rem; color: #ddd; margin-bottom: 20px;">
+                            <i class="fa fa-exclamation-triangle"></i>
+                        </div>
+                        <h3 class="text-muted">Error Loading Default Media</h3>
+                        <p class="text-muted">There was an error loading the default media. Please try again.</p>
+                        <div style="margin-top: 30px;">
+                            <a href="<?= admin_url('ella_contractors/upload_media') ?>" class="btn btn-primary">
+                                <i class="fa fa-upload"></i> Upload Default Media
+                            </a>
+                            <a href="javascript:void(0)" onclick="loadDefaultMedia()" class="btn btn-default">
+                                <i class="fa fa-refresh"></i> Try Again
+                            </a>
+                        </div>
+                    </div>
+                `);
+            }
         });
+    }
+
+
+
+
+    
+    // Function to copy default media gallery link
+    function copyDefaultMediaLink() {
+        // Generate a simple hash for default media access
+        var hash = generateDefaultMediaHash();
+        var url = '<?= site_url("default-media-gallery") ?>/' + hash;
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(url).then(function() {
+            showNotification('Default media gallery link copied to clipboard!', 'success');
+        }).catch(function() {
+            // Fallback for older browsers
+            var textArea = document.createElement("textarea");
+            textArea.value = url;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showNotification('Default media gallery link copied to clipboard!', 'success');
+        });
+    }
+    
+    // Function to generate default media hash (client-side for demo)
+    function generateDefaultMediaHash() {
+        // Simple hash generation - in production, this should come from the server
+        var timestamp = new Date().getTime();
+        var random = Math.random().toString(36).substring(2, 15);
+        return btoa(timestamp + random).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
     }
     
     // Function to show notifications
@@ -414,20 +485,127 @@ $(document).ready(function() {
         window.history.replaceState({}, document.title, newUrl);
     }
     
-    // Load default media count on page load
-    $.ajax({
-        url: '<?= admin_url('ella_contractors/default_media') ?>',
-        type: 'GET',
-        dataType: 'html',
-        success: function(response) {
-            var mediaCount = $(response).find('.media-item').length;
-            $('#default-media-count').text(mediaCount);
-        },
-        error: function() {
-            $('#default-media-count').text('0');
+    // Function to copy shareable media gallery link
+     function copyShareableLink(contractId, hash) {
+         console.log('Copying shareable link for contract:', contractId, 'hash:', hash);
+         
+         const shareableUrl = `<?= site_url('media-gallery') ?>/${contractId}/${hash}`;
+         console.log('Generated shareable URL:', shareableUrl);
+         
+         // Copy to clipboard using modern API
+         navigator.clipboard.writeText(shareableUrl).then(function() {
+             // Show success message
+             showNotification('Shareable link copied to clipboard!', 'success');
+             
+             // Show the copied URL with SweetAlert2
+             if (typeof Swal !== 'undefined') {
+                 Swal.fire({
+                     title: 'Link Copied!',
+                     html: `
+                         <p class="mb-3">Shareable media gallery link has been copied to clipboard:</p>
+                         <div class="alert alert-info">
+                             <code>${shareableUrl}</code>
+                         </div>
+                         <p class="text-muted small">You can now paste this link in emails, SMS, or share it with customers/leads.</p>
+                         <hr>
+                         <p class="text-info small">
+                             <i class="fa fa-info-circle"></i> 
+                             <strong>Test the link:</strong> 
+                             <a href="${shareableUrl}" target="_blank" class="btn btn-sm btn-primary mt-2">
+                                 <i class="fa fa-external-link"></i> Open Gallery
+                             </a>
+                         </p>
+                     `,
+                     icon: 'success',
+                     confirmButtonText: 'OK',
+                     confirmButtonColor: '#667eea',
+                     width: '600px'
+                 });
+             }
+         }).catch(function() {
+             // Fallback for older browsers
+             const tempInput = document.createElement('input');
+             tempInput.value = shareableUrl;
+             document.body.appendChild(tempInput);
+             tempInput.select();
+             const copySuccess = document.execCommand('copy');
+             document.body.removeChild(tempInput);
+             
+             if (copySuccess) {
+                 showNotification('Shareable link copied to clipboard!', 'success');
+                 
+                 if (typeof Swal !== 'undefined') {
+                     Swal.fire({
+                         title: 'Link Copied!',
+                         html: `
+                             <p class="mb-3">Shareable media gallery link has been copied to clipboard:</p>
+                             <div class="alert alert-info">
+                                 <code>${shareableUrl}</code>
+                             </div>
+                             <p class="text-muted small">You can now paste this link in emails, SMS, or share it with customers/leads.</p>
+                         `,
+                         icon: 'success',
+                         confirmButtonText: 'OK',
+                         confirmButtonColor: '#667eea',
+                         width: '600px'
+                     });
+                 }
+             } else {
+                 showNotification('Failed to copy link. Please copy manually: ' + shareableUrl, 'error');
+                 
+                 if (typeof Swal !== 'undefined') {
+                     Swal.fire({
+                         title: 'Copy Failed',
+                         html: `
+                             <p class="mb-3">Please copy this link manually:</p>
+                             <div class="alert alert-warning">
+                                 <code>${shareableUrl}</code>
+                             </div>
+                             <p class="text-muted small">Select the text above and press Ctrl+C (or Cmd+C on Mac)</p>
+                         `,
+                         icon: 'warning',
+                         confirmButtonText: 'OK',
+                         confirmButtonColor: '#f39c12'
+                     });
+                 }
+             }
+         });
+     }
+
+     function showNotification(message, type = 'info') {
+        // Check if Toastr is available
+        if (typeof toastr !== 'undefined') {
+            toastr[type](message);
+        } else if (typeof Swal !== 'undefined') {
+            // Fallback to SweetAlert2
+            Swal.fire({
+                title: type.charAt(0).toUpperCase() + type.slice(1),
+                text: message,
+                icon: type,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        } else {
+            // Fallback to browser alert
+            alert(message);
         }
+    }
+
+     $('#share-gallery-button').click(function() {
+        console.log('Share gallery button clicked');
+        copyShareableLink(<?= $proposal->id ?>, '<?= $proposal->hash ?>');
     });
-});
+
+    });
+
+
+
+
+
+
 </script>
 
 

@@ -65,6 +65,11 @@ window.csrf_jquery_ajax_setup = function() {
                             <i class="fa fa-star"></i> View Default Media
                             <span class="badge"><?php echo count($default_media); ?></span>
                         </a>
+                        <button type="button" class="btn btn-success" 
+                                onclick="copyShareableLink(<?php echo $contract->id; ?>, '<?php echo $contract->hash; ?>')"
+                                title="Copy shareable media gallery link">
+                            <i class="fa fa-share"></i> Share Gallery
+                        </button>
                     </div>
 
                     <!-- Contract Details Content -->
@@ -169,3 +174,67 @@ window.csrf_jquery_ajax_setup = function() {
 </div>
 
 <?php init_tail(); ?>
+
+<script>
+    // Function to copy shareable media gallery link
+    function copyShareableLink(contractId, hash) {
+        const shareableUrl = `<?= site_url('media-gallery') ?>/${contractId}/${hash}`;
+        
+        // Create temporary input element
+        const tempInput = document.createElement('input');
+        tempInput.value = shareableUrl;
+        document.body.appendChild(tempInput);
+        
+        // Select and copy the text
+        tempInput.select();
+        document.execCommand('copy');
+        
+        // Remove temporary element
+        document.body.removeChild(tempInput);
+        
+        // Show success message
+        showNotification('Shareable link copied to clipboard!', 'success');
+        
+        // Show the copied URL
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Link Copied!',
+                html: `
+                    <p class="mb-3">Shareable media gallery link has been copied to clipboard:</p>
+                    <div class="alert alert-info">
+                        <code>${shareableUrl}</code>
+                    </div>
+                    <p class="text-muted small">You can now paste this link in emails, SMS, or share it with customers/leads.</p>
+                `,
+                icon: 'success',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#667eea'
+            });
+        } else {
+            alert(`Shareable link copied: ${shareableUrl}`);
+        }
+    }
+    
+    // Enhanced showNotification function
+    function showNotification(message, type = 'info') {
+        // Check if Toastr is available
+        if (typeof toastr !== 'undefined') {
+            toastr[type](message);
+        } else if (typeof Swal !== 'undefined') {
+            // Fallback to SweetAlert2
+            Swal.fire({
+                title: type.charAt(0).toUpperCase() + type.slice(1),
+                text: message,
+                icon: type,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        } else {
+            // Fallback to browser alert
+            alert(message);
+        }
+    }
+</script>
