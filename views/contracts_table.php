@@ -148,9 +148,10 @@ window.csrf_jquery_ajax_setup = function() {
                                                                         </a>
                                                                     </li>
                                                                     <li>
-                                                                        <button type="button" class="btn btn-primary btn-sm" 
-                                                                                onclick="copyShareableLink(<?= $proposal->id ?>, '<?= $proposal->hash ?>')"
-                                                                                title="Copy shareable media gallery link" id="share-gallery-button">
+                                                                        <button type="button" class="btn btn-primary btn-sm share-gallery-btn" 
+                                                                                data-contract-id="<?= $proposal->id ?>" 
+                                                                                data-hash="<?= $proposal->hash ?>"
+                                                                                title="Copy shareable media gallery link">
                                                                             <i class="fa fa-share"></i> Share Gallery
                                                                         </button>
                                                                     </li>
@@ -169,28 +170,28 @@ window.csrf_jquery_ajax_setup = function() {
                                                                     <?php endif; ?>
                                                                     <li class="divider"></li>
                                                                     <li>
-                                                                        <a href="javascript:void(0)" onclick="alert('Generate Contract PDF - Coming Soon!')">
+                                                                        <a href="javascript:void(0)" class="generate-pdf-btn">
                                                                             <i class="fa fa-file-pdf-o text-danger"></i> Generate Contract PDF
                                                                         </a>
                                                                     </li>
                                                                     <li>
-                                                                        <a href="javascript:void(0)" onclick="alert('Generate Presentation - Coming Soon!')">
+                                                                        <a href="javascript:void(0)" class="generate-ppt-btn">
                                                                             <i class="fa fa-file-powerpoint-o text-warning"></i> Generate PPT
                                                                         </a>
                                                                     </li>
                                                                     <li>
-                                                                        <a href="javascript:void(0)" onclick="alert('Create Project - Coming Soon!')">
+                                                                        <a href="javascript:void(0)" class="create-project-btn">
                                                                             <i class="fa fa-plus text-success"></i> Create Project
                                                                         </a>
                                                                     </li>
                                                                     <li class="divider"></li>
                                                                     <li>
-                                                                        <a href="javascript:void(0)" onclick="alert('Send Email - Coming Soon!')">
+                                                                        <a href="javascript:void(0)" class="send-email-btn">
                                                                             <i class="fa fa-envelope"></i> Send Email
                                                                         </a>
                                                                     </li>
                                                                     <li>
-                                                                        <a href="javascript:void(0)" onclick="alert('Clone Contract - Coming Soon!')">
+                                                                        <a href="javascript:void(0)" class="clone-contract-btn">
                                                                             <i class="fa fa-copy"></i> Clone Contract
                                                                         </a>
                                                                     </li>
@@ -239,10 +240,10 @@ window.csrf_jquery_ajax_setup = function() {
                                                     <a href="<?= admin_url('ella_contractors/upload_media') ?>" class="btn btn-primary">
                                                         <i class="fa fa-plus"></i> Add More Files
                                                     </a>
-                                                    <a href="javascript:void(0)" onclick="loadDefaultMedia()" class="btn btn-success">
+                                                    <a href="javascript:void(0)" class="btn btn-success refresh-default-media-btn">
                                                         <i class="fa fa-refresh"></i> Refresh
                                                     </a>
-                                                    <a href="javascript:void(0)" onclick="copyDefaultMediaLink()" class="btn btn-warning">
+                                                    <a href="javascript:void(0)" class="btn btn-warning copy-default-media-link-btn">
                                                         <i class="fa fa-share"></i> Share Gallery
                                                     </a>
                                                     <a href="<?= admin_url('ella_contractors/default_media') ?>" class="btn btn-info" target="_blank">
@@ -354,12 +355,6 @@ $(document).ready(function() {
                     var mediaCount = $(response).find('.media-grid-item').length;
                     $('#default-media-count').text(mediaCount);
                     
-                    // Show refresh success message
-                    if (mediaCount > 0) {
-                        showNotification('Default media refreshed successfully! Found ' + mediaCount + ' file(s).', 'success');
-                    } else {
-                        showNotification('Default media refreshed. No files found.', 'info');
-                    }
                 } else {
                     // No media found - show empty state
                     $('#default-media-content').html(`
@@ -397,7 +392,7 @@ $(document).ready(function() {
                             <a href="<?= admin_url('ella_contractors/upload_media') ?>" class="btn btn-primary">
                                 <i class="fa fa-upload"></i> Upload Default Media
                             </a>
-                            <a href="javascript:void(0)" onclick="loadDefaultMedia()" class="btn btn-default">
+                            <a href="javascript:void(0)" class="btn btn-default try-again-default-media-btn">
                                 <i class="fa fa-refresh"></i> Try Again
                             </a>
                         </div>
@@ -487,10 +482,7 @@ $(document).ready(function() {
     
     // Function to copy shareable media gallery link
      function copyShareableLink(contractId, hash) {
-         console.log('Copying shareable link for contract:', contractId, 'hash:', hash);
-         
          const shareableUrl = `<?= site_url('media-gallery') ?>/${contractId}/${hash}`;
-         console.log('Generated shareable URL:', shareableUrl);
          
          // Copy to clipboard using modern API
          navigator.clipboard.writeText(shareableUrl).then(function() {
@@ -594,10 +586,45 @@ $(document).ready(function() {
         }
     }
 
-     $('#share-gallery-button').click(function() {
-        console.log('Share gallery button clicked');
-        copyShareableLink(<?= $proposal->id ?>, '<?= $proposal->hash ?>');
+     // Handle share gallery button clicks using event delegation
+     $(document).on('click', '.share-gallery-btn', function() {
+        const contractId = $(this).data('contract-id');
+        const hash = $(this).data('hash');
+        copyShareableLink(contractId, hash);
     });
+
+     // Handle other button clicks using event delegation
+     $(document).on('click', '.generate-pdf-btn', function() {
+        alert('Generate Contract PDF - Coming Soon!');
+     });
+
+     $(document).on('click', '.generate-ppt-btn', function() {
+        alert('Generate Presentation - Coming Soon!');
+     });
+
+     $(document).on('click', '.create-project-btn', function() {
+        alert('Create Project - Coming Soon!');
+     });
+
+     $(document).on('click', '.send-email-btn', function() {
+        alert('Send Email - Coming Soon!');
+     });
+
+     $(document).on('click', '.clone-contract-btn', function() {
+        alert('Clone Contract - Coming Soon!');
+     });
+
+     $(document).on('click', '.refresh-default-media-btn', function() {
+        loadDefaultMedia();
+     });
+
+     $(document).on('click', '.copy-default-media-link-btn', function() {
+        copyDefaultMediaLink();
+     });
+
+     $(document).on('click', '.try-again-default-media-btn', function() {
+        loadDefaultMedia();
+     });
 
     });
 
