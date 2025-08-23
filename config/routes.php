@@ -1,40 +1,44 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+$module_name = 'ella_contractors';
+
 // Main dashboard route
-$route['ella_contractors'] = 'ella_contractors/dashboard';
-$route['ella_contractors/dashboard'] = 'ella_contractors/dashboard';
+$route[$module_name] = $module_name . '/dashboard';
+$route[$module_name . '/dashboard'] = $module_name . '/dashboard';
 
 // Contractors management routes
-$route['ella_contractors/contractors'] = 'ella_contractors/contractors';
-$route['ella_contractors/contractors/(:num)'] = 'ella_contractors/contractors/$1';
+$route[$module_name . '/contractors'] = $module_name . '/contractors';
+$route[$module_name . '/contractors/(:num)'] = $module_name . '/contractors/$1';
 
 // Contracts management routes
-$route['ella_contractors/contracts'] = 'ella_contractors/contracts';
-$route['ella_contractors/contracts/view/(:num)'] = 'ella_contractors/view_contract/$1';
-$route['ella_contractors/contracts/(:num)'] = 'ella_contractors/contracts/$1';
-$route['ella_contractors/view_contract/(:num)'] = 'ella_contractors/view_contract/$1';
+$route[$module_name . '/contracts'] = $module_name . '/contracts';
+$route[$module_name . '/contracts/view/(:num)'] = $module_name . '/view_contract/$1';
+$route[$module_name . '/contracts/(:num)'] = $module_name . '/contracts/$1';
+$route[$module_name . '/view_contract/(:num)'] = $module_name . '/view_contract/$1';
 
 // Media management routes
-$route['ella_contractors/upload_media/(:num)'] = 'ella_contractors/upload_media/$1';
-$route['ella_contractors/upload_media'] = 'ella_contractors/upload_media';
-$route['ella_contractors/delete_media/(:num)'] = 'ella_contractors/delete_media/$1';
-$route['ella_contractors/media_gallery/(:num)'] = 'ella_contractors/media_gallery/$1';
-$route['ella_contractors/media_gallery'] = 'ella_contractors/media_gallery';
-$route['ella_contractors/default_media'] = 'ella_contractors/default_media';
+$route[$module_name . '/upload_media/(:num)'] = $module_name . '/upload_media/$1';
+$route[$module_name . '/upload_media'] = $module_name . '/upload_media';
+$route[$module_name . '/delete_media/(:num)'] = $module_name . '/delete_media/$1';
+$route[$module_name . '/media_gallery/(:num)'] = $module_name . '/media_gallery/$1';
+$route[$module_name . '/media_gallery'] = $module_name . '/media_gallery';
+$route[$module_name . '/default_media'] = $module_name . '/default_media';
 
 // Module management routes
-$route['ella_contractors/activate'] = 'ella_contractors/activate_module';
+$route[$module_name . '/activate'] = $module_name . '/activate_module';
 // Projects management routes
-$route['ella_contractors/projects'] = 'ella_contractors/projects';
-$route['ella_contractors/projects/(:num)'] = 'ella_contractors/projects/$1';
+$route[$module_name . '/projects'] = $module_name . '/projects';
+$route[$module_name . '/projects/(:num)'] = $module_name . '/projects/$1';
 
 // Payments management routes
-$route['ella_contractors/payments'] = 'ella_contractors/payments';
-$route['ella_contractors/payments/(:num)'] = 'ella_contractors/payments/$1';
+$route[$module_name . '/payments'] = $module_name . '/payments';
+$route[$module_name . '/payments/(:num)'] = $module_name . '/payments/$1';
 
 // Settings routes
-$route['ella_contractors/settings'] = 'ella_contractors/settings';
+$route[$module_name . '/settings'] = $module_name . '/settings';
+
+
 
 // Public Media Gallery Routes (Simple Perfex-compatible)
 $route['public_media/(:num)/(:any)'] = 'ella_contractors/public_media/$1/$2';
