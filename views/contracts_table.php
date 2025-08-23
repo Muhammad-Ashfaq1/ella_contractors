@@ -482,7 +482,7 @@ $(document).ready(function() {
     
     // Function to copy shareable media gallery link
      function copyShareableLink(contractId, hash) {
-         const shareableUrl = `<?= site_url('public-media-gallery') ?>/${contractId}/${hash}`;
+         const shareableUrl = `<?= site_url('ella-contractors/media') ?>/${contractId}/${hash}`;
          
          // Copy to clipboard using modern API
          navigator.clipboard.writeText(shareableUrl).then(function() {

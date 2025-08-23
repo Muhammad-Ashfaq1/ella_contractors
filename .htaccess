@@ -4,15 +4,15 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
-# Route public media gallery requests
-RewriteRule ^public-media-gallery/([0-9]+)/([a-zA-Z0-9]+)/?$ index.php/public_media_gallery/index/$1/$2 [L,QSA]
-RewriteRule ^public-media-gallery/([0-9]+)/([a-zA-Z0-9]+)/download/([^/]+)/?$ index.php/public_media_gallery/download/$1/$2/$3 [L,QSA]
-RewriteRule ^public-media-gallery/([0-9]+)/([a-zA-Z0-9]+)/view/([^/]+)/?$ index.php/public_media_gallery/view/$1/$2/$3 [L,QSA]
+# Route media gallery requests (Perfex-compatible)
+RewriteRule ^media/([0-9]+)/([a-zA-Z0-9]+)/?$ index.php/public_access/media/$1/$2 [L,QSA]
+RewriteRule ^media/([0-9]+)/([a-zA-Z0-9]+)/download/([^/]+)/?$ index.php/public_access/download/$1/$2/$3 [L,QSA]
+RewriteRule ^media/([0-9]+)/([a-zA-Z0-9]+)/view/([^/]+)/?$ index.php/public_access/view/$1/$2/$3 [L,QSA]
 
 # Route default media gallery requests
-RewriteRule ^public-default-media/([a-zA-Z0-9]+)/?$ index.php/public_media_gallery/default_gallery/$1 [L,QSA]
-RewriteRule ^public-default-media/([a-zA-Z0-9]+)/download/([^/]+)/?$ index.php/public_media_gallery/download/0/$1/$2 [L,QSA]
-RewriteRule ^public-default-media/([a-zA-Z0-9]+)/view/([^/]+)/?$ index.php/public_media_gallery/view/0/$1/$2 [L,QSA]
+RewriteRule ^default-media/([a-zA-Z0-9]+)/?$ index.php/public_access/default_media/$1 [L,QSA]
+RewriteRule ^default-media/([a-zA-Z0-9]+)/download/([^/]+)/?$ index.php/public_access/download/0/$1/$2 [L,QSA]
+RewriteRule ^default-media/([a-zA-Z0-9]+)/view/([^/]+)/?$ index.php/public_access/view/0/$1/$2 [L,QSA]
 
 # Allow access to assets
 RewriteRule ^assets/(.*)$ assets/$1 [L]

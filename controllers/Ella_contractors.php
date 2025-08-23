@@ -350,4 +350,27 @@ class Ella_contractors extends AdminController
         $data['message'] = 'Hello from Settings page';
         $this->load->view('simple_page', $data);
     }
+    
+    /**
+     * Test method to verify module is accessible
+     */
+    public function test_access() {
+        echo "<h2>Ella Contractors Module Test</h2>";
+        echo "<p>✅ Module is accessible!</p>";
+        echo "<p>✅ Controller is working!</p>";
+        echo "<p>✅ Database connection: ";
+        
+        try {
+            $this->db->simple_query('SELECT 1');
+            echo "Working</p>";
+        } catch (Exception $e) {
+            echo "Failed: " . $e->getMessage() . "</p>";
+        }
+        
+        echo "<p><strong>Test URLs:</strong></p>";
+        echo "<ul>";
+        echo "<li><a href='" . site_url('ella-contractors/media/1/test123') . "'>Test Contract Media Gallery</a></li>";
+        echo "<li><a href='" . site_url('ella-contractors/default-media/test123') . "'>Test Default Media Gallery</a></li>";
+        echo "</ul>";
+    }
 }
