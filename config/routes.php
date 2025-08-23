@@ -25,9 +25,6 @@ $route['ella_contractors/default_media'] = 'ella_contractors/default_media';
 
 // Module management routes
 $route['ella_contractors/activate'] = 'ella_contractors/activate_module';
-
-
-
 // Projects management routes
 $route['ella_contractors/projects'] = 'ella_contractors/projects';
 $route['ella_contractors/projects/(:num)'] = 'ella_contractors/projects/$1';
@@ -39,16 +36,6 @@ $route['ella_contractors/payments/(:num)'] = 'ella_contractors/payments/$1';
 // Settings routes
 $route['ella_contractors/settings'] = 'ella_contractors/settings';
 
-// Test route for debugging
-$route['ella_contractors/test'] = 'ella_contractors/test_access';
-
-// Public Media Gallery Routes (Perfex-compatible)
-$route['media/(:num)/(:any)'] = 'public_access/media/$1/$2';
-$route['default-media/(:any)'] = 'public_access/default_media/$1';
-$route['media/(:num)/(:any)/download/(:any)'] = 'public_access/download/$1/$2/$3';
-$route['media/(:num)/(:any)/view/(:any)'] = 'public_access/view/$1/$2/$3';
-$route['default-media/(:any)/download/(:any)'] = 'public_access/download/0/$1/$2';
-$route['default-media/(:any)/view/(:any)'] = 'public_access/view/0/$1/$2';
-
-// Public Media Gallery Routes are now defined in application/config/routes.php
-// for proper public access outside the admin panel
+// Public Media Gallery Routes (Simple Perfex-compatible)
+$route['public_media/(:num)/(:any)'] = 'ella_contractors/public_media/$1/$2';
+$route['public_default_media/(:any)'] = 'ella_contractors/public_default_media/$1';
