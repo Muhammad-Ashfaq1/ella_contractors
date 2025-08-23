@@ -83,24 +83,39 @@ window.csrf_jquery_ajax_setup = function() {
                                                       placeholder="Optional description for this file"></textarea>
                                         </div>
 
+                                        <!-- Debug Info (remove in production) -->
+                                        <?php if (defined('ELLA_CONTRACTORS_DEBUG') && ELLA_CONTRACTORS_DEBUG): ?>
+                                        <div class="alert alert-warning">
+                                            <strong>Debug Info:</strong><br>
+                                            Contract ID: <?php var_dump($contract_id); ?><br>
+                                            Type: <?php echo gettype($contract_id); ?><br>
+                                            Empty: <?php echo empty($contract_id) ? 'true' : 'false'; ?><br>
+                                            Null: <?php echo is_null($contract_id) ? 'true' : 'false'; ?><br>
+                                            Should be checked: <?php echo (empty($contract_id) || $contract_id === null || $contract_id === '') ? 'true' : 'false'; ?>
+                                        </div>
+                                        <?php endif; ?>
+                                        
                                         <!-- Dynamic Default Media Checkbox -->
                                         <div class="form-group">
-                                            <div class="checkbox checkbox-default-media">
+                                                                                            <div class="checkbox checkbox-default-media">
                                                 <label>
                                                     <input type="checkbox" 
                                                            name="is_default" 
                                                            value="1" 
                                                            id="is_default_checkbox"
-                                                           <?php echo !$contract_id ? 'checked' : ''; ?>>
+                                                           <?php 
+                                                           $should_check = (empty($contract_id) || $contract_id === null || $contract_id === '' || $contract_id === 0);
+                                                           echo $should_check ? 'checked' : ''; 
+                                                           ?>>
                                                     <strong id="checkbox_label">
-                                                        <?php if (!$contract_id): ?>
+                                                        <?php if ($should_check): ?>
                                                             Use as default media for all contracts
                                                         <?php else: ?>
                                                             Also use as default media for all contracts
                                                         <?php endif; ?>
                                                     </strong>
                                                     <br><small class="text-muted" id="checkbox_description">
-                                                        <?php if (!$contract_id): ?>
+                                                        <?php if ($should_check): ?>
                                                             This file will be available in all contract media galleries
                                                         <?php else: ?>
                                                             This file will be available in all contract media galleries, not just this contract
@@ -110,7 +125,7 @@ window.csrf_jquery_ajax_setup = function() {
                                             </div>
                                             
                                             <!-- Additional Info Panel -->
-                                            <div class="alert alert-info checkbox-info-panel" id="default_info_panel" style="display: none; margin-top: 10px;">
+                                            <div class="alert alert-info checkbox-info-panel" id="default_info_panel" style="margin-top: 10px;">
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <h6><i class="fa fa-info-circle"></i> What this means:</h6>
@@ -296,9 +311,41 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add event listener to checkbox
     const isDefaultCheckbox = document.getElementById('is_default_checkbox');
+    const defaultInfoPanel = document.getElementById('default_info_panel');
+    
+    // Debug: Log checkbox state and contract_id
+    console.log('Contract ID:', '<?php echo $contract_id; ?>');
+    console.log('Checkbox checked:', isDefaultCheckbox ? isDefaultCheckbox.checked : 'checkbox not found');
+    
     if (isDefaultCheckbox) {
-        isDefaultCheckbox.addEventListener('change', updateSubmitButtonText);
-        updateSubmitButtonText(); // Initial call
+        isDefaultCheckbox.addEventListener('change', function() {
+            console.log('Checkbox changed to:', this.checked);
+            updateSubmitButtonText();
+            toggleDefaultInfoPanel();
+        });
+        
+        // Initial calls
+        updateSubmitButtonText();
+        toggleDefaultInfoPanel();
+        
+        // Ensure proper initial state
+        setTimeout(function() {
+            console.log('Initial checkbox state:', isDefaultCheckbox.checked);
+            toggleDefaultInfoPanel();
+        }, 100);
+    }
+    
+    // Function to toggle default info panel visibility
+    function toggleDefaultInfoPanel() {
+        if (defaultInfoPanel && isDefaultCheckbox) {
+            if (isDefaultCheckbox.checked) {
+                defaultInfoPanel.style.display = 'block';
+                console.log('Info panel shown');
+            } else {
+                defaultInfoPanel.style.display = 'none';
+                console.log('Info panel hidden');
+            }
+        }
     }
     
     // Check for URL parameters to show notifications
