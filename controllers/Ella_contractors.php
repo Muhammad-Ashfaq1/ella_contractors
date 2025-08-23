@@ -33,6 +33,13 @@ class Ella_contractors extends AdminController
     public function index() {
         redirect('admin/ella_contractors/dashboard');
     }
+
+    /**
+     * New method
+     */
+    public function new() {
+        die('test');
+    }
     
     /**
      * Contractors listing page
@@ -354,7 +361,7 @@ class Ella_contractors extends AdminController
     /**
      * Test method to verify module is accessible
      */
-    public function test_access() {
+    public function myFunction() {
         echo "<h2>Ella Contractors Module Test</h2>";
         echo "<p>✅ Module is accessible!</p>";
         echo "<p>✅ Controller is working!</p>";
@@ -372,5 +379,8 @@ class Ella_contractors extends AdminController
         echo "<li><a href='" . site_url('ella-contractors/media/1/test123') . "'>Test Contract Media Gallery</a></li>";
         echo "<li><a href='" . site_url('ella-contractors/default-media/test123') . "'>Test Default Media Gallery</a></li>";
         echo "</ul>";
+        
+        echo "<hr>";
+        echo "<p><a href='" . admin_url('ella_contractors') . "'>← Back to Ella Contractors</a></p>";
     }
 }
