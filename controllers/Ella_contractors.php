@@ -154,8 +154,7 @@ class Ella_contractors extends AdminController
         $data['title'] = $contract_id ? 'Upload Media for Contract' : 'Upload Default Media';
         $data['contract_id'] = $contract_id;
         
-        // Debug logging
-        log_message('debug', 'Ella Contractors: upload_media - contract_id: ' . var_export($contract_id, true));
+
         
         // Get contract details if contract_id provided
         if ($contract_id) {

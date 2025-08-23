@@ -83,18 +83,6 @@ window.csrf_jquery_ajax_setup = function() {
                                                       placeholder="Optional description for this file"></textarea>
                                         </div>
 
-                                        <!-- Debug Info (remove in production) -->
-                                        <?php if (defined('ELLA_CONTRACTORS_DEBUG') && ELLA_CONTRACTORS_DEBUG): ?>
-                                        <div class="alert alert-warning">
-                                            <strong>Debug Info:</strong><br>
-                                            Contract ID: <?php var_dump($contract_id); ?><br>
-                                            Type: <?php echo gettype($contract_id); ?><br>
-                                            Empty: <?php echo empty($contract_id) ? 'true' : 'false'; ?><br>
-                                            Null: <?php echo is_null($contract_id) ? 'true' : 'false'; ?><br>
-                                            Should be checked: <?php echo (empty($contract_id) || $contract_id === null || $contract_id === '') ? 'true' : 'false'; ?>
-                                        </div>
-                                        <?php endif; ?>
-                                        
                                         <!-- Dynamic Default Media Checkbox -->
                                         <div class="form-group">
                                                                                             <div class="checkbox checkbox-default-media">
@@ -313,13 +301,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const isDefaultCheckbox = document.getElementById('is_default_checkbox');
     const defaultInfoPanel = document.getElementById('default_info_panel');
     
-    // Debug: Log checkbox state and contract_id
-    console.log('Contract ID:', '<?php echo $contract_id; ?>');
-    console.log('Checkbox checked:', isDefaultCheckbox ? isDefaultCheckbox.checked : 'checkbox not found');
+
     
     if (isDefaultCheckbox) {
         isDefaultCheckbox.addEventListener('change', function() {
-            console.log('Checkbox changed to:', this.checked);
             updateSubmitButtonText();
             toggleDefaultInfoPanel();
         });
@@ -330,7 +315,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Ensure proper initial state
         setTimeout(function() {
-            console.log('Initial checkbox state:', isDefaultCheckbox.checked);
             toggleDefaultInfoPanel();
         }, 100);
     }
@@ -340,10 +324,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (defaultInfoPanel && isDefaultCheckbox) {
             if (isDefaultCheckbox.checked) {
                 defaultInfoPanel.style.display = 'block';
-                console.log('Info panel shown');
             } else {
                 defaultInfoPanel.style.display = 'none';
-                console.log('Info panel hidden');
             }
         }
     }

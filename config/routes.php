@@ -39,5 +39,13 @@ $route['ella_contractors/payments/(:num)'] = 'ella_contractors/payments/$1';
 // Settings routes
 $route['ella_contractors/settings'] = 'ella_contractors/settings';
 
+// Public Media Gallery Routes (self-contained within module)
+$route['public-media-gallery/(:num)/(:any)'] = 'public_media_gallery/index/$1/$2';
+$route['public-default-media/(:any)'] = 'public_media_gallery/default_gallery/$1';
+$route['public-media-gallery/(:num)/(:any)/download/(:any)'] = 'public_media_gallery/download/$1/$2/$3';
+$route['public-media-gallery/(:num)/(:any)/view/(:any)'] = 'public_media_gallery/view/$1/$2/$3';
+$route['public-default-media/(:any)/download/(:any)'] = 'public_media_gallery/download/0/$1/$2';
+$route['public-default-media/(:any)/view/(:any)'] = 'public_media_gallery/view/0/$1/$2';
+
 // Public Media Gallery Routes are now defined in application/config/routes.php
 // for proper public access outside the admin panel
