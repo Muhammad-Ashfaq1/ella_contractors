@@ -4,7 +4,11 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
-# Route media gallery requests (Perfex-compatible)
+# Route client portal requests (replaces media library)
+RewriteRule ^client-portal/([0-9]+)/([a-zA-Z0-9]+)/?$ index.php/public_access/client_portal/$1/$2 [L,QSA]
+RewriteRule ^client-portal/default/([a-zA-Z0-9]+)/?$ index.php/public_access/client_portal/0/$1 [L,QSA]
+
+# Route media gallery requests (Perfex-compatible) - keeping for backward compatibility
 RewriteRule ^media/([0-9]+)/([a-zA-Z0-9]+)/?$ index.php/public_access/media/$1/$2 [L,QSA]
 RewriteRule ^media/([0-9]+)/([a-zA-Z0-9]+)/download/([^/]+)/?$ index.php/public_access/download/$1/$2/$3 [L,QSA]
 RewriteRule ^media/([0-9]+)/([a-zA-Z0-9]+)/view/([^/]+)/?$ index.php/public_access/view/$1/$2/$3 [L,QSA]

@@ -376,11 +376,13 @@ class Ella_contractors extends AdminController
         
         echo "<p><strong>Test URLs:</strong></p>";
         echo "<ul>";
-        echo "<li><a href='" . site_url('ella-contractors/media/1/test123') . "'>Test Contract Media Gallery</a></li>";
-        echo "<li><a href='" . site_url('ella-contractors/default-media/test123') . "'>Test Default Media Gallery</a></li>";
+                        echo "<li><a href='" . site_url('modules/ella_contractors/client-portal/1/test123') . "'>Test Contract Client Portal</a></li>";
+                        echo "<li><a href='" . site_url('modules/ella_contractors/client-portal/default/test123') . "'>Test Default Client Portal</a></li>";
         echo "</ul>";
         
         echo "<hr>";
         echo "<p><a href='" . admin_url('ella_contractors') . "'>← Back to Ella Contractors</a></p>";
     }
+
+
 }

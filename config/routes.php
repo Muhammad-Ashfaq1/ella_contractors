@@ -46,3 +46,7 @@ $route[$module_name . '/settings'] = $module_name . '/settings';
 // Public Media Gallery Routes (Simple Perfex-compatible)
 $route['public_media/(:num)/(:any)'] = 'ella_contractors/public_media/$1/$2';
 $route['public_default_media/(:any)'] = 'ella_contractors/public_default_media/$1';
+
+// Client Portal Routes (Public Access)
+$route['modules/ella_contractors/client-portal/(:num)/(:any)'] = 'ella_contractors/public_access/client_portal/$1/$2';
+$route['modules/ella_contractors/client-portal/default/(:any)'] = 'ella_contractors/public_access/client_portal/0/$1';

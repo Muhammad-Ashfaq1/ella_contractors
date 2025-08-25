@@ -151,8 +151,8 @@ window.csrf_jquery_ajax_setup = function() {
                                                                         <button type="button" class="btn btn-primary btn-sm share-gallery-btn" 
                                                                                 data-contract-id="<?= $proposal->id ?>" 
                                                                                 data-hash="<?= $proposal->hash ?>"
-                                                                                title="Copy shareable media gallery link">
-                                                                            <i class="fa fa-share"></i> Share Gallery
+                                                                                title="Copy shareable client portal link">
+                                                                            <i class="fa fa-share"></i> Share Portal
                                                                         </button>
                                                                     </li>
                                                                     <li class="divider"></li>
@@ -244,7 +244,7 @@ window.csrf_jquery_ajax_setup = function() {
                                                         <i class="fa fa-refresh"></i> Refresh
                                                     </a>
                                                     <a href="javascript:void(0)" class="btn btn-warning copy-default-media-link-btn">
-                                                        <i class="fa fa-share"></i> Share Gallery
+                                                                                                                                    <i class="fa fa-share"></i> Share Portal
                                                     </a>
                                                     <a href="<?= admin_url('ella_contractors/default_media') ?>" class="btn btn-info" target="_blank">
                                                         <i class="fa fa-external-link"></i> Full Gallery
@@ -406,15 +406,41 @@ $(document).ready(function() {
 
 
     
-    // Function to copy default media gallery link
+    // Function to copy default client portal link
     function copyDefaultMediaLink() {
-        // Generate a simple hash for default media access
+        // Generate a simple hash for default portal access
         var hash = generateDefaultMediaHash();
-        var url = '<?= site_url("default-media-gallery") ?>/' + hash;
+        var url = '<?= site_url("client-portal/default") ?>/' + hash;
         
         // Copy to clipboard
         navigator.clipboard.writeText(url).then(function() {
-            showNotification('Default media gallery link copied to clipboard!', 'success');
+            showNotification('Default client portal link copied to clipboard!', 'success');
+            
+            // Show the copied URL with SweetAlert2
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Link Copied!',
+                    html: `
+                        <p class="mb-3">Default client portal link has been copied to clipboard:</p>
+                        <div class="alert alert-info">
+                            <code>${url}</code>
+                        </div>
+                        <p class="text-muted small">You can now paste this link in emails, SMS, or share it with customers/leads.</p>
+                        <hr>
+                        <p class="text-info small">
+                            <i class="fa fa-info-circle"></i> 
+                            <strong>Test the link:</strong> 
+                            <a href="${url}" target="_blank" class="btn btn-sm btn-primary mt-2">
+                                <i class="fa fa-external-link"></i> Open Client Portal
+                            </a>
+                        </p>
+                    `,
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#667eea',
+                    width: '600px'
+                });
+            }
         }).catch(function() {
             // Fallback for older browsers
             var textArea = document.createElement("textarea");
@@ -423,11 +449,11 @@ $(document).ready(function() {
             textArea.select();
             document.execCommand('copy');
             document.body.removeChild(textArea);
-            showNotification('Default media gallery link copied to clipboard!', 'success');
+            showNotification('Default client portal link copied to clipboard!', 'success');
         });
     }
     
-    // Function to generate default media hash (client-side for demo)
+    // Function to generate default portal hash (client-side for demo)
     function generateDefaultMediaHash() {
         // Simple hash generation - in production, this should come from the server
         var timestamp = new Date().getTime();
@@ -480,9 +506,9 @@ $(document).ready(function() {
         window.history.replaceState({}, document.title, newUrl);
     }
     
-    // Function to copy shareable media gallery link
+    // Function to copy shareable client portal link
      function copyShareableLink(contractId, hash) {
-         const shareableUrl = `<?= site_url('ella-contractors/media') ?>/${contractId}/${hash}`;
+         const shareableUrl = `<?= site_url('client-portal') ?>/${contractId}/${hash}`;
          
          // Copy to clipboard using modern API
          navigator.clipboard.writeText(shareableUrl).then(function() {
@@ -494,7 +520,7 @@ $(document).ready(function() {
                  Swal.fire({
                      title: 'Link Copied!',
                      html: `
-                         <p class="mb-3">Shareable media gallery link has been copied to clipboard:</p>
+                         <p class="mb-3">Shareable client portal link has been copied to clipboard:</p>
                          <div class="alert alert-info">
                              <code>${shareableUrl}</code>
                          </div>
@@ -504,7 +530,7 @@ $(document).ready(function() {
                              <i class="fa fa-info-circle"></i> 
                              <strong>Test the link:</strong> 
                              <a href="${shareableUrl}" target="_blank" class="btn btn-sm btn-primary mt-2">
-                                 <i class="fa fa-external-link"></i> Open Gallery
+                                 <i class="fa fa-external-link"></i> Open Client Portal
                              </a>
                          </p>
                      `,
@@ -530,7 +556,7 @@ $(document).ready(function() {
                      Swal.fire({
                          title: 'Link Copied!',
                          html: `
-                             <p class="mb-3">Shareable media gallery link has been copied to clipboard:</p>
+                             <p class="mb-3">Shareable client portal link has been copied to clipboard:</p>
                              <div class="alert alert-info">
                                  <code>${shareableUrl}</code>
                              </div>

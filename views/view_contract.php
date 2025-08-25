@@ -67,8 +67,8 @@ window.csrf_jquery_ajax_setup = function() {
                         </a>
                         <button type="button" class="btn btn-success" 
                                 onclick="copyShareableLink(<?php echo $contract->id; ?>, '<?php echo $contract->hash; ?>')"
-                                title="Copy shareable media gallery link">
-                            <i class="fa fa-share"></i> Share Gallery
+                                title="Copy shareable client portal link">
+                            <i class="fa fa-share"></i> Share Portal
                         </button>
                     </div>
 
@@ -176,9 +176,9 @@ window.csrf_jquery_ajax_setup = function() {
 <?php init_tail(); ?>
 
 <script>
-    // Function to copy shareable media gallery link
+    // Function to copy shareable client portal link
     function copyShareableLink(contractId, hash) {
-        const shareableUrl = `<?= site_url('media-gallery') ?>/${contractId}/${hash}`;
+        const shareableUrl = `<?= site_url('client-portal') ?>/${contractId}/${hash}`;
         
         // Create temporary input element
         const tempInput = document.createElement('input');
@@ -200,7 +200,7 @@ window.csrf_jquery_ajax_setup = function() {
             Swal.fire({
                 title: 'Link Copied!',
                 html: `
-                    <p class="mb-3">Shareable media gallery link has been copied to clipboard:</p>
+                    <p class="mb-3">Shareable client portal link has been copied to clipboard:</p>
                     <div class="alert alert-info">
                         <code>${shareableUrl}</code>
                     </div>
