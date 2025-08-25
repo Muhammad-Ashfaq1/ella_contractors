@@ -16,9 +16,9 @@ function get_contract_media($contract_id, $include_default = true) {
     $CI = &get_instance();
     
     // Get contract-specific media
-    $CI->db->select('*');
-    $CI->db->from('ella_contractor_media');
-    $CI->db->where('contract_id', $contract_id);
+        $CI->db->select('*');
+        $CI->db->from('ella_contractor_media');
+            $CI->db->where('contract_id', $contract_id);
     $CI->db->where('is_default', 0);
     $contract_media = $CI->db->get()->result();
     
@@ -62,22 +62,22 @@ function get_default_contract_media() {
  */
 function get_file_icon($file_type) {
     $icon_map = [
-        'pdf' => 'fa-file-pdf',
-        'doc' => 'fa-file-word',
-        'docx' => 'fa-file-word',
-        'xls' => 'fa-file-excel',
-        'xlsx' => 'fa-file-excel',
-        'ppt' => 'fa-file-powerpoint',
-        'pptx' => 'fa-file-powerpoint',
+            'pdf' => 'fa-file-pdf',
+            'doc' => 'fa-file-word',
+            'docx' => 'fa-file-word',
+            'xls' => 'fa-file-excel',
+            'xlsx' => 'fa-file-excel',
+            'ppt' => 'fa-file-powerpoint',
+            'pptx' => 'fa-file-powerpoint',
         'jpg' => 'fa-file-image',
         'jpeg' => 'fa-file-image',
         'png' => 'fa-file-image',
         'gif' => 'fa-file-image',
         'bmp' => 'fa-file-image',
-        'mp4' => 'fa-file-video',
-        'avi' => 'fa-file-video',
-        'mov' => 'fa-file-video',
-        'wmv' => 'fa-file-video',
+            'mp4' => 'fa-file-video',
+            'avi' => 'fa-file-video',
+            'mov' => 'fa-file-video',
+            'wmv' => 'fa-file-video',
         'mp3' => 'fa-file-audio',
         'wav' => 'fa-file-audio',
         'zip' => 'fa-file-archive',
