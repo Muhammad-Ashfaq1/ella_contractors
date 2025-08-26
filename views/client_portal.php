@@ -328,8 +328,10 @@
                                 <p class="mb-0 text-muted"><?= $contract['description'] ?></p>
                             </div>
                             <div class="col-md-4 text-end">
-                                <div class="progress-custom">
-                                    <div class="progress-bar" style="width: 65%"></div>
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-65" role="progressbar" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100">
+                                        65%
+                                    </div>
                                 </div>
                                 <small class="text-muted">65% Complete</small>
                             </div>
@@ -406,8 +408,10 @@
                                     <div class="col-12">
                                         <div class="info-card">
                                             <h5><i class="fas fa-chart-line text-primary"></i> Project Progress</h5>
-                                            <div class="progress-custom mb-3">
-                                                <div class="progress-bar" style="width: 65%"></div>
+                                            <div class="progress mb-3">
+                                                <div class="progress-bar progress-bar-65" role="progressbar" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100">
+                                                    65%
+                                                </div>
                                             </div>
                                             <div class="row text-center">
                                                 <div class="col-md-3">

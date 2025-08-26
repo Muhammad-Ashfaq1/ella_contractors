@@ -180,7 +180,7 @@ window.csrf_jquery_ajax_setup = function() {
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <select name="bulk_action" class="form-control" style="width: 200px;">
+                                            <select name="bulk_action" class="form-control bulk-action-select">
                                                 <option value="">Bulk Actions</option>
                                                 <option value="activate">Activate</option>
                                                 <option value="deactivate">Deactivate</option>
@@ -328,7 +328,7 @@ window.csrf_jquery_ajax_setup = function() {
                             <?php endif; ?>
                             
                             <?php else: ?>
-                            <div class="text-center" style="padding: 40px;">
+                            <div class="text-center empty-state-container">
                                 <i class="fa fa-users fa-3x text-muted"></i>
                                 <h3 class="text-muted">No contractors found</h3>
                                 <p class="text-muted">Get started by adding your first contractor.</p>

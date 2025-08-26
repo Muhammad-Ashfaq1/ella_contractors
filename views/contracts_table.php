@@ -69,7 +69,23 @@ window.csrf_jquery_ajax_setup = function() {
                             <div role="tabpanel" class="tab-pane active" id="contracts-tab">
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <?php if (!empty($accepted_proposals)): ?>
+                                        <?php if (empty($accepted_proposals)): ?>
+                                        <div class="text-center contracts-empty-state">
+                                            <div class="contracts-empty-icon">
+                                                <i class="fa fa-file-text"></i>
+                                            </div>
+                                            <h3 class="text-muted">No contracts found</h3>
+                                            <p class="text-muted">Contracts will appear here once proposals are accepted.</p>
+                                            <div class="contracts-empty-actions">
+                                                <a href="<?= admin_url('leads') ?>" class="btn btn-primary">
+                                                    <i class="fa fa-plus"></i> Create New Lead
+                                                </a>
+                                                <a href="<?= admin_url('proposals') ?>" class="btn btn-info">
+                                                    <i class="fa fa-file-text"></i> View Proposals
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <?php else: ?>
                                         <div class="table-responsive">
                                             <table class="table table-striped table-bordered" id="contracts-table">
                                                 <thead>
@@ -202,23 +218,6 @@ window.csrf_jquery_ajax_setup = function() {
                                                     <?php endforeach; ?>
                                                 </tbody>
                                             </table>
-                                        </div>
-                                        <?php else: ?>
-                                        <!-- Empty State -->
-                                        <div class="text-center" style="padding: 80px 20px;">
-                                            <div style="font-size: 4rem; color: #ddd; margin-bottom: 20px;">
-                                                <i class="fa fa-file-contract"></i>
-                                            </div>
-                                            <h3 class="text-muted">No Accepted Proposals Found</h3>
-                                            <p class="text-muted">No proposals have been accepted yet. When leads accept proposals, they will appear here as contracts.</p>
-                                            <div style="margin-top: 30px;">
-                                                <a href="<?= admin_url('proposals') ?>" class="btn btn-primary">
-                                                    <i class="fa fa-eye"></i> View All Proposals
-                                                </a>
-                                                <a href="<?= admin_url('leads') ?>" class="btn btn-success">
-                                                    <i class="fa fa-users"></i> View Leads
-                                                </a>
-                                            </div>
                                         </div>
                                         <?php endif; ?>
                                     </div>

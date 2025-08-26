@@ -113,26 +113,14 @@ window.csrf_jquery_ajax_setup = function() {
                                             </div>
                                             
                                             <!-- Additional Info Panel -->
-                                            <div class="alert alert-info checkbox-info-panel" id="default_info_panel" style="margin-top: 10px;">
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <h6><i class="fa fa-info-circle"></i> What this means:</h6>
-                                                        <ul class="list-unstyled" style="margin-bottom: 0;">
-                                                            <li><i class="fa fa-check text-success"></i> File will appear in all contract galleries</li>
-                                                            <li><i class="fa fa-check text-success"></i> Available for new and existing contracts</li>
-                                                            <li><i class="fa fa-check text-success"></i> Can be managed from default media gallery</li>
-                                                        </ul>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <h6><i class="fa fa-lightbulb-o"></i> Best for:</h6>
-                                                        <ul class="list-unstyled" style="margin-bottom: 0;">
-                                                            <li>• Company brochures</li>
-                                                            <li>• Standard contracts</li>
-                                                            <li>• Policy documents</li>
-                                                            <li>• Common forms</li>
-                                                        </ul>
-                                                    </div>
-                                                </div>
+                                            <div class="alert alert-info checkbox-info-panel" id="default_info_panel">
+                                                <strong>Default Media Files:</strong>
+                                                <p>These files will be used for all contracts unless overridden by contract-specific uploads.</p>
+                                                <ul class="list-unstyled media-info-list">
+                                                    <li><i class="fa fa-check text-success"></i> Contract templates</li>
+                                                    <li><i class="fa fa-check text-success"></i> Standard forms</li>
+                                                    <li><i class="fa fa-check text-success"></i> Legal documents</li>
+                                                </ul>
                                             </div>
                                         </div>
 

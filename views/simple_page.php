@@ -59,10 +59,10 @@ window.csrf_jquery_ajax_setup = function() {
                         <!-- Main Content -->
                         <div class="row">
                             <div class="col-md-12 text-center">
-                                <div class="well" style="padding: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-                                    <h2 style="font-weight: 300; margin-bottom: 20px;"><?= $message ?></h2>
-                                    <a href="<?= admin_url('ella_contractors') ?>" class="btn btn-light">
-                                        <i class="fa fa-arrow-left"></i> Back to Dashboard
+                                <div class="well simple-page-well">
+                                    <h2 class="simple-page-title"><?= $message ?></h2>
+                                    <a href="<?= admin_url('ella_contractors/dashboard') ?>" class="btn btn-light">
+                                        ← BACK TO DASHBOARD
                                     </a>
                                 </div>
                             </div>

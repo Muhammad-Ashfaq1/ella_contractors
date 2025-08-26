@@ -36,68 +36,83 @@ window.csrf_jquery_ajax_setup = function() {
                         <!-- Dashboard Content -->
                         <div class="row">
                             <div class="col-md-12 text-center">
-                                <div class="well dashboard-gradient" style="padding: 60px;">
-                                    <h1 class="dashboard-title">Ella Contractors Module</h1>
-                                    <p class="dashboard-subtitle">Comprehensive contractor management system</p>
-                                    
-                                    <!-- Quick Navigation -->
-                                    <div class="row" style="margin-top: 2rem;">
-                                        <div class="col-md-3">
-                                            <a href="<?= admin_url('ella_contractors/contractors') ?>" class="btn btn-light btn-lg quick-nav-btn">
-                                                <i class="fa fa-users"></i><br>Contractors
-                                            </a>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <a href="<?= admin_url('ella_contractors/contracts') ?>" class="btn btn-light btn-lg quick-nav-btn">
-                                                <i class="fa fa-file-contract"></i><br>Contracts
-                                            </a>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <a href="<?= admin_url('ella_contractors/projects') ?>" class="btn btn-light btn-lg quick-nav-btn">
-                                                <i class="fa fa-project-diagram"></i><br>Projects
-                                            </a>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <a href="<?= admin_url('ella_contractors/payments') ?>" class="btn btn-light btn-lg quick-nav-btn">
-                                                <i class="fa fa-dollar-sign"></i><br>Payments
-                                            </a>
-                                        </div>
+                                <div class="well dashboard-gradient">
+                                    <h2 class="text-center"><?= $title ?></h2>
+                                    <p class="text-center lead"><?= $subtitle ?></p>
+                                </div>
+                                
+                                <div class="row dashboard-row-spacing">
+                                    <div class="col-md-3">
+                                        <a href="<?= admin_url('ella_contractors/contractors') ?>" class="btn btn-primary btn-lg btn-block">
+                                            <i class="fa fa-users fa-2x"></i><br>
+                                            Manage Contractors
+                                        </a>
                                     </div>
-                                    
-                                    <!-- Quick Actions -->
-                                    <div class="row" style="margin-top: 2rem;">
-                                        <div class="col-md-12">
-                                            <h4>Quick Actions</h4>
-                                            <div class="row">
-                                                <div class="col-md-4">
-                                                    <a href="<?= admin_url('ella_contractors/add_contractor') ?>" class="btn btn-primary btn-lg">
-                                                        <i class="fa fa-plus"></i> Add New Contractor
-                                                    </a>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <a href="<?= admin_url('ella_contractors/contractors') ?>" class="btn btn-success btn-lg">
-                                                        <i class="fa fa-list"></i> View All Contractors
-                                                    </a>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <a href="<?= admin_url('ella_contractors/contracts') ?>" class="btn btn-info btn-lg">
-                                                        <i class="fa fa-eye"></i> View Contracts
-                                                    </a>
+                                    <div class="col-md-3">
+                                        <a href="<?= admin_url('ella_contractors/contracts') ?>" class="btn btn-success btn-lg btn-block">
+                                            <i class="fa fa-file-text fa-2x"></i><br>
+                                            View Contracts
+                                        </a>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <a href="<?= admin_url('ella_contractors/projects') ?>" class="btn btn-info btn-lg btn-block">
+                                            <i class="fa fa-tasks fa-2x"></i><br>
+                                            Manage Projects
+                                        </a>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <a href="<?= admin_url('ella_contractors/payments') ?>" class="btn btn-warning btn-lg btn-block">
+                                            <i class="fa fa-credit-card fa-2x"></i><br>
+                                            Track Payments
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div class="row dashboard-section-spacing">
+                                    <div class="col-md-12">
+                                        <div class="panel_s">
+                                            <div class="panel-body">
+                                                <h4>Quick Actions</h4>
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <a href="<?= admin_url('ella_contractors/add_contractor') ?>" class="btn btn-primary btn-lg">
+                                                            <i class="fa fa-plus"></i> Add New Contractor
+                                                        </a>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <a href="<?= admin_url('ella_contractors/contractors') ?>" class="btn btn-info btn-lg">
+                                                            <i class="fa fa-list"></i> View All Contractors
+                                                        </a>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <a href="<?= admin_url('ella_contractors/contracts') ?>" class="btn btn-success btn-lg">
+                                                            <i class="fa fa-file-text"></i> View Contracts
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    
-                                    <?php if (is_super_admin()): ?>
-                                    <div style="margin-top: 2rem;">
-                                        <a href="<?= admin_url('ella_contractors/activate') ?>" class="btn btn-warning">
-                                            <i class="fa fa-database"></i> Activate Module
-                                        </a>
-                                        <a href="<?= admin_url('ella_contractors/settings') ?>" class="btn btn-outline-light">
-                                            <i class="fa fa-cog"></i> Settings
-                                        </a>
+                                </div>
+                                
+                                <div class="dashboard-section-spacing">
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="panel_s">
+                                                <div class="panel-body">
+                                                    <h4>Module Information</h4>
+                                                    <p>This module provides comprehensive contractor management capabilities including:</p>
+                                                    <ul>
+                                                        <li>Contractor profile management</li>
+                                                        <li>Contract tracking and management</li>
+                                                        <li>Project coordination</li>
+                                                        <li>Payment tracking</li>
+                                                        <li>Document management</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
