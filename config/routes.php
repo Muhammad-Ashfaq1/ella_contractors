@@ -26,7 +26,6 @@ $route[$module_name . '/media_gallery'] = $module_name . '/media_gallery';
 $route[$module_name . '/default_media'] = $module_name . '/default_media';
 
 
-$route[$module_name . '/myFunction'] = $module_name . '/myFunction';
 
 // Module management routes
 $route[$module_name . '/activate'] = $module_name . '/activate_module';

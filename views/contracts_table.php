@@ -244,7 +244,7 @@ window.csrf_jquery_ajax_setup = function() {
                                                         <i class="fa fa-refresh"></i> Refresh
                                                     </a>
                                                     <a href="javascript:void(0)" class="btn btn-warning copy-default-media-link-btn">
-                                                                                                                                    <i class="fa fa-share"></i> Share Portal
+                                                        <i class="fa fa-share"></i> Share Portal
                                                     </a>
                                                     <a href="<?= admin_url('ella_contractors/default_media') ?>" class="btn btn-info" target="_blank">
                                                         <i class="fa fa-external-link"></i> Full Gallery
