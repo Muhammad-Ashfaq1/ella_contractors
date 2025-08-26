@@ -46,8 +46,255 @@ class Ella_contractors extends AdminController
      */
     public function contractors($page = 1) {
         $data['title'] = 'Contractors Management';
-        $data['message'] = 'Hello from Contractors page';
-        $this->load->view('simple_page', $data);
+        
+        // Load the contractors model
+        $this->load->model('ella_contractors_model');
+        
+        // Get filters from request
+        $filters = [
+            'status' => $this->input->get('status'),
+            'search' => $this->input->get('search'),
+            'specialization' => $this->input->get('specialization')
+        ];
+        
+        // Pagination settings
+        $per_page = 20;
+        $offset = ($page - 1) * $per_page;
+        
+        // Get contractors with filters and pagination
+        $data['contractors'] = $this->ella_contractors_model->get_contractors($filters, $per_page, $offset);
+        $data['total_contractors'] = $this->ella_contractors_model->get_contractors_count($filters);
+        $data['stats'] = $this->ella_contractors_model->get_contractors_stats();
+        
+        // Pagination configuration
+        $this->load->library('pagination');
+        $config['base_url'] = admin_url('ella_contractors/contractors');
+        $config['total_rows'] = $data['total_contractors'];
+        $config['per_page'] = $per_page;
+        $config['uri_segment'] = 4;
+        $config['page_query_string'] = false;
+        
+        // Pagination styling
+        $config['full_tag_open'] = '<ul class="pagination">';
+        $config['full_tag_close'] = '</ul>';
+        $config['first_link'] = 'First';
+        $config['last_link'] = 'Last';
+        $config['first_tag_open'] = '<li>';
+        $config['first_tag_close'] = '</li>';
+        $config['prev_link'] = '&laquo';
+        $config['prev_tag_open'] = '<li class="prev">';
+        $config['prev_tag_close'] = '</li>';
+        $config['next_link'] = '&raquo';
+        $config['next_tag_open'] = '<li>';
+        $config['next_tag_close'] = '</li>';
+        $config['last_tag_open'] = '<li>';
+        $config['last_tag_close'] = '</li>';
+        $config['cur_tag_open'] = '<li class="active"><a href="#">';
+        $config['cur_tag_close'] = '</a></li>';
+        $config['num_tag_open'] = '<li>';
+        $config['num_tag_close'] = '</li>';
+        
+        $this->pagination->initialize($config);
+        $data['pagination'] = $this->pagination->create_links();
+        
+        // Pass filters for view
+        $data['filters'] = $filters;
+        
+        $this->load->view('contractors_list', $data);
+    }
+    
+    /**
+     * Add new contractor
+     */
+    public function add_contractor() {
+        $data['title'] = 'Add New Contractor';
+        
+        if ($this->input->post()) {
+            $this->load->library('form_validation');
+            
+            // Set validation rules
+            $this->form_validation->set_rules('company_name', 'Company Name', 'required|trim');
+            $this->form_validation->set_rules('contact_person', 'Contact Person', 'required|trim');
+            $this->form_validation->set_rules('email', 'Email', 'required|valid_email|trim');
+            $this->form_validation->set_rules('phone', 'Phone', 'trim');
+            $this->form_validation->set_rules('mobile', 'Mobile', 'trim');
+            $this->form_validation->set_rules('city', 'City', 'trim');
+            $this->form_validation->set_rules('state', 'State', 'trim');
+            $this->form_validation->set_rules('zip_code', 'ZIP Code', 'trim');
+            $this->form_validation->set_rules('country', 'Country', 'trim');
+            $this->form_validation->set_rules('tax_id', 'Tax ID', 'trim');
+            $this->form_validation->set_rules('business_license', 'Business License', 'trim');
+            $this->form_validation->set_rules('insurance_info', 'Insurance Info', 'trim');
+            $this->form_validation->set_rules('specialization', 'Specialization', 'trim');
+            $this->form_validation->set_rules('hourly_rate', 'Hourly Rate', 'trim|numeric');
+            $this->form_validation->set_rules('payment_terms', 'Payment Terms', 'trim');
+            $this->form_validation->set_rules('status', 'Status', 'required|in_list[active,inactive,pending,blacklisted]');
+            $this->form_validation->set_rules('rating', 'Rating', 'trim|numeric|greater_than[0]|less_than[6]');
+            $this->form_validation->set_rules('notes', 'Notes', 'trim');
+            
+            if ($this->form_validation->run() == false) {
+                $data['errors'] = validation_errors();
+            } else {
+                $this->load->model('ella_contractors_model');
+                
+                // Check if email already exists
+                if ($this->ella_contractors_model->email_exists($this->input->post('email'))) {
+                    $data['errors'] = 'Email address already exists.';
+                } else {
+                    // Prepare data for insertion
+                    $contractor_data = [
+                        'company_name' => $this->input->post('company_name'),
+                        'contact_person' => $this->input->post('contact_person'),
+                        'email' => $this->input->post('email'),
+                        'phone' => $this->input->post('phone'),
+                        'mobile' => $this->input->post('mobile'),
+                        'address' => $this->input->post('address'),
+                        'city' => $this->input->post('city'),
+                        'state' => $this->input->post('state'),
+                        'zip_code' => $this->input->post('zip_code'),
+                        'country' => $this->input->post('country'),
+                        'tax_id' => $this->input->post('tax_id'),
+                        'business_license' => $this->input->post('business_license'),
+                        'insurance_info' => $this->input->post('insurance_info'),
+                        'specialization' => $this->input->post('specialization'),
+                        'hourly_rate' => $this->input->post('hourly_rate') ?: null,
+                        'payment_terms' => $this->input->post('payment_terms'),
+                        'status' => $this->input->post('status'),
+                        'rating' => $this->input->post('rating') ?: null,
+                        'notes' => $this->input->post('notes')
+                    ];
+                    
+                    // Create contractor
+                    $contractor_id = $this->ella_contractors_model->create_contractor($contractor_data);
+                    
+                    if ($contractor_id) {
+                        set_alert('success', 'Contractor added successfully.');
+                        redirect(admin_url('ella_contractors/contractors'));
+                    } else {
+                        $data['errors'] = 'Failed to add contractor. Please try again.';
+                    }
+                }
+            }
+        }
+        
+        $this->load->view('contractor_form', $data);
+    }
+    
+    /**
+     * Edit contractor
+     */
+    public function edit_contractor($id) {
+        $data['title'] = 'Edit Contractor';
+        
+        $this->load->model('ella_contractors_model');
+        $data['contractor'] = $this->ella_contractors_model->get_contractor($id);
+        
+        if (!$data['contractor']) {
+            show_404();
+            return;
+        }
+        
+        if ($this->input->post()) {
+            $this->load->library('form_validation');
+            
+            // Set validation rules
+            $this->form_validation->set_rules('company_name', 'Company Name', 'required|trim');
+            $this->form_validation->set_rules('contact_person', 'Contact Person', 'required|trim');
+            $this->form_validation->set_rules('email', 'Email', 'required|valid_email|trim');
+            $this->form_validation->set_rules('phone', 'Phone', 'trim');
+            $this->form_validation->set_rules('mobile', 'Mobile', 'trim');
+            $this->form_validation->set_rules('city', 'City', 'trim');
+            $this->form_validation->set_rules('state', 'State', 'trim');
+            $this->form_validation->set_rules('zip_code', 'ZIP Code', 'trim');
+            $this->form_validation->set_rules('country', 'Country', 'trim');
+            $this->form_validation->set_rules('tax_id', 'Tax ID', 'trim');
+            $this->form_validation->set_rules('business_license', 'Business License', 'trim');
+            $this->form_validation->set_rules('insurance_info', 'Insurance Info', 'trim');
+            $this->form_validation->set_rules('specialization', 'Specialization', 'trim');
+            $this->form_validation->set_rules('hourly_rate', 'Hourly Rate', 'trim|numeric');
+            $this->form_validation->set_rules('payment_terms', 'Payment Terms', 'trim');
+            $this->form_validation->set_rules('status', 'Status', 'required|in_list[active,inactive,pending,blacklisted]');
+            $this->form_validation->set_rules('rating', 'Rating', 'trim|numeric|greater_than[0]|less_than[6]');
+            $this->form_validation->set_rules('notes', 'Notes', 'trim');
+            
+            if ($this->form_validation->run() == false) {
+                $data['errors'] = validation_errors();
+            } else {
+                // Check if email already exists (excluding current contractor)
+                if ($this->ella_contractors_model->email_exists($this->input->post('email'), $id)) {
+                    $data['errors'] = 'Email address already exists.';
+                } else {
+                    // Prepare data for update
+                    $contractor_data = [
+                        'company_name' => $this->input->post('company_name'),
+                        'contact_person' => $this->input->post('contact_person'),
+                        'email' => $this->input->post('email'),
+                        'phone' => $this->input->post('phone'),
+                        'mobile' => $this->input->post('mobile'),
+                        'address' => $this->input->post('address'),
+                        'city' => $this->input->post('city'),
+                        'state' => $this->input->post('state'),
+                        'zip_code' => $this->input->post('zip_code'),
+                        'country' => $this->input->post('country'),
+                        'tax_id' => $this->input->post('tax_id'),
+                        'business_license' => $this->input->post('business_license'),
+                        'insurance_info' => $this->input->post('insurance_info'),
+                        'specialization' => $this->input->post('specialization'),
+                        'hourly_rate' => $this->input->post('hourly_rate') ?: null,
+                        'payment_terms' => $this->input->post('payment_terms'),
+                        'status' => $this->input->post('status'),
+                        'rating' => $this->input->post('rating') ?: null,
+                        'notes' => $this->input->post('notes')
+                    ];
+                    
+                    // Update contractor
+                    if ($this->ella_contractors_model->update_contractor($id, $contractor_data)) {
+                        set_alert('success', 'Contractor updated successfully.');
+                        redirect(admin_url('ella_contractors/contractors'));
+                    } else {
+                        $data['errors'] = 'Failed to update contractor. Please try again.';
+                    }
+                }
+            }
+        }
+        
+        $this->load->view('contractor_form', $data);
+    }
+    
+    /**
+     * View contractor details
+     */
+    public function view_contractor($id) {
+        $data['title'] = 'Contractor Details';
+        
+        $this->load->model('ella_contractors_model');
+        $data['contractor'] = $this->ella_contractors_model->get_contractor($id);
+        
+        if (!$data['contractor']) {
+            show_404();
+            return;
+        }
+        
+        $this->load->view('contractor_view', $data);
+    }
+    
+    /**
+     * Delete contractor
+     */
+    public function delete_contractor($id) {
+        if (!has_permission('ella_contractors', '', 'delete')) {
+            access_denied('ella_contractors');
+        }
+        
+        $this->load->model('ella_contractors_model');
+        
+        if ($this->ella_contractors_model->delete_contractor($id)) {
+            set_alert('success', 'Contractor deleted successfully.');
+        } else {
+            set_alert('danger', 'Failed to delete contractor.');
+        }
+        
+        redirect(admin_url('ella_contractors/contractors'));
     }
     
     /**
@@ -220,30 +467,73 @@ class Ella_contractors extends AdminController
 
     
     /**
-     * Activate module manually
+     * Bulk actions for contractors
      */
-    public function activate_module() {
-        // Check if user has permission
-        if (!is_admin()) {
-            show_error('Access denied. Admin privileges required.');
-            return;
-        }
-
-        // Clean up any duplicate tables first
-        $this->cleanup_duplicate_tables();
-        
-        // Create the table
-        $this->ensure_contract_media_table();
-        
-        // Verify table was created
-        if ($this->db->table_exists('ella_contractor_media')) {
-            set_alert('success', 'Module activated successfully! Database table created.');
-        } else {
-            set_alert('danger', 'Module activation failed! Table could not be created.');
+    public function bulk_actions() {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            access_denied('ella_contractors');
         }
         
-        // Redirect back to dashboard
-        redirect(admin_url('ella_contractors'));
+        $action = $this->input->post('bulk_action');
+        $ids = $this->input->post('contractor_ids');
+        
+        if (!$action || !$ids) {
+            set_alert('warning', 'Please select action and contractors.');
+            redirect(admin_url('ella_contractors/contractors'));
+        }
+        
+        $this->load->model('ella_contractors_model');
+        
+        switch ($action) {
+            case 'activate':
+                $this->ella_contractors_model->bulk_update_status($ids, 'active');
+                set_alert('success', 'Selected contractors activated successfully.');
+                break;
+                
+            case 'deactivate':
+                $this->ella_contractors_model->bulk_update_status($ids, 'inactive');
+                set_alert('success', 'Selected contractors deactivated successfully.');
+                break;
+                
+            case 'suspend':
+                $this->ella_contractors_model->bulk_update_status($ids, 'suspended');
+                set_alert('success', 'Selected contractors suspended successfully.');
+                break;
+                
+            case 'delete':
+                if (has_permission('ella_contractors', '', 'delete')) {
+                    foreach ($ids as $id) {
+                        $this->ella_contractors_model->delete_contractor($id);
+                    }
+                    set_alert('success', 'Selected contractors deleted successfully.');
+                } else {
+                    set_alert('danger', 'You do not have permission to delete contractors.');
+                }
+                break;
+                
+            default:
+                set_alert('warning', 'Invalid action selected.');
+                break;
+        }
+        
+        redirect(admin_url('ella_contractors/contractors'));
+    }
+    
+    /**
+     * Activate module and create database tables
+     */
+    public function activate() {
+        if (!is_super_admin()) {
+            access_denied('ella_contractors');
+        }
+        
+        $this->load->model('ella_contractors_model');
+        
+        // Trigger module activation
+        ella_contractors_activate_module();
+        
+        set_alert('success', 'Module activated successfully. Database tables have been created.');
+        redirect(admin_url('ella_contractors/contractors'));
     }
     
     /**

@@ -100,6 +100,137 @@ function ella_contractors_activate_module()
     $CI = &get_instance();
     $CI->load->dbforge();
     
+    // Create contractors table
+    $contractors_table = 'tblella_contractors';
+    
+    if (!$CI->db->table_exists($contractors_table)) {
+        $fields = [
+            'id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'unsigned' => TRUE,
+                'auto_increment' => TRUE
+            ],
+            'company_name' => [
+                'type' => 'VARCHAR',
+                'constraint' => 255,
+                'null' => FALSE
+            ],
+            'contact_person' => [
+                'type' => 'VARCHAR',
+                'constraint' => 255,
+                'null' => FALSE
+            ],
+            'email' => [
+                'type' => 'VARCHAR',
+                'constraint' => 255,
+                'null' => FALSE
+            ],
+            'phone' => [
+                'type' => 'VARCHAR',
+                'constraint' => 50,
+                'null' => TRUE
+            ],
+            'mobile' => [
+                'type' => 'VARCHAR',
+                'constraint' => 50,
+                'null' => TRUE
+            ],
+            'address' => [
+                'type' => 'TEXT',
+                'null' => TRUE
+            ],
+            'city' => [
+                'type' => 'VARCHAR',
+                'constraint' => 100,
+                'null' => TRUE
+            ],
+            'state' => [
+                'type' => 'VARCHAR',
+                'constraint' => 100,
+                'null' => TRUE
+            ],
+            'zip_code' => [
+                'type' => 'VARCHAR',
+                'constraint' => 20,
+                'null' => TRUE
+            ],
+            'country' => [
+                'type' => 'VARCHAR',
+                'constraint' => 100,
+                'null' => TRUE
+            ],
+            'tax_id' => [
+                'type' => 'VARCHAR',
+                'constraint' => 100,
+                'null' => TRUE
+            ],
+            'business_license' => [
+                'type' => 'VARCHAR',
+                'constraint' => 100,
+                'null' => TRUE
+            ],
+            'insurance_info' => [
+                'type' => 'TEXT',
+                'null' => TRUE
+            ],
+            'specialization' => [
+                'type' => 'TEXT',
+                'null' => TRUE
+            ],
+            'hourly_rate' => [
+                'type' => 'DECIMAL',
+                'constraint' => '10,2',
+                'null' => TRUE
+            ],
+            'payment_terms' => [
+                'type' => 'VARCHAR',
+                'constraint' => 255,
+                'null' => TRUE
+            ],
+            'status' => [
+                'type' => 'ENUM',
+                'constraint' => ['active', 'inactive', 'suspended'],
+                'default' => 'active'
+            ],
+            'rating' => [
+                'type' => 'DECIMAL',
+                'constraint' => '3,2',
+                'null' => TRUE
+            ],
+            'notes' => [
+                'type' => 'TEXT',
+                'null' => TRUE
+            ],
+            'created_by' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => FALSE
+            ],
+            'created_at' => [
+                'type' => 'DATETIME',
+                'null' => FALSE
+            ],
+            'updated_by' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => TRUE
+            ],
+            'updated_at' => [
+                'type' => 'DATETIME',
+                'null' => TRUE
+            ]
+        ];
+        
+        $CI->dbforge->add_field($fields);
+        $CI->dbforge->add_key('id', TRUE);
+        $CI->dbforge->add_key('email');
+        $CI->dbforge->add_key('status');
+        $CI->dbforge->create_table($contractors_table);
+        
+        log_message('info', 'Ella Contractors: Created table ' . $contractors_table);
+    }
+    
     // Create media table for contract attachments
     $table_name = 'ella_contractor_media';
     
