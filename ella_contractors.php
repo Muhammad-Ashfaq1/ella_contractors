@@ -69,6 +69,12 @@ function ella_contractors_init_menu() {
                 'name' => 'Payments',
                 'href' => admin_url('ella_contractors/payments'),
                 'position' => 25,
+            ],
+            [
+                'slug' => 'ella_contractors_appointments',
+                'name' => 'Appointments',
+                'href' => admin_url('ella_contractors/appointments'),
+                'position' => 26,
             ]
         ];
 
@@ -398,6 +404,104 @@ function ella_contractors_activate_module()
     } else {
         // Table already exists, log it
         log_message('info', 'Ella Contractors: Table ' . $contracts_table . ' already exists');
+    }
+    
+    // Create appointments table
+    $appointments_table = 'ella_appointments';
+    
+    if (!$CI->db->table_exists($appointments_table)) {
+        $fields = [
+            'id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'unsigned' => TRUE,
+                'auto_increment' => TRUE
+            ],
+            'contract_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => FALSE
+            ],
+            'title' => [
+                'type' => 'VARCHAR',
+                'constraint' => 255,
+                'null' => FALSE
+            ],
+            'description' => [
+                'type' => 'TEXT',
+                'null' => TRUE
+            ],
+            'appointment_date' => [
+                'type' => 'DATE',
+                'null' => FALSE
+            ],
+            'start_time' => [
+                'type' => 'TIME',
+                'null' => FALSE
+            ],
+            'end_time' => [
+                'type' => 'TIME',
+                'null' => FALSE
+            ],
+            'appointment_type' => [
+                'type' => 'VARCHAR',
+                'constraint' => 100,
+                'null' => FALSE
+            ],
+            'status' => [
+                'type' => 'ENUM',
+                'constraint' => ['scheduled', 'confirmed', 'completed', 'cancelled', 'rescheduled'],
+                'default' => 'scheduled'
+            ],
+            'location' => [
+                'type' => 'VARCHAR',
+                'constraint' => 255,
+                'null' => TRUE
+            ],
+            'attendees' => [
+                'type' => 'TEXT',
+                'null' => TRUE
+            ],
+            'notes' => [
+                'type' => 'TEXT',
+                'null' => TRUE
+            ],
+            'reminder_sent' => [
+                'type' => 'TINYINT',
+                'constraint' => 1,
+                'default' => 0
+            ],
+            'created_by' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => FALSE
+            ],
+            'created_at' => [
+                'type' => 'DATETIME',
+                'null' => FALSE
+            ],
+            'updated_by' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => TRUE
+            ],
+            'updated_at' => [
+                'type' => 'DATETIME',
+                'null' => TRUE
+            ]
+        ];
+        
+        $CI->dbforge->add_field($fields);
+        $CI->dbforge->add_key('id', TRUE);
+        $CI->dbforge->add_key('contract_id');
+        $CI->dbforge->add_key('appointment_date');
+        $CI->dbforge->add_key('status');
+        $CI->dbforge->create_table($appointments_table);
+        
+        log_message('info', 'Ella Contractors: Created table ' . $appointments_table);
+    } else {
+        // Table already exists, log it
+        log_message('info', 'Ella Contractors: Table ' . $appointments_table . ' already exists');
     }
 }
 

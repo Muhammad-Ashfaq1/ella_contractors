@@ -280,4 +280,19 @@ class Ella_contracts_model extends CI_Model
         
         return $this->db->affected_rows();
     }
+
+    /**
+     * Get contracts with portal status
+     */
+    public function get_contracts_with_portal_status()
+    {
+        $this->db->select('c.*, l.name as lead_name, l.email as lead_email, l.phonenumber as lead_phone, 
+                           cont.company_name as contractor_name, cont.contact_person as contractor_contact');
+        $this->db->from($this->table . ' c');
+        $this->db->join('tblleads l', 'l.id = c.lead_id', 'left');
+        $this->db->join('tblella_contractors cont', 'cont.id = c.contractor_id', 'left');
+        $this->db->order_by('c.date_created', 'DESC');
+        
+        return $this->db->get()->result();
+    }
 }

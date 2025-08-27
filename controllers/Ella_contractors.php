@@ -12,6 +12,10 @@ class Ella_contractors extends AdminController
         // Load form validation library
         $this->load->library('form_validation');
         
+        // Load models
+        $this->load->model('ella_contracts_model');
+        $this->load->model('ella_contractors_model');
+        
         // Load helper functions from module directory
         $helper_path = __DIR__ . '/../helpers/ella_contractors_helper.php';
         if (file_exists($helper_path)) {
@@ -20,6 +24,9 @@ class Ella_contractors extends AdminController
         
         // Ensure database table exists
         $this->ensure_contract_media_table();
+        
+        // Ensure appointments table exists
+        $this->ensure_appointments_table();
     }
     
     /**
@@ -659,6 +666,109 @@ class Ella_contractors extends AdminController
     }
     
     /**
+     * Ensure appointments table exists
+     */
+    private function ensure_appointments_table() {
+        $table_name = 'ella_appointments';
+        
+        if (!$this->db->table_exists($table_name)) {
+            $this->load->dbforge();
+            
+            $fields = [
+                'id' => [
+                    'type' => 'INT',
+                    'constraint' => 11,
+                    'unsigned' => TRUE,
+                    'auto_increment' => TRUE
+                ],
+                'contract_id' => [
+                    'type' => 'INT',
+                    'constraint' => 11,
+                    'null' => FALSE
+                ],
+                'title' => [
+                    'type' => 'VARCHAR',
+                    'constraint' => 255,
+                    'null' => FALSE
+                ],
+                'description' => [
+                    'type' => 'TEXT',
+                    'null' => TRUE
+                ],
+                'appointment_date' => [
+                    'type' => 'DATE',
+                    'null' => FALSE
+                ],
+                'start_time' => [
+                    'type' => 'TIME',
+                    'null' => FALSE
+                ],
+                'end_time' => [
+                    'type' => 'TIME',
+                    'null' => FALSE
+                ],
+                'appointment_type' => [
+                    'type' => 'VARCHAR',
+                    'constraint' => 100,
+                    'null' => FALSE
+                ],
+                'status' => [
+                    'type' => 'ENUM',
+                    'constraint' => ['scheduled', 'confirmed', 'completed', 'cancelled', 'rescheduled'],
+                    'default' => 'scheduled'
+                ],
+                'location' => [
+                    'type' => 'VARCHAR',
+                    'constraint' => 255,
+                    'null' => TRUE
+                ],
+                'attendees' => [
+                    'type' => 'TEXT',
+                    'null' => TRUE
+                ],
+                'notes' => [
+                    'type' => 'TEXT',
+                    'null' => TRUE
+                ],
+                'reminder_sent' => [
+                    'type' => 'TINYINT',
+                    'constraint' => 1,
+                    'default' => 0
+                ],
+                'created_by' => [
+                    'type' => 'INT',
+                    'constraint' => 11,
+                    'null' => FALSE
+                ],
+                'created_at' => [
+                    'type' => 'DATETIME',
+                    'null' => FALSE
+                ],
+                'updated_by' => [
+                    'type' => 'INT',
+                    'constraint' => 11,
+                    'null' => TRUE
+                ],
+                'updated_at' => [
+                    'type' => 'DATETIME',
+                    'null' => TRUE
+                ]
+            ];
+            
+            $this->dbforge->add_field($fields);
+            $this->dbforge->add_key('id', TRUE);
+            $this->dbforge->add_key('contract_id');
+            $this->dbforge->add_key('appointment_date');
+            $this->dbforge->add_key('status');
+            $this->dbforge->create_table($table_name);
+            
+            log_message('info', 'Ella Contractors: Created appointments table ' . $table_name);
+        } else {
+            log_message('info', 'Ella Contractors: Appointments table ' . $table_name . ' already exists');
+        }
+    }
+    
+    /**
      * Clean up duplicate tables
      */
     private function cleanup_duplicate_tables() {
@@ -1024,10 +1134,10 @@ class Ella_contractors extends AdminController
     public function public_view($id)
     {
         // Load the contracts model
-        $this->load->model('ella_contracts_model');
+        $this->load->model('ella_contractors_model');
         
         // Get contract data
-        $contract = $this->ella_contracts_model->get_contract($id);
+        $contract = $this->ella_contractors_model->get_contract($id);
         if (!$contract) {
             show_404();
         }
@@ -1052,6 +1162,298 @@ class Ella_contractors extends AdminController
         ];
         
         $this->load->view('contract_public_view', $data);
+    }
+
+    /**
+     * Appointments management
+     */
+    public function appointments($contract_id = null)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            access_denied('ella_contractors');
+        }
+        
+        if ($contract_id) {
+            // Single contract appointments
+            $contract = $this->ella_contracts_model->get_contract($contract_id);
+            if (!$contract) {
+                show_404();
+            }
+            
+            $data = [
+                'title' => 'Appointments - ' . $contract->subject,
+                'contract' => $contract,
+                'contract_id' => $contract_id,
+                'appointments' => $this->get_contract_appointments($contract_id)
+            ];
+            
+            $this->load->view('appointments_contract', $data);
+        } else {
+            // All appointments across contracts
+            try {
+                $contracts_result = $this->ella_contracts_model->get_contracts(['status' => 'active']);
+                $contracts = $contracts_result['contracts'];
+            } catch (Exception $e) {
+                log_message('error', 'Failed to load contracts for appointments: ' . $e->getMessage());
+                $contracts = [];
+            }
+            
+            $data = [
+                'title' => 'All Appointments',
+                'appointments' => $this->get_all_appointments(),
+                'contracts' => $contracts
+            ];
+            
+            $this->load->view('appointments_list', $data);
+        }
+    }
+
+    /**
+     * Add new appointment
+     */
+    public function add_appointment($contract_id = null)
+    {
+        if (!has_permission('ella_contractors', '', 'add')) {
+            access_denied('ella_contractors');
+        }
+
+        if ($this->input->post()) {
+            $this->form_validation->set_rules('contract_id', 'Contract', 'required|numeric');
+            $this->form_validation->set_rules('title', 'Title', 'required');
+            $this->form_validation->set_rules('appointment_date', 'Date', 'required');
+            $this->form_validation->set_rules('start_time', 'Start Time', 'required');
+            $this->form_validation->set_rules('end_time', 'End Time', 'required');
+            $this->form_validation->set_rules('appointment_type', 'Type', 'required');
+            
+            if ($this->form_validation->run()) {
+                $appointment_data = [
+                    'contract_id' => $this->input->post('contract_id'),
+                    'title' => $this->input->post('title'),
+                    'description' => $this->input->post('description'),
+                    'appointment_date' => $this->input->post('appointment_date'),
+                    'start_time' => $this->input->post('start_time'),
+                    'end_time' => $this->input->post('end_time'),
+                    'appointment_type' => $this->input->post('appointment_type'),
+                    'status' => $this->input->post('status'),
+                    'location' => $this->input->post('location'),
+                    'attendees' => $this->input->post('attendees'),
+                    'notes' => $this->input->post('notes'),
+                    'created_by' => get_staff_user_id(),
+                    'created_at' => date('Y-m-d H:i:s')
+                ];
+                
+                if ($this->add_appointment_data($appointment_data)) {
+                    set_alert('success', 'Appointment added successfully.');
+                    redirect(admin_url('ella_contractors/appointments/' . $appointment_data['contract_id']));
+                } else {
+                    set_alert('danger', 'Failed to add appointment.');
+                }
+            }
+        }
+        
+        try {
+            $contracts_result = $this->ella_contracts_model->get_contracts(['status' => 'active']);
+            $contracts = $contracts_result['contracts'];
+        } catch (Exception $e) {
+            log_message('error', 'Failed to load contracts for appointments: ' . $e->getMessage());
+            $contracts = [];
+        }
+        
+        $data = [
+            'title' => 'Add New Appointment',
+            'contract_id' => $contract_id,
+            'contracts' => $contracts
+        ];
+        
+        $this->load->view('appointment_form', $data);
+    }
+
+    /**
+     * Edit appointment
+     */
+    public function edit_appointment($appointment_id)
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            access_denied('ella_contractors');
+        }
+
+        $appointment = $this->get_appointment($appointment_id);
+        if (!$appointment) {
+            show_404();
+        }
+
+        if ($this->input->post()) {
+            $this->form_validation->set_rules('title', 'Title', 'required');
+            $this->form_validation->set_rules('appointment_date', 'Date', 'required');
+            $this->form_validation->set_rules('start_time', 'Start Time', 'required');
+            $this->form_validation->set_rules('end_time', 'End Time', 'required');
+            $this->form_validation->set_rules('appointment_type', 'Type', 'required');
+            
+            if ($this->form_validation->run()) {
+                $appointment_data = [
+                    'title' => $this->input->post('title'),
+                    'description' => $this->input->post('description'),
+                    'appointment_date' => $this->input->post('appointment_date'),
+                    'start_time' => $this->input->post('start_time'),
+                    'end_time' => $this->input->post('end_time'),
+                    'appointment_type' => $this->input->post('appointment_type'),
+                    'status' => $this->input->post('status'),
+                    'location' => $this->input->post('location'),
+                    'attendees' => $this->input->post('attendees'),
+                    'notes' => $this->input->post('notes'),
+                    'updated_by' => get_staff_user_id(),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ];
+                
+                if ($this->update_appointment_data($appointment_id, $appointment_data)) {
+                    set_alert('success', 'Appointment updated successfully.');
+                    redirect(admin_url('ella_contractors/appointments/' . $appointment->contract_id));
+                } else {
+                    set_alert('danger', 'Failed to update appointment.');
+                }
+            }
+        }
+        
+        try {
+            $contracts_result = $this->ella_contracts_model->get_contracts(['status' => 'active']);
+            $contracts = $contracts_result['contracts'];
+        } catch (Exception $e) {
+            log_message('error', 'Failed to load contracts for appointments: ' . $e->getMessage());
+            $contracts = [];
+        }
+        
+        $data = [
+            'title' => 'Edit Appointment',
+            'appointment' => $appointment,
+            'contracts' => $contracts
+        ];
+        
+        $this->load->view('appointment_form', $data);
+    }
+
+    /**
+     * Delete appointment
+     */
+    public function delete_appointment($appointment_id)
+    {
+        if (!has_permission('ella_contractors', '', 'delete')) {
+            access_denied('ella_contractors');
+        }
+
+        $appointment = $this->get_appointment($appointment_id);
+        if (!$appointment) {
+            show_404();
+        }
+
+        if ($this->delete_appointment_data($appointment_id)) {
+            set_alert('success', 'Appointment deleted successfully.');
+        } else {
+            set_alert('danger', 'Failed to delete appointment.');
+        }
+        
+        redirect(admin_url('ella_contractors/appointments/' . $appointment->contract_id));
+    }
+
+    /**
+     * Update appointment status
+     */
+    public function update_appointment_status()
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            access_denied('ella_contractors');
+        }
+
+        $appointment_id = $this->input->post('appointment_id');
+        $status = $this->input->post('status');
+        
+        if ($this->update_appointment_status_data($appointment_id, $status)) {
+            set_alert('success', 'Appointment status updated successfully.');
+        } else {
+            set_alert('danger', 'Failed to update appointment status.');
+        }
+        
+        redirect(admin_url('ella_contractors/appointments'));
+    }
+
+    /**
+     * Get contract appointments
+     */
+    private function get_contract_appointments($contract_id)
+    {
+        $this->db->select('a.*, c.subject as contract_title, c.contract_number');
+        $this->db->from('ella_appointments a');
+        $this->db->join('tblella_contracts c', 'c.id = a.contract_id', 'left');
+        $this->db->where('a.contract_id', $contract_id);
+        $this->db->order_by('a.appointment_date', 'ASC');
+        $this->db->order_by('a.start_time', 'ASC');
+        
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Get all appointments
+     */
+    private function get_all_appointments()
+    {
+        $this->db->select('a.*, c.subject as contract_title, c.contract_number');
+        $this->db->from('ella_appointments a');
+        $this->db->join('tblella_contracts c', 'c.id = a.contract_id', 'left');
+        $this->db->order_by('a.appointment_date', 'ASC');
+        $this->db->order_by('a.start_time', 'ASC');
+        
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Get single appointment
+     */
+    private function get_appointment($appointment_id)
+    {
+        $this->db->select('a.*, c.subject as contract_title, c.contract_number');
+        $this->db->from('ella_appointments a');
+        $this->db->join('tblella_contracts c', 'c.id = a.contract_id', 'left');
+        $this->db->where('a.id', $appointment_id);
+        
+        return $this->db->get()->row();
+    }
+
+    /**
+     * Add appointment data
+     */
+    private function add_appointment_data($data)
+    {
+        return $this->db->insert('ella_appointments', $data);
+    }
+
+    /**
+     * Update appointment data
+     */
+    private function update_appointment_data($appointment_id, $data)
+    {
+        $this->db->where('id', $appointment_id);
+        return $this->db->update('ella_appointments', $data);
+    }
+
+    /**
+     * Delete appointment data
+     */
+    private function delete_appointment_data($appointment_id)
+    {
+        $this->db->where('id', $appointment_id);
+        return $this->db->delete('ella_appointments');
+    }
+
+    /**
+     * Update appointment status
+     */
+    private function update_appointment_status_data($appointment_id, $status)
+    {
+        $this->db->where('id', $appointment_id);
+        return $this->db->update('ella_appointments', [
+            'status' => $status,
+            'updated_by' => get_staff_user_id(),
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
     }
 
 }

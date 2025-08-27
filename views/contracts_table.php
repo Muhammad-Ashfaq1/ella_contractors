@@ -164,6 +164,11 @@ window.csrf_jquery_ajax_setup = function() {
                                                                         </a>
                                                                     </li>
                                                                     <li>
+                                                                        <a href="<?= admin_url('ella_contractors/appointments/' . $proposal->id) ?>" class="btn btn-warning btn-sm">
+                                                                            <i class="fa fa-calendar"></i> Manage Appointments
+                                                                        </a>
+                                                                    </li>
+                                                                    <li>
                                                                         <button type="button" class="btn btn-primary btn-sm share-gallery-btn" 
                                                                                 data-contract-id="<?= $proposal->id ?>" 
                                                                                 data-hash="<?= $proposal->hash ?>"
