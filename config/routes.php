@@ -24,6 +24,7 @@ $route[$module_name . '/delete_media/(:num)'] = $module_name . '/delete_media/$1
 $route[$module_name . '/media_gallery/(:num)'] = $module_name . '/media_gallery/$1';
 $route[$module_name . '/media_gallery'] = $module_name . '/media_gallery';
 $route[$module_name . '/default_media'] = $module_name . '/default_media';
+$route[$module_name . '/update_media_table'] = $module_name . '/update_media_table';
 
 
 
@@ -49,3 +50,7 @@ $route['public_default_media/(:any)'] = 'ella_contractors/public_default_media/$
 // Client Portal Routes (Public Access)
 $route['modules/ella_contractors/client-portal/(:num)/(:any)'] = 'ella_contractors/public_access/client_portal/$1/$2';
 $route['modules/ella_contractors/client-portal/default/(:any)'] = 'ella_contractors/public_access/client_portal/0/$1';
+
+// Public Contract View Routes (Shareable Links)
+$route['contracts/view/(:num)'] = 'ella_contractors/public_view/$1';
+$route['public/contracts/(:num)'] = 'ella_contractors/public_view/$1';

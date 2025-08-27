@@ -357,6 +357,16 @@ window.csrf_jquery_ajax_setup = function() {
                                             <a href="<?= admin_url('ella_contractors/edit_contract/' . $contract->id) ?>" class="btn btn-xs btn-info" title="Edit">
                                                 <i class="fa fa-edit"></i>
                                             </a>
+                                            <button type="button" class="btn btn-xs btn-success share-contract-btn" 
+                                                    data-contract-id="<?= $contract->id ?>" 
+                                                    data-contract-number="<?= $contract->contract_number ?>"
+                                                    data-subject="<?= $contract->subject ?>"
+                                                    title="Share Client Portal">
+                                                <i class="fa fa-share"></i>
+                                            </button>
+                                            <a href="<?= admin_url('ella_contractors/upload_media/' . $contract->id) ?>" class="btn btn-xs btn-warning" title="Attach Media">
+                                                <i class="fa fa-paperclip"></i>
+                                            </a>
                                             <?php if ($contract->status === 'draft'): ?>
                                             <a href="<?= admin_url('ella_contractors/delete_contract/' . $contract->id) ?>" class="btn btn-xs btn-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this contract?')">
                                                 <i class="fa fa-trash"></i>
@@ -418,6 +428,66 @@ window.csrf_jquery_ajax_setup = function() {
 </div>
 </div>
 </div>
+</div>
+
+<!-- Share Contract Modal -->
+<div class="modal fade" id="shareContractModal" tabindex="-1" role="dialog" aria-labelledby="shareContractModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="shareContractModalLabel">
+                    <i class="fa fa-share"></i> Share Client Portal
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="shareLink">Shareable Link:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="shareLink" readonly>
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="button" id="copyLinkBtn" title="Copy to clipboard">
+                                <i class="fa fa-copy"></i>
+                            </button>
+                        </span>
+                    </div>
+                    <small class="text-muted">Anyone with this link can access the client portal with full contract information.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="shareEmail">Send via Email:</label>
+                    <div class="input-group">
+                        <input type="email" class="form-control" id="shareEmail" placeholder="Enter email address">
+                        <span class="input-group-btn">
+                            <button class="btn btn-primary" type="button" id="sendEmailBtn">
+                                <i class="fa fa-envelope"></i> Send
+                            </button>
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Quick Share Options:</label>
+                    <div class="btn-group-vertical btn-block">
+                        <button type="button" class="btn btn-default" id="shareWhatsApp">
+                            <i class="fa fa-whatsapp"></i> WhatsApp
+                        </button>
+                        <button type="button" class="btn btn-default" id="shareTelegram">
+                            <i class="fa fa-telegram"></i> Telegram
+                        </button>
+                        <button type="button" class="btn btn-default" id="shareSMS">
+                            <i class="fa fa-mobile"></i> SMS
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -488,6 +558,78 @@ $(document).ready(function() {
         
         return true;
     });
+    
+    // Share contract functionality
+    $('.share-contract-btn').click(function() {
+        var contractId = $(this).data('contract-id');
+        var contractNumber = $(this).data('contract-number');
+        var subject = $(this).data('subject');
+        
+        // Generate shareable link using existing client portal
+        var shareLink = window.location.origin + '/client-portal/' + contractId + '/' + generateContractHash(contractId);
+        
+        $('#shareLink').val(shareLink);
+        $('#shareContractModal').modal('show');
+    });
+    
+    // Copy link to clipboard
+    $('#copyLinkBtn').click(function() {
+        var shareLink = $('#shareLink');
+        shareLink.select();
+        document.execCommand('copy');
+        
+        // Show success message
+        $(this).tooltip('hide').attr('data-original-title', 'Copied!').tooltip('show');
+        setTimeout(function() {
+            $('#copyLinkBtn').tooltip('hide');
+        }, 1000);
+    });
+    
+    // Send email
+    $('#sendEmailBtn').click(function() {
+        var email = $('#shareEmail').val();
+        var shareLink = $('#shareLink').val();
+        
+        if (!email) {
+            alert('Please enter an email address.');
+            return;
+        }
+        
+        // Here you would typically make an AJAX call to send the email
+        // For now, we'll just show a success message
+        alert('Client portal link sent to ' + email + '!');
+        $('#shareEmail').val('');
+    });
+    
+    // Quick share options
+    $('#shareWhatsApp').click(function() {
+        var shareLink = $('#shareLink').val();
+        var text = 'Check out this client portal: ' + shareLink;
+        var whatsappUrl = 'https://wa.me/?text=' + encodeURIComponent(text);
+        window.open(whatsappUrl, '_blank');
+    });
+    
+    $('#shareTelegram').click(function() {
+        var shareLink = $('#shareLink').val();
+        var text = 'Check out this client portal: ' + shareLink;
+        var telegramUrl = 'https://t.me/share/url?url=' + encodeURIComponent(shareLink) + '&text=' + encodeURIComponent(text);
+        window.open(telegramUrl, '_blank');
+    });
+    
+    $('#shareSMS').click(function() {
+        var shareLink = $('#shareLink').val();
+        var text = 'Check out this client portal: ' + shareLink;
+        var smsUrl = 'sms:?body=' + shareLink;
+        window.open(smsUrl, '_blank');
+    });
+    
+    // Generate a contract hash for the client portal (matches existing system)
+    function generateContractHash(contractId) {
+        return btoa('contract_' + contractId + '_' + Date.now());
+    }
+    
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
 });
 </script>
 

@@ -11,6 +11,103 @@ window.csrf_jquery_ajax_setup = function() {
     // Do nothing - prevent the error from general_helper.php
     return false;
 };
+
+// File preview functionality
+$(document).ready(function() {
+    $('#media_file').change(function() {
+        var file = this.files[0];
+        if (file) {
+            showFilePreview(file);
+        } else {
+            hideFilePreview();
+        }
+    });
+
+    // Form validation
+    $('#upload-form').submit(function(e) {
+        var file = $('#media_file')[0].files[0];
+        var category = $('#media_category').val();
+        
+        if (!file) {
+            e.preventDefault();
+            toastr.error('Please select a file to upload.');
+            return false;
+        }
+        
+        if (!category) {
+            e.preventDefault();
+            toastr.error('Please select a media category.');
+            return false;
+        }
+        
+        // Check file size (50MB limit)
+        if (file.size > 50 * 1024 * 1024) {
+            e.preventDefault();
+            toastr.error('File size exceeds 50MB limit. Please choose a smaller file.');
+            return false;
+        }
+        
+        // Show loading state
+        $('#upload-form button[type="submit"]').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Uploading...');
+        
+        return true;
+    });
+});
+
+function showFilePreview(file) {
+    var icon = getFileIcon(file.name);
+    var size = formatFileSize(file.size);
+    var type = getFileType(file.name);
+    
+    $('#preview-icon').attr('class', 'fa ' + icon);
+    $('#preview-filename').text(file.name);
+    $('#preview-filesize').text(size);
+    $('#preview-filetype').text(type);
+    
+    $('#file-preview-section').show();
+}
+
+function hideFilePreview() {
+    $('#file-preview-section').hide();
+}
+
+function getFileIcon(filename) {
+    var ext = filename.split('.').pop().toLowerCase();
+    var iconMap = {
+        'pdf': 'fa-file-pdf',
+        'doc': 'fa-file-word', 'docx': 'fa-file-word',
+        'xls': 'fa-file-excel', 'xlsx': 'fa-file-excel',
+        'ppt': 'fa-file-powerpoint', 'pptx': 'fa-file-powerpoint',
+        'jpg': 'fa-file-image', 'jpeg': 'fa-file-image', 'png': 'fa-file-image', 'gif': 'fa-file-image', 'bmp': 'fa-file-image',
+        'mp4': 'fa-file-video', 'avi': 'fa-file-video', 'mov': 'fa-file-video', 'wmv': 'fa-file-video',
+        'mp3': 'fa-file-audio', 'wav': 'fa-file-audio',
+        'zip': 'fa-file-archive', 'rar': 'fa-file-archive', '7z': 'fa-file-archive'
+    };
+    return iconMap[ext] || 'fa-file';
+}
+
+function getFileType(filename) {
+    var ext = filename.split('.').pop().toLowerCase();
+    var typeMap = {
+        'pdf': 'PDF Document',
+        'doc': 'Word Document', 'docx': 'Word Document',
+        'xls': 'Excel Spreadsheet', 'xlsx': 'Excel Spreadsheet',
+        'ppt': 'PowerPoint Presentation', 'pptx': 'PowerPoint Presentation',
+        'jpg': 'JPEG Image', 'jpeg': 'JPEG Image', 'png': 'PNG Image', 'gif': 'GIF Image', 'bmp': 'BMP Image',
+        'mp4': 'MP4 Video', 'avi': 'AVI Video', 'mov': 'MOV Video', 'wmv': 'WMV Video',
+        'mp3': 'MP3 Audio', 'wav': 'WAV Audio',
+        'zip': 'ZIP Archive', 'rar': 'RAR Archive', '7z': '7-Zip Archive'
+    };
+    return typeMap[ext] || 'Unknown File Type';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    var k = 1024;
+    var sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    var i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
 </script>
 
 <?php init_head(); ?>
@@ -38,14 +135,26 @@ window.csrf_jquery_ajax_setup = function() {
                             <div class="col-md-8">
                                 <h4 class="customer-profile-group-heading"><?= $title ?></h4>
                                 <?php if ($contract_id): ?>
-                                <p class="text-muted">Upload media for: <strong><?= isset($contract_subject) ? $contract_subject : 'Contract #' . $contract_id ?></strong></p>
+                                <div class="contract-info-box">
+                                    <div class="contract-header">
+                                        <i class="fa fa-file-contract"></i>
+                                        <strong>Contract: <?= isset($contract_subject) ? $contract_subject : 'Contract #' . $contract_id ?></strong>
+                                    </div>
+                                    <p class="text-muted mb-0">Upload media files specifically for this contract. These files will only be visible for this contract.</p>
+                                </div>
                                 <?php else: ?>
-                                <p class="text-muted">Upload default media files that will be available for all contracts</p>
+                                <div class="default-media-info-box">
+                                    <div class="default-media-header">
+                                        <i class="fa fa-star"></i>
+                                        <strong>Default Media Gallery</strong>
+                                    </div>
+                                    <p class="text-muted mb-0">Upload default media files that will be available for all contracts. These files will be visible in every contract's media section.</p>
+                                </div>
                                 <?php endif; ?>
                             </div>
                             <div class="col-md-4 text-right">
                                 <?php if ($contract_id): ?>
-                                <a href="<?= admin_url('ella_contractors/contracts/view/' . $contract_id) ?>" class="btn btn-default">
+                                <a href="<?= admin_url('ella_contractors/view_contract/' . $contract_id) ?>" class="btn btn-default">
                                     <i class="fa fa-arrow-left"></i> Back to Contract
                                 </a>
                                 <?php else: ?>
@@ -70,17 +179,59 @@ window.csrf_jquery_ajax_setup = function() {
                                         <div class="form-group">
                                             <label for="media_file">Select File <span class="text-danger">*</span></label>
                                             <input type="file" name="media_file" id="media_file" class="form-control" required 
-                                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip,.rar">
+                                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.bmp,.mp4,.avi,.mov,.wmv,.mp3,.wav,.zip,.rar,.7z">
                                             <small class="help-block">
-                                                Allowed formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG, GIF, ZIP, RAR<br>
-                                                Maximum file size: 50MB
+                                                <strong>Allowed formats:</strong> PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG, GIF, BMP, MP4, AVI, MOV, WMV, MP3, WAV, ZIP, RAR, 7Z<br>
+                                                <strong>Maximum file size:</strong> 50MB<br>
+                                                <strong>Recommended:</strong> Use descriptive filenames for better organization
                                             </small>
+                                        </div>
+
+                                        <!-- File Preview Section -->
+                                        <div class="form-group" id="file-preview-section" style="display: none;">
+                                            <label>File Preview</label>
+                                            <div class="file-preview-container">
+                                                <div class="file-preview-info">
+                                                    <div class="file-preview-icon">
+                                                        <i class="fa fa-file" id="preview-icon"></i>
+                                                    </div>
+                                                    <div class="file-preview-details">
+                                                        <h6 id="preview-filename">filename.ext</h6>
+                                                        <p id="preview-filesize">0 KB</p>
+                                                        <p id="preview-filetype">File Type</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="media_category">Media Category <span class="text-danger">*</span></label>
+                                            <select name="media_category" id="media_category" class="form-control" required>
+                                                <option value="">Select Category</option>
+                                                <option value="documents">Documents (PDF, Word, Excel)</option>
+                                                <option value="images">Images (Photos, Screenshots)</option>
+                                                <option value="presentations">Presentations (PowerPoint)</option>
+                                                <option value="contracts">Contract Files</option>
+                                                <option value="invoices">Invoices & Financial</option>
+                                                <option value="blueprints">Blueprints & Plans</option>
+                                                <option value="videos">Videos & Animations</option>
+                                                <option value="audio">Audio Files</option>
+                                                <option value="archives">Archives (ZIP, RAR)</option>
+                                                <option value="other">Other Files</option>
+                                            </select>
                                         </div>
 
                                         <div class="form-group">
                                             <label for="description">Description</label>
                                             <textarea name="description" id="description" class="form-control" rows="3" 
-                                                      placeholder="Optional description for this file"></textarea>
+                                                      placeholder="Detailed description of this file (e.g., 'Project blueprint for Phase 1', 'Client invoice for March 2024')"></textarea>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="tags">Tags (Optional)</label>
+                                            <input type="text" name="tags" id="tags" class="form-control" 
+                                                   placeholder="Enter tags separated by commas (e.g., blueprint, phase1, construction)">
+                                            <small class="help-block">Tags help organize and search media files</small>
                                         </div>
 
                                         <!-- Dynamic Default Media Checkbox -->

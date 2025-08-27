@@ -171,6 +171,224 @@ window.csrf_jquery_ajax_setup = function() {
             </div>
         </div>
     </div>
+
+    <!-- Contract Media Section -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel_s">
+                <div class="panel-body">
+                    <h4 class="mb-3">
+                        <i class="fa fa-paperclip"></i> Contract Media Files
+                    </h4>
+                    
+                    <!-- Media Upload Button -->
+                    <div class="text-right mb-3">
+                        <a href="<?php echo admin_url('ella_contractors/upload_media/' . $contract->id); ?>" class="btn btn-success">
+                            <i class="fa fa-plus"></i> Add Media to Contract
+                        </a>
+                    </div>
+
+                    <?php if (!empty($contract_media)): ?>
+                        <!-- Contract-Specific Media -->
+                        <div class="media-section">
+                            <h5 class="text-info mb-3">
+                                <i class="fa fa-file"></i> Contract-Specific Media (<?php echo count($contract_media); ?> files)
+                            </h5>
+                            <div class="media-grid">
+                                <?php foreach ($contract_media as $media): ?>
+                                <div class="media-grid-item">
+                                    <div class="media-card">
+                                        <!-- File Icon/Preview -->
+                                        <div class="media-icon-section">
+                                            <div class="media-icon">
+                                                <i class="fa <?= get_file_icon($media->file_type) ?>"></i>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- File Info -->
+                                        <div class="media-info-section">
+                                            <h6 class="media-title">
+                                                <?= character_limiter($media->original_name, 30) ?>
+                                            </h6>
+                                            
+                                            <div class="media-meta">
+                                                <div class="media-meta-item">
+                                                    <i class="fa fa-hdd-o"></i>
+                                                    <?= formatBytes($media->file_size) ?>
+                                                </div>
+                                                <div class="media-meta-item">
+                                                    <i class="fa fa-calendar"></i>
+                                                    <?= _dt($media->date_uploaded) ?>
+                                                </div>
+                                            </div>
+                                            
+                                            <?php if ($media->description): ?>
+                                            <div class="media-description">
+                                                <?= character_limiter($media->description, 60) ?>
+                                            </div>
+                                            <?php endif; ?>
+                                            
+                                            <!-- Media Category and Tags -->
+                                            <?php if (isset($media->media_category) && $media->media_category): ?>
+                                            <div class="media-category-badge">
+                                                <i class="fa fa-tag"></i> <?= ucfirst($media->media_category) ?>
+                                            </div>
+                                            <?php endif; ?>
+                                            
+                                            <?php if (isset($media->tags) && $media->tags): ?>
+                                            <div class="media-tags">
+                                                <?php 
+                                                $tags = explode(',', $media->tags);
+                                                foreach (array_slice($tags, 0, 3) as $tag): 
+                                                    $tag = trim($tag);
+                                                    if (!empty($tag)):
+                                                ?>
+                                                <span class="media-tag"><?= $tag ?></span>
+                                                <?php 
+                                                    endif;
+                                                endforeach; 
+                                                if (count($tags) > 3): 
+                                                ?>
+                                                <span class="media-tag-more">+<?= count($tags) - 3 ?> more</span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <?php endif; ?>
+                                            
+                                            <!-- Action Buttons -->
+                                            <div class="media-actions">
+                                                <div class="media-btn-group">
+                                                    <a href="<?= get_contract_media_url($media->contract_id) . $media->file_name ?>" 
+                                                       target="_blank" class="media-btn media-btn-view" title="View File">
+                                                        <i class="fa fa-eye"></i>
+                                                    </a>
+                                                    <a href="<?= get_contract_media_url($media->contract_id) . $media->file_name ?>" 
+                                                       download class="media-btn media-btn-download" title="Download File">
+                                                        <i class="fa fa-download"></i>
+                                                    </a>
+                                                    <a href="javascript:void(0)" 
+                                                       onclick="confirmDeleteMedia(<?= $media->id ?>, '<?= addslashes($media->original_name) ?>', '<?= urlencode(current_url()) ?>')" 
+                                                       class="btn btn-xs btn-danger" title="Delete File">
+                                                        <i class="fa fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Default Media Section -->
+                    <?php if (!empty($default_media)): ?>
+                    <div class="media-section mt-4">
+                        <h5 class="text-warning mb-3">
+                            <i class="fa fa-star"></i> Default Media Available (<?php echo count($default_media); ?> files)
+                        </h5>
+                        <div class="media-grid">
+                            <?php foreach ($default_media as $media): ?>
+                            <div class="media-grid-item">
+                                <div class="media-card">
+                                    <!-- File Icon/Preview -->
+                                    <div class="media-icon-section">
+                                        <div class="media-icon">
+                                            <i class="fa <?= get_file_icon($media->file_type) ?>"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- File Info -->
+                                    <div class="media-info-section">
+                                        <h6 class="media-title">
+                                            <?= character_limiter($media->original_name, 30) ?>
+                                        </h6>
+                                        
+                                        <div class="media-meta">
+                                            <div class="media-meta-item">
+                                                <i class="fa fa-hdd-o"></i>
+                                                <?= formatBytes($media->file_size) ?>
+                                            </div>
+                                            <div class="media-meta-item">
+                                                <i class="fa fa-calendar"></i>
+                                                <?= _dt($media->date_uploaded) ?>
+                                            </div>
+                                        </div>
+                                        
+                                        <?php if ($media->description): ?>
+                                        <div class="media-description">
+                                            <?= character_limiter($media->description, 60) ?>
+                                        </div>
+                                        <?php endif; ?>
+                                        
+                                        <!-- Media Category and Tags -->
+                                        <?php if (isset($media->media_category) && $media->media_category): ?>
+                                        <div class="media-category-badge">
+                                            <i class="fa fa-tag"></i> <?= ucfirst($media->media_category) ?>
+                                        </div>
+                                        <?php endif; ?>
+                                        
+                                        <?php if (isset($media->tags) && $media->tags): ?>
+                                        <div class="media-tags">
+                                            <?php 
+                                            $tags = explode(',', $media->tags);
+                                            foreach (array_slice($tags, 0, 3) as $tag): 
+                                                $tag = trim($tag);
+                                                if (!empty($tag)):
+                                            ?>
+                                            <span class="media-tag"><?= $tag ?></span>
+                                            <?php 
+                                                endif;
+                                            endforeach; 
+                                            if (count($tags) > 3): 
+                                            ?>
+                                            <span class="media-tag-more">+<?= count($tags) - 3 ?> more</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php endif; ?>
+                                        
+                                        <!-- Default Media Badge -->
+                                        <span class="media-default-badge">
+                                            <i class="fa fa-star"></i> Default Media
+                                        </span>
+                                        
+                                        <!-- Action Buttons -->
+                                        <div class="media-actions">
+                                            <div class="media-btn-group">
+                                                <a href="<?= get_contract_media_url(null) . $media->file_name ?>" 
+                                                   target="_blank" class="media-btn media-btn-view" title="View File">
+                                                    <i class="fa fa-eye"></i>
+                                                </a>
+                                                <a href="<?= get_contract_media_url(null) . $media->file_name ?>" 
+                                                   download class="media-btn media-btn-download" title="Download File">
+                                                    <i class="fa fa-download"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- Empty State -->
+                    <?php if (empty($contract_media) && empty($default_media)): ?>
+                    <div class="media-empty-state">
+                        <div class="media-empty-icon">
+                            <i class="fa fa-folder-open"></i>
+                        </div>
+                        <h3 class="media-empty-title">No Media Files Found</h3>
+                        <p class="media-empty-description">This contract doesn't have any media files attached yet.</p>
+                        <a href="<?php echo admin_url('ella_contractors/upload_media/' . $contract->id); ?>" class="btn btn-primary btn-lg">
+                            <i class="fa fa-upload"></i> Upload First Media File
+                        </a>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <?php init_tail(); ?>
@@ -235,6 +453,48 @@ window.csrf_jquery_ajax_setup = function() {
         } else {
             // Fallback to browser alert
             alert(message);
+        }
+    }
+
+    // Function to confirm media deletion
+    function confirmDeleteMedia(mediaId, fileName, redirectUrl) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Delete Media File?',
+                html: `
+                    <p>Are you sure you want to delete this file?</p>
+                    <div class="alert alert-warning">
+                        <strong>File:</strong> ${fileName}
+                    </div>
+                    <p class="text-danger">This action cannot be undone!</p>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, Delete It!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading state
+                    Swal.fire({
+                        title: 'Deleting...',
+                        html: 'Please wait while we delete the file.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    // Perform the deletion
+                    window.location.href = '<?= admin_url('ella_contractors/delete_media/') ?>' + mediaId + '?redirect=' + redirectUrl;
+                }
+            });
+        } else {
+            // Fallback to browser confirm
+            if (confirm(`Are you sure you want to delete "${fileName}"?`)) {
+                window.location.href = '<?= admin_url('ella_contractors/delete_media/') ?>' + mediaId + '?redirect=' + redirectUrl;
+            }
         }
     }
 </script>

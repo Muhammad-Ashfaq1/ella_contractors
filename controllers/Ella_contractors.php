@@ -374,10 +374,19 @@ class Ella_contractors extends AdminController
     public function upload_media($contract_id = null) {
         if ($this->input->post()) {
             $description = $this->input->post('description');
+            $media_category = $this->input->post('media_category');
+            $tags = $this->input->post('tags');
             $is_default = $this->input->post('is_default') ? true : false;
             
+            // Validate required fields
+            if (empty($media_category)) {
+                set_alert('danger', 'Please select a media category.');
+                redirect(admin_url('ella_contractors/upload_media/' . $contract_id));
+                return;
+            }
+            
                         if (!empty($_FILES['media_file']['name'])) {
-                $result = upload_contract_media($contract_id, 'media_file', $description, $is_default);
+                $result = upload_contract_media($contract_id, 'media_file', $description, $is_default, $media_category, $tags);
                 
                 if ($result['success']) {
                     set_alert('success', 'Media file uploaded successfully!');
@@ -403,7 +412,7 @@ class Ella_contractors extends AdminController
         // Get contract details if contract_id provided
         if ($contract_id) {
             $this->db->select('subject');
-            $this->db->from('tblproposals');
+            $this->db->from('tblella_contracts');
             $this->db->where('id', $contract_id);
             $contract = $this->db->get()->row();
             $data['contract_subject'] = $contract ? $contract->subject : 'Unknown Contract';
@@ -496,7 +505,7 @@ class Ella_contractors extends AdminController
                         $this->ella_contractors_model->delete_contractor($id);
                     }
                     set_alert('success', 'Selected contractors deleted successfully.');
-                } else {
+        } else {
                     set_alert('danger', 'You do not have permission to delete contractors.');
                 }
                 break;
@@ -582,6 +591,15 @@ class Ella_contractors extends AdminController
                     'type' => 'TEXT',
                     'null' => TRUE
                 ],
+                'media_category' => [
+                    'type' => 'VARCHAR',
+                    'constraint' => 100,
+                    'null' => TRUE
+                ],
+                'tags' => [
+                    'type' => 'TEXT',
+                    'null' => TRUE
+                ],
                 'uploaded_by' => [
                     'type' => 'INT',
                     'constraint' => 11,
@@ -598,6 +616,45 @@ class Ella_contractors extends AdminController
             $this->dbforge->add_key('contract_id');
             $this->dbforge->add_key('is_default');
             $this->dbforge->create_table($table_name);
+        } else {
+            // Table exists, check if we need to add new columns
+            $this->ensure_media_table_columns();
+        }
+    }
+    
+    /**
+     * Ensure all required columns exist in the media table
+     */
+    private function ensure_media_table_columns() {
+        $table_name = 'ella_contractor_media';
+        
+        if ($this->db->table_exists($table_name)) {
+            $this->load->dbforge();
+            
+            // Check and add media_category column if it doesn't exist
+            if (!$this->db->field_exists('media_category', $table_name)) {
+                $fields = [
+                    'media_category' => [
+                        'type' => 'VARCHAR',
+                        'constraint' => 100,
+                        'null' => TRUE,
+                        'after' => 'description'
+                    ]
+                ];
+                $this->dbforge->add_column($table_name, $fields);
+            }
+            
+            // Check and add tags column if it doesn't exist
+            if (!$this->db->field_exists('tags', $table_name)) {
+                $fields = [
+                    'tags' => [
+                        'type' => 'TEXT',
+                        'null' => TRUE,
+                        'after' => 'media_category'
+                    ]
+                ];
+                $this->dbforge->add_column($table_name, $fields);
+            }
         }
     }
     
@@ -627,6 +684,21 @@ class Ella_contractors extends AdminController
         $data['is_default_gallery'] = true;
         
         $this->load->view('media_gallery', $data);
+    }
+    
+    /**
+     * Update media table structure (for existing installations)
+     */
+    public function update_media_table() {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            access_denied('ella_contractors');
+        }
+        
+        // Ensure the table structure is up to date
+        $this->ensure_contract_media_table();
+        
+        set_alert('success', 'Media table structure has been updated successfully!');
+        redirect(admin_url('ella_contractors/media_gallery'));
     }
     
     /**
@@ -824,12 +896,23 @@ class Ella_contractors extends AdminController
             redirect(admin_url('ella_contractors/contracts'));
         }
         
+        // Load contract media files
+        $contract_media = [];
+        $default_media = [];
+        
+        if (function_exists('get_contract_media')) {
+            $contract_media = get_contract_media($id, false); // Only contract-specific media
+            $default_media = get_default_contract_media(); // Default media for all contracts
+        }
+        
         $data = [
             'title' => 'Contract Details',
-            'contract' => $contract
+            'contract' => $contract,
+            'contract_media' => $contract_media,
+            'default_media' => $default_media
         ];
         
-        $this->load->view('contract_view', $data);
+        $this->load->view('view_contract', $data);
     }
 
     /**
@@ -935,5 +1018,40 @@ class Ella_contractors extends AdminController
         redirect(admin_url('ella_contractors/contracts'));
     }
 
+    /**
+     * Public contract view (for shareable links)
+     */
+    public function public_view($id)
+    {
+        // Load the contracts model
+        $this->load->model('ella_contracts_model');
+        
+        // Get contract data
+        $contract = $this->ella_contracts_model->get_contract($id);
+        if (!$contract) {
+            show_404();
+        }
+        
+        // Check if token is valid (basic validation)
+        $token = $this->input->get('token');
+        if (!$token) {
+            show_404();
+        }
+        
+        // For now, we'll do basic token validation
+        // In production, implement proper token validation
+        $expected_token = base64_encode('contract_' . $id . '_' . strtotime('today'));
+        if (strpos($token, 'contract_' . $id) === false) {
+            show_404();
+        }
+        
+        // Load public view
+        $data = [
+            'contract' => $contract,
+            'is_public' => true
+        ];
+        
+        $this->load->view('contract_public_view', $data);
+    }
 
 }

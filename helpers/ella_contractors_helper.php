@@ -196,3 +196,127 @@ function get_contract_summary($contract_id) {
         'days_remaining' => rand(1, 30)
     ];
 }
+
+/**
+ * Upload contract media file
+ * @param int $contract_id
+ * @param string $file_field
+ * @param string $description
+ * @param bool $is_default
+ * @param string $media_category
+ * @param string $tags
+ * @return array
+ */
+function upload_contract_media($contract_id, $file_field, $description = '', $is_default = false, $media_category = '', $tags = '') {
+    $CI = &get_instance();
+    
+    // Load upload library
+    $CI->load->library('upload');
+    
+    // Set upload path
+    if ($is_default) {
+        $upload_path = FCPATH . 'uploads/contracts/default/';
+    } else {
+        $upload_path = FCPATH . 'uploads/contracts/media/contract_' . $contract_id . '/';
+    }
+    
+    // Create directory if it doesn't exist
+    if (!is_dir($upload_path)) {
+        mkdir($upload_path, 0755, true);
+    }
+    
+    // Configure upload
+    $config['upload_path'] = $upload_path;
+    $config['allowed_types'] = 'pdf|doc|docx|xls|xlsx|ppt|pptx|jpg|jpeg|png|gif|bmp|mp4|avi|mov|wmv|mp3|wav|zip|rar|7z';
+    $config['max_size'] = 50 * 1024; // 50MB
+    $config['encrypt_name'] = true;
+    $config['remove_spaces'] = true;
+    
+    $CI->upload->initialize($config);
+    
+    if (!$CI->upload->do_upload($file_field)) {
+        return [
+            'success' => false,
+            'error' => $CI->upload->display_errors('', '')
+        ];
+    }
+    
+    $upload_data = $CI->upload->data();
+    
+    // Prepare data for database
+    $media_data = [
+        'contract_id' => $is_default ? null : $contract_id,
+        'file_name' => $upload_data['file_name'],
+        'original_name' => $upload_data['orig_name'],
+        'file_type' => $upload_data['file_ext'],
+        'file_size' => $upload_data['file_size'],
+        'file_path' => $upload_path . $upload_data['file_name'],
+        'is_default' => $is_default ? 1 : 0,
+        'description' => $description,
+        'media_category' => $media_category,
+        'tags' => $tags,
+        'uploaded_by' => get_staff_user_id(),
+        'date_uploaded' => date('Y-m-d H:i:s')
+    ];
+    
+    // Insert into database
+    $CI->db->insert('ella_contractor_media', $media_data);
+    
+    if ($CI->db->affected_rows() > 0) {
+        return [
+            'success' => true,
+            'media_id' => $CI->db->insert_id(),
+            'file_name' => $upload_data['file_name']
+        ];
+    } else {
+        // Delete uploaded file if database insert failed
+        unlink($upload_path . $upload_data['file_name']);
+        return [
+            'success' => false,
+            'error' => 'Failed to save media information to database'
+        ];
+    }
+}
+
+/**
+ * Delete contract media file
+ * @param int $media_id
+ * @return bool
+ */
+function delete_contract_media($media_id) {
+    $CI = &get_instance();
+    
+    // Get media info
+    $CI->db->select('*');
+    $CI->db->from('ella_contractor_media');
+    $CI->db->where('id', $media_id);
+    $media = $CI->db->get()->row();
+    
+    if (!$media) {
+        return false;
+    }
+    
+    // Delete file from filesystem
+    if (file_exists($media->file_path)) {
+        unlink($media->file_path);
+    }
+    
+    // Delete from database
+    $CI->db->where('id', $media_id);
+    $CI->db->delete('ella_contractor_media');
+    
+    return $CI->db->affected_rows() > 0;
+}
+
+/**
+ * Get contract media URL for viewing/downloading
+ * @param int $contract_id
+ * @return string
+ */
+function get_contract_media_url($contract_id) {
+    if ($contract_id) {
+        return base_url('uploads/contracts/media/contract_' . $contract_id . '/');
+    } else {
+        return base_url('uploads/contracts/default/');
+    }
+}
