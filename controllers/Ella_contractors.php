@@ -1456,4 +1456,91 @@ class Ella_contractors extends AdminController
         ]);
     }
 
+    /**
+     * Get contract appointments for AJAX request
+     */
+    public function get_contract_appointments_ajax($contract_id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            $this->output->set_status_header(403);
+            echo json_encode(['success' => false, 'message' => 'Access denied']);
+            return;
+        }
+
+        try {
+            $appointments = $this->get_contract_appointments($contract_id);
+            
+            $this->output->set_content_type('application/json');
+            echo json_encode([
+                'success' => true,
+                'appointments' => $appointments
+            ]);
+        } catch (Exception $e) {
+            log_message('error', 'Failed to get appointments for contract ' . $contract_id . ': ' . $e->getMessage());
+            
+            $this->output->set_status_header(403);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to load appointments'
+            ]);
+        }
+    }
+
+    /**
+     * Add appointment via AJAX
+     */
+    public function add_appointment_ajax()
+    {
+        if (!has_permission('ella_contractors', '', 'add')) {
+            $this->output->set_status_header(403);
+            echo json_encode(['success' => false, 'message' => 'Access denied']);
+            return;
+        }
+
+        $this->form_validation->set_rules('contract_id', 'Contract', 'required|numeric');
+        $this->form_validation->set_rules('title', 'Title', 'required');
+        $this->form_validation->set_rules('appointment_date', 'Date', 'required');
+        $this->form_validation->set_rules('start_time', 'Start Time', 'required');
+        $this->form_validation->set_rules('end_time', 'End Time', 'required');
+        $this->form_validation->set_rules('appointment_type', 'Type', 'required');
+        
+        if ($this->form_validation->run()) {
+            $appointment_data = [
+                'contract_id' => $this->input->post('contract_id'),
+                'title' => $this->input->post('title'),
+                'description' => $this->input->post('description'),
+                'appointment_date' => $this->input->post('appointment_date'),
+                'start_time' => $this->input->post('start_time'),
+                'end_time' => $this->input->post('end_time'),
+                'appointment_type' => $this->input->post('appointment_type'),
+                'status' => $this->input->post('status'),
+                'location' => $this->input->post('location'),
+                'attendees' => '',
+                'notes' => '',
+                'created_by' => get_staff_user_id(),
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+            
+            if ($this->add_appointment_data($appointment_data)) {
+                $this->output->set_content_type('application/json');
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Appointment added successfully'
+                ]);
+            } else {
+                $this->output->set_content_type('application/json');
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to add appointment'
+                ]);
+            }
+        } else {
+            $this->output->set_content_type('application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => validation_errors()
+            ]);
+        }
+    }
+
 }

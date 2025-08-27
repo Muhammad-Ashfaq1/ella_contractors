@@ -194,6 +194,26 @@ window.csrf_jquery_ajax_setup = function() {
                         </div>
                     </div>
 
+                    <!-- Appointments Section (for existing contracts) -->
+                    <?php if (isset($contract) && $contract->id): ?>
+                    <div class="form-section mt-4">
+                        <h5 class="form-section-title">
+                            <i class="fa fa-calendar"></i> Contract Appointments
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="alert alert-info">
+                                    <i class="fa fa-info-circle"></i>
+                                    <strong>Appointments:</strong> You can manage appointments for this contract after saving.
+                                    <a href="<?= admin_url('ella_contractors/appointments/' . $contract->id) ?>" class="btn btn-sm btn-info pull-right">
+                                        <i class="fa fa-calendar"></i> View Appointments
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
                     <?php echo form_close(); ?>
                 </div>
             </div>
