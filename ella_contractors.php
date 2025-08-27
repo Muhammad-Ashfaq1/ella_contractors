@@ -303,6 +303,102 @@ function ella_contractors_activate_module()
         // Table already exists, log it
         log_message('info', 'Ella Contractors: Table ' . $table_name . ' already exists');
     }
+    
+    // Create contracts table
+    $contracts_table = 'tblella_contracts';
+    
+    if (!$CI->db->table_exists($contracts_table)) {
+        $fields = [
+            'id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'unsigned' => TRUE,
+                'auto_increment' => TRUE
+            ],
+            'contract_number' => [
+                'type' => 'VARCHAR',
+                'constraint' => 50,
+                'null' => FALSE
+            ],
+            'lead_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => FALSE
+            ],
+            'contractor_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => FALSE
+            ],
+            'subject' => [
+                'type' => 'VARCHAR',
+                'constraint' => 255,
+                'null' => FALSE
+            ],
+            'description' => [
+                'type' => 'TEXT',
+                'null' => TRUE
+            ],
+            'contract_value' => [
+                'type' => 'DECIMAL',
+                'constraint' => '15,2',
+                'null' => TRUE
+            ],
+            'start_date' => [
+                'type' => 'DATE',
+                'null' => TRUE
+            ],
+            'end_date' => [
+                'type' => 'DATE',
+                'null' => TRUE
+            ],
+            'status' => [
+                'type' => 'ENUM',
+                'constraint' => ['draft', 'active', 'completed', 'cancelled', 'expired'],
+                'default' => 'draft'
+            ],
+            'payment_terms' => [
+                'type' => 'VARCHAR',
+                'constraint' => 255,
+                'null' => TRUE
+            ],
+            'notes' => [
+                'type' => 'TEXT',
+                'null' => TRUE
+            ],
+            'created_by' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => FALSE
+            ],
+            'created_at' => [
+                'type' => 'DATETIME',
+                'null' => FALSE
+            ],
+            'updated_by' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => TRUE
+            ],
+            'updated_at' => [
+                'type' => 'DATETIME',
+                'null' => TRUE
+            ]
+        ];
+        
+        $CI->dbforge->add_field($fields);
+        $CI->dbforge->add_key('id', TRUE);
+        $CI->dbforge->add_key('contract_number');
+        $CI->dbforge->add_key('lead_id');
+        $CI->dbforge->add_key('contractor_id');
+        $CI->dbforge->add_key('status');
+        $CI->dbforge->create_table($contracts_table);
+        
+        log_message('info', 'Ella Contractors: Created table ' . $contracts_table);
+    } else {
+        // Table already exists, log it
+        log_message('info', 'Ella Contractors: Table ' . $contracts_table . ' already exists');
+    }
 }
 
 /**

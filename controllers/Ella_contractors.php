@@ -9,6 +9,9 @@ class Ella_contractors extends AdminController
         // Load CodeIgniter system helpers
         $this->load->helper(['text', 'date']);
         
+        // Load form validation library
+        $this->load->library('form_validation');
+        
         // Load helper functions from module directory
         $helper_path = __DIR__ . '/../helpers/ella_contractors_helper.php';
         if (file_exists($helper_path)) {
@@ -298,27 +301,51 @@ class Ella_contractors extends AdminController
     }
     
     /**
-     * Contracts listing page - shows accepted proposals
+     * Contracts listing page
      */
-    public function contracts($page = 1) {
-        $data['title'] = 'Contracts Management';
+    public function contracts($page = 1)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            access_denied('ella_contractors');
+        }
+
+        $this->load->model('ella_contracts_model');
         
-        // Load the proposals model to get accepted proposals
-        $this->load->model('proposals_model');
+        // Get filters
+        $filters = [
+            'status' => $this->input->get('status'),
+            'search' => $this->input->get('search'),
+            'lead_id' => $this->input->get('lead_id'),
+            'contractor_id' => $this->input->get('contractor_id')
+        ];
         
-        // Get accepted proposals (status = 3 means accepted)
-        $this->db->select('tblproposals.*, tblleads.name as lead_name, tblleads.email as lead_email, 
-                          tblleads.phonenumber as lead_phone, tblleads.company as lead_company,
-                          tblstaff.firstname, tblstaff.lastname');
-        $this->db->from('tblproposals');
-        $this->db->join('tblleads', 'tblproposals.rel_id = tblleads.id AND tblproposals.rel_type = "lead"', 'left');
-        $this->db->join('tblstaff', 'tblleads.assigned = tblstaff.staffid', 'left');
-        $this->db->where('tblproposals.status', $this->active_status); // Status 3 = Accepted
-        $this->db->order_by('tblproposals.date', 'DESC');
+        // Get contracts with pagination
+        $result = $this->ella_contracts_model->get_contracts($filters, $page);
         
-        $data['accepted_proposals'] = $this->db->get()->result();
+        // Get statistics
+        $stats = $this->ella_contracts_model->get_contracts_stats();
+        $counts = $this->ella_contracts_model->get_contracts_count();
         
-        $this->load->view('contracts_table', $data);
+        // Get leads and contractors for filters
+        $leads = $this->ella_contracts_model->get_leads_for_contracts();
+        $contractors = $this->ella_contracts_model->get_contractors_for_contracts();
+        
+        $data = [
+            'title' => 'Contracts Management',
+            'contracts' => $result['contracts'],
+            'pagination' => [
+                'current_page' => $result['current_page'],
+                'total_pages' => $result['total_pages'],
+                'total_records' => $result['total_records']
+            ],
+            'stats' => $stats,
+            'counts' => $counts,
+            'filters' => $filters,
+            'leads' => $leads,
+            'contractors' => $contractors
+        ];
+        
+        $this->load->view('contracts_list', $data);
     }
     
     /**
@@ -339,44 +366,7 @@ class Ella_contractors extends AdminController
         $this->load->view('simple_page', $data);
     }
     
-    /**
-     * View contract details with media gallery
-     */
-    public function view_contract($contract_id) {
-        // Get contract (proposal) details
-        $this->db->select('tblproposals.*, tblleads.name as lead_name, tblleads.email as lead_email, 
-                          tblleads.phonenumber as lead_phone, tblleads.company as lead_company,
-                          tblstaff.firstname, tblstaff.lastname');
-        $this->db->from('tblproposals');
-        $this->db->join('tblleads', 'tblproposals.rel_id = tblleads.id AND tblproposals.rel_type = "lead"', 'left');
-        $this->db->join('tblstaff', 'tblleads.assigned = tblstaff.staffid', 'left');
-        $this->db->where('tblproposals.id', $contract_id);
-        $this->db->where('tblproposals.status', 3); // Only accepted proposals
-        
-        $contract = $this->db->get()->row();
-        
-        if (!$contract) {
-            show_404();
-                return;
-            }
-            
-                        // Get media files for this contract
-        $contract_media = get_contract_media($contract_id, false);
-        
-        // Get default media files
-        $default_media = get_default_contract_media();
-        
-        // Get base currency for formatting
-        $base_currency = get_base_currency();
-        
-        $data['title'] = 'Contract Details - ' . $contract->subject;
-        $data['contract'] = $contract;
-        $data['contract_media'] = $contract_media;
-        $data['default_media'] = $default_media;
-        $data['base_currency'] = $base_currency;
-        
-        $this->load->view('view_contract', $data);
-    }
+
     
     /**
      * Upload media for contract
@@ -672,6 +662,277 @@ class Ella_contractors extends AdminController
         
         echo "<hr>";
         echo "<p><a href='" . admin_url('ella_contractors') . "'>← Back to Ella Contractors</a></p>";
+    }
+
+    /**
+     * Add new contract
+     */
+    public function add_contract()
+    {
+        if (!has_permission('ella_contractors', '', 'create')) {
+            access_denied('ella_contractors');
+        }
+
+        $this->load->model('ella_contracts_model');
+        $this->load->library('form_validation');
+        
+        if ($this->input->post()) {
+            // Form validation
+            $this->form_validation->set_rules('lead_id', 'Lead', 'required|numeric');
+            $this->form_validation->set_rules('contractor_id', 'Contractor', 'required|numeric');
+            $this->form_validation->set_rules('subject', 'Subject', 'required|max_length[255]');
+            $this->form_validation->set_rules('contract_value', 'Contract Value', 'numeric');
+            $this->form_validation->set_rules('status', 'Status', 'required|in_list[draft,active,completed,cancelled,expired]');
+            
+            if ($this->form_validation->run() == false) {
+                $errors = validation_errors();
+                set_alert('danger', $errors);
+            } else {
+                $data = [
+                    'lead_id' => $this->input->post('lead_id'),
+                    'contractor_id' => $this->input->post('contractor_id'),
+                    'subject' => $this->input->post('subject'),
+                    'description' => $this->input->post('description'),
+                    'contract_value' => $this->input->post('contract_value'),
+                    'start_date' => $this->input->post('start_date'),
+                    'end_date' => $this->input->post('end_date'),
+                    'status' => $this->input->post('status'),
+                    'payment_terms' => $this->input->post('payment_terms'),
+                    'notes' => $this->input->post('notes')
+                ];
+                
+                // Check if lead already has active contract
+                if ($this->ella_contracts_model->lead_has_active_contract($data['lead_id']) && in_array($data['status'], ['draft', 'active'])) {
+                    set_alert('warning', 'This lead already has an active contract. Please review existing contracts first.');
+                } else {
+                    $contract_id = $this->ella_contracts_model->create_contract($data);
+                    
+                    if ($contract_id) {
+                        log_activity('New Contract Created [ContractID: ' . $contract_id . ']');
+                        set_alert('success', 'Contract created successfully.');
+                        redirect(admin_url('ella_contractors/contracts'));
+                    } else {
+                        set_alert('danger', 'Failed to create contract.');
+                    }
+                }
+            }
+        }
+        
+        // Get leads and contractors for dropdowns
+        $leads = $this->ella_contracts_model->get_leads_for_contracts();
+        $contractors = $this->ella_contracts_model->get_contractors_for_contracts();
+        
+        $data = [
+            'title' => 'Add New Contract',
+            'leads' => $leads,
+            'contractors' => $contractors
+        ];
+        
+        $this->load->view('contract_form', $data);
+    }
+
+    /**
+     * Edit existing contract
+     */
+    public function edit_contract($id)
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            access_denied('ella_contractors');
+        }
+
+        $this->load->model('ella_contracts_model');
+        $this->load->library('form_validation');
+        
+        $contract = $this->ella_contracts_model->get_contract($id);
+        if (!$contract) {
+            set_alert('danger', 'Contract not found.');
+            redirect(admin_url('ella_contractors/contracts'));
+        }
+        
+        if ($this->input->post()) {
+            // Form validation
+            $this->form_validation->set_rules('lead_id', 'Lead', 'required|numeric');
+            $this->form_validation->set_rules('contractor_id', 'Contractor', 'required|numeric');
+            $this->form_validation->set_rules('subject', 'Subject', 'required|max_length[255]');
+            $this->form_validation->set_rules('contract_value', 'Contract Value', 'numeric');
+            $this->form_validation->set_rules('status', 'Status', 'required|in_list[draft,active,completed,cancelled,expired]');
+            
+            if ($this->form_validation->run() == false) {
+                $errors = validation_errors();
+                set_alert('danger', $errors);
+            } else {
+                $data = [
+                    'lead_id' => $this->input->post('lead_id'),
+                    'contractor_id' => $this->input->post('contractor_id'),
+                    'subject' => $this->input->post('subject'),
+                    'description' => $this->input->post('description'),
+                    'contract_value' => $this->input->post('contract_value'),
+                    'start_date' => $this->input->post('start_date'),
+                    'end_date' => $this->input->post('end_date'),
+                    'status' => $this->input->post('status'),
+                    'payment_terms' => $this->input->post('payment_terms'),
+                    'notes' => $this->input->post('notes')
+                ];
+                
+                // Check if lead already has active contract (excluding current contract)
+                if ($data['lead_id'] != $contract->lead_id && 
+                    $this->ella_contracts_model->lead_has_active_contract($data['lead_id']) && 
+                    in_array($data['status'], ['draft', 'active'])) {
+                    set_alert('warning', 'This lead already has an active contract. Please review existing contracts first.');
+                } else {
+                    $updated = $this->ella_contracts_model->update_contract($id, $data);
+                    
+                    if ($updated) {
+                        log_activity('Contract Updated [ContractID: ' . $id . ']');
+                        set_alert('success', 'Contract updated successfully.');
+                        redirect(admin_url('ella_contractors/contracts'));
+                    } else {
+                        set_alert('danger', 'Failed to update contract.');
+                    }
+                }
+            }
+        }
+        
+        // Get leads and contractors for dropdowns
+        $leads = $this->ella_contracts_model->get_leads_for_contracts();
+        $contractors = $this->ella_contracts_model->get_contractors_for_contracts();
+        
+        $data = [
+            'title' => 'Edit Contract',
+            'contract' => $contract,
+            'leads' => $leads,
+            'contractors' => $contractors
+        ];
+        
+        $this->load->view('contract_form', $data);
+    }
+
+    /**
+     * View contract details
+     */
+    public function view_contract($id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            access_denied('ella_contractors');
+        }
+
+        $this->load->model('ella_contracts_model');
+        
+        $contract = $this->ella_contracts_model->get_contract($id);
+        if (!$contract) {
+            set_alert('danger', 'Contract not found.');
+            redirect(admin_url('ella_contractors/contracts'));
+        }
+        
+        $data = [
+            'title' => 'Contract Details',
+            'contract' => $contract
+        ];
+        
+        $this->load->view('contract_view', $data);
+    }
+
+    /**
+     * Delete contract
+     */
+    public function delete_contract($id)
+    {
+        if (!has_permission('ella_contractors', '', 'delete')) {
+            access_denied('ella_contractors');
+        }
+
+        $this->load->model('ella_contracts_model');
+        
+        $contract = $this->ella_contracts_model->get_contract($id);
+        if (!$contract) {
+            set_alert('danger', 'Contract not found.');
+            redirect(admin_url('ella_contractors/contracts'));
+        }
+        
+        // Check if contract can be deleted (only draft contracts)
+        if ($contract->status !== 'draft') {
+            set_alert('warning', 'Only draft contracts can be deleted.');
+            redirect(admin_url('ella_contractors/contracts'));
+        }
+        
+        $deleted = $this->ella_contracts_model->delete_contract($id);
+        
+        if ($deleted) {
+            log_activity('Contract Deleted [ContractID: ' . $id . ']');
+            set_alert('success', 'Contract deleted successfully.');
+        } else {
+            set_alert('danger', 'Failed to delete contract.');
+        }
+        
+        redirect(admin_url('ella_contractors/contracts'));
+    }
+
+    /**
+     * Bulk actions for contracts
+     */
+    public function bulk_contract_actions()
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            access_denied('ella_contractors');
+        }
+
+        $this->load->model('ella_contracts_model');
+        
+        $action = $this->input->post('bulk_action');
+        $contract_ids = $this->input->post('contract_ids');
+        
+        if (empty($contract_ids) || empty($action)) {
+            set_alert('warning', 'Please select contracts and an action.');
+            redirect(admin_url('ella_contractors/contracts'));
+        }
+        
+        $success_count = 0;
+        
+        switch ($action) {
+            case 'activate':
+                $success_count = $this->ella_contracts_model->bulk_update_status($contract_ids, 'active');
+                $message = 'Selected contracts activated successfully.';
+                break;
+                
+            case 'complete':
+                $success_count = $this->ella_contracts_model->bulk_update_status($contract_ids, 'completed');
+                $message = 'Selected contracts marked as completed.';
+                break;
+                
+            case 'cancel':
+                $success_count = $this->ella_contracts_model->bulk_update_status($contract_ids, 'cancelled');
+                $message = 'Selected contracts cancelled successfully.';
+                break;
+                
+            case 'delete':
+                if (has_permission('ella_contractors', '', 'delete')) {
+                    foreach ($contract_ids as $contract_id) {
+                        $contract = $this->ella_contracts_model->get_contract($contract_id);
+                        if ($contract && $contract->status === 'draft') {
+                            if ($this->ella_contracts_model->delete_contract($contract_id)) {
+                                $success_count++;
+                            }
+                        }
+                    }
+                    $message = 'Selected draft contracts deleted successfully.';
+                } else {
+                    set_alert('danger', 'You do not have permission to delete contracts.');
+                    redirect(admin_url('ella_contractors/contracts'));
+                }
+                break;
+                
+            default:
+                set_alert('warning', 'Invalid action selected.');
+                redirect(admin_url('ella_contractors/contracts'));
+        }
+        
+        if ($success_count > 0) {
+            set_alert('success', $message . ' ' . $success_count . ' contracts affected.');
+        } else {
+            set_alert('warning', 'No contracts were affected by this action.');
+        }
+        
+        redirect(admin_url('ella_contractors/contracts'));
     }
 
 
