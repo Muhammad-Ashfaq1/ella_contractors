@@ -114,7 +114,7 @@ window.csrf_jquery_ajax_setup = function() {
                                 <?php if (!empty($media_files)): ?>
                                                         <!-- Media Grid -->
                             <div class="row">
-                                <?php foreach ($media_files as $media): ?>
+                                    <?php foreach ($media_files as $media): ?>
                                 <div class="col-md-4 col-sm-6 media-item" data-category="<?= $media->media_category ?>" data-tags="<?= $media->tags ?>" data-name="<?= strtolower($media->original_name) ?>" data-size="<?= $media->file_size ?>" data-date="<?= $media->date_uploaded ?>">
                                     <div class="panel panel-default">
                                         <div class="panel-body">
@@ -158,15 +158,15 @@ window.csrf_jquery_ajax_setup = function() {
                                             <div class="media-item-header">
                                                 <div class="media-item-icon">
                                                     <i class="fa <?= get_file_icon($media->file_type) ?>"></i>
-                                                </div>
+                                                    </div>
                                                 <div class="media-item-info">
                                                     <h5 class="media-title"><?= character_limiter($media->original_name, 30) ?></h5>
                                                     <div class="media-item-meta">
                                                         <?= formatBytes($media->file_size) ?> • <?= strtoupper($media->file_type) ?>
                                                     </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            
+                                                
                                             <div class="media-item-details">
                                                 <?php if (!empty($media->description)): ?>
                                                 <div class="media-item-description">
@@ -195,26 +195,26 @@ window.csrf_jquery_ajax_setup = function() {
                                                 <?php endif; ?>
                                             </div>
                                             
-                                            <div class="media-btn-group">
-                                                <a href="<?= get_contract_media_url($media->contract_id) . $media->file_name ?>" 
+                                                    <div class="media-btn-group">
+                                                        <a href="<?= get_contract_media_url($media->contract_id) . $media->file_name ?>" 
                                                    target="_blank" class="btn btn-xs btn-info" title="View File">
                                                     <i class="fa fa-eye"></i> View
-                                                </a>
-                                                <a href="<?= get_contract_media_url($media->contract_id) . $media->file_name ?>" 
+                                                        </a>
+                                                        <a href="<?= get_contract_media_url($media->contract_id) . $media->file_name ?>" 
                                                    download class="btn btn-xs btn-success" title="Download File">
                                                     <i class="fa fa-download"></i> Download
-                                                </a>
-                                                <a href="javascript:void(0)" 
-                                                   onclick="confirmDeleteMedia(<?= $media->id ?>, '<?= addslashes($media->original_name) ?>', '<?= urlencode(current_url()) ?>')" 
+                                                        </a>
+                                                        <a href="javascript:void(0)" 
+                                                           onclick="confirmDeleteMedia(<?= $media->id ?>, '<?= addslashes($media->original_name) ?>', '<?= urlencode(current_url()) ?>')" 
                                                    class="btn btn-xs btn-danger" title="Delete File">
                                                     <i class="fa fa-trash"></i> Delete
-                                                </a>
+                                                        </a>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <?php endforeach; ?>
-                            </div>
+                                </div>
                                 
                                 <!-- Summary -->
                             <div class="row">
@@ -255,8 +255,8 @@ window.csrf_jquery_ajax_setup = function() {
                                     <?php endif; ?>
                                 </div>
                                 </div>
-                            </div>
-                            <?php endif; ?>
+                                </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
