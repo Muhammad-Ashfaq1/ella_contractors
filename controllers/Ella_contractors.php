@@ -2,7 +2,6 @@
 
 class Ella_contractors extends AdminController
 {
-    public $active_status = 3;
     public function __construct() {
         parent::__construct();
         
@@ -42,13 +41,6 @@ class Ella_contractors extends AdminController
      */
     public function index() {
         redirect('admin/ella_contractors/dashboard');
-    }
-
-    /**
-     * New method
-     */
-    public function new() {
-        die('test');
     }
     
     /**
@@ -121,7 +113,6 @@ class Ella_contractors extends AdminController
         
         if ($this->input->post()) {
             $this->load->library('form_validation');
-            
             // Set validation rules
             $this->form_validation->set_rules('company_name', 'Company Name', 'required|trim');
             $this->form_validation->set_rules('contact_person', 'Contact Person', 'required|trim');
@@ -818,32 +809,6 @@ class Ella_contractors extends AdminController
         $data['title'] = 'Contractor Settings';
         $data['message'] = 'Hello from Settings page';
         $this->load->view('simple_page', $data);
-    }
-    
-    /**
-     * Test method to verify module is accessible
-     */
-    public function myFunction() {
-        echo "<h2>Ella Contractors Module Test</h2>";
-        echo "<p>✅ Module is accessible!</p>";
-        echo "<p>✅ Controller is working!</p>";
-        echo "<p>✅ Database connection: ";
-        
-        try {
-            $this->db->simple_query('SELECT 1');
-            echo "Working</p>";
-        } catch (Exception $e) {
-            echo "Failed: " . $e->getMessage() . "</p>";
-        }
-        
-        echo "<p><strong>Test URLs:</strong></p>";
-        echo "<ul>";
-                        echo "<li><a href='" . site_url('modules/ella_contractors/client-portal/1/test123') . "'>Test Contract Client Portal</a></li>";
-                        echo "<li><a href='" . site_url('modules/ella_contractors/client-portal/default/test123') . "'>Test Default Client Portal</a></li>";
-        echo "</ul>";
-        
-        echo "<hr>";
-        echo "<p><a href='" . admin_url('ella_contractors') . "'>← Back to Ella Contractors</a></p>";
     }
 
     /**
