@@ -14,6 +14,7 @@ class Ella_contractors extends AdminController
         // Load models
         $this->load->model('ella_contracts_model');
         $this->load->model('ella_contractors_model');
+        $this->load->model('ella_contract_notes_model');
         
         // Load helper functions from module directory
         $helper_path = __DIR__ . '/../helpers/ella_contractors_helper.php';
@@ -1504,6 +1505,245 @@ class Ella_contractors extends AdminController
             echo json_encode([
                 'success' => false,
                 'message' => validation_errors()
+            ]);
+        }
+    }
+
+    /**
+     * Contract Notes Management
+     */
+    public function contract_notes($contract_id = null)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            access_denied('ella_contractors');
+        }
+
+        if (!$contract_id) {
+            show_404();
+            return;
+        }
+
+        try {
+            $data['title'] = 'Contract Notes';
+            $data['contract_id'] = $contract_id;
+            
+            // Get contract details
+            $data['contract'] = $this->ella_contracts_model->get_contract($contract_id);
+            if (!$data['contract']) {
+                show_404();
+                return;
+            }
+            
+            // Check if notes table exists
+            if (!$this->db->table_exists('tblella_contract_notes')) {
+                // Table doesn't exist, show message to run migration
+                $data['notes'] = [];
+                $data['notes_summary'] = [
+                    'total' => 0,
+                    'public' => 0,
+                    'private' => 0,
+                    'by_type' => []
+                ];
+                $data['table_missing'] = true;
+            } else {
+                // Get notes for this contract
+                $data['notes'] = $this->ella_contract_notes_model->get_contract_notes($contract_id);
+                $data['notes_summary'] = $this->ella_contract_notes_model->get_notes_summary($contract_id);
+                $data['table_missing'] = false;
+            }
+            
+            // Load the view with proper admin layout
+            $this->load->view('contract_notes', $data);
+            
+        } catch (Exception $e) {
+            log_message('error', 'Error in contract_notes method: ' . $e->getMessage());
+            show_error('An error occurred while loading contract notes. Please check the error logs.');
+        }
+    }
+
+    /**
+     * Add new note via AJAX
+     */
+    public function add_note_ajax()
+    {
+        if (!has_permission('ella_contractors', '', 'add')) {
+            $this->output->set_status_header(403);
+            echo json_encode(['success' => false, 'message' => 'Access denied', 'csrf_token' => $this->security->get_csrf_hash()]);
+            return;
+        }
+
+        $this->form_validation->set_rules('contract_id', 'Contract', 'required|numeric');
+        $this->form_validation->set_rules('note_title', 'Note Title', 'required|trim|max_length[255]');
+        $this->form_validation->set_rules('note_content', 'Note Content', 'required|trim');
+        $this->form_validation->set_rules('note_type', 'Note Type', 'required|in_list[general,progress,issue,milestone,other]');
+        
+        if ($this->form_validation->run()) {
+            $note_data = [
+                'contract_id' => $this->input->post('contract_id'),
+                'note_title' => $this->input->post('note_title'),
+                'note_content' => $this->input->post('note_content'),
+                'note_type' => $this->input->post('note_type'),
+                'is_public' => $this->input->post('is_public') ? 1 : 0,
+                'created_by' => get_staff_user_id()
+            ];
+            
+            $note_id = $this->ella_contract_notes_model->create_note($note_data);
+            
+            if ($note_id) {
+                // Get the created note with creator info
+                $note = $this->ella_contract_notes_model->get_note($note_id);
+                
+                $this->output->set_content_type('application/json');
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Note added successfully',
+                    'note' => $note,
+                    'csrf_token' => $this->security->get_csrf_hash()
+                ]);
+            } else {
+                            $this->output->set_content_type('application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to add note',
+                'csrf_token' => $this->security->get_csrf_hash()
+            ]);
+            }
+        } else {
+            $this->output->set_content_type('application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => validation_errors(),
+                'csrf_token' => $this->security->get_csrf_hash()
+            ]);
+        }
+    }
+
+    /**
+     * Update note via AJAX
+     */
+    public function update_note_ajax()
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            $this->output->set_status_header(403);
+            echo json_encode(['success' => false, 'message' => 'Access denied', 'csrf_token' => $this->security->get_csrf_hash()]);
+            return;
+        }
+
+        $this->form_validation->set_rules('note_id', 'Note ID', 'required|numeric');
+        $this->form_validation->set_rules('note_title', 'Note Title', 'required|trim|max_length[255]');
+        $this->form_validation->set_rules('note_content', 'Note Content', 'required|trim');
+        $this->form_validation->set_rules('note_type', 'Note Type', 'required|in_list[general,progress,issue,milestone,other]');
+        
+        if ($this->form_validation->run()) {
+            $note_data = [
+                'note_title' => $this->input->post('note_title'),
+                'note_content' => $this->input->post('note_content'),
+                'note_type' => $this->input->post('note_type'),
+                'is_public' => $this->input->post('is_public') ? 1 : 0,
+                'updated_by' => get_staff_user_id()
+            ];
+            
+            $note_id = $this->input->post('note_id');
+            
+            if ($this->ella_contract_notes_model->update_note($note_id, $note_data)) {
+                // Get the updated note
+                $note = $this->ella_contract_notes_model->get_note($note_id);
+                
+                $this->output->set_content_type('application/json');
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Note updated successfully',
+                    'note' => $note,
+                    'csrf_token' => $this->security->get_csrf_hash()
+                ]);
+            } else {
+                $this->output->set_content_type('application/json');
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to update note',
+                    'csrf_token' => $this->security->get_csrf_hash()
+                ]);
+            }
+        } else {
+            $this->output->set_content_type('application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => validation_errors(),
+                'csrf_token' => $this->security->get_csrf_hash()
+            ]);
+        }
+    }
+
+    /**
+     * Delete note via AJAX
+     */
+    public function delete_note_ajax()
+    {
+        if (!has_permission('ella_contractors', '', 'delete')) {
+            $this->output->set_status_header(403);
+            echo json_encode(['success' => false, 'message' => 'Access denied', 'csrf_token' => $this->security->get_csrf_hash()]);
+            return;
+        }
+
+        $note_id = $this->input->post('note_id');
+        
+        if (!$note_id) {
+            $this->output->set_content_type('application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Note ID is required',
+                'csrf_token' => $this->security->get_csrf_hash()
+            ]);
+            return;
+        }
+        
+        if ($this->ella_contract_notes_model->delete_note($note_id)) {
+            $this->output->set_content_type('application/json');
+            echo json_encode([
+                'success' => true,
+                'message' => 'Note deleted successfully',
+                'csrf_token' => $this->security->get_csrf_hash()
+            ]);
+        } else {
+            $this->output->set_content_type('application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to delete note',
+                'csrf_token' => $this->security->get_csrf_hash()
+            ]);
+        }
+    }
+
+    /**
+     * Get notes for contract via AJAX
+     */
+    public function get_contract_notes_ajax($contract_id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            $this->output->set_status_header(403);
+            echo json_encode(['success' => false, 'message' => 'Access denied', 'csrf_token' => $this->security->get_csrf_hash()]);
+            return;
+        }
+
+        try {
+            $notes = $this->ella_contract_notes_model->get_contract_notes($contract_id);
+            $summary = $this->ella_contract_notes_model->get_notes_summary($contract_id);
+            
+            $this->output->set_content_type('application/json');
+            echo json_encode([
+                'success' => true,
+                'notes' => $notes,
+                'summary' => $summary,
+                'csrf_token' => $this->security->get_csrf_hash()
+            ]);
+        } catch (Exception $e) {
+            log_message('error', 'Failed to get notes for contract ' . $contract_id . ': ' . $e->getMessage());
+            
+            $this->output->set_status_header(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to load notes',
+                'csrf_token' => $this->security->get_csrf_hash()
             ]);
         }
     }

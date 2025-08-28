@@ -185,6 +185,10 @@ window.csrf_jquery_ajax_setup = function() {
                             <i class="fa fa-calendar"></i> Manage Appointments
                             <span class="badge" id="appointments-count">0</span>
                         </a>
+                        <a href="<?php echo admin_url('ella_contractors/contract_notes/' . $contract->id); ?>" class="btn btn-info">
+                            <i class="fa fa-sticky-note"></i> Manage Notes
+                            <span class="badge" id="notes-count">0</span>
+                        </a>
                         <button type="button" class="btn btn-success" 
                                 onclick="copyShareableLink(<?php echo $contract->id; ?>, '<?php echo $contract->hash; ?>')"
                                 title="Copy shareable client portal link">
@@ -661,6 +665,30 @@ window.csrf_jquery_ajax_setup = function() {
             </div>
         </div>
     </div>
+
+    <!-- Notes Section -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel_s">
+                <div class="panel-body">
+                    <h4 class="mb-3">
+                        <i class="fa fa-sticky-note"></i> Recent Notes
+                        <div class="pull-right">
+                            <a href="<?php echo admin_url('ella_contractors/contract_notes/' . $contract->id); ?>" class="btn btn-sm btn-info">
+                                <i class="fa fa-plus"></i> Manage Notes
+                            </a>
+                        </div>
+                    </h4>
+                    <div id="notes-section">
+                        <div class="text-center p-4">
+                            <i class="fa fa-spinner fa-spin fa-2x text-muted"></i>
+                            <p class="text-muted mt-2">Loading notes...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Quick Add Appointment Modal -->
@@ -865,9 +893,10 @@ window.csrf_jquery_ajax_setup = function() {
         }
     }
 
-    // Load appointments for this contract
+    // Load appointments and notes for this contract
     $(document).ready(function() {
         loadContractAppointments(<?php echo $contract->id; ?>);
+        loadContractNotes(<?php echo $contract->id; ?>);
     });
 
     function loadContractAppointments(contractId) {
@@ -1170,5 +1199,115 @@ window.csrf_jquery_ajax_setup = function() {
                 header.text(newText);
             }
         });
+    }
+
+    // ========================================
+    // CONTRACT NOTES FUNCTIONS
+    // ========================================
+
+    function loadContractNotes(contractId) {
+        $.ajax({
+            url: '<?php echo admin_url('ella_contractors/get_contract_notes_ajax/'); ?>' + contractId,
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    displayNotes(response.notes);
+                    updateNotesCount(response.notes.length);
+                } else {
+                    $('#notes-section').html(`
+                        <div class="text-center p-4">
+                            <i class="fa fa-exclamation-triangle fa-2x text-warning"></i>
+                            <p class="text-muted mt-2">Failed to load notes</p>
+                        </div>
+                    `);
+                }
+            },
+            error: function() {
+                $('#notes-section').html(`
+                    <div class="text-center p-4">
+                        <i class="fa fa-exclamation-triangle fa-2x text-danger"></i>
+                        <p class="text-muted mt-2">Error loading notes</p>
+                    </div>
+                `);
+            }
+        });
+    }
+
+    function displayNotes(notes) {
+        if (notes.length === 0) {
+            $('#notes-section').html(`
+                <div class="text-center p-4">
+                    <i class="fa fa-sticky-note fa-2x text-muted"></i>
+                    <p class="text-muted mt-2">No notes available for this contract yet</p>
+                    <a href="<?php echo admin_url('ella_contractors/contract_notes/' . $contract->id); ?>" class="btn btn-primary">
+                        <i class="fa fa-plus"></i> Add First Note
+                    </a>
+                </div>
+            `);
+            return;
+        }
+
+        let notesHtml = '<div class="row">';
+        
+        // Show only the 3 most recent notes
+        const recentNotes = notes.slice(0, 3);
+        
+        recentNotes.forEach(function(note) {
+            const noteType = note.note_type.charAt(0).toUpperCase() + note.note_type.slice(1);
+            const isPublic = note.is_public == 1;
+            const publicBadge = isPublic ? 
+                '<span class="badge badge-success ml-2">Public</span>' : 
+                '<span class="badge badge-warning ml-2">Private</span>';
+            
+            notesHtml += `
+                <div class="col-md-4 mb-3">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h6 class="panel-title text-primary">
+                                <i class="fa fa-sticky-note"></i> ${note.note_title}
+                                ${publicBadge}
+                            </h6>
+                        </div>
+                        <div class="panel-body">
+                            <p class="text-muted mb-2">
+                                <i class="fa fa-tag"></i> ${noteType}
+                                <span class="ml-2">
+                                    <i class="fa fa-calendar"></i> ${formatDate(note.created_at)}
+                                </span>
+                            </p>
+                            <div class="note-content mb-2">
+                                ${note.note_content.length > 100 ? 
+                                    note.note_content.substring(0, 100) + '...' : 
+                                    note.note_content}
+                            </div>
+                            <div class="note-meta">
+                                <small class="text-muted">
+                                    <i class="fa fa-user"></i> By: ${note.created_by_name} ${note.created_by_lastname}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        notesHtml += '</div>';
+        
+        if (notes.length > 3) {
+            notesHtml += `
+                <div class="text-center mt-3">
+                    <a href="<?php echo admin_url('ella_contractors/contract_notes/' . $contract->id); ?>" class="btn btn-info">
+                        <i class="fa fa-sticky-note"></i> View All Notes (${notes.length})
+                    </a>
+                </div>
+            `;
+        }
+        
+        $('#notes-section').html(notesHtml);
+    }
+
+    function updateNotesCount(count) {
+        $('#notes-count').text(count);
     }
 </script>
