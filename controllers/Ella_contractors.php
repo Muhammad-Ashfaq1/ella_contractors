@@ -384,7 +384,7 @@ class Ella_contractors extends AdminController
                 return;
             }
             
-                        if (!empty($_FILES['media_file']['name'])) {
+                if (!empty($_FILES['media_file']['name'])) {
                 $result = upload_contract_media($contract_id, 'media_file', $description, $is_default, $media_category, $tags);
                 
                 if ($result['success']) {
