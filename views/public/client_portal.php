@@ -770,16 +770,6 @@
             window.showTab = showTab;
         });
         
-        // Test function for debugging
-        function testTabChange() {
-            console.log('Test tab change clicked');
-            const currentTab = document.querySelector('.tab-pane.show');
-            const currentIndex = Array.from(document.querySelectorAll('.tab-pane')).indexOf(currentTab);
-            const nextIndex = (currentIndex + 1) % 7; // 7 tabs total
-            console.log('Current tab:', currentIndex, 'Switching to:', nextIndex);
-            window.showTab(nextIndex);
-        }
-        
         // Helper functions
         function formatBytes(bytes, decimals = 2) {
             if (bytes === 0) return '0 Bytes';

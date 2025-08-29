@@ -227,7 +227,7 @@ function upload_contract_media($contract_id, $file_field, $description = '', $is
     
     // Configure upload
     $config['upload_path'] = $upload_path;
-    $config['allowed_types'] = 'pdf|doc|docx|xls|xlsx|ppt|pptx|jpg|jpeg|png|gif|bmp|mp4|avi|mov|wmv|mp3|wav|zip|rar|7z';
+    $config['allowed_types'] = 'pdf|doc|docx|xls|xlsx|ppt|pptx|jpg|jpeg|png|gif|bmp|webp|svg|tiff|mp4|avi|mov|wmv|flv|webm|mkv|3gp|m4v|mpg|mpeg|ogv|mp3|wav|aac|ogg|wma|flac|m4a|aiff|zip|rar|7z|tar|gz|txt|rtf';
     $config['max_size'] = 50 * 1024; // 50MB
     $config['encrypt_name'] = true;
     $config['remove_spaces'] = true;

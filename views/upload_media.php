@@ -78,10 +78,11 @@ function getFileIcon(filename) {
         'doc': 'fa-file-word', 'docx': 'fa-file-word',
         'xls': 'fa-file-excel', 'xlsx': 'fa-file-excel',
         'ppt': 'fa-file-powerpoint', 'pptx': 'fa-file-powerpoint',
-        'jpg': 'fa-file-image', 'jpeg': 'fa-file-image', 'png': 'fa-file-image', 'gif': 'fa-file-image', 'bmp': 'fa-file-image',
-        'mp4': 'fa-file-video', 'avi': 'fa-file-video', 'mov': 'fa-file-video', 'wmv': 'fa-file-video',
-        'mp3': 'fa-file-audio', 'wav': 'fa-file-audio',
-        'zip': 'fa-file-archive', 'rar': 'fa-file-archive', '7z': 'fa-file-archive'
+        'jpg': 'fa-file-image', 'jpeg': 'fa-file-image', 'png': 'fa-file-image', 'gif': 'fa-file-image', 'bmp': 'fa-file-image', 'webp': 'fa-file-image', 'svg': 'fa-file-image', 'tiff': 'fa-file-image',
+        'mp4': 'fa-file-video', 'avi': 'fa-file-video', 'mov': 'fa-file-video', 'wmv': 'fa-file-video', 'flv': 'fa-file-video', 'webm': 'fa-file-video', 'mkv': 'fa-file-video', '3gp': 'fa-file-video', 'm4v': 'fa-file-video', 'mpg': 'fa-file-video', 'mpeg': 'fa-file-video', 'ogv': 'fa-file-video',
+        'mp3': 'fa-file-audio', 'wav': 'fa-file-audio', 'aac': 'fa-file-audio', 'ogg': 'fa-file-audio', 'wma': 'fa-file-audio', 'flac': 'fa-file-audio', 'm4a': 'fa-file-audio', 'aiff': 'fa-file-audio',
+        'zip': 'fa-file-archive', 'rar': 'fa-file-archive', '7z': 'fa-file-archive', 'tar': 'fa-file-archive', 'gz': 'fa-file-archive',
+        'txt': 'fa-file-text', 'rtf': 'fa-file-text'
     };
     return iconMap[ext] || 'fa-file';
 }
@@ -93,10 +94,11 @@ function getFileType(filename) {
         'doc': 'Word Document', 'docx': 'Word Document',
         'xls': 'Excel Spreadsheet', 'xlsx': 'Excel Spreadsheet',
         'ppt': 'PowerPoint Presentation', 'pptx': 'PowerPoint Presentation',
-        'jpg': 'JPEG Image', 'jpeg': 'JPEG Image', 'png': 'PNG Image', 'gif': 'GIF Image', 'bmp': 'BMP Image',
-        'mp4': 'MP4 Video', 'avi': 'AVI Video', 'mov': 'MOV Video', 'wmv': 'WMV Video',
-        'mp3': 'MP3 Audio', 'wav': 'WAV Audio',
-        'zip': 'ZIP Archive', 'rar': 'RAR Archive', '7z': '7-Zip Archive'
+        'jpg': 'JPEG Image', 'jpeg': 'JPEG Image', 'png': 'PNG Image', 'gif': 'GIF Image', 'bmp': 'BMP Image', 'webp': 'WebP Image', 'svg': 'SVG Vector Image', 'tiff': 'TIFF Image',
+        'mp4': 'MP4 Video', 'avi': 'AVI Video', 'mov': 'MOV Video', 'wmv': 'WMV Video', 'flv': 'FLV Video', 'webm': 'WebM Video', 'mkv': 'MKV Video', '3gp': '3GP Video', 'm4v': 'M4V Video', 'mpg': 'MPEG Video', 'mpeg': 'MPEG Video', 'ogv': 'OGV Video',
+        'mp3': 'MP3 Audio', 'wav': 'WAV Audio', 'aac': 'AAC Audio', 'ogg': 'OGG Audio', 'wma': 'WMA Audio', 'flac': 'FLAC Audio', 'm4a': 'M4A Audio', 'aiff': 'AIFF Audio',
+        'zip': 'ZIP Archive', 'rar': 'RAR Archive', '7z': '7-Zip Archive', 'tar': 'TAR Archive', 'gz': 'GZIP Archive',
+        'txt': 'Text File', 'rtf': 'Rich Text File'
     };
     return typeMap[ext] || 'Unknown File Type';
 }
@@ -179,9 +181,9 @@ function formatFileSize(bytes) {
                                         <div class="form-group">
                                             <label for="media_file">Select File <span class="text-danger">*</span></label>
                                             <input type="file" name="media_file" id="media_file" class="form-control" required 
-                                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.bmp,.mp4,.avi,.mov,.wmv,.mp3,.wav,.zip,.rar,.7z">
+                                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.bmp,.webp,.svg,.tiff,.mp4,.avi,.mov,.wmv,.flv,.webm,.mkv,.3gp,.m4v,.mpg,.mpeg,.ogv,.mp3,.wav,.aac,.ogg,.wma,.flac,.m4a,.aiff,.zip,.rar,.7z,.tar,.gz">
                                             <small class="help-block">
-                                                <strong>Allowed formats:</strong> PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG, GIF, BMP, MP4, AVI, MOV, WMV, MP3, WAV, ZIP, RAR, 7Z<br>
+                                                <strong>Allowed formats:</strong> PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG, GIF, BMP, WebP, SVG, TIFF, MP4, AVI, MOV, WMV, FLV, WebM, MKV, 3GP, M4V, MPG, MPEG, OGV, MP3, WAV, AAC, OGG, WMA, FLAC, M4A, AIFF, ZIP, RAR, 7Z, TAR, GZ<br>
                                                 <strong>Maximum file size:</strong> 50MB<br>
                                                 <strong>Recommended:</strong> Use descriptive filenames for better organization
                                             </small>
@@ -302,23 +304,29 @@ function formatFileSize(bytes) {
                                 <div class="file-type-info">
                                     <h5><i class="fa fa-info-circle"></i> Supported File Types</h5>
                                     <div class="row">
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <strong>Documents:</strong><br>
                                             <i class="fa fa-file-pdf-o"></i> PDF<br>
                                             <i class="fa fa-file-word-o"></i> DOC, DOCX
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <strong>Spreadsheets:</strong><br>
                                             <i class="fa fa-file-excel-o"></i> XLS, XLSX
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <strong>Presentations:</strong><br>
                                             <i class="fa fa-file-powerpoint-o"></i> PPT, PPTX
                                         </div>
                                         <div class="col-md-3">
-                                            <strong>Images & Archives:</strong><br>
-                                            <i class="fa fa-file-image-o"></i> JPG, PNG, GIF<br>
-                                            <i class="fa fa-file-archive-o"></i> ZIP, RAR
+                                            <strong>Images & Media:</strong><br>
+                                            <i class="fa fa-file-image-o"></i> JPG, PNG, GIF, WebP<br>
+                                            <i class="fa fa-file-video-o"></i> MP4, AVI, MOV, WebM<br>
+                                            <i class="fa fa-file-audio-o"></i> MP3, WAV, AAC, OGG
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong>Archives & Others:</strong><br>
+                                            <i class="fa fa-file-archive-o"></i> ZIP, RAR, 7Z, TAR<br>
+                                            <i class="fa fa-file-text-o"></i> TXT, RTF, SVG, TIFF
                                         </div>
                                     </div>
                                 </div>
@@ -375,8 +383,47 @@ document.addEventListener('DOMContentLoaded', function() {
         'image/jpg',
         'image/png',
         'image/gif',
+        'image/bmp',
+        'image/webp',
+        'image/svg+xml',
+        'image/tiff',
         'application/zip',
-        'application/x-rar-compressed'
+        'application/x-rar-compressed',
+        'application/x-7z-compressed',
+        'application/x-tar',
+        'application/gzip',
+        // Video formats
+        'video/mp4',
+        'video/avi',
+        'video/mov',
+        'video/wmv',
+        'video/flv',
+        'video/webm',
+        'video/mkv',
+        'video/3gp',
+        'video/m4v',
+        'video/mpg',
+        'video/mpeg',
+        'video/ogv',
+        // Audio formats
+        'audio/mp3',
+        'audio/mpeg',
+        'audio/mpeg3',
+        'audio/mp4',
+        'audio/wav',
+        'audio/aac',
+        'audio/ogg',
+        'audio/wma',
+        'audio/flac',
+        'audio/m4a',
+        'audio/aiff',
+        'audio/x-m4a',
+        'audio/x-aac',
+        // Additional document formats
+        'text/plain',
+        'text/rtf',
+        'application/rtf',
+        'application/txt'
     ];
     
     // File input change handler
@@ -390,9 +437,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Validate file type
-            if (!allowedTypes.includes(file.type)) {
-                showErrorToast('File type not supported. Please select a valid file format.', 'Invalid File Type');
+            // Validate file type - check both MIME type and file extension
+            const isValidMimeType = allowedTypes.includes(file.type);
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'tiff', 'mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', '3gp', 'm4v', 'mpg', 'mpeg', 'ogv', 'mp3', 'wav', 'aac', 'ogg', 'wma', 'flac', 'm4a', 'aiff', 'zip', 'rar', '7z', 'tar', 'gz', 'txt', 'rtf'];
+            
+            // Debug logging
+            console.log('File validation:', {
+                fileName: file.name,
+                fileType: file.type,
+                fileExtension: fileExtension,
+                isValidMimeType: isValidMimeType,
+                isValidExtension: allowedExtensions.includes(fileExtension)
+            });
+            
+            if (!isValidMimeType && !allowedExtensions.includes(fileExtension)) {
+                showErrorToast(`File type not supported. MIME: ${file.type}, Extension: .${fileExtension}. Please select a valid file format.`, 'Invalid File Type');
                 fileInput.value = '';
                 return;
             }
