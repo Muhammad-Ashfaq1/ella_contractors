@@ -70,6 +70,25 @@ function ella_contractors_init_menu() {
 function ella_contractors_activate_module() {
     $CI = &get_instance();
     
+    // Ensure PPT and PPTX files are allowed for upload
+    $allowed_files = get_option('allowed_files');
+    if ($allowed_files) {
+        $allowed_extensions = explode(',', $allowed_files);
+        $allowed_extensions = array_map('trim', $allowed_extensions);
+        
+        if (!in_array('.ppt', $allowed_extensions)) {
+            $allowed_extensions[] = '.ppt';
+        }
+        if (!in_array('.pptx', $allowed_extensions)) {
+            $allowed_extensions[] = '.pptx';
+        }
+        
+        update_option('allowed_files', implode(',', $allowed_extensions));
+    } else {
+        // Set default allowed files if not set
+        add_option('allowed_files', '.pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar');
+    }
+    
     // Create ella_media_folders table
     if (!$CI->db->table_exists(db_prefix() . 'ella_media_folders')) {
         $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_media_folders` (
@@ -119,12 +138,19 @@ function ella_contractors_activate_module() {
 
     foreach ($directories as $dir) {
         if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+            if (!mkdir($dir, 0755, true)) {
+                log_message('error', 'Failed to create directory: ' . $dir);
+            }
         }
         
         // Create index.html to prevent directory listing
         if (!file_exists($dir . 'index.html')) {
             file_put_contents($dir . 'index.html', '');
+        }
+        
+        // Create .htaccess to prevent direct access
+        if (!file_exists($dir . '.htaccess')) {
+            file_put_contents($dir . '.htaccess', 'Order Deny,Allow' . PHP_EOL . 'Deny from all');
         }
     }
 }

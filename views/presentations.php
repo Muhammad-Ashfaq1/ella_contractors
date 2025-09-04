@@ -78,8 +78,9 @@ if (!function_exists('formatBytes')) {
                                             </div>
                                             <div class="modal-body">
                                                 <div class="form-group">
-                                                    <label for="file">File (HTML/PDF/PPT)</label>
-                                                    <input type="file" name="file" class="form-control" required>
+                                                    <label for="file">File (HTML/PDF/PPT/PPTX)</label>
+                                                    <input type="file" name="file" class="form-control" accept=".html,.pdf,.ppt,.pptx" required>
+                                                    <small class="text-muted">Supported formats: HTML, PDF, PPT, PPTX</small>
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="lead_id">Attach to Lead</label>
@@ -141,7 +142,7 @@ if (!function_exists('formatBytes')) {
                                         <td><?= $file['active'] ? 'Yes' : 'No'; ?></td>
                                         <td><?= date('M d, Y', strtotime($file['date_uploaded'])); ?></td>
                                         <td>
-                                            <a href="<?= admin_url('ella_contractors/preview_file/' . $file['id']); ?>" class="btn btn-info btn-xs" target="_blank">Preview</a>
+                                            <a href="#" class="btn btn-info btn-xs" onclick="previewFile(<?= $file['id']; ?>, '<?= $file['original_name']; ?>', '<?= strtolower(pathinfo($file['file_name'], PATHINFO_EXTENSION)); ?>', '<?= site_url('uploads/ella_presentations/' . ($file['is_default'] ? 'default/' : ($file['lead_id'] ? 'lead_' . $file['lead_id'] . '/' : 'general/')) . $file['file_name']); ?>'); return false;">Preview</a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -154,4 +155,102 @@ if (!function_exists('formatBytes')) {
         </div>
     </div>
 </div>
+
+<!-- File Preview Modal -->
+<div class="modal fade" id="filePreviewModal" tabindex="-1" role="dialog" aria-labelledby="filePreviewModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" onclick="closeFilePreview(); return false;" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="filePreviewModalLabel">File Preview</h4>
+            </div>
+            <div class="modal-body">
+                <div id="filePreviewContent">
+                    <!-- Preview content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" onclick="closeFilePreview(); return false;">Close</button>
+                <a href="#" id="downloadFileBtn" class="btn btn-primary" target="_blank">
+                    <i class="fa fa-download"></i> Download
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewFile(fileId, fileName, fileExt, fileUrl) {
+    // Set modal title
+    $('#filePreviewModalLabel').text('Preview: ' + fileName);
+    
+    // Set download link
+    $('#downloadFileBtn').attr('href', fileUrl);
+    
+    // Clear previous content
+    $('#filePreviewContent').html('');
+    
+    // Show loading
+    $('#filePreviewContent').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><br><br>Loading preview...</div>');
+    
+    // Show modal
+    $('#filePreviewModal').modal({show: true, backdrop: 'static', keyboard: false});
+    
+    // Generate preview content based on file type
+    var previewContent = '';
+    
+    if (fileExt === 'pdf') {
+        previewContent = '<iframe src="' + fileUrl + '" width="100%" height="600px" frameborder="0"></iframe>';
+    } else if (fileExt === 'ppt' || fileExt === 'pptx') {
+        // Convert PPT/PPTX to PDF for preview
+        var pdfPreviewUrl = '<?= admin_url('ella_contractors/get_preview_pdf/'); ?>' + fileId;
+        previewContent = '<iframe src="' + pdfPreviewUrl + '" width="100%" height="600px" frameborder="0"></iframe>';
+    } else if (fileExt === 'html') {
+        previewContent = '<iframe src="' + fileUrl + '" width="100%" height="600px" frameborder="0"></iframe>';
+    } else {
+        previewContent = '<div class="alert alert-info text-center">' +
+            '<h5><i class="fa fa-info-circle"></i> Preview Not Available</h5>' +
+            '<p>Preview is not available for this file type (' + fileExt.toUpperCase() + ').</p>' +
+            '<p><strong>File:</strong> ' + fileName + '</p>' +
+            '<a href="' + fileUrl + '" class="btn btn-primary" target="_blank">' +
+            '<i class="fa fa-external-link"></i> Open in New Tab</a>' +
+            '</div>';
+    }
+    
+    // Set preview content
+    $('#filePreviewContent').html(previewContent);
+}
+
+function closeFilePreview() {
+    $('#filePreviewModal').modal('hide');
+    // Clear content when modal is hidden
+    $('#filePreviewContent').html('');
+}
+
+// Handle modal close events
+$('#filePreviewModal').on('hidden.bs.modal', function () {
+    $('#filePreviewContent').html('');
+});
+
+// Handle iframe load errors
+$(document).on('load', 'iframe', function() {
+    var iframe = $(this);
+    iframe.on('error', function() {
+        iframe.parent().html('<div class="alert alert-warning text-center">' +
+            '<h5><i class="fa fa-exclamation-triangle"></i> Preview Error</h5>' +
+            '<p>Unable to load preview. This may be due to:</p>' +
+            '<ul class="text-left">' +
+            '<li>File not accessible from the internet (required for Office Online viewer)</li>' +
+            '<li>File format not supported</li>' +
+            '<li>Network connectivity issues</li>' +
+            '</ul>' +
+            '<a href="' + iframe.attr('src') + '" class="btn btn-primary" target="_blank">' +
+            '<i class="fa fa-external-link"></i> Try Opening in New Tab</a>' +
+            '</div>');
+    });
+});
+</script>
+
 <?php init_tail(); ?>
