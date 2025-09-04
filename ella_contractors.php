@@ -158,14 +158,15 @@ function ella_contractors_activate_module() {
 function ella_contractors_deactivate_module() {
     $CI = &get_instance();
 
+    // Rollback code - commented out for now, uncomment when needed
     // Drop tables if they exist
-    if ($CI->db->table_exists(db_prefix() . 'ella_contractor_media')) {
-        $CI->db->query('DROP TABLE `' . db_prefix() . 'ella_contractor_media`');
-    }
+    // if ($CI->db->table_exists(db_prefix() . 'ella_contractor_media')) {
+    //     $CI->db->query('DROP TABLE `' . db_prefix() . 'ella_contractor_media`');
+    // }
     
-    if ($CI->db->table_exists(db_prefix() . 'ella_media_folders')) {
-        $CI->db->query('DROP TABLE `' . db_prefix() . 'ella_media_folders`');
-    }
+    // if ($CI->db->table_exists(db_prefix() . 'ella_media_folders')) {
+    //     $CI->db->query('DROP TABLE `' . db_prefix() . 'ella_media_folders`');
+    // }
     
     // Optionally remove upload directories (be careful with this)
     // $base_path = FCPATH . 'uploads/ella_presentations/';
