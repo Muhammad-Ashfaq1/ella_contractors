@@ -15,6 +15,10 @@ define('ELLA_CONTRACTORS_MODULE_NAME', 'ella_contractors');
 // Register module menu
 hooks()->add_action('admin_init', 'ella_contractors_init_menu');
 
+// Register activation and deactivation hooks
+register_activation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_activate_module');
+register_deactivation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_deactivate_module');
+
 /**
  * Initialize module menu
  */
@@ -48,6 +52,12 @@ function ella_contractors_init_menu() {
                 'name' => 'Measurements',
                 'href' => admin_url('ella_contractors/measurements'),
                 'position' => 15,
+            ],
+            [
+                'slug' => 'ella_contractors_presentations',
+                'name' => 'Presentations',
+                'href' => admin_url('ella_contractors/presentations'),
+                'position' => 20,
             ]
         ];
 
@@ -57,19 +67,86 @@ function ella_contractors_init_menu() {
     }
 }
 
-register_activation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_activate_module');
-
-/**
- * Activate module function
- */
-function ella_contractors_activate_module()
-{
+function ella_contractors_activate_module() {
     $CI = &get_instance();
-    $CI->load->dbforge();
     
-    // All tables removed - module is now empty
+    // Create ella_media_folders table
+    if (!$CI->db->table_exists(db_prefix() . 'ella_media_folders')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_media_folders` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `name` varchar(255) NOT NULL,
+            `lead_id` int(11) DEFAULT NULL,
+            `is_default` tinyint(1) DEFAULT 0,
+            `active` tinyint(1) DEFAULT 1,
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `lead_id` (`lead_id`),
+            KEY `is_default` (`is_default`),
+            KEY `active` (`active`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+    }
+    
+    // Create ella_contractor_media table
+    if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_media')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractor_media` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `folder_id` int(11) DEFAULT NULL,
+            `lead_id` int(11) DEFAULT NULL,
+            `file_name` varchar(255) NOT NULL,
+            `original_name` varchar(255) NOT NULL,
+            `file_type` varchar(100) NOT NULL,
+            `file_size` int(11) NOT NULL,
+            `description` text,
+            `is_default` tinyint(1) DEFAULT 0,
+            `active` tinyint(1) DEFAULT 1,
+            `date_uploaded` datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `folder_id` (`folder_id`),
+            KEY `lead_id` (`lead_id`),
+            KEY `is_default` (`is_default`),
+            KEY `active` (`active`),
+            KEY `file_type` (`file_type`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+    }
+    
+    // Create upload directories
+    $base_path = FCPATH . 'uploads/ella_presentations/';
+    $directories = [
+        $base_path,
+        $base_path . 'default/',
+        $base_path . 'general/',
+    ];
+
+    foreach ($directories as $dir) {
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        
+        // Create index.html to prevent directory listing
+        if (!file_exists($dir . 'index.html')) {
+            file_put_contents($dir . 'index.html', '');
+        }
+    }
 }
 
+function ella_contractors_deactivate_module() {
+    $CI = &get_instance();
+
+    // Drop tables if they exist
+    if ($CI->db->table_exists(db_prefix() . 'ella_contractor_media')) {
+        $CI->db->query('DROP TABLE `' . db_prefix() . 'ella_contractor_media`');
+    }
+    
+    if ($CI->db->table_exists(db_prefix() . 'ella_media_folders')) {
+        $CI->db->query('DROP TABLE `' . db_prefix() . 'ella_media_folders`');
+    }
+    
+    // Optionally remove upload directories (be careful with this)
+    // $base_path = FCPATH . 'uploads/ella_presentations/';
+    // if (is_dir($base_path)) {
+    //     rmdir($base_path);
+    // }
+}
 
 
 // Register module language files
