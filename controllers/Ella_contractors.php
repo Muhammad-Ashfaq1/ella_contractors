@@ -105,15 +105,6 @@ class Ella_contractors extends AdminController
         redirect(admin_url('ella_contractors/presentations'));
     }
 
-    public function preview_file($id) {
-        $file = $this->ella_media_model->get_file($id);
-        if (!$file) {
-            show_404();
-        }
-        $data['file'] = $file;
-        $data['title'] = 'Preview ' . $file->original_name;
-        $this->load->view('ella_contractors/preview', $data);
-    }
 
     public function get_preview_pdf($id) {
         $file = $this->ella_media_model->get_file($id);

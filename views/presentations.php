@@ -29,7 +29,7 @@ if (!function_exists('formatBytes')) {
                                 <input type="text" name="name" class="form-control" required>
                             </div>
                             <div class="form-group">
-                                <label for="lead_id">Attach to Lead</label>
+                                <label for="lead_id">Jobs / Leads</label>
                                 <select name="lead_id" class="selectpicker" data-width="100%">
                                     <option value="">None</option>
                                     <?php foreach ($leads as $lead): ?>

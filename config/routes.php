@@ -21,4 +21,3 @@ $route[$module_name . '/activate'] = $module_name . '/activate_module';
 $route[$module_name . '/presentations'] = $module_name . '/presentations';
 $route[$module_name . '/create_folder'] = $module_name . '/create_folder';
 $route[$module_name . '/upload_presentation'] = $module_name . '/upload_presentation';
-$route[$module_name . '/preview_file/(.*)'] = $module_name . '/preview_file/$1';
