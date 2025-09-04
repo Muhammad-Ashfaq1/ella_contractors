@@ -28,35 +28,39 @@ function ella_contractors_init_menu() {
         $CI->app_menu->add_sidebar_menu_item('ella_contractors', [
             'slug' => 'ella_contractors',
             'name' => 'Ella Contractors',
-            'icon' => 'fa-solid fa-file-contract',
+            'icon' => 'fa fa-users',
             'position' => 30,
             'collapse' => true,
         ]);
 
-        // No submenu items - module is now empty
+        // Submenu items with icons
         $submenu = [
             [
                 'slug' => 'ella_contractors_jobs_leads',
                 'name' => 'Jobs / Leads',
                 'href' => admin_url('leads'),
+                'icon' => 'fa fa-briefcase',
                 'position' => 5,
             ],
             [
                 'slug' => 'ella_contractors_appointments',
                 'name' => 'Appointments',
                 'href' => admin_url('appointly/appointments'),
+                'icon' => 'fa fa-calendar-check-o',
                 'position' => 10,
             ],
             [
                 'slug' => 'ella_contractors_measurements',
                 'name' => 'Measurements',
                 'href' => admin_url('ella_contractors/measurements'),
+                'icon' => 'fa fa-square-o',
                 'position' => 15,
             ],
             [
                 'slug' => 'ella_contractors_presentations',
                 'name' => 'Presentations',
                 'href' => admin_url('ella_contractors/presentations'),
+                'icon' => 'fa fa-file-powerpoint-o',
                 'position' => 20,
             ]
         ];
