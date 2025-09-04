@@ -23,14 +23,33 @@ function ella_contractors_init_menu() {
     if (is_staff_logged_in() && (is_super_admin() || is_admin() || has_permission('ella_contractors', '', 'view'))) {
         $CI->app_menu->add_sidebar_menu_item('ella_contractors', [
             'slug' => 'ella_contractors',
-            'name' => 'Ella Media',
-            'icon' => 'fa fa-file-contract',
+            'name' => 'Ella Contractors',
+            'icon' => 'fa-solid fa-file-contract',
             'position' => 30,
             'collapse' => true,
         ]);
 
         // No submenu items - module is now empty
-        $submenu = [];
+        $submenu = [
+            [
+                'slug' => 'ella_contractors_jobs_leads',
+                'name' => 'Jobs / Leads',
+                'href' => admin_url('leads'),
+                'position' => 5,
+            ],
+            [
+                'slug' => 'ella_contractors_appointments',
+                'name' => 'Appointments',
+                'href' => admin_url('appointly/appointments'),
+                'position' => 10,
+            ],
+            [
+                'slug' => 'ella_contractors_measurements',
+                'name' => 'Measurements',
+                'href' => admin_url('ella_contractors/measurements'),
+                'position' => 15,
+            ]
+        ];
 
         foreach ($submenu as $item) {
             $CI->app_menu->add_sidebar_children_item('ella_contractors', $item);
