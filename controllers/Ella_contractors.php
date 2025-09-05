@@ -714,7 +714,9 @@ startxref
         if (!has_permission('ella_contractors', '', 'view')) {
             ajax_access_denied();
         }
-        $this->app->get_table_data('line_items');
+        
+        // Load the module's table configuration
+        $this->load->view('admin/tables/line_items');
     }
 
     /**
