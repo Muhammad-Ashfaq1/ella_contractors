@@ -143,19 +143,19 @@
 <script>
 $(document).ready(function() {
     // Prevent DataTable initialization on our custom estimates table
-    if (typeof initDataTable === 'function') {
-        // Override the global DataTable initialization for our specific table
-        var originalInitDataTable = initDataTable;
-        initDataTable = function(selector, url, notSortable, notSearchable, serverParams, order) {
-            // Skip DataTable initialization for our custom estimates table
-            if (selector === '.table-estimates' || $(selector).hasClass('table-estimates')) {
-                console.log('Skipping DataTable initialization for custom estimates table');
-                return;
-            }
-            // Call original function for other tables
-            return originalInitDataTable(selector, url, notSortable, notSearchable, serverParams, order);
-        };
-    }
+    // Override the global DataTable initialization to skip our custom table
+    window.originalInitDataTable = window.initDataTable;
+    window.initDataTable = function(selector, url, notSortable, notSearchable, serverParams, order) {
+        // Skip DataTable initialization for our custom estimates table
+        if (selector === '.table-estimates' || $(selector).hasClass('table-estimates') || selector === '#custom-estimates-table') {
+            console.log('Skipping DataTable initialization for custom estimates table');
+            return;
+        }
+        // Call original function for other tables
+        if (typeof window.originalInitDataTable === 'function') {
+            return window.originalInitDataTable(selector, url, notSortable, notSearchable, serverParams, order);
+        }
+    };
     
     // Bulk actions function
     window.estimates_bulk_action = function(button) {
