@@ -974,14 +974,30 @@ startxref
         }
 
         $estimate_id = $this->input->post('estimate_id');
-        $line_item_id = $this->input->post('line_item_id');
-        $quantity = $this->input->post('quantity');
-        $unit_price = $this->input->post('unit_price');
+        $line_items = $this->input->post('line_items');
 
-        if ($this->ella_estimates_model->add_line_item_to_estimate($estimate_id, $line_item_id, $quantity, $unit_price)) {
-            set_alert('success', 'Line item added to estimate successfully');
+        $added_count = 0;
+        if ($line_items && is_array($line_items)) {
+            foreach ($line_items as $item) {
+                if (!empty($item['line_item_id']) && !empty($item['quantity']) && !empty($item['unit_price'])) {
+                    if ($this->ella_estimates_model->add_line_item_to_estimate(
+                        $estimate_id,
+                        $item['line_item_id'],
+                        $item['quantity'],
+                        $item['unit_price']
+                    )) {
+                        $added_count++;
+                    }
+                }
+            }
+        }
+
+        if ($added_count > 0) {
+            // Update totals
+            $this->ella_estimates_model->update_estimate_totals($estimate_id);
+            set_alert('success', $added_count . ' line item(s) added to estimate successfully');
         } else {
-            set_alert('warning', 'Failed to add line item to estimate');
+            set_alert('warning', 'Failed to add line items to estimate');
         }
 
         redirect(admin_url('ella_contractors/view_estimate/' . $estimate_id));
@@ -1190,7 +1206,15 @@ startxref
         if (!has_permission('ella_contractors', '', 'view')) {
             access_denied('ella_contractors');
         }
+        
         $line_items = $this->ella_line_items_model->get_line_items(null, true);
+        
+        // Debug logging
+        log_message('debug', 'Line items count: ' . count($line_items));
+        if (!empty($line_items)) {
+            log_message('debug', 'First line item: ' . json_encode($line_items[0]));
+        }
+        
         $options = [];
         foreach($line_items as $item) {
             $options[] = [
@@ -1199,7 +1223,51 @@ startxref
                 'cost' => $item['cost']
             ];
         }
+        
+        // Debug logging
+        log_message('debug', 'Options count: ' . count($options));
+        if (!empty($options)) {
+            log_message('debug', 'First option: ' . json_encode($options[0]));
+        }
+        
+        // Set proper content type
+        header('Content-Type: application/json');
         echo json_encode($options);
+    }
+    
+    // Test endpoint to debug line items
+    public function test_line_items()
+    {
+        if (!is_admin()) {
+            access_denied();
+        }
+        
+        $line_items = $this->ella_line_items_model->get_line_items(null, true);
+        
+        echo "<h3>Line Items Debug</h3>";
+        echo "<p>Count: " . count($line_items) . "</p>";
+        echo "<pre>";
+        print_r($line_items);
+        echo "</pre>";
+        
+        $options = [];
+        foreach($line_items as $item) {
+            $options[] = [
+                'value' => $item['id'],
+                'text' => htmlspecialchars($item['name']) . ' - $' . number_format($item['cost'], 2),
+                'cost' => $item['cost']
+            ];
+        }
+        
+        echo "<h3>Options Array</h3>";
+        echo "<pre>";
+        print_r($options);
+        echo "</pre>";
+        
+        echo "<h3>JSON Output</h3>";
+        echo "<pre>";
+        echo json_encode($options, JSON_PRETTY_PRINT);
+        echo "</pre>";
     }
 
 

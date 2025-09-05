@@ -204,44 +204,78 @@
 <!-- Add Line Item Modal -->
 <?php if(has_permission('ella_contractors','','edit')){ ?>
 <div class="modal fade" id="add_line_item_modal" tabindex="-1" role="dialog">
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title"><?php echo _l('add_line_item'); ?></h4>
+        <h4 class="modal-title"><?php echo _l('add_line_items'); ?></h4>
       </div>
       <?php echo form_open('admin/ella_contractors/add_line_item_to_estimate'); ?>
       <?php echo form_hidden('estimate_id', $estimate->id); ?>
       <div class="modal-body">
-        <div class="form-group">
-          <label for="line_item_id" class="control-label"><?php echo _l('select_line_item'); ?></label>
-          <select class="selectpicker display-block" data-width="100%" name="line_item_id" data-none-selected-text="Select Line Item" required>
-            <option value="">Select Line Item</option>
-            <?php foreach($line_items as $item): ?>
-              <option value="<?= $item['id']; ?>" data-cost="<?= $item['cost']; ?>">
-                <?= htmlspecialchars($item['name']); ?> - $<?= number_format($item['cost'], 2); ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-        <div class="row">
-          <div class="col-md-6">
-            <div class="form-group">
-              <label for="quantity" class="control-label"><?php echo _l('quantity'); ?></label>
-              <input type="number" id="quantity" name="quantity" class="form-control" step="0.01" min="0" value="1" required>
+        <div id="add_line_items_container">
+          <!-- Initial row -->
+          <div class="add-line-item-row" style="margin-bottom: 10px;">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label class="control-label"><?php echo _l('select_line_item'); ?></label>
+                  <select class="selectpicker display-block add-line-item-select" data-width="100%" name="line_items[0][line_item_id]" data-none-selected-text="Select Line Item">
+                    <option value="">Select Line Item</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="form-group">
+                  <label class="control-label"><?php echo _l('quantity'); ?></label>
+                  <input type="number" class="form-control add-line-item-quantity" name="line_items[0][quantity]" step="0.01" min="0" value="1">
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="form-group">
+                  <label class="control-label"><?php echo _l('unit_price'); ?></label>
+                  <input type="number" class="form-control add-line-item-unit-price" name="line_items[0][unit_price]" step="0.01" min="0">
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="form-group">
+                  <label class="control-label"><?php echo _l('total_price'); ?></label>
+                  <input type="text" class="form-control add-line-item-total" readonly>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="form-group">
+                  <label class="control-label">&nbsp;</label>
+                  <button type="button" class="btn btn-danger btn-sm remove-add-line-item" style="width: 100%;">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-12">
+            <button type="button" class="btn btn-success btn-sm" id="add_add_line_item_btn">
+              <i class="fa fa-plus"></i> Add Line Item
+            </button>
+          </div>
+        </div>
+        
+        <hr>
+        <div class="row">
           <div class="col-md-6">
-            <div class="form-group">
-              <label for="unit_price" class="control-label"><?php echo _l('unit_price'); ?></label>
-              <input type="number" id="unit_price" name="unit_price" class="form-control" step="0.01" min="0" required>
-            </div>
+            <h5><strong>Total Quantity: <span id="add_total_quantity">0.00</span></strong></h5>
+          </div>
+          <div class="col-md-6">
+            <h5><strong>Total Amount: $<span id="add_total_amount">0.00</span></strong></h5>
           </div>
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal"><?php echo _l('close'); ?></button>
-        <button type="submit" class="btn btn-success"><?php echo _l('add_line_item'); ?></button>
+        <button type="submit" class="btn btn-success"><?php echo _l('add_line_items'); ?></button>
         <?php echo form_close(); ?>
       </div>
     </div>
@@ -312,6 +346,164 @@ $(document).ready(function() {
         modal.find('input[name="quantity"]').val(quantity);
         modal.find('input[name="unit_price"]').val(unitPrice);
     });
+    
+    // For add modal
+    var addLineItemIndex = 0;
+    var addLineItemOptions = [];
+    
+    $('#add_line_item_modal').on('show.bs.modal', function () {
+        // Reset to initial row
+        $('#add_line_items_container').html(`
+          <div class="add-line-item-row" style="margin-bottom: 10px;">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label class="control-label"><?php echo _l('select_line_item'); ?></label>
+                  <select class="selectpicker display-block add-line-item-select" data-width="100%" name="line_items[0][line_item_id]" data-none-selected-text="Select Line Item">
+                    <option value="">Select Line Item</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="form-group">
+                  <label class="control-label"><?php echo _l('quantity'); ?></label>
+                  <input type="number" class="form-control add-line-item-quantity" name="line_items[0][quantity]" step="0.01" min="0" value="1">
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="form-group">
+                  <label class="control-label"><?php echo _l('unit_price'); ?></label>
+                  <input type="number" class="form-control add-line-item-unit-price" name="line_items[0][unit_price]" step="0.01" min="0">
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="form-group">
+                  <label class="control-label"><?php echo _l('total_price'); ?></label>
+                  <input type="text" class="form-control add-line-item-total" readonly>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="form-group">
+                  <label class="control-label">&nbsp;</label>
+                  <button type="button" class="btn btn-danger btn-sm remove-add-line-item" style="width: 100%;">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `);
+        addLineItemIndex = 0;
+        
+        // Load options
+        $.get(admin_url + 'ella_contractors/get_line_items_ajax').done(function(options) {
+            addLineItemOptions = options;
+            fillAllAddSelects();
+            calculateAddTotals();
+        });
+    });
+    
+    // Add line item button in modal
+    $('#add_add_line_item_btn').on('click', function() {
+        addLineItemIndex++;
+        var lineItemHtml = `
+            <div class="add-line-item-row" style="margin-bottom: 10px;">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="control-label"><?php echo _l('select_line_item'); ?></label>
+                            <select class="selectpicker display-block add-line-item-select" data-width="100%" name="line_items[${addLineItemIndex}][line_item_id]" data-none-selected-text="Select Line Item">
+                                <option value="">Select Line Item</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label"><?php echo _l('quantity'); ?></label>
+                            <input type="number" class="form-control add-line-item-quantity" name="line_items[${addLineItemIndex}][quantity]" step="0.01" min="0" value="1">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label"><?php echo _l('unit_price'); ?></label>
+                            <input type="number" class="form-control add-line-item-unit-price" name="line_items[${addLineItemIndex}][unit_price]" step="0.01" min="0" value="">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label"><?php echo _l('total_price'); ?></label>
+                            <input type="text" class="form-control add-line-item-total" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label">&nbsp;</label>
+                            <button type="button" class="btn btn-danger btn-sm remove-add-line-item" style="width: 100%;">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('#add_line_items_container').append(lineItemHtml);
+        $('.selectpicker').selectpicker();
+        fillAllAddSelects();
+        calculateAddTotals();
+    });
+    
+    // Remove line item
+    $(document).on('click', '.remove-add-line-item', function() {
+        $(this).closest('.add-line-item-row').remove();
+        calculateAddTotals();
+    });
+    
+    // Auto-fill unit price
+    $(document).on('change', '.add-line-item-select', function() {
+        var selectedOption = $(this).find('option:selected');
+        var cost = selectedOption.data('cost');
+        if (cost) {
+            $(this).closest('.add-line-item-row').find('.add-line-item-unit-price').val(cost);
+        }
+        calculateAddLineItemTotal($(this).closest('.add-line-item-row'));
+    });
+    
+    // Calculate line total
+    $(document).on('input', '.add-line-item-quantity, .add-line-item-unit-price', function() {
+        calculateAddLineItemTotal($(this).closest('.add-line-item-row'));
+    });
+    
+    function calculateAddLineItemTotal(row) {
+        var quantity = parseFloat(row.find('.add-line-item-quantity').val()) || 0;
+        var unitPrice = parseFloat(row.find('.add-line-item-unit-price').val()) || 0;
+        var total = quantity * unitPrice;
+        row.find('.add-line-item-total').val(total.toFixed(2));
+        calculateAddTotals();
+    }
+    
+    function calculateAddTotals() {
+        var totalQuantity = 0;
+        var totalAmount = 0;
+        $('.add-line-item-row').each(function() {
+            totalQuantity += parseFloat($(this).find('.add-line-item-quantity').val()) || 0;
+            totalAmount += parseFloat($(this).find('.add-line-item-total').val()) || 0;
+        });
+        $('#add_total_quantity').text(totalQuantity.toFixed(2));
+        $('#add_total_amount').text(totalAmount.toFixed(2));
+    }
+    
+    function fillAllAddSelects() {
+        $('.add-line-item-select').each(function() {
+            $(this).empty();
+            $(this).append('<option value="">Select Line Item</option>');
+            addLineItemOptions.forEach(function(opt) {
+                var option = $('<option></option>').val(opt.value).text(opt.text).attr('data-cost', opt.cost);
+                $(this).append(option);
+            });
+            $(this).selectpicker('refresh');
+        });
+    }
+    init_selectpicker();
 });
 </script>
 </body>

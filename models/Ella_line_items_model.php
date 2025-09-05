@@ -23,7 +23,7 @@ class Ella_line_items_model extends App_Model
         }
         
         if ($active_only) {
-            $this->db->where('is_active', 1);
+            $this->db->where(db_prefix() . 'ella_contractor_line_items.is_active', 1);
         }
         
         $this->db->order_by('group_name', 'ASC');
