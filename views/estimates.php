@@ -41,7 +41,7 @@
     <?php } ?>
     <!-- Estimates Table -->
     <h5><?php echo _l('estimates'); ?></h5>
-    <table class="table table-striped table-estimates">
+    <table class="table table-striped table-estimates" id="custom-estimates-table">
         <thead>
             <tr>
                 <?php if(has_permission('ella_contractors','','delete')){ ?>
@@ -142,6 +142,21 @@
 <?php init_tail(); ?>
 <script>
 $(document).ready(function() {
+    // Prevent DataTable initialization on our custom estimates table
+    if (typeof initDataTable === 'function') {
+        // Override the global DataTable initialization for our specific table
+        var originalInitDataTable = initDataTable;
+        initDataTable = function(selector, url, notSortable, notSearchable, serverParams, order) {
+            // Skip DataTable initialization for our custom estimates table
+            if (selector === '.table-estimates' || $(selector).hasClass('table-estimates')) {
+                console.log('Skipping DataTable initialization for custom estimates table');
+                return;
+            }
+            // Call original function for other tables
+            return originalInitDataTable(selector, url, notSortable, notSearchable, serverParams, order);
+        };
+    }
+    
     // Bulk actions function
     window.estimates_bulk_action = function(button) {
         var ids = [];
@@ -149,7 +164,7 @@ $(document).ready(function() {
         var checkbox = table.find('tbody input[type="checkbox"]:checked');
         
         if (checkbox.length === 0) {
-            alert_float('warning', '<?php echo _l('no_items_selected'); ?>');
+            alert_float('warning', 'No items selected');
             return;
         }
         
@@ -158,7 +173,7 @@ $(document).ready(function() {
         });
         
         if ($('#mass_delete').is(':checked')) {
-            if (confirm('<?php echo _l('confirm_action'); ?>')) {
+            if (confirm('Are you sure you want to delete the selected items?')) {
                 $.post(admin_url + 'ella_contractors/estimates_bulk_action', {
                     ids: ids,
                     mass_delete: true

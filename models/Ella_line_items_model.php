@@ -29,7 +29,18 @@ class Ella_line_items_model extends App_Model
         $this->db->order_by('group_name', 'ASC');
         $this->db->order_by(db_prefix() . 'ella_contractor_line_items.name', 'ASC');
         
-        return $this->db->get()->result_array();
+        // Debug logging
+        log_message('debug', 'Line items query: ' . $this->db->last_query());
+        
+        $result = $this->db->get()->result_array();
+        
+        // Debug logging
+        log_message('debug', 'Line items result count: ' . count($result));
+        if (!empty($result)) {
+            log_message('debug', 'First line item result: ' . json_encode($result[0]));
+        }
+        
+        return $result;
     }
 
     /**

@@ -834,7 +834,9 @@ startxref
         
         $this->load->model('leads_model');
         $data['leads'] = $this->leads_model->get();
-        
+        $data['line_items'] = $this->ella_line_items_model->get_line_items(null, true);
+
+        // die(json_encode($data['line_items']));
         $data['title'] = 'Estimates Management';
         $data['estimates'] = $this->ella_estimates_model->get_estimates();
         $data['statuses'] = $this->ella_estimates_model->get_statuses();
@@ -1077,7 +1079,11 @@ startxref
     {
         if (has_permission('ella_contractors', '', 'view')) {
             if ($this->input->post()) {
-                $data = $this->input->post();
+                try {
+                    $data = $this->input->post();
+                    
+                    // Debug logging
+                    log_message('debug', 'Manage estimate data: ' . json_encode($data));
                 if ($data['estimate_id'] == '') {
                     if (!has_permission('ella_contractors', '', 'create')) {
                         header('HTTP/1.0 400 Bad error');
@@ -1122,7 +1128,8 @@ startxref
                         die;
                     }
                     
-                    // Remove line_items from main data for update
+                    // Extract line_items before removing from main data
+                    $line_items = isset($data['line_items']) ? $data['line_items'] : [];
                     unset($data['line_items']);
                     
                     $success = $this->ella_estimates_model->update_estimate($data['estimate_id'], $data);
@@ -1133,7 +1140,6 @@ startxref
                         $this->db->delete(db_prefix() . 'ella_contractor_estimate_line_items');
                         
                         // Add posted line items
-                        $line_items = isset($data['line_items']) ? $data['line_items'] : [];
                         if (is_array($line_items)) {
                             foreach ($line_items as $item) {
                                 if (!empty($item['line_item_id']) && !empty($item['quantity']) && !empty($item['unit_price'])) {
@@ -1153,6 +1159,17 @@ startxref
                     echo json_encode([
                         'success' => $success,
                         'message' => $message,
+                        'debug' => [
+                            'estimate_id' => $data['estimate_id'],
+                            'line_items_count' => count($line_items)
+                        ]
+                    ]);
+                }
+                } catch (Exception $e) {
+                    log_message('error', 'Estimate management error: ' . $e->getMessage());
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Error: ' . $e->getMessage()
                     ]);
                 }
             }
@@ -1171,6 +1188,19 @@ startxref
         $estimate = (array) $this->ella_estimates_model->get_estimate($id);
         $estimate['line_items'] = $this->ella_estimates_model->get_estimate_line_items($id);
         echo json_encode($estimate);
+    }
+    
+    /**
+     * Get Estimates Data for AJAX
+     */
+    public function get_estimates_ajax()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            access_denied('ella_contractors');
+        }
+        
+        $estimates = $this->ella_estimates_model->get_estimates();
+        echo json_encode($estimates);
     }
 
     /**
@@ -1204,7 +1234,7 @@ startxref
     public function get_line_items_ajax()
     {
         if (!has_permission('ella_contractors', '', 'view')) {
-            access_denied('ella_contractors');
+            ajax_access_denied();
         }
         
         $line_items = $this->ella_line_items_model->get_line_items(null, true);
@@ -1269,6 +1299,5 @@ startxref
         echo json_encode($options, JSON_PRETTY_PRINT);
         echo "</pre>";
     }
-
 
 }

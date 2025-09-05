@@ -175,9 +175,17 @@ function manage_estimate(form) {
     $.post(url, data).done(function (response) {
         response = JSON.parse(response);
         if (response.success == true) {
-            window.location.reload();
+            // Show success message
+            alert_float('success', response.message || 'Estimate saved successfully');
+            
+            // Close modal
+            $('#estimate_modal').modal('hide');
+            
+            // Refresh the estimates table
+            refreshEstimatesTable();
+        } else {
+            alert_float('danger', response.message || 'Failed to save estimate');
         }
-        $('#estimate_modal').modal('hide');
     }).fail(function (data) {
         alert_float('danger', data.responseText);
     });
@@ -190,6 +198,12 @@ function init_estimate_js() {
         status: 'required'
     }, manage_estimate);
 }
+
+function refreshEstimatesTable() {
+    // Simple page reload to refresh the estimates list
+    window.location.reload();
+}
+
 
 function initEstimateModal() {
     init_estimate_js();
