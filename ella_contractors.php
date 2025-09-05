@@ -69,6 +69,13 @@ function ella_contractors_init_menu() {
                 'href' => admin_url('ella_contractors/line_items'),
                 'icon' => 'fa fa-list-alt',
                 'position' => 25,
+            ],
+            [
+                'slug' => 'ella_contractors_estimates',
+                'name' => 'Estimates',
+                'href' => admin_url('ella_contractors/estimates'),
+                'icon' => 'fa fa-file-text-o',
+                'position' => 30,
             ]
         ];
 
@@ -186,6 +193,49 @@ function ella_contractors_activate_module() {
         if ($CI->db->field_exists('group_name', db_prefix() . 'ella_contractor_line_items')) {
             $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` DROP COLUMN `group_name`');
         }
+    }
+    
+    // Create ella_contractor_estimates table
+    if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_estimates')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractor_estimates` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `estimate_name` varchar(255) NOT NULL,
+            `description` text,
+            `client_id` int(11) DEFAULT NULL,
+            `lead_id` int(11) DEFAULT NULL,
+            `status` enum(\'draft\',\'sent\',\'accepted\',\'rejected\',\'expired\') DEFAULT \'draft\',
+            `total_amount` decimal(10,2) DEFAULT 0.00,
+            `total_quantity` decimal(10,2) DEFAULT 0.00,
+            `line_items_count` int(11) DEFAULT 0,
+            `created_by` int(11) NOT NULL,
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `client_id` (`client_id`),
+            KEY `lead_id` (`lead_id`),
+            KEY `status` (`status`),
+            KEY `created_by` (`created_by`),
+            KEY `created_at` (`created_at`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+    }
+    
+    // Create ella_contractor_estimate_line_items table (pivot table)
+    if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_estimate_line_items')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractor_estimate_line_items` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `estimate_id` int(11) NOT NULL,
+            `line_item_id` int(11) NOT NULL,
+            `quantity` decimal(10,2) NOT NULL DEFAULT 1.00,
+            `unit_price` decimal(10,2) NOT NULL DEFAULT 0.00,
+            `total_price` decimal(10,2) NOT NULL DEFAULT 0.00,
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `estimate_id` (`estimate_id`),
+            KEY `line_item_id` (`line_item_id`),
+            UNIQUE KEY `unique_estimate_line_item` (`estimate_id`, `line_item_id`),
+            FOREIGN KEY (`estimate_id`) REFERENCES `' . db_prefix() . 'ella_contractor_estimates`(`id`) ON DELETE CASCADE,
+            FOREIGN KEY (`line_item_id`) REFERENCES `' . db_prefix() . 'ella_contractor_line_items`(`id`) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
     }
     
     // Create upload directories
