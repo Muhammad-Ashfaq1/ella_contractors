@@ -525,10 +525,10 @@ startxref
             access_denied('ella_contractors');
         }
         
-        
         $data['title'] = 'Line Items Management';
         $data['groups'] = $this->ella_line_item_groups_model->get_groups();
         $data['unit_types'] = $this->ella_line_items_model->get_unit_types();
+        $data['line_items'] = $this->ella_line_items_model->get_line_items();
         
         $this->load->view('ella_contractors/line_items', $data);
     }
@@ -706,18 +706,7 @@ startxref
         }
     }
 
-    /**
-     * Table data for DataTables
-     */
-    public function table()
-    {
-        if (!has_permission('ella_contractors', '', 'view')) {
-            ajax_access_denied();
-        }
-        
-        // Load the module's table configuration
-        $this->load->view('admin/tables/line_items');
-    }
+    // Table method removed - using direct view rendering
 
     /**
      * Manage Line Item (Add/Edit) - AJAX

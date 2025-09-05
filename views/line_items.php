@@ -44,24 +44,86 @@
       <div class="clearfix"></div>
       <hr class="hr-panel-heading" />
     <?php } ?>
-    <?php
-    $table_data = [];
-
-    if(has_permission('ella_contractors','','delete')) {
-      $table_data[] = '<span class="hide"> - </span><div class="checkbox mass_select_all_wrap"><input type="checkbox" id="mass_select_all" data-to-table="line-items"><label></label></div>';
-    }
-
-    $table_data = array_merge($table_data, array(
-      'Image',
-      'Name',
-      'Group',
-      'Description',
-      'Cost',
-      'Quantity',
-      'Unit Type',
-      'Status'));
-
-    render_datatable($table_data,'line-items'); ?>
+    <!-- Line Items Table -->
+    <h5>Line Items</h5>
+    <table class="table table-striped table-line-items">
+        <thead>
+            <tr>
+                <?php if(has_permission('ella_contractors','','delete')){ ?>
+                <th width="50">
+                    <div class="checkbox mass_select_all_wrap">
+                        <input type="checkbox" id="mass_select_all" data-to-table="line-items">
+                        <label></label>
+                    </div>
+                </th>
+                <?php } ?>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Group</th>
+                <th>Description</th>
+                <th>Cost</th>
+                <th>Quantity</th>
+                <th>Unit Type</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach($line_items as $item): ?>
+            <tr>
+                <?php if(has_permission('ella_contractors','','delete')){ ?>
+                <td>
+                    <div class="checkbox">
+                        <input type="checkbox" value="<?= $item['id']; ?>">
+                        <label></label>
+                    </div>
+                </td>
+                <?php } ?>
+                <td>
+                    <?php if($item['image']): ?>
+                        <img src="<?= site_url('uploads/ella_line_items/' . $item['image']); ?>" 
+                             alt="<?= htmlspecialchars($item['name']); ?>" 
+                             class="img-thumbnail" 
+                             style="width: 40px; height: 40px; object-fit: cover;">
+                    <?php else: ?>
+                        <div class="text-center" style="width: 40px; height: 40px; background: #f5f5f5; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center;">
+                            <i class="fa fa-image text-muted"></i>
+                        </div>
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <a href="#" data-toggle="modal" data-target="#line_item_modal" data-id="<?= $item['id']; ?>">
+                        <?= htmlspecialchars($item['name']); ?>
+                    </a>
+                    <div class="row-options">
+                        <?php if(has_permission('ella_contractors','','edit')){ ?>
+                        <a href="#" data-toggle="modal" data-target="#line_item_modal" data-id="<?= $item['id']; ?>">
+                            <?= _l('edit'); ?>
+                        </a>
+                        <?php } ?>
+                        <?php if(has_permission('ella_contractors','','delete')){ ?>
+                        | <a href="<?= admin_url('ella_contractors/delete_line_item/' . $item['id']); ?>" 
+                             class="text-danger _delete">
+                            <?= _l('delete'); ?>
+                        </a>
+                        <?php } ?>
+                    </div>
+                </td>
+                <td><?= htmlspecialchars($item['group_name'] ?? 'No Group'); ?></td>
+                <td><?= htmlspecialchars(substr($item['description'], 0, 30)) . (strlen($item['description']) > 30 ? '...' : ''); ?></td>
+                <td><?= $item['cost'] ? '$' . number_format($item['cost'], 2) : 'N/A'; ?></td>
+                <td><?= number_format($item['quantity'], 2); ?></td>
+                <td><?= htmlspecialchars($item['unit_type']); ?></td>
+                <td>
+                    <?php if($item['is_active']): ?>
+                        <span class="label label-success">Active</span>
+                    <?php else: ?>
+                        <span class="label label-default">Inactive</span>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
   </div>
 </div>
 </div>
@@ -174,7 +236,28 @@
       }
     <?php } ?>
 
-    initDataTable('.table-line-items', admin_url+'ella_contractors/table', notSortableAndSearchableItemColumns, notSortableAndSearchableItemColumns,'undefined',[1,'asc']);
+    // DataTable initialization removed - using direct table rendering
+    
+    // Select All functionality
+    $('#mass_select_all').on('change', function() {
+      var isChecked = $(this).prop('checked');
+      $('.table-line-items tbody input[type="checkbox"]').prop('checked', isChecked);
+      updateBulkActionsButton();
+    });
+    
+    // Individual checkbox change
+    $('.table-line-items tbody').on('change', 'input[type="checkbox"]', function() {
+      updateBulkActionsButton();
+    });
+    
+    function updateBulkActionsButton() {
+      var checkedCount = $('.table-line-items tbody input[type="checkbox"]:checked').length;
+      if (checkedCount > 0) {
+        $('.bulk-actions-btn').removeClass('hide');
+      } else {
+        $('.bulk-actions-btn').addClass('hide');
+      }
+    }
 
     if(get_url_param('groups_modal')){
        // Set time out user to see the message
@@ -224,11 +307,17 @@
 
       var rows = $('.table-line-items').find('tbody tr');
       $.each(rows, function() {
-        var checkbox = $($(this).find('td').eq(0)).find('input');
+        var checkbox = $(this).find('input[type="checkbox"]');
         if (checkbox.prop('checked') === true) {
           ids.push(checkbox.val());
         }
       });
+      
+      if(ids.length === 0) {
+        alert_float('warning', 'Please select at least one item');
+        return;
+      }
+      
       data.ids = ids;
       $(event).addClass('disabled');
       setTimeout(function() {

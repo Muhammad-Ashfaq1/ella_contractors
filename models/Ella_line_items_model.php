@@ -27,7 +27,7 @@ class Ella_line_items_model extends App_Model
         }
         
         $this->db->order_by('group_name', 'ASC');
-        $this->db->order_by('name', 'ASC');
+        $this->db->order_by(db_prefix() . 'ella_contractor_line_items.name', 'ASC');
         
         return $this->db->get()->result_array();
     }
@@ -97,7 +97,7 @@ class Ella_line_items_model extends App_Model
             $this->db->where('is_active', 1);
         }
         
-        $this->db->order_by('name', 'ASC');
+        $this->db->order_by(db_prefix() . 'ella_contractor_line_items.name', 'ASC');
         return $this->db->get(db_prefix() . 'ella_contractor_line_items')->result_array();
     }
 
@@ -107,8 +107,8 @@ class Ella_line_items_model extends App_Model
     public function search($term, $group_name = null, $active_only = false)
     {
         $this->db->group_start();
-        $this->db->like('name', $term);
-        $this->db->or_like('description', $term);
+        $this->db->like(db_prefix() . 'ella_contractor_line_items.name', $term);
+        $this->db->or_like(db_prefix() . 'ella_contractor_line_items.description', $term);
         
         // Only search group_name if column exists
         if ($this->db->field_exists('group_name', db_prefix() . 'ella_contractor_line_items')) {
@@ -128,7 +128,7 @@ class Ella_line_items_model extends App_Model
         if ($this->db->field_exists('group_name', db_prefix() . 'ella_contractor_line_items')) {
             $this->db->order_by('group_name', 'ASC');
         }
-        $this->db->order_by('name', 'ASC');
+        $this->db->order_by(db_prefix() . 'ella_contractor_line_items.name', 'ASC');
         
         return $this->db->get(db_prefix() . 'ella_contractor_line_items')->result_array();
     }

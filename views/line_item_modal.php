@@ -14,9 +14,6 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-12">
-                        <div class="alert alert-warning affect-warning hide">
-                            <?php echo _l('changing_items_affect_warning'); ?>
-                        </div>
                         <?php echo render_input('name','line_item_name','','text',array('required'=>true)); ?>
                         <?php echo render_textarea('description','line_item_description'); ?>
                         <div class="form-group">
@@ -100,9 +97,8 @@ function manage_line_items(form) {
     $.post(url, data).done(function (response) {
         response = JSON.parse(response);
         if (response.success == true) {
-            // Is general items view
-            $('.table-line-items').DataTable().ajax.reload(null, false);
-            alert_float('success', response.message);
+            // Reload page to show updated data
+            window.location.reload();
         }
         $('#line_item_modal').modal('hide');
     }).fail(function (data) {
@@ -113,8 +109,6 @@ function manage_line_items(form) {
 function init_line_item_js() {
     // Line items modal show action
     $("body").on('show.bs.modal', '#line_item_modal', function (event) {
-
-        $('.affect-warning').addClass('hide');
 
         var $itemModal = $('#line_item_modal');
         $('input[name="itemid"]').val('');
@@ -129,7 +123,6 @@ function init_line_item_js() {
         // If id found get the text from the datatable
         if (typeof (id) !== 'undefined') {
 
-            $('.affect-warning').removeClass('hide');
             $('input[name="itemid"]').val(id);
 
             requestGetJSON('ella_contractors/get_line_item_data/' + id).done(function (response) {
