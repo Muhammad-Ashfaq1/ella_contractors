@@ -6,6 +6,7 @@ class Ella_contractors extends AdminController
         parent::__construct();
         $this->load->model('ella_media_model');
         $this->load->model('ella_line_items_model');
+        $this->load->model('ella_line_item_groups_model');
         $this->load->helper('ella_media');
     }
     
@@ -523,8 +524,7 @@ startxref
         if (!has_permission('ella_contractors', '', 'view')) {
             access_denied('ella_contractors');
         }
-
-        $this->load->model('ella_line_item_groups_model');
+        
         
         $data['title'] = 'Line Items Management';
         $data['groups'] = $this->ella_line_item_groups_model->get_groups();
@@ -769,7 +769,6 @@ startxref
     public function add_group()
     {
         if ($this->input->post() && has_permission('ella_contractors', '', 'create')) {
-            $this->load->model('ella_line_item_groups_model');
             $this->ella_line_item_groups_model->add_group($this->input->post());
             set_alert('success', _l('added_successfully', _l('item_group')));
         }
@@ -781,7 +780,6 @@ startxref
     public function update_group($id)
     {
         if ($this->input->post() && has_permission('ella_contractors', '', 'edit')) {
-            $this->load->model('ella_line_item_groups_model');
             $this->ella_line_item_groups_model->edit_group($this->input->post(), $id);
             set_alert('success', _l('updated_successfully', _l('item_group')));
         }
@@ -793,7 +791,6 @@ startxref
     public function delete_group($id)
     {
         if (has_permission('ella_contractors', '', 'delete')) {
-            $this->load->model('ella_line_item_groups_model');
             if ($this->ella_line_item_groups_model->delete_group($id)) {
                 set_alert('success', _l('deleted', _l('item_group')));
             }
@@ -828,5 +825,6 @@ startxref
             set_alert('success', _l('total_items_deleted', $total_deleted));
         }
     }
+
 
 }

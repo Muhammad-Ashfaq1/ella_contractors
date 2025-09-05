@@ -249,6 +249,74 @@ function ella_contractors_activate_module() {
         }
     }
     
+    // Insert sample line items for testing
+    $sample_items = [
+        [
+            'name' => 'Asphalt Shingles',
+            'description' => 'High-quality asphalt shingles for roofing',
+            'cost' => 150.00,
+            'quantity' => 1.00,
+            'unit_type' => 'sq ft',
+            'group_id' => 1, // Roofing
+            'is_active' => 1
+        ],
+        [
+            'name' => 'Wooden Door',
+            'description' => 'Solid wood entrance door',
+            'cost' => 350.00,
+            'quantity' => 1.00,
+            'unit_type' => 'piece',
+            'group_id' => 2, // Doors
+            'is_active' => 1
+        ],
+        [
+            'name' => 'Double Pane Window',
+            'description' => 'Energy efficient double pane window',
+            'cost' => 200.00,
+            'quantity' => 1.00,
+            'unit_type' => 'piece',
+            'group_id' => 3, // Windows
+            'is_active' => 1
+        ],
+        [
+            'name' => 'Vinyl Siding',
+            'description' => 'Durable vinyl siding panels',
+            'cost' => 25.00,
+            'quantity' => 1.00,
+            'unit_type' => 'sq ft',
+            'group_id' => 4, // Siding
+            'is_active' => 1
+        ],
+        [
+            'name' => 'Drywall Sheet',
+            'description' => 'Standard 4x8 drywall sheet',
+            'cost' => 12.00,
+            'quantity' => 1.00,
+            'unit_type' => 'piece',
+            'group_id' => 5, // Walls
+            'is_active' => 1
+        ],
+        [
+            'name' => 'Nails - 2 inch',
+            'description' => 'Standard construction nails',
+            'cost' => 0.05,
+            'quantity' => 100.00,
+            'unit_type' => 'piece',
+            'group_id' => 6, // General
+            'is_active' => 1
+        ]
+    ];
+    
+    $existing_items = $CI->db->count_all_results(db_prefix() . 'ella_contractor_line_items');
+    if ($existing_items == 0) {
+        foreach ($sample_items as $item) {
+            $CI->db->insert(db_prefix() . 'ella_contractor_line_items', $item);
+        }
+    }
+    
+    // Set module version
+    update_option('ella_contractors_version', '1.0.0');
+    
 }
 
 function ella_contractors_deactivate_module() {
