@@ -5,6 +5,7 @@ class Ella_contractors extends AdminController
     public function __construct() {
         parent::__construct();
         $this->load->model('ella_media_model');
+        $this->load->model('ella_line_items_model');
         $this->load->helper('ella_media');
     }
     
@@ -511,4 +512,197 @@ startxref
         
         echo "<br><a href='" . admin_url('ella_contractors/presentations') . "'>Back to Presentations</a>";
     }
+
+    // ==================== LINE ITEMS MANAGEMENT ====================
+
+    /**
+     * Line Items Management
+     */
+    public function line_items()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            access_denied('ella_contractors');
+        }
+
+        $data['title'] = 'Line Items Management';
+        $data['line_items'] = $this->ella_line_items_model->get_line_items();
+        $data['group_names'] = $this->ella_line_items_model->get_group_names();
+        $data['unit_types'] = $this->ella_line_items_model->get_unit_types();
+        
+        $this->load->view('ella_contractors/line_items', $data);
+    }
+
+    /**
+     * Create Line Item
+     */
+    public function create_line_item()
+    {
+        if (!has_permission('ella_contractors', '', 'create')) {
+            access_denied('ella_contractors');
+        }
+
+        $this->load->library('form_validation');
+        $this->form_validation->set_rules('name', 'Name', 'required');
+        $this->form_validation->set_rules('group_name', 'Group', 'required');
+        $this->form_validation->set_rules('unit_type', 'Unit Type', 'required');
+        $this->form_validation->set_rules('cost', 'Cost', 'numeric');
+        $this->form_validation->set_rules('quantity', 'Quantity', 'numeric');
+
+        if ($this->form_validation->run() == FALSE) {
+            set_alert('warning', validation_errors());
+        } else {
+            $data = [
+                'name' => $this->input->post('name'),
+                'description' => $this->input->post('description'),
+                'cost' => $this->input->post('cost') ?: null,
+                'quantity' => $this->input->post('quantity') ?: 1.00,
+                'unit_type' => $this->input->post('unit_type'),
+                'group_name' => $this->input->post('group_name'),
+                'is_active' => $this->input->post('is_active') ? 1 : 0
+            ];
+
+            // Handle image upload
+            if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+                $upload_result = $this->handle_line_item_image_upload();
+                if ($upload_result) {
+                    $data['image'] = $upload_result;
+                }
+            }
+
+            $line_item_id = $this->ella_line_items_model->create_line_item($data);
+            if ($line_item_id) {
+                set_alert('success', 'Line item created successfully');
+            } else {
+                set_alert('warning', 'Failed to create line item');
+            }
+        }
+        redirect(admin_url('ella_contractors/line_items'));
+    }
+
+    /**
+     * Update Line Item
+     */
+    public function update_line_item($id)
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            access_denied('ella_contractors');
+        }
+
+        $this->load->library('form_validation');
+        $this->form_validation->set_rules('name', 'Name', 'required');
+        $this->form_validation->set_rules('group_name', 'Group', 'required');
+        $this->form_validation->set_rules('unit_type', 'Unit Type', 'required');
+        $this->form_validation->set_rules('cost', 'Cost', 'numeric');
+        $this->form_validation->set_rules('quantity', 'Quantity', 'numeric');
+
+        if ($this->form_validation->run() == FALSE) {
+            set_alert('warning', validation_errors());
+        } else {
+            $data = [
+                'name' => $this->input->post('name'),
+                'description' => $this->input->post('description'),
+                'cost' => $this->input->post('cost') ?: null,
+                'quantity' => $this->input->post('quantity') ?: 1.00,
+                'unit_type' => $this->input->post('unit_type'),
+                'group_name' => $this->input->post('group_name'),
+                'is_active' => $this->input->post('is_active') ? 1 : 0
+            ];
+
+            // Handle image upload
+            if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+                $upload_result = $this->handle_line_item_image_upload();
+                if ($upload_result) {
+                    $data['image'] = $upload_result;
+                }
+            }
+
+            if ($this->ella_line_items_model->update_line_item($id, $data)) {
+                set_alert('success', 'Line item updated successfully');
+            } else {
+                set_alert('warning', 'Failed to update line item');
+            }
+        }
+        redirect(admin_url('ella_contractors/line_items'));
+    }
+
+    /**
+     * Delete Line Item
+     */
+    public function delete_line_item($id)
+    {
+        if (!has_permission('ella_contractors', '', 'delete')) {
+            access_denied('ella_contractors');
+        }
+
+        if ($this->ella_line_items_model->delete_line_item($id)) {
+            set_alert('success', 'Line item deleted successfully');
+        } else {
+            set_alert('warning', 'Failed to delete line item');
+        }
+        redirect(admin_url('ella_contractors/line_items'));
+    }
+
+    /**
+     * Toggle Line Item Active Status
+     */
+    public function toggle_line_item_active($id)
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            access_denied('ella_contractors');
+        }
+
+        if ($this->ella_line_items_model->toggle_active($id)) {
+            set_alert('success', 'Line item status updated successfully');
+        } else {
+            set_alert('warning', 'Failed to update line item status');
+        }
+        redirect(admin_url('ella_contractors/line_items'));
+    }
+
+
+    /**
+     * Handle Line Item Image Upload
+     */
+    private function handle_line_item_image_upload()
+    {
+        $upload_path = FCPATH . 'uploads/ella_line_items/';
+        
+        // Create directory if it doesn't exist
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0755, true);
+        }
+
+        $config['upload_path'] = $upload_path;
+        $config['allowed_types'] = 'gif|jpg|jpeg|png';
+        $config['max_size'] = 2048; // 2MB
+        $config['encrypt_name'] = true;
+
+        $this->load->library('upload', $config);
+
+        if ($this->upload->do_upload('image')) {
+            $upload_data = $this->upload->data();
+            return $upload_data['file_name'];
+        } else {
+            log_message('error', 'Line item image upload failed: ' . $this->upload->display_errors());
+            return false;
+        }
+    }
+
+    /**
+     * Get Line Item Data for AJAX
+     */
+    public function get_line_item_data($id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            access_denied('ella_contractors');
+        }
+
+        $line_item = $this->ella_line_items_model->get_line_item($id);
+        if ($line_item) {
+            echo json_encode($line_item);
+        } else {
+            echo json_encode(['error' => 'Line item not found']);
+        }
+    }
+
 }

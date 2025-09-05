@@ -62,6 +62,13 @@ function ella_contractors_init_menu() {
                 'href' => admin_url('ella_contractors/presentations'),
                 'icon' => 'fa fa-file-powerpoint-o',
                 'position' => 20,
+            ],
+            [
+                'slug' => 'ella_contractors_line_items',
+                'name' => 'Line Items',
+                'href' => admin_url('ella_contractors/line_items'),
+                'icon' => 'fa fa-list-alt',
+                'position' => 25,
             ]
         ];
 
@@ -132,6 +139,39 @@ function ella_contractors_activate_module() {
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
     }
     
+    // Create ella_contractor_line_items table
+    if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_line_items')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractor_line_items` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `name` varchar(255) NOT NULL,
+            `description` text,
+            `image` varchar(255) DEFAULT NULL,
+            `cost` decimal(10,2) DEFAULT NULL,
+            `quantity` decimal(10,2) DEFAULT 1.00,
+            `unit_type` varchar(50) NOT NULL,
+            `group_name` varchar(100) NOT NULL,
+            `is_active` tinyint(1) DEFAULT 1,
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `is_active` (`is_active`),
+            KEY `name` (`name`),
+            KEY `unit_type` (`unit_type`),
+            KEY `group_name` (`group_name`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+    } else {
+        // Check if group_name column exists, if not add it
+        if (!$CI->db->field_exists('group_name', db_prefix() . 'ella_contractor_line_items')) {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD COLUMN `group_name` varchar(100) NOT NULL AFTER `unit_type`');
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD KEY `group_name` (`group_name`)');
+        }
+        
+        // Check if group_id column exists, if it does remove it
+        if ($CI->db->field_exists('group_id', db_prefix() . 'ella_contractor_line_items')) {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` DROP COLUMN `group_id`');
+        }
+    }
+    
     // Create upload directories
     $base_path = FCPATH . 'uploads/ella_presentations/';
     $directories = [
@@ -157,6 +197,25 @@ function ella_contractors_activate_module() {
             file_put_contents($dir . '.htaccess', 'Order Deny,Allow' . PHP_EOL . 'Deny from all');
         }
     }
+    
+    // Create line items image upload directory
+    $line_items_path = FCPATH . 'uploads/ella_line_items/';
+    if (!is_dir($line_items_path)) {
+        if (!mkdir($line_items_path, 0755, true)) {
+            log_message('error', 'Failed to create directory: ' . $line_items_path);
+        }
+    }
+    
+    // Create index.html to prevent directory listing
+    if (!file_exists($line_items_path . 'index.html')) {
+        file_put_contents($line_items_path . 'index.html', '');
+    }
+    
+    // Create .htaccess to prevent direct access
+    if (!file_exists($line_items_path . '.htaccess')) {
+        file_put_contents($line_items_path . '.htaccess', 'Order Deny,Allow' . PHP_EOL . 'Deny from all');
+    }
+    
 }
 
 function ella_contractors_deactivate_module() {
