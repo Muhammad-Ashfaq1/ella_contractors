@@ -524,9 +524,10 @@ startxref
             access_denied('ella_contractors');
         }
 
+        $this->load->model('ella_line_item_groups_model');
+        
         $data['title'] = 'Line Items Management';
-        $data['line_items'] = $this->ella_line_items_model->get_line_items();
-        $data['group_names'] = $this->ella_line_items_model->get_group_names();
+        $data['groups'] = $this->ella_line_item_groups_model->get_groups();
         $data['unit_types'] = $this->ella_line_items_model->get_unit_types();
         
         $this->load->view('ella_contractors/line_items', $data);
@@ -543,7 +544,7 @@ startxref
 
         $this->load->library('form_validation');
         $this->form_validation->set_rules('name', 'Name', 'required');
-        $this->form_validation->set_rules('group_name', 'Group', 'required');
+        $this->form_validation->set_rules('group_id', 'Group', 'required|numeric');
         $this->form_validation->set_rules('unit_type', 'Unit Type', 'required');
         $this->form_validation->set_rules('cost', 'Cost', 'numeric');
         $this->form_validation->set_rules('quantity', 'Quantity', 'numeric');
@@ -557,7 +558,7 @@ startxref
                 'cost' => $this->input->post('cost') ?: null,
                 'quantity' => $this->input->post('quantity') ?: 1.00,
                 'unit_type' => $this->input->post('unit_type'),
-                'group_name' => $this->input->post('group_name'),
+                'group_id' => $this->input->post('group_id'),
                 'is_active' => $this->input->post('is_active') ? 1 : 0
             ];
 
@@ -590,7 +591,7 @@ startxref
 
         $this->load->library('form_validation');
         $this->form_validation->set_rules('name', 'Name', 'required');
-        $this->form_validation->set_rules('group_name', 'Group', 'required');
+        $this->form_validation->set_rules('group_id', 'Group', 'required|numeric');
         $this->form_validation->set_rules('unit_type', 'Unit Type', 'required');
         $this->form_validation->set_rules('cost', 'Cost', 'numeric');
         $this->form_validation->set_rules('quantity', 'Quantity', 'numeric');
@@ -604,7 +605,7 @@ startxref
                 'cost' => $this->input->post('cost') ?: null,
                 'quantity' => $this->input->post('quantity') ?: 1.00,
                 'unit_type' => $this->input->post('unit_type'),
-                'group_name' => $this->input->post('group_name'),
+                'group_id' => $this->input->post('group_id'),
                 'is_active' => $this->input->post('is_active') ? 1 : 0
             ];
 
@@ -702,6 +703,129 @@ startxref
             echo json_encode($line_item);
         } else {
             echo json_encode(['error' => 'Line item not found']);
+        }
+    }
+
+    /**
+     * Table data for DataTables
+     */
+    public function table()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+        $this->app->get_table_data('line_items');
+    }
+
+    /**
+     * Manage Line Item (Add/Edit) - AJAX
+     */
+    public function manage_line_item()
+    {
+        if (has_permission('ella_contractors', '', 'view')) {
+            if ($this->input->post()) {
+                $data = $this->input->post();
+                if ($data['itemid'] == '') {
+                    if (!has_permission('ella_contractors', '', 'create')) {
+                        header('HTTP/1.0 400 Bad error');
+                        echo _l('access_denied');
+                        die;
+                    }
+                    $id = $this->ella_line_items_model->add($data);
+                    $success = false;
+                    $message = '';
+                    if ($id) {
+                        $success = true;
+                        $message = _l('added_successfully', _l('line_item'));
+                    }
+                    echo json_encode([
+                        'success' => $success,
+                        'message' => $message,
+                        'item' => $this->ella_line_items_model->get($id),
+                    ]);
+                } else {
+                    if (!has_permission('ella_contractors', '', 'edit')) {
+                        header('HTTP/1.0 400 Bad error');
+                        echo _l('access_denied');
+                        die;
+                    }
+                    $success = $this->ella_line_items_model->edit($data);
+                    $message = '';
+                    if ($success) {
+                        $message = _l('updated_successfully', _l('line_item'));
+                    }
+                    echo json_encode([
+                        'success' => $success,
+                        'message' => $message,
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Add Group
+     */
+    public function add_group()
+    {
+        if ($this->input->post() && has_permission('ella_contractors', '', 'create')) {
+            $this->load->model('ella_line_item_groups_model');
+            $this->ella_line_item_groups_model->add_group($this->input->post());
+            set_alert('success', _l('added_successfully', _l('item_group')));
+        }
+    }
+
+    /**
+     * Update Group
+     */
+    public function update_group($id)
+    {
+        if ($this->input->post() && has_permission('ella_contractors', '', 'edit')) {
+            $this->load->model('ella_line_item_groups_model');
+            $this->ella_line_item_groups_model->edit_group($this->input->post(), $id);
+            set_alert('success', _l('updated_successfully', _l('item_group')));
+        }
+    }
+
+    /**
+     * Delete Group
+     */
+    public function delete_group($id)
+    {
+        if (has_permission('ella_contractors', '', 'delete')) {
+            $this->load->model('ella_line_item_groups_model');
+            if ($this->ella_line_item_groups_model->delete_group($id)) {
+                set_alert('success', _l('deleted', _l('item_group')));
+            }
+        }
+        redirect(admin_url('ella_contractors/line_items?groups_modal=true'));
+    }
+
+    /**
+     * Bulk Actions
+     */
+    public function bulk_action()
+    {
+        hooks()->do_action('before_do_bulk_action_for_line_items');
+        $total_deleted = 0;
+        if ($this->input->post()) {
+            $ids = $this->input->post('ids');
+            $has_permission_delete = has_permission('ella_contractors', '', 'delete');
+            if (is_array($ids)) {
+                foreach ($ids as $id) {
+                    if ($this->input->post('mass_delete')) {
+                        if ($has_permission_delete) {
+                            if ($this->ella_line_items_model->delete($id)) {
+                                $total_deleted++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($this->input->post('mass_delete')) {
+            set_alert('success', _l('total_items_deleted', $total_deleted));
         }
     }
 

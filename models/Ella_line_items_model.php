@@ -12,23 +12,24 @@ class Ella_line_items_model extends App_Model
     /**
      * Get all line items
      */
-    public function get_line_items($group_name = null, $active_only = false)
+    public function get_line_items($group_id = null, $active_only = false)
     {
-        if ($group_name) {
-            $this->db->where('group_name', $group_name);
+        $this->db->select('*,' . db_prefix() . 'ella_contractor_line_item_groups.name as group_name');
+        $this->db->from(db_prefix() . 'ella_contractor_line_items');
+        $this->db->join(db_prefix() . 'ella_contractor_line_item_groups', db_prefix() . 'ella_contractor_line_item_groups.id = ' . db_prefix() . 'ella_contractor_line_items.group_id', 'left');
+        
+        if ($group_id) {
+            $this->db->where('group_id', $group_id);
         }
         
         if ($active_only) {
             $this->db->where('is_active', 1);
         }
         
-        // Check if group_name column exists before ordering
-        if ($this->db->field_exists('group_name', db_prefix() . 'ella_contractor_line_items')) {
-            $this->db->order_by('group_name', 'ASC');
-        }
+        $this->db->order_by('group_name', 'ASC');
         $this->db->order_by('name', 'ASC');
         
-        return $this->db->get(db_prefix() . 'ella_contractor_line_items')->result_array();
+        return $this->db->get()->result_array();
     }
 
     /**
@@ -180,30 +181,80 @@ class Ella_line_items_model extends App_Model
     }
 
     /**
-     * Get available group names
+     * Add new line item
      */
-    public function get_group_names()
+    public function add($data)
     {
-        // Check if group_name column exists
-        if (!$this->db->field_exists('group_name', db_prefix() . 'ella_contractor_line_items')) {
-            return ['General']; // Return default group if column doesn't exist
+        unset($data['itemid']);
+        
+        if (isset($data['group_id']) && $data['group_id'] == '') {
+            $data['group_id'] = 0;
         }
-        
-        $this->db->select('DISTINCT group_name');
-        $this->db->where('group_name !=', '');
-        $this->db->order_by('group_name', 'ASC');
-        $result = $this->db->get(db_prefix() . 'ella_contractor_line_items')->result_array();
-        
-        $groups = [];
-        foreach ($result as $row) {
-            $groups[] = $row['group_name'];
+
+        $this->db->insert(db_prefix() . 'ella_contractor_line_items', $data);
+        $insert_id = $this->db->insert_id();
+        if ($insert_id) {
+            hooks()->do_action('line_item_created', $insert_id);
+            log_activity('New Line Item Added [ID:' . $insert_id . ', ' . $data['name'] . ']');
+            return $insert_id;
         }
-        
-        // If no groups found, return default
-        if (empty($groups)) {
-            $groups = ['General'];
+        return false;
+    }
+
+    /**
+     * Edit line item
+     */
+    public function edit($data)
+    {
+        $itemid = $data['itemid'];
+        unset($data['itemid']);
+
+        if (isset($data['group_id']) && $data['group_id'] == '') {
+            $data['group_id'] = 0;
         }
-        
-        return $groups;
+
+        $affectedRows = 0;
+
+        $data = hooks()->apply_filters('before_update_line_item', $data, $itemid);
+
+        $this->db->where('id', $itemid);
+        $this->db->update(db_prefix() . 'ella_contractor_line_items', $data);
+        if ($this->db->affected_rows() > 0) {
+            log_activity('Line Item Updated [ID: ' . $itemid . ', ' . $data['name'] . ']');
+            $affectedRows++;
+        }
+
+        if ($affectedRows > 0) {
+            hooks()->do_action('line_item_updated', $itemid);
+        }
+
+        return $affectedRows > 0 ? true : false;
+    }
+
+    /**
+     * Delete line item
+     */
+    public function delete($id)
+    {
+        $this->db->where('id', $id);
+        $this->db->delete(db_prefix() . 'ella_contractor_line_items');
+        if ($this->db->affected_rows() > 0) {
+            log_activity('Line Item Deleted [ID: ' . $id . ']');
+            hooks()->do_action('line_item_deleted', $id);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Get single line item by ID (for AJAX)
+     */
+    public function get($id)
+    {
+        $this->db->select('*,' . db_prefix() . 'ella_contractor_line_item_groups.name as group_name');
+        $this->db->from(db_prefix() . 'ella_contractor_line_items');
+        $this->db->join(db_prefix() . 'ella_contractor_line_item_groups', db_prefix() . 'ella_contractor_line_item_groups.id = ' . db_prefix() . 'ella_contractor_line_items.group_id', 'left');
+        $this->db->where(db_prefix() . 'ella_contractor_line_items.id', $id);
+        return $this->db->get()->row();
     }
 }

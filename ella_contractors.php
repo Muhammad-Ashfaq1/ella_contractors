@@ -139,6 +139,21 @@ function ella_contractors_activate_module() {
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
     }
     
+    // Create ella_contractor_line_item_groups table
+    if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_line_item_groups')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractor_line_item_groups` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `name` varchar(255) NOT NULL,
+            `description` text,
+            `is_active` tinyint(1) DEFAULT 1,
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `is_active` (`is_active`),
+            KEY `name` (`name`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+    }
+    
     // Create ella_contractor_line_items table
     if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_line_items')) {
         $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractor_line_items` (
@@ -149,7 +164,7 @@ function ella_contractors_activate_module() {
             `cost` decimal(10,2) DEFAULT NULL,
             `quantity` decimal(10,2) DEFAULT 1.00,
             `unit_type` varchar(50) NOT NULL,
-            `group_name` varchar(100) NOT NULL,
+            `group_id` int(11) DEFAULT 0,
             `is_active` tinyint(1) DEFAULT 1,
             `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
             `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -157,18 +172,19 @@ function ella_contractors_activate_module() {
             KEY `is_active` (`is_active`),
             KEY `name` (`name`),
             KEY `unit_type` (`unit_type`),
-            KEY `group_name` (`group_name`)
+            KEY `group_id` (`group_id`),
+            FOREIGN KEY (`group_id`) REFERENCES `' . db_prefix() . 'ella_contractor_line_item_groups`(`id`) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
     } else {
-        // Check if group_name column exists, if not add it
-        if (!$CI->db->field_exists('group_name', db_prefix() . 'ella_contractor_line_items')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD COLUMN `group_name` varchar(100) NOT NULL AFTER `unit_type`');
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD KEY `group_name` (`group_name`)');
+        // Check if group_id column exists, if not add it
+        if (!$CI->db->field_exists('group_id', db_prefix() . 'ella_contractor_line_items')) {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD COLUMN `group_id` int(11) DEFAULT 0 AFTER `unit_type`');
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD KEY `group_id` (`group_id`)');
         }
         
-        // Check if group_id column exists, if it does remove it
-        if ($CI->db->field_exists('group_id', db_prefix() . 'ella_contractor_line_items')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` DROP COLUMN `group_id`');
+        // Check if group_name column exists, if it does remove it
+        if ($CI->db->field_exists('group_name', db_prefix() . 'ella_contractor_line_items')) {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` DROP COLUMN `group_name`');
         }
     }
     
@@ -214,6 +230,23 @@ function ella_contractors_activate_module() {
     // Create .htaccess to prevent direct access
     if (!file_exists($line_items_path . '.htaccess')) {
         file_put_contents($line_items_path . '.htaccess', 'Order Deny,Allow' . PHP_EOL . 'Deny from all');
+    }
+    
+    // Insert default groups
+    $default_groups = [
+        ['name' => 'Roofing', 'description' => 'Roofing materials and services'],
+        ['name' => 'Doors', 'description' => 'Door installation and materials'],
+        ['name' => 'Windows', 'description' => 'Window installation and materials'],
+        ['name' => 'Siding', 'description' => 'Siding materials and installation'],
+        ['name' => 'Walls', 'description' => 'Wall construction and finishing'],
+        ['name' => 'General', 'description' => 'General construction items']
+    ];
+    
+    $existing_groups = $CI->db->count_all_results(db_prefix() . 'ella_contractor_line_item_groups');
+    if ($existing_groups == 0) {
+        foreach ($default_groups as $group) {
+            $CI->db->insert(db_prefix() . 'ella_contractor_line_item_groups', $group);
+        }
     }
     
 }
