@@ -10,7 +10,7 @@
 						<div class="row mbot15">
 							<div class="col-md-6"><h4><?= html_escape($title); ?></h4></div>
 							<div class="col-md-6 text-right">
-								<a href="#" class="btn btn-info" onclick="$('#addModal').modal('show');return false;"><i class="fa fa-plus"></i> Add</a>
+								<a href="<?= admin_url('ella_contractors/measurements/create/' . $category); ?>" class="btn btn-info"><i class="fa fa-plus"></i> Add</a>
 							</div>
 						</div>
 
@@ -49,9 +49,6 @@
 										<td>
 											<a href="#" onclick="editRow(<?= (int) $r['id']; ?>);return false;">Edit</a> |
 											<a href="<?= admin_url('ella_contractors/measurements/delete/' . $r['id']); ?>" onclick="return confirm('Delete this row?');" class="text-danger">Delete</a>
-											<div id="edit-form-<?= (int) $r['id']; ?>" class="hidden">
-												<?php $row = $r; $this->load->view('ella_contractors/measurements/_form_modal', compact('row') + ['category' => $category]); ?>
-											</div>
 										</td>
 									</tr>
 									<?php endforeach; ?>
@@ -65,30 +62,9 @@
 	</div>
 </div>
 
-<!-- Add Modal -->
-<div class="modal fade" id="addModal" tabindex="-1" role="dialog">
-	<div class="modal-dialog modal-lg" role="document">
-		<div class="modal-content">
-			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-					<span aria-hidden="true">&times;</span>
-				</button>
-				<h4 class="modal-title">Add New <?= ucfirst($category); ?></h4>
-			</div>
-			<div class="modal-body">
-				<?php $this->load->view('ella_contractors/measurements/_form_modal', ['category' => $category]); ?>
-			</div>
-		</div>
-	</div>
-</div>
-
 <script>
 function editRow(id){
-	var html = document.getElementById('edit-form-'+id).innerHTML;
-	var modal = document.getElementById('addModal');
-	$(modal).find('.modal-title').text('Edit');
-	$(modal).find('.modal-body').html(html);
-	$('#addModal').modal('show');
+	window.location = '<?= admin_url('ella_contractors/measurements/edit/'); ?>' + id;
 }
 </script>
 <?php init_tail(); ?>

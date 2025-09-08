@@ -38,6 +38,7 @@ class Measurements extends AdminController
         $post = $this->input->post(null, true);
         $id   = isset($post['id']) ? (int) $post['id'] : 0;
 
+        // Handle basic measurement fields
         $width  = (float) ($post['width_val'] ?? 0);
         $height = (float) ($post['height_val'] ?? 0);
         if ($width && $height) {
@@ -53,13 +54,24 @@ class Measurements extends AdminController
             }
         }
 
-        if (isset($post['attributes_json']) && is_string($post['attributes_json']) && $post['attributes_json'] !== '') {
-            $decoded = json_decode($post['attributes_json'], true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                $post['attributes_json'] = json_encode($decoded);
-            }
+        // Handle category-specific attributes
+        $categorySpecificData = [];
+        if (isset($post['siding']) && is_array($post['siding'])) {
+            $categorySpecificData['siding'] = $post['siding'];
+            unset($post['siding']);
+        }
+        if (isset($post['roofing']) && is_array($post['roofing'])) {
+            $categorySpecificData['roofing'] = $post['roofing'];
+            unset($post['roofing']);
+        }
+
+        // Merge with existing attributes_json if editing
+        if ($id > 0) {
+            $existing = $this->measurements_model->find($id);
+            $existing_attributes = json_decode($existing['attributes_json'] ?? '{}', true);
+            $post['attributes_json'] = json_encode(array_merge($existing_attributes, $categorySpecificData));
         } else {
-            unset($post['attributes_json']);
+            $post['attributes_json'] = json_encode($categorySpecificData);
         }
 
         if ($id > 0) {
@@ -71,7 +83,41 @@ class Measurements extends AdminController
         }
 
         set_alert($ok ? 'success' : 'danger', $msg);
-        redirect(admin_url('ella_contractors/measurements/' . ($post['category'] ?? 'windows')));
+        redirect(admin_url('ella_contractors/measurements/' . ($post['category'] ?? 'siding')));
+    }
+
+    public function create($category = 'siding')
+    {
+        if (!has_permission('ella_contractors', '', 'create')) {
+            access_denied('ella_contractors');
+        }
+
+        $allowed = ['windows','doors','roofing','siding','other'];
+        if (!in_array($category, $allowed)) {
+            $category = 'siding';
+        }
+
+        $data['title']    = 'Add Measurements - ' . ucfirst($category);
+        $data['category'] = $category;
+        $data['row']      = null;
+        $this->load->view('ella_contractors/measurements/form', $data);
+    }
+
+    public function edit($id)
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            access_denied('ella_contractors');
+        }
+
+        $row = $this->measurements_model->find($id);
+        if (!$row) {
+            show_404();
+        }
+
+        $data['title']    = 'Edit Measurements';
+        $data['category'] = $row['category'] ?? 'siding';
+        $data['row']      = $row;
+        $this->load->view('ella_contractors/measurements/form', $data);
     }
 
     public function delete($id)
