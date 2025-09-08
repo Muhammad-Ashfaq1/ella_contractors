@@ -25,6 +25,9 @@ $route[$module_name . '/upload_presentation'] = $module_name . '/upload_presenta
 // Measurements routes
 $measurements_route = 'measurements';
 $route[$module_name . '/measurements'] = $measurements_route . '/index';
+$route[$module_name . '/measurements/(:any)'] = $measurements_route . '/index/$1';
+$route[$module_name . '/measurements/save'] = $measurements_route . '/save';
+$route[$module_name . '/measurements/delete/(:num)'] = $measurements_route . '/delete/$1';
 
 // AJAX endpoints
 $route[$module_name . '/get_line_items_ajax'] = $module_name . '/get_line_items_ajax';

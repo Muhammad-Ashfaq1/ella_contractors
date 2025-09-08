@@ -237,6 +237,44 @@ function ella_contractors_activate_module() {
             FOREIGN KEY (`line_item_id`) REFERENCES `' . db_prefix() . 'ella_contractor_line_items`(`id`) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
     }
+
+    // Create ella_contractors_measurements table
+    if (!$CI->db->table_exists(db_prefix() . 'ella_contractors_measurements')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractors_measurements` (
+            `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `category` ENUM(\'windows\',\'doors\',\'roofing\',\'siding\',\'other\') NOT NULL DEFAULT \'other\',
+            `rel_type` ENUM(\'customer\',\'lead\',\'project\',\'other\') NOT NULL DEFAULT \'customer\',
+            `rel_id` BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            `designator` VARCHAR(64) NULL,
+            `name` VARCHAR(191) NOT NULL,
+            `location_label` VARCHAR(128) NULL,
+            `level_label` VARCHAR(64) NULL,
+            `quantity` DECIMAL(12,4) NOT NULL DEFAULT 1.0000,
+            `width_val` DECIMAL(12,4) NULL,
+            `height_val` DECIMAL(12,4) NULL,
+            `length_val` DECIMAL(12,4) NULL,
+            `area_val` DECIMAL(14,4) NULL,
+            `united_inches_val` DECIMAL(12,4) NULL,
+            `length_unit` VARCHAR(16) NULL DEFAULT \'in\',
+            `area_unit` VARCHAR(16) NULL DEFAULT \'sqft\',
+            `ui_unit` VARCHAR(16) NULL DEFAULT \'in\',
+            `attributes_json` JSON NULL,
+            `notes` TEXT NULL,
+            `status_code` TINYINT NOT NULL DEFAULT 1,
+            `sort_order` INT NOT NULL DEFAULT 0,
+            `dtmCreated` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            `dtmLastM` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+            `intCreatedByCode` INT NULL,
+            `intAlteredByCode` INT NULL,
+            `intRecordStatusCode` TINYINT NOT NULL DEFAULT 1,
+            `intBranchCode` INT NULL,
+            `intCompanyCode` INT NULL,
+            PRIMARY KEY (`id`),
+            KEY `idx_cat_rel` (`category`,`rel_type`,`rel_id`),
+            KEY `idx_location_level` (`location_label`,`level_label`),
+            KEY `idx_created` (`dtmCreated`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+    }
     
     // Create upload directories
     $base_path = FCPATH . 'uploads/ella_presentations/';
