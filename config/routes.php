@@ -23,7 +23,8 @@ $route[$module_name . '/create_folder'] = $module_name . '/create_folder';
 $route[$module_name . '/upload_presentation'] = $module_name . '/upload_presentation';
 
 // Measurements routes
-$route[$module_name . '/measurements'] = 'measurements/index';
+$measurements_route = 'measurements';
+$route[$module_name . '/measurements'] = $measurements_route . '/index';
 
 // AJAX endpoints
 $route[$module_name . '/get_line_items_ajax'] = $module_name . '/get_line_items_ajax';
