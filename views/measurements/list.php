@@ -18,9 +18,10 @@
 							<table class="table table-striped dataTable no-footer">
 								<thead>
 									<tr>
+										<th>Category</th>
 										<th>Lead/Job</th>
-										<th>Designator</th>
-										<th>Name</th>
+										<th>Customer Name</th>
+										<th>Measurement Name</th>
 										<th>Location</th>
 										<th>Level</th>
 										<th>Width</th>
@@ -31,6 +32,54 @@
 									</tr>
 								</thead>
 								<tbody>
+									<?php
+									$rows = $this->measurements_model->list_all();
+									foreach ($rows['data'] as $r) : ?>
+									<tr>
+										<td>
+											<span class="label label-info"><?= ucfirst(html_escape($r['category'])); ?></span>
+										</td>
+										<td>
+											<?php if ($r['lead_name']): ?>
+												<strong><?= html_escape($r['lead_name']); ?></strong>
+												<?php if ($r['lead_company']): ?>
+													<br><small class="text-muted"><?= html_escape($r['lead_company']); ?></small>
+												<?php endif; ?>
+											<?php else: ?>
+												<span class="text-muted">No Lead</span>
+											<?php endif; ?>
+										</td>
+										<td>
+											<?php if ($r['client_name']): ?>
+												<strong><?= html_escape($r['client_name']); ?></strong>
+											<?php else: ?>
+												<span class="text-muted">No Customer</span>
+											<?php endif; ?>
+										</td>
+										<td>
+											<strong><?= html_escape($r['name']); ?></strong>
+											<?php if ($r['designator']): ?>
+												<br><small class="text-muted"><?= html_escape($r['designator']); ?></small>
+											<?php endif; ?>
+										</td>
+										<td><?= html_escape($r['location_label']); ?></td>
+										<td><?= html_escape($r['level_label']); ?></td>
+										<td><?= html_escape($r['width_val']); ?> <?= html_escape($r['length_unit']); ?></td>
+										<td><?= html_escape($r['height_val']); ?> <?= html_escape($r['length_unit']); ?></td>
+										<td><?= html_escape($r['united_inches_val']); ?> <?= html_escape($r['ui_unit']); ?></td>
+										<td><?= html_escape($r['area_val']); ?> <?= html_escape($r['area_unit']); ?></td>
+										<td>
+											<a href="<?= admin_url('ella_contractors/measurements/edit/' . $r['id']); ?>" class="btn btn-default btn-xs">
+												<i class="fa fa-edit"></i> Edit
+											</a>
+											<a href="<?= admin_url('ella_contractors/measurements/delete/' . $r['id']); ?>" 
+											   onclick="return confirm('Delete this measurement?');" 
+											   class="btn btn-danger btn-xs">
+												<i class="fa fa-trash"></i> Delete
+											</a>
+										</td>
+									</tr>
+									<?php endforeach; ?>
 								</tbody>
 							</table>
 						</div>

@@ -14,24 +14,24 @@
 
 						<!-- Tab Navigation -->
 						<ul class="nav nav-tabs mb-3" id="category-tabs">
-							<li class="<?php echo($category ?? 'siding') == 'siding' ? 'active' : ''; ?>">
+							<li class="<?php echo($row['category'] ?? $category ?? 'siding') == 'siding' ? 'active' : ''; ?>">
 								<a href="#siding-tab" data-toggle="tab" data-category="siding">Siding</a>
 							</li>
-							<li class="<?php echo($category ?? 'siding') == 'roofing' ? 'active' : ''; ?>">
+							<li class="<?php echo($row['category'] ?? $category ?? 'siding') == 'roofing' ? 'active' : ''; ?>">
 								<a href="#roofing-tab" data-toggle="tab" data-category="roofing">Roofing</a>
 							</li>
-							<li class="<?php echo($category ?? 'siding') == 'windows' ? 'active' : ''; ?>">
+							<li class="<?php echo($row['category'] ?? $category ?? 'siding') == 'windows' ? 'active' : ''; ?>">
 								<a href="#windows-tab" data-toggle="tab" data-category="windows">Windows</a>
 							</li>
-							<li class="<?php echo($category ?? 'siding') == 'doors' ? 'active' : ''; ?>">
+							<li class="<?php echo($row['category'] ?? $category ?? 'siding') == 'doors' ? 'active' : ''; ?>">
 								<a href="#doors-tab" data-toggle="tab" data-category="doors">Doors</a>
 							</li>
 						</ul>
 						<form id="measurements-form" method="post" action="javascript:void(0);" onsubmit="return false;">
-							<input type="hidden" name="category" id="selected-category" value="<?php echo html_escape($category ?? 'siding'); ?>">
+							<input type="hidden" name="category" id="selected-category" value="<?php echo html_escape($row['category'] ?? $category ?? 'siding'); ?>">
 							
 							<!-- Hidden fields for relationship -->
-							<input type="hidden" name="rel_type" value="lead">
+							<input type="hidden" name="rel_type" value="<?php echo html_escape($row['rel_type'] ?? 'lead'); ?>">
 							<input type="hidden" name="rel_id" id="rel_id" value="<?php echo html_escape($row['rel_id'] ?? ''); ?>">
 							
 							<!-- Leads/Jobs and Client Selection -->
@@ -41,23 +41,31 @@
 										<label for="lead_id">Lead/Job <span class="text-danger">*</span></label>
 										<select name="lead_id" id="lead_id" class="form-control selectpicker" data-live-search="true" required>
 											<option value="">Select Lead/Job</option>
-											<?php if (isset($row['lead_id']) && $row['lead_id']): ?>
-												<?php 
-												$this->load->model('leads_model');
-												$lead = $this->leads_model->get($row['lead_id']);
-												if ($lead): ?>
-													<option value="<?= $lead->id; ?>" selected><?= html_escape($lead->name); ?></option>
-												<?php endif; ?>
+											<?php if (isset($leads) && !empty($leads)): ?>
+												<?php foreach ($leads as $lead): ?>
+													<option value="<?= $lead['id']; ?>" 
+														<?= (isset($row['rel_type']) && $row['rel_type'] == 'lead' && $row['rel_id'] == $lead['id']) ? 'selected' : ''; ?>>
+														<?= html_escape($lead['name']); ?> - <?= html_escape($lead['company']); ?>
+													</option>
+												<?php endforeach; ?>
 											<?php endif; ?>
 										</select>
 									</div>
 								</div>
 								<div class="col-md-6">
 									<div class="form-group">
-										<label for="client_name">Client (Optional)</label>
-										<input type="text" name="client_name" id="client_name" class="form-control" 
-											   value="<?= html_escape($row['client_name'] ?? ''); ?>" 
-											   placeholder="Enter client name manually">
+										<label for="client_id">Customer (Optional)</label>
+										<select name="client_id" id="client_id" class="form-control selectpicker" data-live-search="true">
+											<option value="">Select Customer</option>
+											<?php if (isset($clients) && !empty($clients)): ?>
+												<?php foreach ($clients as $client): ?>
+													<option value="<?= $client['userid']; ?>" 
+														<?= (isset($row['rel_type']) && $row['rel_type'] == 'customer' && $row['rel_id'] == $client['userid']) ? 'selected' : ''; ?>>
+														<?= html_escape($client['company']); ?>
+													</option>
+												<?php endforeach; ?>
+											<?php endif; ?>
+										</select>
 									</div>
 								</div>
 							</div>
@@ -327,8 +335,15 @@
 		});
 		
 		// Set initial rel_id if editing
-		<?php if (isset($row['lead_id']) && $row['lead_id']): ?>
-			$('#rel_id').val('<?= $row['lead_id']; ?>');
+		<?php if (isset($row['rel_id']) && $row['rel_id']): ?>
+			$('#rel_id').val('<?= $row['rel_id']; ?>');
+		<?php endif; ?>
+		
+		// Set initial category tab if editing
+		<?php if (isset($row['category'])): ?>
+			var category = '<?= $row['category']; ?>';
+			$('#selected-category').val(category);
+			$('a[data-category="' + category + '"]').tab('show');
 		<?php endif; ?>
 		
 		// Prevent any button clicks from submitting the form
@@ -402,10 +417,21 @@
 			console.log('Form submit event triggered');
 			
 			var leadId = $('#lead_id').val();
-			if (!leadId) {
-				alert('Please select a Lead/Job before saving the measurement.');
+			var clientId = $('#client_id').val();
+			
+			if (!leadId && !clientId) {
+				alert('Please select either a Lead/Job or Customer before saving the measurement.');
 				$('#lead_id').focus();
 				return false;
+			}
+			
+			// Set rel_type and rel_id based on selection
+			if (leadId) {
+				$('input[name="rel_type"]').val('lead');
+				$('input[name="rel_id"]').val(leadId);
+			} else if (clientId) {
+				$('input[name="rel_type"]').val('customer');
+				$('input[name="rel_id"]').val(clientId);
 			}
 			
 			// Collect form data from all tabs

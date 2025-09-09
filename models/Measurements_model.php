@@ -26,6 +26,21 @@ class Measurements_model extends App_Model
 		return ['data' => $rows];
 	}
 
+	public function list_all($params = [])
+	{
+		$this->db->select($this->table . '.*, l.name as lead_name, l.company as lead_company, c.company as client_name');
+		$this->db->from($this->table);
+		$this->db->join(db_prefix() . 'leads l', 'l.id = ' . $this->table . '.rel_id AND ' . $this->table . '.rel_type = "lead"', 'left');
+		$this->db->join(db_prefix() . 'clients c', 'c.userid = ' . $this->table . '.rel_id AND ' . $this->table . '.rel_type = "customer"', 'left');
+		if (!empty($params['rel_type']) && !empty($params['rel_id'])) {
+			$this->db->where($this->table . '.rel_type', $params['rel_type']);
+			$this->db->where($this->table . '.rel_id', (int) $params['rel_id']);
+		}
+		$this->db->order_by($this->table . '.category ASC, ' . $this->table . '.sort_order ASC, ' . $this->table . '.id DESC');
+		$rows = $this->db->get()->result_array();
+		return ['data' => $rows];
+	}
+
 	public function create($data)
 	{
 		$fillable = [
@@ -72,6 +87,18 @@ class Measurements_model extends App_Model
 	public function find($id)
 	{
 		return $this->db->get_where($this->table, ['id' => (int) $id])->row_array();
+	}
+
+	public function get_related_measurements($rel_type, $rel_id)
+	{
+		$this->db->select($this->table . '.*, l.name as lead_name, l.company as lead_company, c.company as client_name');
+		$this->db->from($this->table);
+		$this->db->join(db_prefix() . 'leads l', 'l.id = ' . $this->table . '.rel_id AND ' . $this->table . '.rel_type = "lead"', 'left');
+		$this->db->join(db_prefix() . 'clients c', 'c.userid = ' . $this->table . '.rel_id AND ' . $this->table . '.rel_type = "customer"', 'left');
+		$this->db->where($this->table . '.rel_type', $rel_type);
+		$this->db->where($this->table . '.rel_id', $rel_id);
+		$this->db->order_by($this->table . '.category ASC, ' . $this->table . '.sort_order ASC, ' . $this->table . '.id ASC');
+		return $this->db->get()->result_array();
 	}
 }
 

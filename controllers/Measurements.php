@@ -8,24 +8,18 @@ class Measurements extends AdminController
         $this->load->model('ella_contractors/Measurements_model', 'measurements_model');
     }
 
-    public function index($category = 'windows')
+    public function index()
     {
         if (!has_permission('ella_contractors', '', 'view')) {
             access_denied('ella_contractors');
         }
 
-        $allowed = ['windows','doors','roofing','siding','other'];
-        if (!in_array($category, $allowed)) {
-            $category = 'windows';
-        }
-
         if ($this->input->is_ajax_request()) {
-            echo json_encode($this->measurements_model->list($category, $this->input->get()));
+            echo json_encode($this->measurements_model->list_all($this->input->get()));
             return;
         }
 
-        $data['title']    = 'Measurements - ' . ucfirst($category);
-        $data['category'] = $category;
+        $data['title'] = 'All Measurements';
         $data['measurements_model'] = $this->measurements_model;
         $this->load->view('ella_contractors/measurements/list', $data);
     }
@@ -125,9 +119,17 @@ class Measurements extends AdminController
             access_denied('ella_contractors');
         }
         
-        $data['title']    = 'Add Measurements';
+        // Get leads and clients for dropdowns
+        $this->load->model('leads_model');
+        $this->load->model('clients_model');
+        
+        $data['title'] = 'Add Measurements';
         $data['category'] = 'siding';
-        $data['row']      = null;
+        $data['row'] = null;
+        $data['all_measurements'] = [];
+        $data['leads'] = $this->leads_model->get();
+        $data['clients'] = $this->clients_model->get();
+        
         $this->load->view('ella_contractors/measurements/form', $data);
     }
 
@@ -142,9 +144,20 @@ class Measurements extends AdminController
             show_404();
         }
 
-        $data['title']    = 'Edit Measurements';
+        // Get all measurements for the same lead/client
+        $all_measurements = $this->measurements_model->get_related_measurements($row['rel_type'], $row['rel_id']);
+        
+        // Get leads and clients for dropdowns
+        $this->load->model('leads_model');
+        $this->load->model('clients_model');
+        
+        $data['title'] = 'Edit Measurements';
         $data['category'] = $row['category'] ?? 'siding';
-        $data['row']      = $row;
+        $data['row'] = $row;
+        $data['all_measurements'] = $all_measurements;
+        $data['leads'] = $this->leads_model->get();
+        $data['clients'] = $this->clients_model->get();
+        
         $this->load->view('ella_contractors/measurements/form', $data);
     }
 
