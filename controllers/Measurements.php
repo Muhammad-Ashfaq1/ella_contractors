@@ -86,19 +86,14 @@ class Measurements extends AdminController
         redirect(admin_url('ella_contractors/measurements/' . ($post['category'] ?? 'siding')));
     }
 
-    public function create($category = 'siding')
+    public function create()
     {
         if (!has_permission('ella_contractors', '', 'create')) {
             access_denied('ella_contractors');
         }
-
-        $allowed = ['windows','doors','roofing','siding','other'];
-        if (!in_array($category, $allowed)) {
-            $category = 'siding';
-        }
-
-        $data['title']    = 'Add Measurements - ' . ucfirst($category);
-        $data['category'] = $category;
+        
+        $data['title']    = 'Add Measurements';
+        $data['category'] = 'siding';
         $data['row']      = null;
         $this->load->view('ella_contractors/measurements/form', $data);
     }

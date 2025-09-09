@@ -1,17 +1,13 @@
 <?php
-// Expect $category and optional $row
-// Get existing attributes for pre-filling
+
 $existing_attributes = [];
 if (isset($row) && !empty($row['attributes_json'])) {
     $existing_attributes = json_decode($row['attributes_json'], true) ?: [];
 }
 
-// Common fields for all categories
 $editing = isset($row) && !empty($row);
 ?>
-
-<!-- Common Fields for all categories -->
-<div class="row">
+<!-- <div class="row">
     <div class="col-md-3">
         <div class="form-group">
             <label>Designator</label>
@@ -112,7 +108,7 @@ $editing = isset($row) && !empty($row);
             <input type="text" name="notes" class="form-control" value="<?= html_escape($row['notes'] ?? ''); ?>">
         </div>
     </div>
-</div>
+</div> -->
 
 <?php if ($editing): ?>
 <input type="hidden" name="id" value="<?= html_escape($row['id']); ?>">
@@ -292,14 +288,87 @@ $editing = isset($row) && !empty($row);
 		</div>
 	</div>
 <?php elseif ($category === 'windows') : ?>
-	<div class="alert alert-info">
-		<strong>Windows Measurements</strong><br>
-		Use the common fields above to enter window details. The system will automatically calculate United Inches (UI) and Area based on Width and Height measurements.
+	<div class="row">
+		<table>
+			<thead>
+				<tr>
+					<th>Designator</th>
+					<th>Name</th>
+					<th>Location</th>
+					<th>Level</th>
+					<th>Width</th>
+					<th>Height</th>
+					<th>UI</th>
+					<th>Area</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Designator 1</td>
+					<td>Name 1</td>
+					<td>Location 1</td>
+					<td>Level 1</td>
+					<td>10</td>
+					<td>10</td>
+					<td>10</td>
+					<td>100</td>
+					<td>10</td>
+					<td>100</td>
+					<td>100</td>
+					<td>100</td>
+				</tr>
+				<tr>
+					<td>Designator 2</td>
+					<td>Name 2</td>
+					<td>Location 2</td>
+					<td>Level 2</td>
+					<td>10</td>
+					<td>10</td>
+					<td>100</td>
+					<td>100</td>
+					<td>100</td>
+					<td>100</td>
+				</tr>
+			</tbody>
+		</table>
 	</div>
 <?php elseif ($category === 'doors') : ?>
-	<div class="alert alert-info">
-		<strong>Doors Measurements</strong><br>
-		Use the common fields above to enter door details. The system will automatically calculate United Inches (UI) and Area based on Width and Height measurements.
+	<div class="row">
+		<table>
+			<thead>
+				<tr>
+					<th>Type</th>
+					<th>Name</th>
+					<th>Location</th>
+					<th>Level</th>
+					<th>Width</th>
+					<th>Height</th>
+					<th>UI</th>
+					<th>Area</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Type 1</td>
+					<td>Name 1</td>
+					<td>Location 1</td>
+					<td>Level 1</td>
+					<td>10</td>
+					<td>10</td>
+					<td>100</td>
+					<td>100</td>
+					<td>100</td>
+				</tr>
+				<tr>
+					<td>Type 2</td>
+					<td>Name 2</td>
+					<td>Location 2</td>
+					<td>Level 2</td>
+					<td>10</td>
+					<td>10</td>
+					<td>100</td>
+					<td>100</td>
+		</table>
 	</div>
 <?php else : ?>
 	<div class="alert alert-info">No fields configured for this category yet.</div>

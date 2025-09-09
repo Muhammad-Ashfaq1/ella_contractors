@@ -4,13 +4,13 @@
 	<div class="content">
 		<div class="row">
 			<div class="col-md-12">
-				<?php $this->load->view('ella_contractors/measurements/_tabs'); ?>
+				<!-- <?php //$this->load->view('ella_contractors/measurements/_tabs'); ?> -->
 				<div class="panel_s">
 					<div class="panel-body">
 						<div class="row mbot15">
 							<div class="col-md-6"><h4><?= html_escape($title); ?></h4></div>
 							<div class="col-md-6 text-right">
-								<a href="<?= admin_url('ella_contractors/measurements/create/' . $category); ?>" class="btn btn-info"><i class="fa fa-plus"></i> Add</a>
+								<a href="<?= admin_url('ella_contractors/measurements/create/'); ?>" class="btn btn-info"><i class="fa fa-plus"></i> Add</a>
 							</div>
 						</div>
 
@@ -31,13 +31,13 @@
 								</thead>
 								<tbody>
 									<?php
-									$rows = $this->db
-										->where('category', $category)
-										->order_by('sort_order ASC, id DESC')
-										->get(db_prefix() . 'ella_contractors_measurements')
-										->result_array();
-									foreach ($rows as $r) : ?>
-									<tr>
+									// $rows = $this->db
+										// ->where('category', $category)
+										// ->order_by('sort_order ASC, id DESC')
+										// ->get(db_prefix() . 'ella_contractors_measurements')
+										// ->result_array(); -->
+									// foreach ($rows as $r) : ?>
+									<!-- <tr>
 										<td><?= html_escape($r['designator']); ?></td>
 										<td><?= html_escape($r['name']); ?></td>
 										<td><?= html_escape($r['location_label']); ?></td>
@@ -50,8 +50,8 @@
 											<a href="#" onclick="editRow(<?= (int) $r['id']; ?>);return false;">Edit</a> |
 											<a href="<?= admin_url('ella_contractors/measurements/delete/' . $r['id']); ?>" onclick="return confirm('Delete this row?');" class="text-danger">Delete</a>
 										</td>
-									</tr>
-									<?php endforeach; ?>
+									</tr> -->
+									<?php // endforeach; ?>
 								</tbody>
 							</table>
 						</div>
