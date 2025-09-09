@@ -274,6 +274,16 @@ $editing = isset($row) && !empty($row);
 	</div>
 <?php elseif ($category === 'windows') : ?>
 	<div class="row">
+		<div class="col-md-12">
+			<div class="btn-group pull-right">
+				<button type="button" class="btn btn-info" data-toggle="modal" data-target="#windowModal">
+					<i class="fa fa-plus"></i> Add Window
+				</button>
+			</div>
+		</div>
+	</div>
+	<br>
+	<div class="row">
 		<div class="table-responsive">
 		<table class="table table-striped dataTable no-footer">
 			<thead>
@@ -286,6 +296,7 @@ $editing = isset($row) && !empty($row);
 					<th>Height</th>
 					<th>UI</th>
 					<th>Area</th>
+					<th>Actions</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -298,6 +309,11 @@ $editing = isset($row) && !empty($row);
 					<td>10</td>
 					<td>10</td>
 					<td>100</td>
+					<td>
+						<button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#windowModal">
+							<i class="fa fa-edit"></i>
+						</button>
+					</td>
 				</tr>
 				<tr>
 					<td>Designator 2</td>
@@ -308,6 +324,11 @@ $editing = isset($row) && !empty($row);
 					<td>10</td>
 					<td>100</td>
 					<td>100</td>
+					<td>
+						<button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#windowModal">
+							<i class="fa fa-edit"></i>
+						</button>
+					</td>
 				</tr>
 			</tbody>
 		</table>
@@ -315,8 +336,19 @@ $editing = isset($row) && !empty($row);
 	</div>
 <?php elseif ($category === 'doors') : ?>
 	<div class="row">
+		<div class="col-md-12">
+			<div class="btn-group pull-right">
+				<button type="button" class="btn btn-info" data-toggle="modal" data-target="#doorModal">
+					<i class="fa fa-plus"></i> Add Door
+				</button>
+			</div>
+		</div>
+	</div>
+	<br>
+	<div class="row">
 		<div class="table-responsive">
 			<table class="table table-striped dataTable no-footer">
+				<thead>
 					<tr>
 						<th>Type</th>
 						<th>Name</th>
@@ -326,6 +358,7 @@ $editing = isset($row) && !empty($row);
 						<th>Height</th>
 						<th>UI</th>
 						<th>Area</th>
+						<th>Actions</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -338,6 +371,11 @@ $editing = isset($row) && !empty($row);
 						<td>10</td>
 						<td>100</td>
 						<td>100</td>
+						<td>
+							<button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#doorModal">
+								<i class="fa fa-edit"></i>
+							</button>
+						</td>
 					</tr>
 					<tr>
 						<td>Type 2</td>
@@ -348,11 +386,211 @@ $editing = isset($row) && !empty($row);
 						<td>10</td>
 						<td>100</td>
 						<td>100</td>
+						<td>
+							<button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#doorModal">
+								<i class="fa fa-edit"></i>
+							</button>
+						</td>
+					</tr>
+				</tbody>
 			</table>
 		</div>
 	</div>
 <?php else : ?>
 	<div class="alert alert-info">No fields configured for this category yet.</div>
 <?php endif; ?>
+
+<!-- Window Modal -->
+<div class="modal fade" id="windowModal" tabindex="-1" role="dialog" aria-labelledby="windowModalLabel">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				<h4 class="modal-title" id="windowModalLabel">Add New Window</h4>
+			</div>
+			<?php echo form_open('', array('id' => 'window-form')); ?>
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>TYPE</label>
+							<button type="button" class="btn btn-info btn-block">Window</button>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>NAME <span class="text-danger">*</span></label>
+							<input type="text" name="name" class="form-control" required>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>LOCATION</label>
+							<select name="location" class="form-control">
+								<option value="">Select Location</option>
+								<?php for($i = 1; $i <= 10; $i++): ?>
+								<option value="Bedroom <?= $i; ?>">Bedroom <?= $i; ?></option>
+								<?php endfor; ?>
+							</select>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>LEVEL</label>
+							<select name="level" class="form-control">
+								<option value="">Select Level</option>
+								<?php for($i = 1; $i <= 10; $i++): ?>
+								<option value="<?= $i; ?>"><?= $i; ?></option>
+								<?php endfor; ?>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>QUANTITY</label>
+							<input type="number" name="quantity" class="form-control" value="1" min="1">
+						</div>
+					</div>
+				</div>
+				<hr>
+				<h5>Measurements</h5>
+				<div class="row">
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>WIDTH</label>
+							<input type="number" name="width" class="form-control" value="0" step="0.01">
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>HEIGHT</label>
+							<input type="number" name="height" class="form-control" value="0" step="0.01">
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>UI: <span id="ui-display">0 in</span></label>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>Area: <span id="area-display">0 sqft</span></label>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+				<button type="submit" class="btn btn-info">Save Changes</button>
+			</div>
+			<?php echo form_close(); ?>
+		</div>
+	</div>
+</div>
+
+<!-- Door Modal -->
+<div class="modal fade" id="doorModal" tabindex="-1" role="dialog" aria-labelledby="doorModalLabel">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				<h4 class="modal-title" id="doorModalLabel">Add New Door</h4>
+			</div>
+			<?php echo form_open('', array('id' => 'door-form')); ?>
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>TYPE</label>
+							<button type="button" class="btn btn-info btn-block">Door</button>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>NAME <span class="text-danger">*</span></label>
+							<input type="text" name="name" class="form-control" required>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>LOCATION</label>
+							<select name="location" class="form-control">
+								<option value="">Select Location</option>
+								<?php for($i = 1; $i <= 10; $i++): ?>
+								<option value="Bedroom <?= $i; ?>">Bedroom <?= $i; ?></option>
+								<?php endfor; ?>
+							</select>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>LEVEL</label>
+							<select name="level" class="form-control">
+								<option value="">Select Level</option>
+								<?php for($i = 1; $i <= 10; $i++): ?>
+								<option value="<?= $i; ?>"><?= $i; ?></option>
+								<?php endfor; ?>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>QUANTITY</label>
+							<input type="number" name="quantity" class="form-control" value="1" min="1">
+						</div>
+					</div>
+				</div>
+				<hr>
+				<h5>Measurements</h5>
+				<div class="row">
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>WIDTH</label>
+							<input type="number" name="width" class="form-control" value="0" step="0.01">
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>HEIGHT</label>
+							<input type="number" name="height" class="form-control" value="0" step="0.01">
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>UI: <span id="door-ui-display">0 in</span></label>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div class="form-group">
+							<label>Area: <span id="door-area-display">0 sqft</span></label>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+				<button type="submit" class="btn btn-info">Save Changes</button>
+			</div>
+			<?php echo form_close(); ?>
+		</div>
+	</div>
+</div>
+
 
 
