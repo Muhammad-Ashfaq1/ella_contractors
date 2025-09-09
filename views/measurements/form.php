@@ -14,16 +14,16 @@
 
 						<!-- Tab Navigation -->
 						<ul class="nav nav-tabs mb-3" id="category-tabs">
-							<li class="<?php echo($row['category'] ?? $category ?? 'siding') == 'siding' ? 'active' : ''; ?>">
+							<li class="active">
 								<a href="#siding-tab" data-toggle="tab" data-category="siding">Siding</a>
 							</li>
-							<li class="<?php echo($row['category'] ?? $category ?? 'siding') == 'roofing' ? 'active' : ''; ?>">
+							<li>
 								<a href="#roofing-tab" data-toggle="tab" data-category="roofing">Roofing</a>
 							</li>
-							<li class="<?php echo($row['category'] ?? $category ?? 'siding') == 'windows' ? 'active' : ''; ?>">
+							<li>
 								<a href="#windows-tab" data-toggle="tab" data-category="windows">Windows</a>
 							</li>
-							<li class="<?php echo($row['category'] ?? $category ?? 'siding') == 'doors' ? 'active' : ''; ?>">
+							<li>
 								<a href="#doors-tab" data-toggle="tab" data-category="doors">Doors</a>
 							</li>
 						</ul>
@@ -74,22 +74,22 @@
 
 							<div class="tab-content">
 								<!-- Siding Tab -->
-								<div class="tab-pane <?php echo($category ?? 'siding') == 'siding' ? 'active' : ''; ?>" id="siding-tab">
+								<div class="tab-pane active" id="siding-tab">
 									<?php $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'siding', 'row' => ($row ?? null)]); ?>
 								</div>
 
 								<!-- Roofing Tab -->
-								<div class="tab-pane <?php echo($category ?? 'siding') == 'roofing' ? 'active' : ''; ?>" id="roofing-tab">
+								<div class="tab-pane" id="roofing-tab">
 									<?php $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'roofing', 'row' => ($row ?? null)]); ?>
 								</div>
 
 								<!-- Windows Tab -->
-								<div class="tab-pane <?php echo($category ?? 'siding') == 'windows' ? 'active' : ''; ?>" id="windows-tab">
+								<div class="tab-pane" id="windows-tab">
 									<?php $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'windows', 'row' => ($row ?? null)]); ?>
 								</div>
 
 								<!-- Doors Tab -->
-								<div class="tab-pane <?php echo($category ?? 'siding') == 'doors' ? 'active' : ''; ?>" id="doors-tab">
+								<div class="tab-pane" id="doors-tab">
 									<?php $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'doors', 'row' => ($row ?? null)]); ?>
 								</div>
 							</div>
@@ -339,11 +339,15 @@
 			$('#rel_id').val('<?= $row['rel_id']; ?>');
 		<?php endif; ?>
 		
-		// Set initial category tab if editing
+		// Set initial category tab - default to siding, or use record category if editing
 		<?php if (isset($row['category'])): ?>
 			var category = '<?= $row['category']; ?>';
 			$('#selected-category').val(category);
+			// Switch to the record's category tab
 			$('a[data-category="' + category + '"]').tab('show');
+		<?php else: ?>
+			// Default to siding for new records
+			$('#selected-category').val('siding');
 		<?php endif; ?>
 		
 		// Prevent any button clicks from submitting the form
