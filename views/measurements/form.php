@@ -117,6 +117,7 @@
 				<h4 class="modal-title" id="windowModalLabel">Add New Window</h4>
 			</div>
 			<form id="window-form" method="post">
+				<input type="hidden" name="id" value="">
 				<div class="modal-body">
 					<div class="row">
 						<div class="col-md-6">
@@ -215,6 +216,7 @@
 				<h4 class="modal-title" id="doorModalLabel">Add New Door</h4>
 			</div>
 			<form id="door-form" method="post">
+				<input type="hidden" name="id" value="">
 				<div class="modal-body">
 					<div class="row">
 						<div class="col-md-6">
@@ -540,6 +542,11 @@
 			// Update active tab
 			$('#category-tabs li').removeClass('active');
 			$(this).parent().addClass('active');
+
+			// Load dynamic data for windows and doors tabs
+			if (category === 'windows' || category === 'doors') {
+				loadMeasurementsByCategory(category);
+			}
 		});
 
 		// Auto-calculate UI and Area when width/height change
@@ -566,6 +573,176 @@
 
 		// Initial calculation
 		calculateMeasurements();
+
+		// Load measurements by category
+		function loadMeasurementsByCategory(category) {
+			var leadId = $('#lead_id').val();
+			var clientId = $('#client_id').val();
+			
+			var params = {};
+			if (leadId) {
+				params.rel_type = 'lead';
+				params.rel_id = leadId;
+			} else if (clientId) {
+				params.rel_type = 'customer';
+				params.rel_id = clientId;
+			}
+
+			$.ajax({
+				url: '<?php echo admin_url("ella_contractors/measurements/get_measurements_by_category"); ?>/' + category,
+				type: 'GET',
+				data: params,
+				dataType: 'json',
+				success: function(response) {
+					if (response && response.data) {
+						populateMeasurementsTable(category, response.data);
+					} else {
+						clearMeasurementsTable(category);
+					}
+				},
+				error: function(xhr, status, error) {
+					console.error('Error loading measurements:', error);
+					clearMeasurementsTable(category);
+				}
+			});
+		}
+
+		// Populate measurements table
+		function populateMeasurementsTable(category, data) {
+			var tbodyId = category + '-tbody';
+			var tbody = $('#' + tbodyId);
+			tbody.empty();
+
+			if (data.length === 0) {
+				tbody.append('<tr><td colspan="9" class="text-center text-muted">No ' + category + ' measurements found</td></tr>');
+				return;
+			}
+
+			$.each(data, function(index, item) {
+				var row = '<tr>' +
+					'<td>' + (item.designator || '') + '</td>' +
+					'<td>' + (item.name || '') + '</td>' +
+					'<td>' + (item.location_label || '') + '</td>' +
+					'<td>' + (item.level_label || '') + '</td>' +
+					'<td>' + (item.width_val || '0') + '</td>' +
+					'<td>' + (item.height_val || '0') + '</td>' +
+					'<td>' + (item.united_inches_val || '0') + '</td>' +
+					'<td>' + (item.area_val || '0') + '</td>' +
+					'<td>' +
+						'<button type="button" class="btn btn-default btn-xs edit-measurement" data-id="' + item.id + '" data-category="' + category + '">' +
+							'<i class="fa fa-edit"></i>' +
+						'</button> ' +
+						'<button type="button" class="btn btn-danger btn-xs delete-measurement" data-id="' + item.id + '" data-category="' + category + '">' +
+							'<i class="fa fa-trash"></i>' +
+						'</button>' +
+					'</td>' +
+				'</tr>';
+				tbody.append(row);
+			});
+		}
+
+		// Clear measurements table
+		function clearMeasurementsTable(category) {
+			var tbodyId = category + '-tbody';
+			var tbody = $('#' + tbodyId);
+			tbody.empty();
+			tbody.append('<tr><td colspan="9" class="text-center text-muted">No ' + category + ' measurements found</td></tr>');
+		}
+
+		// Handle edit measurement button click
+		$(document).on('click', '.edit-measurement', function() {
+			var id = $(this).data('id');
+			var category = $(this).data('category');
+			
+			// Load measurement data and populate modal
+			loadMeasurementForEdit(id, category);
+		});
+
+		// Handle delete measurement button click
+		$(document).on('click', '.delete-measurement', function() {
+			var id = $(this).data('id');
+			var category = $(this).data('category');
+			
+			if (confirm('Are you sure you want to delete this measurement?')) {
+				deleteMeasurement(id, category);
+			}
+		});
+
+		// Load measurement for editing
+		function loadMeasurementForEdit(id, category) {
+			$.ajax({
+				url: '<?php echo admin_url("ella_contractors/measurements/get_measurement"); ?>/' + id,
+				type: 'GET',
+				dataType: 'json',
+				success: function(response) {
+					if (response && response.data) {
+						populateModalForEdit(category, response.data);
+					}
+				},
+				error: function(xhr, status, error) {
+					console.error('Error loading measurement:', error);
+					alert('Error loading measurement data');
+				}
+			});
+		}
+
+		// Populate modal for editing
+		function populateModalForEdit(category, data) {
+			var modalId = category + 'Modal';
+			var modal = $('#' + modalId);
+			
+			// Update modal title
+			modal.find('.modal-title').text('Edit ' + category.charAt(0).toUpperCase() + category.slice(1));
+			
+			// Populate form fields
+			modal.find('input[name="id"]').val(data.id);
+			modal.find('input[name="name"]').val(data.name);
+			modal.find('select[name="location"]').val(data.location_label);
+			modal.find('select[name="level"]').val(data.level_label);
+			modal.find('input[name="quantity"]').val(data.quantity);
+			modal.find('input[name="width"]').val(data.width_val);
+			modal.find('input[name="height"]').val(data.height_val);
+			
+			// Update UI and Area displays
+			var width = parseFloat(data.width_val) || 0;
+			var height = parseFloat(data.height_val) || 0;
+			if (width > 0 && height > 0) {
+				var ui = width + height;
+				var area = (width * height) / 144.0;
+				modal.find('#' + category + '-ui-display').text(ui.toFixed(2) + ' in');
+				modal.find('#' + category + '-area-display').text(area.toFixed(4) + ' sqft');
+			}
+			
+			// Show modal
+			modal.modal('show');
+		}
+
+		// Delete measurement
+		function deleteMeasurement(id, category) {
+			$.ajax({
+				url: '<?php echo admin_url("ella_contractors/measurements/delete"); ?>/' + id,
+				type: 'POST',
+				data: <?php echo json_encode(get_csrf_for_ajax()); ?>,
+				dataType: 'json',
+				success: function(response) {
+					if (response.success) {
+						alert_float('success', 'Measurement deleted successfully');
+						loadMeasurementsByCategory(category);
+					} else {
+						alert_float('danger', 'Error deleting measurement');
+					}
+				},
+				error: function(xhr, status, error) {
+					console.error('Error deleting measurement:', error);
+					alert_float('danger', 'Error deleting measurement');
+				}
+			});
+		}
+
+		// Load initial data for active tab
+		<?php if (isset($row['category']) && ($row['category'] === 'windows' || $row['category'] === 'doors')): ?>
+			loadMeasurementsByCategory('<?= $row['category']; ?>');
+		<?php endif; ?>
 	});
 </script>
 
@@ -575,6 +752,13 @@
 		$(document).on('click', '#js-add-window', function(e) {
 			e.preventDefault();
 			console.log('jQuery: Window modal button clicked');
+			
+			// Reset form and title
+			$('#window-form')[0].reset();
+			$('#windowModal .modal-title').text('Add New Window');
+			$('#ui-display').text('0 in');
+			$('#area-display').text('0 sqft');
+			
 			$('#windowModal').modal({
 				backdrop: 'static',
 				keyboard: false
@@ -585,6 +769,13 @@
 		$(document).on('click', '[data-target="#doorModal"]', function(e) {
 			e.preventDefault();
 			console.log('jQuery: Door modal button clicked');
+			
+			// Reset form and title
+			$('#door-form')[0].reset();
+			$('#doorModal .modal-title').text('Add New Door');
+			$('#door-ui-display').text('0 in');
+			$('#door-area-display').text('0 sqft');
+			
 			$('#doorModal').modal({
 				backdrop: 'static',
 				keyboard: false
@@ -597,24 +788,56 @@
 			console.log('jQuery: Window form submitted');
 			
 			// Get form data using jQuery
-			var formData = $(this).serialize();
-			console.log('Window form data:', formData);
+			var formData = $(this).serializeArray();
+			var data = {};
 			
-			// Add your AJAX submission logic here
+			// Convert form data to object
+			$.each(formData, function(i, field) {
+				data[field.name] = field.value;
+			});
+			
+			// Add category and form type
+			data.category = 'windows';
+			data.form_type = 'windows';
+			
+			// Add lead/client relationship
+			var leadId = $('#lead_id').val();
+			var clientId = $('#client_id').val();
+			if (leadId) {
+				data.lead_id = leadId;
+			} else if (clientId) {
+				data.client_id = clientId;
+			}
+			
+			console.log('Window form data:', data);
+			
+			// Add CSRF token
+			var csrfData = <?php echo json_encode(get_csrf_for_ajax()); ?>;
+			data[csrfData.token_name] = csrfData.hash;
+			
 			$.ajax({
-				url: '<?php echo admin_url("ella_contractors/measurements/save"); ?>',
+				url: '<?php echo admin_url("ella_contractors/measurements/save_measurement_ajax"); ?>',
 				type: 'POST',
-				data: formData,
+				data: data,
+				dataType: 'json',
 				success: function(response) {
-					console.log('jQuery: Window data saved successfully');
-					$('#windowModal').modal('hide');
-					// Reset form
-					$('#window-form')[0].reset();
-					$('#ui-display').text('0 in');
-					$('#area-display').text('0 sqft');
+					console.log('jQuery: Window data saved successfully', response);
+					if (response.success) {
+						alert_float('success', 'Window measurement saved successfully');
+						$('#windowModal').modal('hide');
+						// Reset form
+						$('#window-form')[0].reset();
+						$('#ui-display').text('0 in');
+						$('#area-display').text('0 sqft');
+						// Reload windows table
+						loadMeasurementsByCategory('windows');
+					} else {
+						alert_float('danger', 'Error saving window: ' + (response.message || 'Unknown error'));
+					}
 				},
 				error: function(xhr, status, error) {
 					console.error('jQuery: Error saving window data:', error);
+					alert_float('danger', 'Error saving window measurement');
 				}
 			});
 		});
@@ -625,24 +848,56 @@
 			console.log('jQuery: Door form submitted');
 			
 			// Get form data using jQuery
-			var formData = $(this).serialize();
-			console.log('Door form data:', formData);
+			var formData = $(this).serializeArray();
+			var data = {};
 			
-			// Add your AJAX submission logic here
+			// Convert form data to object
+			$.each(formData, function(i, field) {
+				data[field.name] = field.value;
+			});
+			
+			// Add category and form type
+			data.category = 'doors';
+			data.form_type = 'doors';
+			
+			// Add lead/client relationship
+			var leadId = $('#lead_id').val();
+			var clientId = $('#client_id').val();
+			if (leadId) {
+				data.lead_id = leadId;
+			} else if (clientId) {
+				data.client_id = clientId;
+			}
+			
+			console.log('Door form data:', data);
+			
+			// Add CSRF token
+			var csrfData = <?php echo json_encode(get_csrf_for_ajax()); ?>;
+			data[csrfData.token_name] = csrfData.hash;
+			
 			$.ajax({
-				url: '<?php echo admin_url("ella_contractors/measurements/save"); ?>',
+				url: '<?php echo admin_url("ella_contractors/measurements/save_measurement_ajax"); ?>',
 				type: 'POST',
-				data: formData,
+				data: data,
+				dataType: 'json',
 				success: function(response) {
-					console.log('jQuery: Door data saved successfully');
-					$('#doorModal').modal('hide');
-					// Reset form
-					$('#door-form')[0].reset();
-					$('#door-ui-display').text('0 in');
-					$('#door-area-display').text('0 sqft');
+					console.log('jQuery: Door data saved successfully', response);
+					if (response.success) {
+						alert_float('success', 'Door measurement saved successfully');
+						$('#doorModal').modal('hide');
+						// Reset form
+						$('#door-form')[0].reset();
+						$('#door-ui-display').text('0 in');
+						$('#door-area-display').text('0 sqft');
+						// Reload doors table
+						loadMeasurementsByCategory('doors');
+					} else {
+						alert_float('danger', 'Error saving door: ' + (response.message || 'Unknown error'));
+					}
 				},
 				error: function(xhr, status, error) {
 					console.error('jQuery: Error saving door data:', error);
+					alert_float('danger', 'Error saving door measurement');
 				}
 			});
 		});

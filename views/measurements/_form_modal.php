@@ -286,7 +286,7 @@ $editing = isset($row) && !empty($row);
 	<br>
 	<div class="row">
 		<div class="table-responsive">
-		<table class="table table-striped dataTable no-footer">
+		<table class="table table-striped dataTable no-footer" id="windows-table">
 			<thead>
 				<tr>
 					<th>Designator</th>
@@ -300,37 +300,8 @@ $editing = isset($row) && !empty($row);
 					<th>Actions</th>
 				</tr>
 			</thead>
-			<tbody>
-				<tr>
-					<td>Designator 1</td>
-					<td>Name 1</td>
-					<td>Location 1</td>
-					<td>Level 1</td>
-					<td>10</td>
-					<td>10</td>
-					<td>10</td>
-					<td>100</td>
-					<td>
-						<button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#windowModal">
-							<i class="fa fa-edit"></i>
-						</button>
-					</td>
-				</tr>
-				<tr>
-					<td>Designator 2</td>
-					<td>Name 2</td>
-					<td>Location 2</td>
-					<td>Level 2</td>
-					<td>10</td>
-					<td>10</td>
-					<td>100</td>
-					<td>100</td>
-					<td>
-						<button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#windowModal">
-							<i class="fa fa-edit"></i>
-						</button>
-					</td>
-				</tr>
+			<tbody id="windows-tbody">
+				<!-- Dynamic content will be loaded here -->
 			</tbody>
 		</table>
 		</div>
@@ -348,10 +319,10 @@ $editing = isset($row) && !empty($row);
 	<br>
 	<div class="row">
 		<div class="table-responsive">
-			<table class="table table-striped dataTable no-footer">
+			<table class="table table-striped dataTable no-footer" id="doors-table">
 				<thead>
 					<tr>
-						<th>Type</th>
+						<th>Designator</th>
 						<th>Name</th>
 						<th>Location</th>
 						<th>Level</th>
@@ -362,37 +333,8 @@ $editing = isset($row) && !empty($row);
 						<th>Actions</th>
 					</tr>
 				</thead>
-				<tbody>
-					<tr>
-						<td>Type 1</td>
-						<td>Name 1</td>
-						<td>Location 1</td>
-						<td>Level 1</td>
-						<td>10</td>
-						<td>10</td>
-						<td>100</td>
-						<td>100</td>
-						<td>
-							<button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#doorModal">
-								<i class="fa fa-edit"></i>
-							</button>
-						</td>
-					</tr>
-					<tr>
-						<td>Type 2</td>
-						<td>Name 2</td>
-						<td>Location 2</td>
-						<td>Level 2</td>
-						<td>10</td>
-						<td>10</td>
-						<td>100</td>
-						<td>100</td>
-						<td>
-							<button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#doorModal">
-								<i class="fa fa-edit"></i>
-							</button>
-						</td>
-					</tr>
+				<tbody id="doors-tbody">
+					<!-- Dynamic content will be loaded here -->
 				</tbody>
 			</table>
 		</div>

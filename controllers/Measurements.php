@@ -171,4 +171,140 @@ class Measurements extends AdminController
         set_alert($ok ? 'success' : 'danger', $ok ? 'Deleted' : 'Not found');
         redirect($_SERVER['HTTP_REFERER'] ?? admin_url('ella_contractors/measurements'));
     }
+
+    /**
+     * Get measurements by category for AJAX
+     */
+    public function get_measurements_by_category($category)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $params = [];
+        if ($this->input->get('rel_type') && $this->input->get('rel_id')) {
+            $params['rel_type'] = $this->input->get('rel_type');
+            $params['rel_id'] = $this->input->get('rel_id');
+        }
+
+        $result = $this->measurements_model->list($category, $params);
+        
+        header('Content-Type: application/json');
+        echo json_encode($result);
+    }
+
+    /**
+     * Get all measurements for AJAX
+     */
+    public function get_all_measurements()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $params = [];
+        if ($this->input->get('rel_type') && $this->input->get('rel_id')) {
+            $params['rel_type'] = $this->input->get('rel_type');
+            $params['rel_id'] = $this->input->get('rel_id');
+        }
+
+        $result = $this->measurements_model->list_all($params);
+        
+        header('Content-Type: application/json');
+        echo json_encode($result);
+    }
+
+    /**
+     * Get single measurement for AJAX
+     */
+    public function get_measurement($id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $measurement = $this->measurements_model->find($id);
+        
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => $measurement ? true : false,
+            'data' => $measurement
+        ]);
+    }
+
+    /**
+     * Save measurement via AJAX (for modals)
+     */
+    public function save_measurement_ajax()
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            ajax_access_denied();
+        }
+
+        $post = $this->input->post(null, true);
+        $id = isset($post['id']) ? (int) $post['id'] : 0;
+
+        // Handle lead relationship
+        if (isset($post['lead_id']) && !empty($post['lead_id'])) {
+            $post['rel_type'] = 'lead';
+            $post['rel_id'] = (int) $post['lead_id'];
+        } else {
+            $post['rel_type'] = 'other';
+            $post['rel_id'] = 0;
+        }
+
+        // Handle client name (store in notes or attributes if needed)
+        if (isset($post['client_name']) && !empty($post['client_name'])) {
+            $clientName = $post['client_name'];
+            if (empty($post['notes'])) {
+                $post['notes'] = 'Client: ' . $clientName;
+            } else {
+                $post['notes'] = $post['notes'] . ' | Client: ' . $clientName;
+            }
+        }
+
+        // Handle basic measurement fields
+        $width = (float) ($post['width'] ?? 0);
+        $height = (float) ($post['height'] ?? 0);
+        if ($width && $height) {
+            if (!isset($post['united_inches_val']) || $post['united_inches_val'] === '') {
+                $post['united_inches_val'] = $width + $height;
+            }
+            if (!isset($post['area_val']) || $post['area_val'] === '') {
+                $post['area_val'] = ($width * $height) / 144.0; // Convert to sqft
+            }
+        }
+
+        // Set category based on the form type
+        if (isset($post['form_type'])) {
+            $post['category'] = $post['form_type'];
+        }
+
+        // Set default values for required fields
+        $post['designator'] = $post['designator'] ?? '';
+        $post['name'] = $post['name'] ?? 'Unnamed ' . ucfirst($post['category'] ?? 'item');
+        $post['location_label'] = $post['location'] ?? '';
+        $post['level_label'] = $post['level'] ?? '';
+        $post['width_val'] = $width;
+        $post['height_val'] = $height;
+        $post['quantity'] = $post['quantity'] ?? 1;
+        $post['length_unit'] = 'in';
+        $post['area_unit'] = 'sqft';
+        $post['ui_unit'] = 'in';
+
+        if ($id > 0) {
+            $ok = $this->measurements_model->update($id, $post);
+            $msg = $ok ? 'Updated successfully' : 'Nothing changed';
+        } else {
+            $ok = (bool) $this->measurements_model->create($post);
+            $msg = $ok ? 'Created successfully' : 'Failed to create';
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => $ok,
+            'message' => $msg,
+            'data' => $ok ? $this->measurements_model->find($id ?: $this->db->insert_id()) : null
+        ]);
+    }
 }
