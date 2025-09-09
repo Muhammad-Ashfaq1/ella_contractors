@@ -103,6 +103,17 @@ class Measurements extends AdminController
             $msg = $ok ? 'Created successfully' : 'Failed to create';
         }
 
+        // Handle AJAX requests
+        if ($this->input->is_ajax_request()) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => $ok,
+                'message' => $msg,
+                'data' => $ok ? $this->measurements_model->find($id ?: $this->db->insert_id()) : null
+            ]);
+            return;
+        }
+
         set_alert($ok ? 'success' : 'danger', $msg);
         redirect(admin_url('ella_contractors/measurements/' . ($post['category'] ?? 'siding')));
     }

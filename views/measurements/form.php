@@ -28,7 +28,7 @@
 							</li>
 						</ul>
 
-						<form id="measurements-form" method="post" action="<?php echo admin_url('ella_contractors/measurements/save'); ?>">
+						<form id="measurements-form" method="post" action="javascript:void(0);" onsubmit="return false;">
 							<input type="hidden" name="category" id="selected-category" value="<?php echo html_escape($category ?? 'siding'); ?>">
 							
 							<!-- Hidden fields for relationship -->
@@ -328,16 +328,130 @@
 			$('#rel_id').val('<?= $row['lead_id']; ?>');
 		<?php endif; ?>
 		
-		// Form validation
-		$('#measurements-form').on('submit', function(e) {
+		// Prevent any button clicks from submitting the form
+		$(document).on('click', '#measurements-form button[type="submit"]', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			console.log('Submit button clicked');
+			$('#measurements-form').trigger('submit');
+			return false;
+		});
+		
+		// Also prevent form submission on enter key
+		$('#measurements-form').on('keypress', function(e) {
+			if (e.which === 13) { // Enter key
+				e.preventDefault();
+				console.log('Enter key pressed, preventing form submission');
+				$('#measurements-form').trigger('submit');
+				return false;
+			}
+		});
+		
+		// Form validation and AJAX submission
+		$(document).on('submit', '#measurements-form', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			
+			console.log('Form submit event triggered');
+			
 			var leadId = $('#lead_id').val();
 			if (!leadId) {
-				e.preventDefault();
 				alert('Please select a Lead/Job before saving the measurement.');
 				$('#lead_id').focus();
 				return false;
 			}
+			
+			// Collect form data
+			var formData = $(this).serializeArray();
+			var data = {};
+			
+			// Convert form data to object
+			$.each(formData, function(i, field) {
+				data[field.name] = field.value;
+			});
+			
+			// Add category
+			data.category = $('#selected-category').val();
+			
+			// Basic validation for required fields
+			var currentCategory = $('#selected-category').val();
+			if (currentCategory === 'roofing') {
+				// Check if at least one roofing field has a value
+				var hasRoofingData = false;
+				$('input[name^="roofing["]').each(function() {
+					if ($(this).val() && parseFloat($(this).val()) > 0) {
+						hasRoofingData = true;
+						return false; // break
+					}
+				});
+				
+				if (!hasRoofingData) {
+					alert('Please enter at least one roofing measurement before saving.');
+					return false;
+				}
+			}
+			
+			// Show loading indicator
+			var submitBtn = $(this).find('button[type="submit"]');
+			var originalText = submitBtn.text();
+			submitBtn.prop('disabled', true).text('Saving...');
+			
+			// Save via AJAX
+			saveMeasurementAjax(data, function(success, response) {
+				// Reset button
+				submitBtn.prop('disabled', false).text(originalText);
+				
+				if (success) {
+					alert_float('success', 'Measurement saved successfully!');
+					// Redirect to measurements list
+					setTimeout(function() {
+						window.location.href = '<?php echo admin_url("ella_contractors/measurements"); ?>';
+					}, 1500);
+				} else {
+					alert_float('danger', 'Error saving measurement: ' + (response.message || 'Unknown error'));
+				}
+			});
+			
+			return false; // Additional prevention
 		});
+		
+		// AJAX save functionality for measurements
+		function saveMeasurementAjax(formData, callback) {
+			// Get CSRF token
+			var csrfData = <?php echo json_encode(get_csrf_for_ajax()); ?>;
+			
+			// Add CSRF token to form data
+			formData[csrfData.token_name] = csrfData.hash;
+			
+			// Debug logging
+			console.log('Sending AJAX request with data:', formData);
+			
+			$.ajax({
+				url: '<?php echo admin_url("ella_contractors/measurements/save"); ?>',
+				type: 'POST',
+				data: formData,
+				dataType: 'json',
+				success: function(response) {
+					console.log('AJAX Response:', response);
+					if (response.success) {
+						if (typeof callback === 'function') {
+							callback(true, response);
+						}
+					} else {
+						if (typeof callback === 'function') {
+							callback(false, response);
+						}
+					}
+				},
+				error: function(xhr, status, error) {
+					console.error('AJAX Error:', error);
+					console.error('Response Text:', xhr.responseText);
+					if (typeof callback === 'function') {
+						callback(false, {error: error, responseText: xhr.responseText});
+					}
+				}
+			});
+		}
 		
 		// Handle tab clicks
 		$('#category-tabs a[data-toggle="tab"]').on('click', function(e) {
