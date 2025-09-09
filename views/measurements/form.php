@@ -33,22 +33,22 @@
 
 							<div class="tab-content">
 								<!-- Siding Tab -->
-								<div class="tab-pane								                     <?php echo($category ?? 'siding') == 'siding' ? 'active' : ''; ?>" id="siding-tab">
+								<div class="tab-pane <?php echo($category ?? 'siding') == 'siding' ? 'active' : ''; ?>" id="siding-tab">
 									<?php $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'siding', 'row' => ($row ?? null)]); ?>
 								</div>
 
 								<!-- Roofing Tab -->
-								<div class="tab-pane								                     <?php echo($category ?? 'siding') == 'roofing' ? 'active' : ''; ?>" id="roofing-tab">
+								<div class="tab-pane <?php echo($category ?? 'siding') == 'roofing' ? 'active' : ''; ?>" id="roofing-tab">
 									<?php $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'roofing', 'row' => ($row ?? null)]); ?>
 								</div>
 
 								<!-- Windows Tab -->
-								<div class="tab-pane								                     <?php echo($category ?? 'siding') == 'windows' ? 'active' : ''; ?>" id="windows-tab">
+								<div class="tab-pane <?php echo($category ?? 'siding') == 'windows' ? 'active' : ''; ?>" id="windows-tab">
 									<?php $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'windows', 'row' => ($row ?? null)]); ?>
 								</div>
 
 								<!-- Doors Tab -->
-								<div class="tab-pane								                     <?php echo($category ?? 'siding') == 'doors' ? 'active' : ''; ?>" id="doors-tab">
+								<div class="tab-pane <?php echo($category ?? 'siding') == 'doors' ? 'active' : ''; ?>" id="doors-tab">
 									<?php $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'doors', 'row' => ($row ?? null)]); ?>
 								</div>
 							</div>
@@ -64,6 +64,199 @@
 		</div>
 	</div>
 </div>
+
+<!-- Window Modal -->
+<div class="modal fade" id="windowModal" tabindex="-1" role="dialog" aria-labelledby="windowModalLabel">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				<h4 class="modal-title" id="windowModalLabel">Add New Window</h4>
+			</div>
+			<form id="window-form" method="post">
+				<div class="modal-body">
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>TYPE</label>
+								<button type="button" class="btn btn-info btn-block">Window</button>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>NAME <span class="text-danger">*</span></label>
+								<input type="text" name="name" class="form-control" required>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>LOCATION</label>
+								<select name="location" class="form-control">
+									<option value="">Select Location</option>
+									<?php for($i = 1; $i <= 10; $i++): ?>
+									<option value="Bedroom <?= $i; ?>">Bedroom <?= $i; ?></option>
+									<?php endfor; ?>
+								</select>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>LEVEL</label>
+								<select name="level" class="form-control">
+									<option value="">Select Level</option>
+									<?php for($i = 1; $i <= 10; $i++): ?>
+									<option value="<?= $i; ?>"><?= $i; ?></option>
+									<?php endfor; ?>
+								</select>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>QUANTITY</label>
+								<input type="number" name="quantity" class="form-control" value="1" min="1">
+							</div>
+						</div>
+					</div>
+					<hr>
+					<h5>Measurements</h5>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>WIDTH</label>
+								<input type="number" name="width" class="form-control" value="0" step="0.01">
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>HEIGHT</label>
+								<input type="number" name="height" class="form-control" value="0" step="0.01">
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>UI: <span id="ui-display">0 in</span></label>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Area: <span id="area-display">0 sqft</span></label>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+					<button type="submit" class="btn btn-info">Save Changes</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<!-- Door Modal -->
+<div class="modal fade" id="doorModal" tabindex="-1" role="dialog" aria-labelledby="doorModalLabel">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				<h4 class="modal-title" id="doorModalLabel">Add New Door</h4>
+			</div>
+			<form id="door-form" method="post">
+				<div class="modal-body">
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>TYPE</label>
+								<button type="button" class="btn btn-info btn-block">Door</button>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>NAME <span class="text-danger">*</span></label>
+								<input type="text" name="name" class="form-control" required>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>LOCATION</label>
+								<select name="location" class="form-control">
+									<option value="">Select Location</option>
+									<?php for($i = 1; $i <= 10; $i++): ?>
+									<option value="Bedroom <?= $i; ?>">Bedroom <?= $i; ?></option>
+									<?php endfor; ?>
+								</select>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>LEVEL</label>
+								<select name="level" class="form-control">
+									<option value="">Select Level</option>
+									<?php for($i = 1; $i <= 10; $i++): ?>
+									<option value="<?= $i; ?>"><?= $i; ?></option>
+									<?php endfor; ?>
+								</select>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>QUANTITY</label>
+								<input type="number" name="quantity" class="form-control" value="1" min="1">
+							</div>
+						</div>
+					</div>
+					<hr>
+					<h5>Measurements</h5>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>WIDTH</label>
+								<input type="number" name="width" class="form-control" value="0" step="0.01">
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>HEIGHT</label>
+								<input type="number" name="height" class="form-control" value="0" step="0.01">
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>UI: <span id="door-ui-display">0 in</span></label>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Area: <span id="door-area-display">0 sqft</span></label>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+					<button type="submit" class="btn btn-info">Save Changes</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
 <?php init_tail(); ?>
 
 
@@ -104,7 +297,7 @@
 			}
 		}
 
-		// Bind calculation to width/height inputs
+		// Bind calculation to width/height inputs using jQuery
 		$('input[name="width_val"], input[name="height_val"], input[name="length_unit"], input[name="area_unit"]').on('input change', calculateMeasurements);
 
 		// Initial calculation
@@ -114,9 +307,127 @@
 
 <script>
 	$(document).ready(function() {
-		$('#js-add-window').on('click', function() {
-			console.log('js-add-window clicked');
-			$('#windowModal').modal('show');
+		// Handle window modal button click using jQuery
+		$(document).on('click', '#js-add-window', function(e) {
+			e.preventDefault();
+			console.log('jQuery: Window modal button clicked');
+			$('#windowModal').modal({
+				backdrop: 'static',
+				keyboard: false
+			}).modal('show');
+		});
+
+		// Handle door modal button click using jQuery
+		$(document).on('click', '[data-target="#doorModal"]', function(e) {
+			e.preventDefault();
+			console.log('jQuery: Door modal button clicked');
+			$('#doorModal').modal({
+				backdrop: 'static',
+				keyboard: false
+			}).modal('show');
+		});
+
+		// Handle window modal form submission using jQuery
+		$(document).on('submit', '#window-form', function(e) {
+			e.preventDefault();
+			console.log('jQuery: Window form submitted');
+			
+			// Get form data using jQuery
+			var formData = $(this).serialize();
+			console.log('Window form data:', formData);
+			
+			// Add your AJAX submission logic here
+			$.ajax({
+				url: '<?php echo admin_url("ella_contractors/measurements/save"); ?>',
+				type: 'POST',
+				data: formData,
+				success: function(response) {
+					console.log('jQuery: Window data saved successfully');
+					$('#windowModal').modal('hide');
+					// Reset form
+					$('#window-form')[0].reset();
+					$('#ui-display').text('0 in');
+					$('#area-display').text('0 sqft');
+				},
+				error: function(xhr, status, error) {
+					console.error('jQuery: Error saving window data:', error);
+				}
+			});
+		});
+
+		// Handle door modal form submission using jQuery
+		$(document).on('submit', '#door-form', function(e) {
+			e.preventDefault();
+			console.log('jQuery: Door form submitted');
+			
+			// Get form data using jQuery
+			var formData = $(this).serialize();
+			console.log('Door form data:', formData);
+			
+			// Add your AJAX submission logic here
+			$.ajax({
+				url: '<?php echo admin_url("ella_contractors/measurements/save"); ?>',
+				type: 'POST',
+				data: formData,
+				success: function(response) {
+					console.log('jQuery: Door data saved successfully');
+					$('#doorModal').modal('hide');
+					// Reset form
+					$('#door-form')[0].reset();
+					$('#door-ui-display').text('0 in');
+					$('#door-area-display').text('0 sqft');
+				},
+				error: function(xhr, status, error) {
+					console.error('jQuery: Error saving door data:', error);
+				}
+			});
+		});
+
+		// Auto-calculate UI and Area for window modal using jQuery
+		$(document).on('input change', '#windowModal input[name="width"], #windowModal input[name="height"]', function() {
+			var $modal = $('#windowModal');
+			var width = parseFloat($modal.find('input[name="width"]').val()) || 0;
+			var height = parseFloat($modal.find('input[name="height"]').val()) || 0;
+			
+			if (width > 0 && height > 0) {
+				var ui = width + height;
+				var area = (width * height) / 144.0; // Convert to sqft
+				$modal.find('#ui-display').text(ui.toFixed(2) + ' in');
+				$modal.find('#area-display').text(area.toFixed(4) + ' sqft');
+			} else {
+				$modal.find('#ui-display').text('0 in');
+				$modal.find('#area-display').text('0 sqft');
+			}
+		});
+
+		// Auto-calculate UI and Area for door modal using jQuery
+		$(document).on('input change', '#doorModal input[name="width"], #doorModal input[name="height"]', function() {
+			var $modal = $('#doorModal');
+			var width = parseFloat($modal.find('input[name="width"]').val()) || 0;
+			var height = parseFloat($modal.find('input[name="height"]').val()) || 0;
+			
+			if (width > 0 && height > 0) {
+				var ui = width + height;
+				var area = (width * height) / 144.0; // Convert to sqft
+				$modal.find('#door-ui-display').text(ui.toFixed(2) + ' in');
+				$modal.find('#door-area-display').text(area.toFixed(4) + ' sqft');
+			} else {
+				$modal.find('#door-ui-display').text('0 in');
+				$modal.find('#door-area-display').text('0 sqft');
+			}
+		});
+
+		// Reset modals when they are hidden using jQuery
+		$('#windowModal').on('hidden.bs.modal', function() {
+			$(this).find('form')[0].reset();
+			$(this).find('#ui-display').text('0 in');
+			$(this).find('#area-display').text('0 sqft');
+		});
+
+		$('#doorModal').on('hidden.bs.modal', function() {
+			$(this).find('form')[0].reset();
+			$(this).find('#door-ui-display').text('0 in');
+			$(this).find('#door-area-display').text('0 sqft');
 		});
 	});
 </script>
