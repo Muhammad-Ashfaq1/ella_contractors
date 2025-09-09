@@ -289,7 +289,8 @@ $editing = isset($row) && !empty($row);
 	</div>
 <?php elseif ($category === 'windows') : ?>
 	<div class="row">
-		<table>
+		<div class="table-responsive">
+		<table class="table table-striped dataTable no-footer">
 			<thead>
 				<tr>
 					<th>Designator</th>
@@ -312,10 +313,6 @@ $editing = isset($row) && !empty($row);
 					<td>10</td>
 					<td>10</td>
 					<td>100</td>
-					<td>10</td>
-					<td>100</td>
-					<td>100</td>
-					<td>100</td>
 				</tr>
 				<tr>
 					<td>Designator 2</td>
@@ -326,49 +323,48 @@ $editing = isset($row) && !empty($row);
 					<td>10</td>
 					<td>100</td>
 					<td>100</td>
-					<td>100</td>
-					<td>100</td>
 				</tr>
 			</tbody>
 		</table>
+		</div>
 	</div>
 <?php elseif ($category === 'doors') : ?>
 	<div class="row">
-		<table>
-			<thead>
-				<tr>
-					<th>Type</th>
-					<th>Name</th>
-					<th>Location</th>
-					<th>Level</th>
-					<th>Width</th>
-					<th>Height</th>
-					<th>UI</th>
-					<th>Area</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td>Type 1</td>
-					<td>Name 1</td>
-					<td>Location 1</td>
-					<td>Level 1</td>
-					<td>10</td>
-					<td>10</td>
-					<td>100</td>
-					<td>100</td>
-					<td>100</td>
-				</tr>
-				<tr>
-					<td>Type 2</td>
-					<td>Name 2</td>
-					<td>Location 2</td>
-					<td>Level 2</td>
-					<td>10</td>
-					<td>10</td>
-					<td>100</td>
-					<td>100</td>
-		</table>
+		<div class="table-responsive">
+			<table class="table table-striped dataTable no-footer">
+					<tr>
+						<th>Type</th>
+						<th>Name</th>
+						<th>Location</th>
+						<th>Level</th>
+						<th>Width</th>
+						<th>Height</th>
+						<th>UI</th>
+						<th>Area</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Type 1</td>
+						<td>Name 1</td>
+						<td>Location 1</td>
+						<td>Level 1</td>
+						<td>10</td>
+						<td>10</td>
+						<td>100</td>
+						<td>100</td>
+					</tr>
+					<tr>
+						<td>Type 2</td>
+						<td>Name 2</td>
+						<td>Location 2</td>
+						<td>Level 2</td>
+						<td>10</td>
+						<td>10</td>
+						<td>100</td>
+						<td>100</td>
+			</table>
+		</div>
 	</div>
 <?php else : ?>
 	<div class="alert alert-info">No fields configured for this category yet.</div>
