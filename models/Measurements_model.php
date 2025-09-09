@@ -13,13 +13,15 @@ class Measurements_model extends App_Model
 
 	public function list($category, $params = [])
 	{
+		$this->db->select($this->table . '.*, l.name as lead_name, l.company as lead_company');
 		$this->db->from($this->table);
-		$this->db->where('category', $category);
+		$this->db->join(db_prefix() . 'leads l', 'l.id = ' . $this->table . '.rel_id', 'left');
+		$this->db->where($this->table . '.category', $category);
 		if (!empty($params['rel_type']) && !empty($params['rel_id'])) {
-			$this->db->where('rel_type', $params['rel_type']);
-			$this->db->where('rel_id', (int) $params['rel_id']);
+			$this->db->where($this->table . '.rel_type', $params['rel_type']);
+			$this->db->where($this->table . '.rel_id', (int) $params['rel_id']);
 		}
-		$this->db->order_by('sort_order ASC, id DESC');
+		$this->db->order_by($this->table . '.sort_order ASC, ' . $this->table . '.id DESC');
 		$rows = $this->db->get()->result_array();
 		return ['data' => $rows];
 	}

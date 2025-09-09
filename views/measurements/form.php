@@ -30,6 +30,40 @@
 
 						<form id="measurements-form" method="post" action="<?php echo admin_url('ella_contractors/measurements/save'); ?>">
 							<input type="hidden" name="category" id="selected-category" value="<?php echo html_escape($category ?? 'siding'); ?>">
+							
+							<!-- Hidden fields for relationship -->
+							<input type="hidden" name="rel_type" value="lead">
+							<input type="hidden" name="rel_id" id="rel_id" value="<?php echo html_escape($row['rel_id'] ?? ''); ?>">
+							
+							<!-- Leads/Jobs and Client Selection -->
+							<div class="row">
+								<div class="col-md-6">
+									<div class="form-group">
+										<label for="lead_id">Lead/Job <span class="text-danger">*</span></label>
+										<select name="lead_id" id="lead_id" class="form-control selectpicker" data-live-search="true" required>
+											<option value="">Select Lead/Job</option>
+											<?php if (isset($row['lead_id']) && $row['lead_id']): ?>
+												<?php 
+												$this->load->model('leads_model');
+												$lead = $this->leads_model->get($row['lead_id']);
+												if ($lead): ?>
+													<option value="<?= $lead->id; ?>" selected><?= html_escape($lead->name); ?></option>
+												<?php endif; ?>
+											<?php endif; ?>
+										</select>
+									</div>
+								</div>
+								<div class="col-md-6">
+									<div class="form-group">
+										<label for="client_name">Client (Optional)</label>
+										<input type="text" name="client_name" id="client_name" class="form-control" 
+											   value="<?= html_escape($row['client_name'] ?? ''); ?>" 
+											   placeholder="Enter client name manually">
+									</div>
+								</div>
+							</div>
+							
+							<hr class="hr-panel-heading" />
 
 							<div class="tab-content">
 								<!-- Siding Tab -->
@@ -263,6 +297,48 @@
 
 <script>
 	$(document).ready(function() {
+		// Initialize AJAX search for leads/jobs
+		init_ajax_search('lead', '#lead_id');
+		
+		// Set rel_type to 'lead' for measurements
+		$('input[name="rel_type"]').val('lead');
+		
+		// Handle lead selection change
+		$('#lead_id').on('change', function() {
+			var leadId = $(this).val();
+			$('#rel_id').val(leadId);
+			
+			// Auto-fill client name if lead is selected and client field is empty
+			if (leadId && !$('#client_name').val()) {
+				var selectedText = $(this).find('option:selected').text();
+				if (selectedText && selectedText !== 'Select Lead/Job') {
+					// Extract company name if available (assuming format: "Lead Name - Company")
+					var parts = selectedText.split(' - ');
+					if (parts.length > 1) {
+						$('#client_name').val(parts[1]);
+					} else {
+						$('#client_name').val(parts[0]);
+					}
+				}
+			}
+		});
+		
+		// Set initial rel_id if editing
+		<?php if (isset($row['lead_id']) && $row['lead_id']): ?>
+			$('#rel_id').val('<?= $row['lead_id']; ?>');
+		<?php endif; ?>
+		
+		// Form validation
+		$('#measurements-form').on('submit', function(e) {
+			var leadId = $('#lead_id').val();
+			if (!leadId) {
+				e.preventDefault();
+				alert('Please select a Lead/Job before saving the measurement.');
+				$('#lead_id').focus();
+				return false;
+			}
+		});
+		
 		// Handle tab clicks
 		$('#category-tabs a[data-toggle="tab"]').on('click', function(e) {
 			e.preventDefault();

@@ -7,6 +7,7 @@ if (isset($row) && !empty($row['attributes_json'])) {
 
 $editing = isset($row) && !empty($row);
 ?>
+<!-- Basic Measurement Fields - Commented Out -->
 <!-- <div class="row">
     <div class="col-md-3">
         <div class="form-group">
@@ -114,7 +115,7 @@ $editing = isset($row) && !empty($row);
 <input type="hidden" name="id" value="<?= html_escape($row['id']); ?>">
 <?php endif; ?>
 
-<hr class="hr-panel-heading" />
+
 
 <!-- Category-specific fields -->
 
@@ -399,7 +400,5 @@ $editing = isset($row) && !empty($row);
 <?php else : ?>
 	<div class="alert alert-info">No fields configured for this category yet.</div>
 <?php endif; ?>
-
-
 
 

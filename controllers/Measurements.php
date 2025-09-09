@@ -26,6 +26,7 @@ class Measurements extends AdminController
 
         $data['title']    = 'Measurements - ' . ucfirst($category);
         $data['category'] = $category;
+        $data['measurements_model'] = $this->measurements_model;
         $this->load->view('ella_contractors/measurements/list', $data);
     }
 
@@ -37,6 +38,26 @@ class Measurements extends AdminController
 
         $post = $this->input->post(null, true);
         $id   = isset($post['id']) ? (int) $post['id'] : 0;
+
+        // Handle lead relationship
+        if (isset($post['lead_id']) && !empty($post['lead_id'])) {
+            $post['rel_type'] = 'lead';
+            $post['rel_id'] = (int) $post['lead_id'];
+        } else {
+            $post['rel_type'] = 'other';
+            $post['rel_id'] = 0;
+        }
+
+        // Handle client name (store in notes or attributes if needed)
+        if (isset($post['client_name']) && !empty($post['client_name'])) {
+            $clientName = $post['client_name'];
+            // Store client name in notes or create a separate field
+            if (empty($post['notes'])) {
+                $post['notes'] = 'Client: ' . $clientName;
+            } else {
+                $post['notes'] = $post['notes'] . ' | Client: ' . $clientName;
+            }
+        }
 
         // Handle basic measurement fields
         $width  = (float) ($post['width_val'] ?? 0);

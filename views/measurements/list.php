@@ -18,6 +18,7 @@
 							<table class="table table-striped dataTable no-footer">
 								<thead>
 									<tr>
+										<th>Lead/Job</th>
 										<th>Designator</th>
 										<th>Name</th>
 										<th>Location</th>
@@ -31,13 +32,19 @@
 								</thead>
 								<tbody>
 									<?php
-									// $rows = $this->db
-										// ->where('category', $category)
-										// ->order_by('sort_order ASC, id DESC')
-										// ->get(db_prefix() . 'ella_contractors_measurements')
-										// ->result_array(); -->
-									// foreach ($rows as $r) : ?>
-									<!-- <tr>
+									$rows = $this->measurements_model->list($category);
+									foreach ($rows['data'] as $r) : ?>
+									<tr>
+										<td>
+											<?php if ($r['lead_name']): ?>
+												<strong><?= html_escape($r['lead_name']); ?></strong>
+												<?php if ($r['lead_company']): ?>
+													<br><small class="text-muted"><?= html_escape($r['lead_company']); ?></small>
+												<?php endif; ?>
+											<?php else: ?>
+												<span class="text-muted">No Lead</span>
+											<?php endif; ?>
+										</td>
 										<td><?= html_escape($r['designator']); ?></td>
 										<td><?= html_escape($r['name']); ?></td>
 										<td><?= html_escape($r['location_label']); ?></td>
@@ -47,11 +54,17 @@
 										<td><?= html_escape($r['united_inches_val']); ?> <?= html_escape($r['ui_unit']); ?></td>
 										<td><?= html_escape($r['area_val']); ?> <?= html_escape($r['area_unit']); ?></td>
 										<td>
-											<a href="#" onclick="editRow(<?= (int) $r['id']; ?>);return false;">Edit</a> |
-											<a href="<?= admin_url('ella_contractors/measurements/delete/' . $r['id']); ?>" onclick="return confirm('Delete this row?');" class="text-danger">Delete</a>
+											<a href="<?= admin_url('ella_contractors/measurements/edit/' . $r['id']); ?>" class="btn btn-default btn-xs">
+												<i class="fa fa-edit"></i> Edit
+											</a>
+											<a href="<?= admin_url('ella_contractors/measurements/delete/' . $r['id']); ?>" 
+											   onclick="return confirm('Delete this measurement?');" 
+											   class="btn btn-danger btn-xs">
+												<i class="fa fa-trash"></i> Delete
+											</a>
 										</td>
-									</tr> -->
-									<?php // endforeach; ?>
+									</tr>
+									<?php endforeach; ?>
 								</tbody>
 							</table>
 						</div>
