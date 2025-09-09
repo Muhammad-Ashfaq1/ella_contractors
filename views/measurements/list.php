@@ -45,14 +45,80 @@
 												<span class="text-muted">No Lead</span>
 											<?php endif; ?>
 										</td>
-										<td><?= html_escape($r['designator']); ?></td>
-										<td><?= html_escape($r['name']); ?></td>
-										<td><?= html_escape($r['location_label']); ?></td>
-										<td><?= html_escape($r['level_label']); ?></td>
-										<td><?= html_escape($r['width_val']); ?> <?= html_escape($r['length_unit']); ?></td>
-										<td><?= html_escape($r['height_val']); ?> <?= html_escape($r['length_unit']); ?></td>
-										<td><?= html_escape($r['united_inches_val']); ?> <?= html_escape($r['ui_unit']); ?></td>
-										<td><?= html_escape($r['area_val']); ?> <?= html_escape($r['area_unit']); ?></td>
+										<td>
+											<?php if ($r['category'] === 'combined'): ?>
+												<?php 
+												$attributes = json_decode($r['attributes_json'] ?? '{}', true);
+												$categories = [];
+												foreach (['roofing', 'siding', 'windows', 'doors'] as $cat) {
+													if (!empty($attributes[$cat])) {
+														$categories[] = ucfirst($cat);
+													}
+												}
+												echo implode(', ', $categories) ?: 'No Data';
+												?>
+											<?php else: ?>
+												<?= html_escape($r['designator']); ?>
+											<?php endif; ?>
+										</td>
+										<td>
+											<?php if ($r['category'] === 'combined'): ?>
+												<strong>Combined Measurement</strong>
+											<?php else: ?>
+												<?= html_escape($r['name']); ?>
+											<?php endif; ?>
+										</td>
+										<td>
+											<?php if ($r['category'] === 'combined'): ?>
+												<span class="label label-info">Multi-Category</span>
+											<?php else: ?>
+												<?= html_escape($r['location_label']); ?>
+											<?php endif; ?>
+										</td>
+										<td>
+											<?php if ($r['category'] === 'combined'): ?>
+												<?= date('M j, Y', strtotime($r['created_at'])); ?>
+											<?php else: ?>
+												<?= html_escape($r['level_label']); ?>
+											<?php endif; ?>
+										</td>
+										<td>
+											<?php if ($r['category'] === 'combined'): ?>
+												<?php 
+												$attributes = json_decode($r['attributes_json'] ?? '{}', true);
+												$totalFields = 0;
+												foreach (['roofing', 'siding', 'windows', 'doors'] as $cat) {
+													if (!empty($attributes[$cat])) {
+														$totalFields += count($attributes[$cat]);
+													}
+												}
+												echo $totalFields . ' fields';
+												?>
+											<?php else: ?>
+												<?= html_escape($r['width_val']); ?> <?= html_escape($r['length_unit']); ?>
+											<?php endif; ?>
+										</td>
+										<td>
+											<?php if ($r['category'] === 'combined'): ?>
+												<span class="text-muted">-</span>
+											<?php else: ?>
+												<?= html_escape($r['height_val']); ?> <?= html_escape($r['length_unit']); ?>
+											<?php endif; ?>
+										</td>
+										<td>
+											<?php if ($r['category'] === 'combined'): ?>
+												<span class="text-muted">-</span>
+											<?php else: ?>
+												<?= html_escape($r['united_inches_val']); ?> <?= html_escape($r['ui_unit']); ?>
+											<?php endif; ?>
+										</td>
+										<td>
+											<?php if ($r['category'] === 'combined'): ?>
+												<span class="text-muted">-</span>
+											<?php else: ?>
+												<?= html_escape($r['area_val']); ?> <?= html_escape($r['area_unit']); ?>
+											<?php endif; ?>
+										</td>
 										<td>
 											<a href="<?= admin_url('ella_contractors/measurements/edit/' . $r['id']); ?>" class="btn btn-default btn-xs">
 												<i class="fa fa-edit"></i> Edit

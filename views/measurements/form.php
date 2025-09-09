@@ -28,6 +28,11 @@
 							</li>
 						</ul>
 
+						<div class="alert alert-info">
+							<i class="fa fa-info-circle"></i> 
+							<strong>Multi-Tab Save:</strong> You can enter measurements in any tab (Roofing, Siding, Windows, Doors) and save all data at once. Data from all tabs will be combined into one measurement record.
+						</div>
+						
 						<form id="measurements-form" method="post" action="javascript:void(0);" onsubmit="return false;">
 							<input type="hidden" name="category" id="selected-category" value="<?php echo html_escape($category ?? 'siding'); ?>">
 							
@@ -188,7 +193,9 @@
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-					<button type="submit" class="btn btn-info">Save Changes</button>
+					<button type="submit" class="btn btn-info">
+						<i class="fa fa-save"></i> Save All Measurements
+					</button>
 				</div>
 			</form>
 		</div>
@@ -284,7 +291,9 @@
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-					<button type="submit" class="btn btn-info">Save Changes</button>
+					<button type="submit" class="btn btn-info">
+						<i class="fa fa-save"></i> Save All Measurements
+					</button>
 				</div>
 			</form>
 		</div>
@@ -347,6 +356,50 @@
 			}
 		});
 		
+		// Function to collect data from all tabs
+		function collectAllTabsData() {
+			var allData = {};
+			var categories = ['roofing', 'siding', 'windows', 'doors'];
+			
+			categories.forEach(function(category) {
+				var categoryData = {};
+				$('input[name^="' + category + '["]').each(function() {
+					var name = $(this).attr('name');
+					var value = $(this).val();
+					if (value && value.trim() !== '') {
+						categoryData[name] = value;
+					}
+				});
+				
+				// Only add category data if it has values
+				if (Object.keys(categoryData).length > 0) {
+					allData[category] = categoryData;
+				}
+			});
+			
+			console.log('Collected data from all tabs:', allData);
+			return allData;
+		}
+		
+		// Function to show summary of what will be saved
+		function showSaveSummary(allTabsData) {
+			var categories = Object.keys(allTabsData);
+			if (categories.length === 0) {
+				return false;
+			}
+			
+			var summary = 'The following measurement data will be saved:\n\n';
+			categories.forEach(function(category) {
+				var fieldCount = Object.keys(allTabsData[category]).length;
+				summary += '• ' + category.charAt(0).toUpperCase() + category.slice(1) + ': ' + fieldCount + ' fields\n';
+			});
+			
+			summary += '\nTotal categories: ' + categories.length;
+			console.log('Save summary:', summary);
+			
+			return true; // For now, just return true. Could show modal with summary if needed
+		}
+		
 		// Form validation and AJAX submission
 		$(document).on('submit', '#measurements-form', function(e) {
 			e.preventDefault();
@@ -361,7 +414,7 @@
 				return false;
 			}
 			
-			// Collect form data
+			// Collect form data from all tabs
 			var formData = $(this).serializeArray();
 			var data = {};
 			
@@ -370,26 +423,23 @@
 				data[field.name] = field.value;
 			});
 			
-			// Add category
-			data.category = $('#selected-category').val();
+			// Collect data from all tabs (roofing, siding, windows, doors)
+			var allTabsData = collectAllTabsData();
 			
-			// Basic validation for required fields
-			var currentCategory = $('#selected-category').val();
-			if (currentCategory === 'roofing') {
-				// Check if at least one roofing field has a value
-				var hasRoofingData = false;
-				$('input[name^="roofing["]').each(function() {
-					if ($(this).val() && parseFloat($(this).val()) > 0) {
-						hasRoofingData = true;
-						return false; // break
-					}
-				});
-				
-				if (!hasRoofingData) {
-					alert('Please enter at least one roofing measurement before saving.');
-					return false;
-				}
+			// Show summary of what will be saved
+			var summary = showSaveSummary(allTabsData);
+			if (!summary) {
+				alert('Please enter at least one measurement in any category before saving.');
+				return false;
 			}
+			
+			// Merge all data
+			$.extend(data, allTabsData);
+			
+			// Set category to 'combined' since we're saving all tabs
+			data.category = 'combined';
+			
+			// Validation is already handled in showSaveSummary function
 			
 			// Show loading indicator
 			var submitBtn = $(this).find('button[type="submit"]');

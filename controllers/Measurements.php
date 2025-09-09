@@ -77,13 +77,13 @@ class Measurements extends AdminController
 
         // Handle category-specific attributes
         $categorySpecificData = [];
-        if (isset($post['siding']) && is_array($post['siding'])) {
-            $categorySpecificData['siding'] = $post['siding'];
-            unset($post['siding']);
-        }
-        if (isset($post['roofing']) && is_array($post['roofing'])) {
-            $categorySpecificData['roofing'] = $post['roofing'];
-            unset($post['roofing']);
+        $categories = ['siding', 'roofing', 'windows', 'doors'];
+        
+        foreach ($categories as $category) {
+            if (isset($post[$category]) && is_array($post[$category])) {
+                $categorySpecificData[$category] = $post[$category];
+                unset($post[$category]);
+            }
         }
 
         // Merge with existing attributes_json if editing
@@ -115,7 +115,8 @@ class Measurements extends AdminController
         }
 
         set_alert($ok ? 'success' : 'danger', $msg);
-        redirect(admin_url('ella_contractors/measurements/' . ($post['category'] ?? 'siding')));
+        $redirectCategory = ($post['category'] === 'combined') ? 'siding' : ($post['category'] ?? 'siding');
+        redirect(admin_url('ella_contractors/measurements/' . $redirectCategory));
     }
 
     public function create()
