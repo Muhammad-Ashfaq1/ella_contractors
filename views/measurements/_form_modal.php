@@ -156,9 +156,14 @@ $editing = isset($row) && !empty($row);
 		['Siding Vents Area','sqft','siding_vents_area'],
 	];
 	?>
+	<?php 
+	$allSidingFields = array_merge($sidingLeft, $sidingRight);
+	$sidingRows = array_chunk($allSidingFields, 4);
+	?>
+	<?php foreach ($sidingRows as $row): ?>
 	<div class="row">
-		<div class="col-md-6">
-			<?php foreach ($sidingLeft as $f) : list($label,$unit,$name) = $f; ?>
+		<?php foreach ($row as $f) : list($label,$unit,$name) = $f; ?>
+		<div class="col-md-3">
 			<div class="form-group">
 				<label><?= $label; ?></label>
 				<div class="input-group">
@@ -166,20 +171,10 @@ $editing = isset($row) && !empty($row);
 					<span class="input-group-addon"><?= $unit; ?></span>
 				</div>
 			</div>
-			<?php endforeach; ?>
 		</div>
-		<div class="col-md-6">
-			<?php foreach ($sidingRight as $f) : list($label,$unit,$name) = $f; ?>
-			<div class="form-group">
-				<label><?= $label; ?></label>
-				<div class="input-group">
-					<input type="number" step="0.0001" class="form-control" name="siding[<?= $name; ?>]" value="<?= html_escape($existing_attributes['siding'][$name] ?? ''); ?>">
-					<span class="input-group-addon"><?= $unit; ?></span>
-				</div>
-			</div>
-			<?php endforeach; ?>
-		</div>
+		<?php endforeach; ?>
 	</div>
+	<?php endforeach; ?>
 <?php elseif ($category === 'roofing') : ?>
 	<?php
 	$roofingTotalsLeft = [
@@ -231,60 +226,50 @@ $editing = isset($row) && !empty($row);
 	<div class="panel_s">
 		<div class="panel-heading">Roofing Total</div>
 		<div class="panel-body">
+			<?php 
+			$allRoofingTotals = array_merge($roofingTotalsLeft, $roofingTotalsRight);
+			$roofingTotalRows = array_chunk($allRoofingTotals, 4);
+			?>
+			<?php foreach ($roofingTotalRows as $row): ?>
 			<div class="row">
-		<div class="col-md-6">
-			<?php foreach ($roofingTotalsLeft as $f) : list($label,$unit,$name) = $f; ?>
-			<div class="form-group">
-				<label><?= $label; ?></label>
-				<div class="input-group">
-					<input type="number" step="0.0001" class="form-control" name="roofing[<?= $name; ?>]" value="<?= html_escape($existing_attributes['roofing'][$name] ?? ''); ?>">
-					<span class="input-group-addon"><?= $unit; ?></span>
+				<?php foreach ($row as $f) : list($label,$unit,$name) = $f; ?>
+				<div class="col-md-3">
+					<div class="form-group">
+						<label><?= $label; ?></label>
+						<div class="input-group">
+							<input type="number" step="0.0001" class="form-control" name="roofing[<?= $name; ?>]" value="<?= html_escape($existing_attributes['roofing'][$name] ?? ''); ?>">
+							<span class="input-group-addon"><?= $unit; ?></span>
+						</div>
+					</div>
 				</div>
+				<?php endforeach; ?>
 			</div>
 			<?php endforeach; ?>
-		</div>
-		<div class="col-md-6">
-			<?php foreach ($roofingTotalsRight as $f) : list($label,$unit,$name) = $f; ?>
-			<div class="form-group">
-				<label><?= $label; ?></label>
-				<div class="input-group">
-					<input type="number" step="0.0001" class="form-control" name="roofing[<?= $name; ?>]" value="<?= html_escape($existing_attributes['roofing'][$name] ?? ''); ?>">
-					<span class="input-group-addon"><?= $unit; ?></span>
-				</div>
-			</div>
-			<?php endforeach; ?>
-		</div>
-			</div>
 		</div>
 	</div>
 
 	<div class="panel_s">
 		<div class="panel-heading">Roof Areas by Pitch</div>
 		<div class="panel-body">
+			<?php 
+			$allPitchAreas = array_merge($pitchAreasLeft, $pitchAreasRight);
+			$pitchAreaRows = array_chunk($allPitchAreas, 4);
+			?>
+			<?php foreach ($pitchAreaRows as $row): ?>
 			<div class="row">
-		<div class="col-md-6">
-			<?php foreach ($pitchAreasLeft as $f) : list($label,$unit,$name) = $f; ?>
-			<div class="form-group">
-				<label><?= $label; ?></label>
-				<div class="input-group">
-					<input type="number" step="0.0001" class="form-control" name="roofing[<?= $name; ?>]" value="<?= html_escape($existing_attributes['roofing'][$name] ?? ''); ?>">
-					<span class="input-group-addon"><?= $unit; ?></span>
+				<?php foreach ($row as $f) : list($label,$unit,$name) = $f; ?>
+				<div class="col-md-3">
+					<div class="form-group">
+						<label><?= $label; ?></label>
+						<div class="input-group">
+							<input type="number" step="0.0001" class="form-control" name="roofing[<?= $name; ?>]" value="<?= html_escape($existing_attributes['roofing'][$name] ?? ''); ?>">
+							<span class="input-group-addon"><?= $unit; ?></span>
+						</div>
+					</div>
 				</div>
+				<?php endforeach; ?>
 			</div>
 			<?php endforeach; ?>
-		</div>
-		<div class="col-md-6">
-			<?php foreach ($pitchAreasRight as $f) : list($label,$unit,$name) = $f; ?>
-			<div class="form-group">
-				<label><?= $label; ?></label>
-				<div class="input-group">
-					<input type="number" step="0.0001" class="form-control" name="roofing[<?= $name; ?>]" value="<?= html_escape($existing_attributes['roofing'][$name] ?? ''); ?>">
-					<span class="input-group-addon"><?= $unit; ?></span>
-				</div>
-			</div>
-			<?php endforeach; ?>
-		</div>
-			</div>
 		</div>
 	</div>
 <?php elseif ($category === 'windows') : ?>
