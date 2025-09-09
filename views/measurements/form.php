@@ -27,12 +27,6 @@
 								<a href="#doors-tab" data-toggle="tab" data-category="doors">Doors</a>
 							</li>
 						</ul>
-
-						<div class="alert alert-info">
-							<i class="fa fa-info-circle"></i> 
-							<strong>Multi-Tab Save:</strong> You can enter measurements in any tab (Roofing, Siding, Windows, Doors) and save all data at once. Data from all tabs will be combined into one measurement record.
-						</div>
-						
 						<form id="measurements-form" method="post" action="javascript:void(0);" onsubmit="return false;">
 							<input type="hidden" name="category" id="selected-category" value="<?php echo html_escape($category ?? 'siding'); ?>">
 							
