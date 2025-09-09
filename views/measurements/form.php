@@ -114,6 +114,9 @@
 
 <script>
 	$(document).ready(function() {
-		console.log('jQuery is ready');
+		$('#js-add-window').on('click', function() {
+			console.log('js-add-window clicked');
+			$('#windowModal').modal('show');
+		});
 	});
 </script>

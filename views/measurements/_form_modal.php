@@ -276,7 +276,7 @@ $editing = isset($row) && !empty($row);
 	<div class="row">
 		<div class="col-md-12">
 			<div class="btn-group pull-right">
-				<button type="button" class="btn btn-info" data-toggle="modal" data-target="#windowModal">
+				<button type="button" class="btn btn-info" data-toggle="modal" id="js-add-window">
 					<i class="fa fa-plus"></i> Add Window
 				</button>
 			</div>
