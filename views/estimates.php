@@ -60,73 +60,12 @@
                 <th><?php echo _l('total_quantity'); ?></th>
                 <th><?php echo _l('total_amount'); ?></th>
                 <th><?php echo _l('created_by'); ?></th>
+                <th><?php echo _l('created_date'); ?></th>
                 <th><?php echo _l('last_updated'); ?></th>
                 <th><?php echo _l('options'); ?></th>
             </tr>
         </thead>
         <tbody>
-            <?php foreach($estimates as $estimate): ?>
-            <tr>
-                <?php if(has_permission('ella_contractors','','delete')){ ?>
-                <td>
-                    <div class="checkbox">
-                        <input type="checkbox" value="<?= $estimate['id']; ?>">
-                        <label></label>
-                    </div>
-                </td>
-                <?php } ?>
-                <td>
-                    <a href="<?= admin_url('ella_contractors/view_estimate/' . $estimate['id']); ?>">
-                        <?= htmlspecialchars($estimate['estimate_name']); ?>
-                    </a>
-                    <?php if($estimate['description']): ?>
-                        <br><small class="text-muted"><?= htmlspecialchars(substr($estimate['description'], 0, 50)) . (strlen($estimate['description']) > 50 ? '...' : ''); ?></small>
-                    <?php endif; ?>
-                </td>
-                <td><?= $estimate['client_name'] ? htmlspecialchars($estimate['client_name']) : '-'; ?></td>
-                <td><?= $estimate['lead_name'] ? htmlspecialchars($estimate['lead_name']) : '-'; ?></td>
-                <td>
-                    <?php
-                    $status_class = '';
-                    switch($estimate['status']) {
-                        case 'draft': $status_class = 'label-default'; break;
-                        case 'sent': $status_class = 'label-info'; break;
-                        case 'accepted': $status_class = 'label-success'; break;
-                        case 'rejected': $status_class = 'label-danger'; break;
-                        case 'expired': $status_class = 'label-warning'; break;
-                    }
-                    ?>
-                    <span class="label <?= $status_class; ?>"><?= ucfirst($estimate['status']); ?></span>
-                </td>
-                <td>
-                    <span class="badge"><?= $estimate['line_items_count']; ?></span>
-                </td>
-                <td><?= number_format($estimate['total_quantity'], 2); ?></td>
-                <td>
-                    <strong>$<?= number_format($estimate['total_amount'], 2); ?></strong>
-                </td>
-                <td><?= htmlspecialchars($estimate['created_by_name']); ?></td>
-                <td><?= _dt($estimate['updated_at']); ?></td>
-                <td>
-                    <div class="row-options">
-                        <a href="<?= admin_url('ella_contractors/view_estimate/' . $estimate['id']); ?>">
-                            <?= _l('view'); ?>
-                        </a>
-                        <?php if(has_permission('ella_contractors','','edit')){ ?>
-                        | <a href="#" data-toggle="modal" data-target="#estimate_modal" data-id="<?= $estimate['id']; ?>">
-                            <?= _l('edit'); ?>
-                        </a>
-                        <?php } ?>
-                        <?php if(has_permission('ella_contractors','','delete')){ ?>
-                        | <a href="<?= admin_url('ella_contractors/delete_estimate/' . $estimate['id']); ?>" 
-                             class="text-danger _delete">
-                            <?= _l('delete'); ?>
-                        </a>
-                        <?php } ?>
-                    </div>
-                </td>
-            </tr>
-            <?php endforeach; ?>
         </tbody>
     </table>
   </div>
@@ -142,20 +81,9 @@
 <?php init_tail(); ?>
 <script>
 $(document).ready(function() {
-    // Prevent DataTable initialization on our custom estimates table
-    // Override the global DataTable initialization to skip our custom table
-    window.originalInitDataTable = window.initDataTable;
-    window.initDataTable = function(selector, url, notSortable, notSearchable, serverParams, order) {
-        // Skip DataTable initialization for our custom estimates table
-        if (selector === '.table-estimates' || $(selector).hasClass('table-estimates') || selector === '#custom-estimates-table') {
-            console.log('Skipping DataTable initialization for custom estimates table');
-            return;
-        }
-        // Call original function for other tables
-        if (typeof window.originalInitDataTable === 'function') {
-            return window.originalInitDataTable(selector, url, notSortable, notSearchable, serverParams, order);
-        }
-    };
+
+    // Initialize DataTable for estimates
+    initDataTable('.table-estimates', admin_url + 'ella_contractors/estimates/table', [0], [0]);
     
     // Bulk actions function
     window.estimates_bulk_action = function(button) {
@@ -174,12 +102,12 @@ $(document).ready(function() {
         
         if ($('#mass_delete').is(':checked')) {
             if (confirm('Are you sure you want to delete the selected items?')) {
-                $.post(admin_url + 'ella_contractors/estimates_bulk_action', {
+                $.post(admin_url + 'ella_contractors/estimates/estimates_bulk_action', {
                     ids: ids,
                     mass_delete: true
                 }).done(function(response) {
                     alert_float('success', response);
-                    window.location.reload();
+                    $('.table-estimates').DataTable().ajax.reload();
                 });
             }
         }

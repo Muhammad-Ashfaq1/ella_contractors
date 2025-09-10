@@ -31,6 +31,10 @@ $route[$module_name . '/measurements/delete/(:num)'] = $measurements_route . '/d
 $route[$module_name . '/measurements/create/(:any)'] = $measurements_route . '/create/$1';
 $route[$module_name . '/measurements/edit/(:num)'] = $measurements_route . '/edit/$1';
 
+// Estimates routes
+$route[$module_name . '/estimates'] = $module_name . '/estimates/index';
+$route[$module_name . '/estimates/(:any)'] = $module_name . '/estimates/$1';
+
 // AJAX endpoints
 $route[$module_name . '/get_line_items_ajax'] = $module_name . '/get_line_items_ajax';
 $route[$module_name . '/get_estimates_ajax'] = $module_name . '/get_estimates_ajax';
