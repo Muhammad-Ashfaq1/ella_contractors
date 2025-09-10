@@ -81,7 +81,7 @@
 <?php init_tail(); ?>
 <script>
 $(document).ready(function() {
-    // Initialize DataTable for estimates
+    // Initialize DataTable for estimates (using main route for table only)
     initDataTable('#custom-estimates-table', admin_url + 'estimates/table', [0], [0], [], [[0, 'desc']]);
     
     // Bulk actions function
@@ -101,7 +101,7 @@ $(document).ready(function() {
         
         if ($('#mass_delete').is(':checked')) {
             if (confirm('Are you sure you want to delete the selected items?')) {
-                $.post(admin_url + 'estimates/estimates_bulk_action', {
+                $.post(admin_url + 'ella_contractors/estimates/estimates_bulk_action', {
                     ids: ids,
                     mass_delete: true
                 }).done(function(response) {

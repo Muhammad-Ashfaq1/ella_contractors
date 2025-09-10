@@ -9,7 +9,7 @@
                     <span class="add-title"><?php echo _l('new_estimate'); ?></span>
                 </h4>
             </div>
-            <?php echo form_open('admin/estimates/manage_estimate', array('id' => 'estimate_form')); ?>
+            <?php echo form_open('admin/ella_contractors/estimates/manage_estimate', array('id' => 'estimate_form')); ?>
             <?php echo form_hidden('estimate_id'); ?>
             <div class="modal-body">
                 <div class="row">
