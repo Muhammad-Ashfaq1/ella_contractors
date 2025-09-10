@@ -81,14 +81,13 @@
 <?php init_tail(); ?>
 <script>
 $(document).ready(function() {
-
     // Initialize DataTable for estimates
-    initDataTable('.table-estimates', admin_url + 'ella_contractors/estimates/table', [0], [0]);
+    initDataTable('#custom-estimates-table', admin_url + 'estimates/table', [0], [0], [], [[0, 'desc']]);
     
     // Bulk actions function
     window.estimates_bulk_action = function(button) {
         var ids = [];
-        var table = $('.table-estimates');
+        var table = $('#custom-estimates-table');
         var checkbox = table.find('tbody input[type="checkbox"]:checked');
         
         if (checkbox.length === 0) {
@@ -102,12 +101,12 @@ $(document).ready(function() {
         
         if ($('#mass_delete').is(':checked')) {
             if (confirm('Are you sure you want to delete the selected items?')) {
-                $.post(admin_url + 'ella_contractors/estimates/estimates_bulk_action', {
+                $.post(admin_url + 'estimates/estimates_bulk_action', {
                     ids: ids,
                     mass_delete: true
                 }).done(function(response) {
                     alert_float('success', response);
-                    $('.table-estimates').DataTable().ajax.reload();
+                    $('#custom-estimates-table').DataTable().ajax.reload();
                 });
             }
         }

@@ -5,8 +5,8 @@ class Estimates extends AdminController
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('ella_estimates_model');
-        $this->load->model('ella_line_items_model');
+        $this->load->model('ella_contractors/ella_estimates_model');
+        $this->load->model('ella_contractors/ella_line_items_model');
         $this->load->model('clients_model');
         $this->load->model('leads_model');
     }
@@ -38,6 +38,15 @@ class Estimates extends AdminController
             ajax_access_denied();
         }
 
+        // Simple test response first
+        echo json_encode([
+            'draw' => intval($this->input->post('draw')),
+            'recordsTotal' => 0,
+            'recordsFiltered' => 0,
+            'data' => []
+        ]);
+        return;
+        
         $this->app->get_table_data('ella_contractor_estimates');
     }
 

@@ -46,6 +46,7 @@ $lang['total_amount'] = 'Total Amount';
 $lang['total_quantity'] = 'Total Quantity';
 $lang['line_items_count'] = 'Line Items Count';
 $lang['created_by'] = 'Created By';
+$lang['created_date'] = 'Created Date';
 $lang['last_updated'] = 'Last Updated';
 $lang['add_line_item'] = 'Add Line Item';
 $lang['remove_line_item'] = 'Remove Line Item';
