@@ -1191,6 +1191,18 @@ startxref
     }
     
     /**
+     * DataTable server-side processing for estimates
+     */
+    public function estimates_table()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $this->app->get_table_data('ella_contractor_estimates');
+    }
+
+    /**
      * Get Estimates Data for AJAX
      */
     public function get_estimates_ajax()
