@@ -193,7 +193,6 @@ class Ella_estimates_model extends App_Model
         $this->db->insert(db_prefix() . 'ella_contractor_estimate_line_items', $data);
         
         if ($this->db->affected_rows() > 0) {
-            // Update estimate totals
             $this->update_estimate_totals($estimate_id);
             return $this->db->insert_id();
         }

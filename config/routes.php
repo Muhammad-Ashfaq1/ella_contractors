@@ -40,6 +40,8 @@ $route[$module_name . '/estimates/view/(:num)'] = 'Estimates/view_estimate/$1';
 $route[$module_name . '/estimates/table'] = 'Estimates/table';
 $route[$module_name . '/estimates/get_estimate_data/(:num)'] = 'Estimates/get_estimate_data/$1';
 $route[$module_name . '/estimates/estimates_bulk_action'] = 'Estimates/estimates_bulk_action';
+
+
 $route[$module_name . '/estimates/manage_estimate'] = 'Estimates/manage_estimate';
 $route[$module_name . '/estimates/(:any)'] = 'Estimates/$1';
 
