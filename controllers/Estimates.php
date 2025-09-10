@@ -25,8 +25,9 @@ class Estimates extends AdminController
         $data['leads'] = $this->leads_model->get();
         $data['line_items'] = $this->ella_line_items_model->get_line_items(null, true);
         $data['statuses'] = $this->ella_estimates_model->get_statuses();
-        
-        $this->load->view('ella_contractors/estimates', $data);
+        $data['estimates'] = $this->ella_estimates_model->get_estimates();
+
+        $this->load->view('estimates/index', $data);
     }
 
     /**
@@ -195,8 +196,10 @@ class Estimates extends AdminController
             if ($this->input->post()) {
                 try {
                     $data = $this->input->post();
+
+                    // die(json_encode($data));
                     
-                    if ($data['estimate_id'] == '') {
+                    if (empty($data['estimate_id'])) {
                         if (!has_permission('ella_contractors', '', 'create')) {
                             header('HTTP/1.0 400 Bad error');
                             echo _l('access_denied');
@@ -206,12 +209,13 @@ class Estimates extends AdminController
                         // Remove line_items from main data
                         $line_items = isset($data['line_items']) ? $data['line_items'] : [];
                         unset($data['line_items']);
+                        unset($data['estimate_id']);
                         
                         $id = $this->ella_estimates_model->create_estimate($data);
+
                         $success = false;
                         $message = '';
                         if ($id) {
-                            // Add line items if provided
                             if ($line_items && is_array($line_items)) {
                                 foreach ($line_items as $item) {
                                     if (!empty($item['line_item_id']) && !empty($item['quantity']) && !empty($item['unit_price'])) {
@@ -233,7 +237,9 @@ class Estimates extends AdminController
                             'message' => $message,
                             'estimate' => $this->ella_estimates_model->get_estimate($id),
                         ]);
-                    } else {
+                    } 
+                    
+                    else {
                         if (!has_permission('ella_contractors', '', 'edit')) {
                             header('HTTP/1.0 400 Bad error');
                             echo _l('access_denied');
