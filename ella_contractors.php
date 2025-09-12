@@ -50,6 +50,13 @@ function ella_contractors_init_menu() {
                 'position' => 10,
             ],
             [
+                'slug' => 'ella_contractors_past_appointments',
+                'name' => 'Past Appts',
+                'href' => admin_url('ella_contractors/appointments/past'),
+                'icon' => 'fa fa-history',
+                'position' => 35,
+            ],
+            [
                 'slug' => 'ella_contractors_measurements',
                 'name' => 'Measurements',
                 'href' => admin_url('ella_contractors/measurements'),
@@ -77,13 +84,7 @@ function ella_contractors_init_menu() {
                 'icon' => 'fa fa-file-text-o',
                 'position' => 30,
             ],
-            [
-                'slug' => 'ella_contractors_past_appointments',
-                'name' => 'Past Appts',
-                'href' => admin_url('ella_contractors/appointments/past'),
-                'icon' => 'fa fa-history',
-                'position' => 35,
-            ]
+            
         ];
 
         foreach ($submenu as $item) {
