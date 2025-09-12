@@ -5,21 +5,12 @@
     <div class="col-md-12">
         <div class="panel_s">
             <div class="panel-body">
-                <h4 class="no-margin"><?php echo _l('appointments'); ?></h4>
+                <h4 class="no-margin">Past Appointments</h4>
                 <hr class="hr-panel-heading" />
                 <div class="row">
                     <div class="col-md-12">
-                        <div class="btn-group pull-right">
-                            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#appointmentModal" onclick="openAppointmentModal()">
-                                <i class="fa fa-plus"></i> New Appointment
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
                         <div class="table-responsive">
-                            <table class="table table-striped table-ella_appointments">
+                            <table class="table table-striped table-ella_appointments_past">
                                 <thead>
                                     <tr>
                                         <th></th>
@@ -59,8 +50,8 @@ var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
 var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
 
 $(document).ready(function() {
-    // Initialize DataTable for appointments
-    initDataTable('.table-ella_appointments', admin_url + 'ella_contractors/appointments/table', undefined, undefined, {}, [2, 'desc']);
+    // Initialize DataTable for past appointments
+    initDataTable('.table-ella_appointments_past', admin_url + 'ella_contractors/appointments/table', undefined, undefined, {past: 1}, [2, 'desc']);
     
     // Initialize selectpicker
     $('.selectpicker').selectpicker();
@@ -166,7 +157,7 @@ function deleteAppointment(appointmentId) {
             success: function(response) {
                 if (response.success) {
                     alert_float('success', response.message);
-                    $('.table-ella_appointments').DataTable().ajax.reload();
+                    $('.table-ella_appointments_past').DataTable().ajax.reload();
                 } else {
                     alert_float('danger', response.message);
                 }
@@ -195,7 +186,7 @@ $('#saveAppointment').on('click', function() {
             if (response.success) {
                 alert_float('success', response.message);
                 $('#appointmentModal').modal('hide');
-                $('.table-ella_appointments').DataTable().ajax.reload();
+                $('.table-ella_appointments_past').DataTable().ajax.reload();
             } else {
                 alert_float('danger', response.message);
             }

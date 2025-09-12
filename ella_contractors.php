@@ -42,14 +42,6 @@ function ella_contractors_init_menu() {
                 'icon' => 'fa fa-briefcase',
                 'position' => 5,
             ],
-            // [
-            //     'slug' => 'ella_contractors_appointments',
-            //     'name' => 'Appointments',
-            //     'href' => admin_url('appointly/appointments'),
-            //     'icon' => 'fa fa-calendar-check-o',
-            //     'position' => 10,
-            // ],
-
             [
                 'slug' => 'ella_contractors_appointments',
                 'name' => 'Appointments',
@@ -57,7 +49,6 @@ function ella_contractors_init_menu() {
                 'icon' => 'fa fa-calendar-check-o',
                 'position' => 10,
             ],
-
             [
                 'slug' => 'ella_contractors_measurements',
                 'name' => 'Measurements',
@@ -85,6 +76,13 @@ function ella_contractors_init_menu() {
                 'href' => admin_url('ella_contractors/estimates'),
                 'icon' => 'fa fa-file-text-o',
                 'position' => 30,
+            ],
+            [
+                'slug' => 'ella_contractors_past_appointments',
+                'name' => 'Past Appts',
+                'href' => admin_url('ella_contractors/appointments/past'),
+                'icon' => 'fa fa-history',
+                'position' => 35,
             ]
         ];
 
