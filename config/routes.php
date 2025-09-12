@@ -45,6 +45,11 @@ $route[$module_name . '/estimates/estimates_bulk_action'] = 'Estimates/estimates
 $route[$module_name . '/estimates/manage_estimate'] = 'Estimates/manage_estimate';
 $route[$module_name . '/estimates/(:any)'] = 'Estimates/$1';
 
+
+
+// Appointments routes
+$route[$module_name . '/appointments'] = 'Appointments/index';
+
 // AJAX endpoints
 $route[$module_name . '/get_line_items_ajax'] = $module_name . '/get_line_items_ajax';
 $route[$module_name . '/get_estimates_ajax'] = $module_name . '/get_estimates_ajax';
