@@ -28,6 +28,9 @@ $join = [
 
 $where = [];
 
+// Filter to show only appointments created from EllaContractors module
+$where[] = 'AND ' . db_prefix() . 'appointly_appointments.source = "ella_contractor"';
+
 // Filter for past appointments if requested
 if (isset($past) && $past == 1) {
     $where[] = 'AND ' . db_prefix() . 'appointly_appointments.date < CURDATE()';
@@ -83,3 +86,5 @@ foreach ($rResult as $aRow) {
     
     $output['aaData'][] = $row;
 }
+
+echo json_encode($output);

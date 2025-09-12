@@ -9,6 +9,7 @@ class Ella_appointments_model extends App_Model
 
     /**
      * Get all appointments with additional EllaContractor data
+     * Only shows appointments created from EllaContractors module
      */
     public function get_appointments($where = [])
     {
@@ -23,6 +24,9 @@ class Ella_appointments_model extends App_Model
         $this->db->join(db_prefix() . 'leads l', 'l.id = a.contact_id', 'left');
         $this->db->join(db_prefix() . 'appointly_appointment_types at', 'at.id = a.type_id', 'left');
         
+        // Filter to show only appointments created from EllaContractors module
+        $this->db->where('a.source', 'ella_contractor');
+        
         if (!empty($where)) {
             $this->db->where($where);
         }
@@ -35,6 +39,7 @@ class Ella_appointments_model extends App_Model
 
     /**
      * Get single appointment by ID
+     * Only returns appointments created from EllaContractors module
      */
     public function get_appointment($id)
     {
@@ -49,6 +54,7 @@ class Ella_appointments_model extends App_Model
         $this->db->join(db_prefix() . 'leads l', 'l.id = a.contact_id', 'left');
         $this->db->join(db_prefix() . 'appointly_appointment_types at', 'at.id = a.type_id', 'left');
         $this->db->where('a.id', $id);
+        $this->db->where('a.source', 'ella_contractor');
         
         return $this->db->get()->row();
     }
@@ -175,28 +181,36 @@ class Ella_appointments_model extends App_Model
 
     /**
      * Get upcoming appointments
+     * Only shows appointments created from EllaContractors module
      */
     public function get_upcoming_appointments($limit = 10)
     {
-        $this->db->where('date >=', date('Y-m-d'));
-        $this->db->where('cancelled', 0);
+        $where = [
+            'date >=' => date('Y-m-d'),
+            'cancelled' => 0
+        ];
+        
         $this->db->order_by('date', 'ASC');
         $this->db->order_by('start_hour', 'ASC');
         $this->db->limit($limit);
         
-        return $this->get_appointments();
+        return $this->get_appointments($where);
     }
 
     /**
      * Get past appointments
+     * Only shows appointments created from EllaContractors module
      */
     public function get_past_appointments($limit = 10)
     {
-        $this->db->where('date <', date('Y-m-d'));
+        $where = [
+            'date <' => date('Y-m-d')
+        ];
+        
         $this->db->order_by('date', 'DESC');
         $this->db->order_by('start_hour', 'DESC');
         $this->db->limit($limit);
         
-        return $this->get_appointments();
+        return $this->get_appointments($where);
     }
 }

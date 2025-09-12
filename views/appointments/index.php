@@ -1,34 +1,31 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 
-<div class="row">
-    <div class="col-md-12">
-        <div class="panel_s">
-            <div class="panel-body">
-                <h4 class="no-margin"><?php echo _l('appointments'); ?></h4>
-                <hr class="hr-panel-heading" />
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="btn-group pull-right">
+<div id="wrapper">
+    <div class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <div class="_buttons">
                             <button type="button" class="btn btn-info" data-toggle="modal" data-target="#appointmentModal" onclick="openAppointmentModal()">
-                                <i class="fa fa-plus"></i> New Appointment
+                                <i class="fa fa-plus"></i> <?php echo _l('new_appointment'); ?>
                             </button>
                         </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
+                        <div class="clearfix"></div>
+                        <hr class="hr-panel-heading" />
+                        
                         <div class="table-responsive">
                             <table class="table table-striped table-ella_appointments">
                                 <thead>
                                     <tr>
-                                        <th></th>
-                                        <th>ID</th>
-                                        <th>Subject</th>
-                                        <th>Date & Time</th>
-                                        <th>Client</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
+                                        <th width="50px"></th>
+                                        <th><?php echo _l('id'); ?></th>
+                                        <th><?php echo _l('appointment_subject'); ?></th>
+                                        <th><?php echo _l('appointment_meeting_date'); ?></th>
+                                        <th><?php echo _l('client'); ?></th>
+                                        <th><?php echo _l('appointment_status'); ?></th>
+                                        <th width="120px"><?php echo _l('options'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
