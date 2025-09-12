@@ -2,7 +2,7 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 /*
-Module Name: Ella Contractors
+Module Name: EllaContractor
 Description: Empty module - all functionality removed
 Version: 1.0.0
 Author: Custom
@@ -27,7 +27,7 @@ function ella_contractors_init_menu() {
     if (is_staff_logged_in() && (is_super_admin() || is_admin() || has_permission('ella_contractors', '', 'view'))) {
         $CI->app_menu->add_sidebar_menu_item('ella_contractors', [
             'slug' => 'ella_contractors',
-            'name' => 'Ella Contractors',
+            'name' => 'EllaContractor',
             'icon' => 'fa fa-users',
             'position' => 30,
             'collapse' => true,
