@@ -56,13 +56,13 @@ function ella_contractors_init_menu() {
                 'icon' => 'fa fa-history',
                 'position' => 35,
             ],
-            [
-                'slug' => 'ella_contractors_measurements',
-                'name' => 'Measurements',
-                'href' => admin_url('ella_contractors/measurements'),
-                'icon' => 'fa fa-square-o',
-                'position' => 15,
-            ],
+            // [
+            //     'slug' => 'ella_contractors_measurements',
+            //     'name' => 'Measurements',
+            //     'href' => admin_url('ella_contractors/measurements'),
+            //     'icon' => 'fa fa-square-o',
+            //     'position' => 15,
+            // ],
             [
                 'slug' => 'ella_contractors_presentations',
                 'name' => 'Presentations',
