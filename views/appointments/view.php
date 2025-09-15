@@ -696,13 +696,35 @@ function populateMeasurementForm(data) {
         try {
             var attributes = JSON.parse(data.attributes_json);
             Object.keys(attributes).forEach(function(category) {
-                Object.keys(attributes[category]).forEach(function(field) {
-                    $('input[name="' + category + '[' + field + ']"]').val(attributes[category][field]);
-                });
+                if (category === 'windows' || category === 'doors') {
+                    // Handle windows and doors data
+                    populateWindowsDoorsTables(category, attributes[category]);
+                } else {
+                    // Handle siding and roofing data
+                    Object.keys(attributes[category]).forEach(function(field) {
+                        $('input[name="' + category + '[' + field + ']"]').val(attributes[category][field]);
+                    });
+                }
             });
         } catch (e) {
             console.error('Error parsing attributes:', e);
         }
+    }
+}
+
+// Populate windows and doors tables with data
+function populateWindowsDoorsTables(category, data) {
+    var tbody = $('#' + category + '-tbody');
+    tbody.html(''); // Clear existing data
+    
+    if (Array.isArray(data)) {
+        data.forEach(function(item) {
+            if (category === 'windows') {
+                addToWindowsTable(item);
+            } else if (category === 'doors') {
+                addToDoorsTable(item);
+            }
+        });
     }
 }
 
@@ -742,23 +764,217 @@ function collectAllTabsData() {
     ['siding', 'roofing', 'windows', 'doors'].forEach(function(category) {
         var categoryData = {};
         
-        // Get all inputs for this category
-        $('input[name^="' + category + '["]').each(function() {
-            var name = $(this).attr('name');
-            var value = $(this).val();
-            if (value !== '' && value !== null && value !== undefined) {
-                // Extract field name from name attribute like "siding[siding_total_area]"
-                var fieldName = name.match(/\[([^\]]+)\]/)[1];
-                categoryData[fieldName] = value;
+        if (category === 'windows' || category === 'doors') {
+            // Handle windows and doors from tables
+            var tableData = collectTableData(category);
+            if (Object.keys(tableData).length > 0) {
+                allData[category] = tableData;
             }
-        });
-        
-        if (Object.keys(categoryData).length > 0) {
-            allData[category] = categoryData;
+        } else {
+            // Get all inputs for this category (siding, roofing)
+            $('input[name^="' + category + '["]').each(function() {
+                var name = $(this).attr('name');
+                var value = $(this).val();
+                if (value !== '' && value !== null && value !== undefined) {
+                    // Extract field name from name attribute like "siding[siding_total_area]"
+                    var fieldName = name.match(/\[([^\]]+)\]/)[1];
+                    categoryData[fieldName] = value;
+                }
+            });
+            
+            if (Object.keys(categoryData).length > 0) {
+                allData[category] = categoryData;
+            }
         }
     });
     
     return allData;
+}
+
+// Collect data from windows and doors tables
+function collectTableData(category) {
+    var tableData = [];
+    var tableId = category + '-tbody';
+    var tbody = $('#' + tableId);
+    
+    if (tbody.length > 0) {
+        tbody.find('tr').each(function() {
+            var row = $(this);
+            var rowData = {};
+            
+            // Extract data from each cell in the row
+            row.find('td').each(function(index) {
+                var cell = $(this);
+                var value = cell.text().trim();
+                
+                // Map column index to field name
+                switch(index) {
+                    case 0: rowData.designator = value; break;
+                    case 1: rowData.name = value; break;
+                    case 2: rowData.location_label = value; break;
+                    case 3: rowData.level_label = value; break;
+                    case 4: rowData.width_val = value; break;
+                    case 5: rowData.height_val = value; break;
+                    case 6: rowData.united_inches_val = value; break;
+                    case 7: rowData.area_val = value; break;
+                }
+            });
+            
+            // Only add row if it has meaningful data
+            if (rowData.name && rowData.name !== '') {
+                tableData.push(rowData);
+            }
+        });
+    }
+    
+    return tableData;
+}
+
+// Add window to windows table
+function addToWindowsTable(data) {
+    var tbody = $('#windows-tbody');
+    var rowId = 'window_' + Date.now(); // Unique ID for the row
+    
+    var row = '<tr id="' + rowId + '">';
+    row += '<td>' + (data.designator || '') + '</td>';
+    row += '<td>' + (data.name || '') + '</td>';
+    row += '<td>' + (data.location_label || '') + '</td>';
+    row += '<td>' + (data.level_label || '') + '</td>';
+    row += '<td>' + (data.width_val || '') + '</td>';
+    row += '<td>' + (data.height_val || '') + '</td>';
+    row += '<td>' + (data.united_inches_val || '') + '</td>';
+    row += '<td>' + (data.area_val || '') + '</td>';
+    row += '<td>';
+    row += '<button class="btn btn-default btn-xs" onclick="editTableRow(\'' + rowId + '\', \'windows\')" title="Edit"><i class="fa fa-edit"></i></button> ';
+    row += '<button class="btn btn-danger btn-xs" onclick="removeTableRow(\'' + rowId + '\')" title="Remove"><i class="fa fa-trash"></i></button>';
+    row += '</td>';
+    row += '</tr>';
+    
+    tbody.append(row);
+}
+
+// Add door to doors table
+function addToDoorsTable(data) {
+    var tbody = $('#doors-tbody');
+    var rowId = 'door_' + Date.now(); // Unique ID for the row
+    
+    var row = '<tr id="' + rowId + '">';
+    row += '<td>' + (data.designator || '') + '</td>';
+    row += '<td>' + (data.name || '') + '</td>';
+    row += '<td>' + (data.location_label || '') + '</td>';
+    row += '<td>' + (data.level_label || '') + '</td>';
+    row += '<td>' + (data.width_val || '') + '</td>';
+    row += '<td>' + (data.height_val || '') + '</td>';
+    row += '<td>' + (data.united_inches_val || '') + '</td>';
+    row += '<td>' + (data.area_val || '') + '</td>';
+    row += '<td>';
+    row += '<button class="btn btn-default btn-xs" onclick="editTableRow(\'' + rowId + '\', \'doors\')" title="Edit"><i class="fa fa-edit"></i></button> ';
+    row += '<button class="btn btn-danger btn-xs" onclick="removeTableRow(\'' + rowId + '\')" title="Remove"><i class="fa fa-trash"></i></button>';
+    row += '</td>';
+    row += '</tr>';
+    
+    tbody.append(row);
+}
+
+// Edit table row
+function editTableRow(rowId, category) {
+    var row = $('#' + rowId);
+    var cells = row.find('td');
+    
+    // Extract data from row
+    var data = {
+        designator: cells.eq(0).text(),
+        name: cells.eq(1).text(),
+        location_label: cells.eq(2).text(),
+        level_label: cells.eq(3).text(),
+        width_val: cells.eq(4).text(),
+        height_val: cells.eq(5).text(),
+        united_inches_val: cells.eq(6).text(),
+        area_val: cells.eq(7).text()
+    };
+    
+    // Open appropriate modal with data
+    if (category === 'windows') {
+        openWindowModal(data);
+    } else if (category === 'doors') {
+        openDoorModal(data);
+    }
+    
+    // Mark row for deletion when new data is saved
+    row.attr('data-to-delete', 'true');
+}
+
+// Remove table row
+function removeTableRow(rowId) {
+    if (confirm('Are you sure you want to remove this item?')) {
+        $('#' + rowId).remove();
+    }
+}
+
+// Open window modal with data
+function openWindowModal(data) {
+    $('#window-form')[0].reset();
+    $('#windowModal .modal-title').text('Edit Window');
+    
+    // Populate form with data
+    if (data) {
+        $('input[name="designator"]').val(data.designator || '');
+        $('input[name="name"]').val(data.name || '');
+        $('select[name="location_label"]').val(data.location_label || '');
+        $('select[name="level_label"]').val(data.level_label || '');
+        $('input[name="width_val"]').val(data.width_val || '');
+        $('input[name="height_val"]').val(data.height_val || '');
+        $('input[name="united_inches_val"]').val(data.united_inches_val || '');
+        $('input[name="area_val"]').val(data.area_val || '');
+    }
+    
+    $('#windowModal').modal('show');
+}
+
+// Open door modal with data
+function openDoorModal(data) {
+    $('#door-form')[0].reset();
+    $('#doorModal .modal-title').text('Edit Door');
+    
+    // Populate form with data
+    if (data) {
+        $('input[name="designator"]').val(data.designator || '');
+        $('input[name="name"]').val(data.name || '');
+        $('select[name="location_label"]').val(data.location_label || '');
+        $('select[name="level_label"]').val(data.level_label || '');
+        $('input[name="width_val"]').val(data.width_val || '');
+        $('input[name="height_val"]').val(data.height_val || '');
+        $('input[name="united_inches_val"]').val(data.united_inches_val || '');
+        $('input[name="area_val"]').val(data.area_val || '');
+    }
+    
+    $('#doorModal').modal('show');
+}
+
+// Update windows table row
+function updateWindowsTableRow(row, data) {
+    var cells = row.find('td');
+    cells.eq(0).text(data.designator || '');
+    cells.eq(1).text(data.name || '');
+    cells.eq(2).text(data.location_label || '');
+    cells.eq(3).text(data.level_label || '');
+    cells.eq(4).text(data.width_val || '');
+    cells.eq(5).text(data.height_val || '');
+    cells.eq(6).text(data.united_inches_val || '');
+    cells.eq(7).text(data.area_val || '');
+}
+
+// Update doors table row
+function updateDoorsTableRow(row, data) {
+    var cells = row.find('td');
+    cells.eq(0).text(data.designator || '');
+    cells.eq(1).text(data.name || '');
+    cells.eq(2).text(data.location_label || '');
+    cells.eq(3).text(data.level_label || '');
+    cells.eq(4).text(data.width_val || '');
+    cells.eq(5).text(data.height_val || '');
+    cells.eq(6).text(data.united_inches_val || '');
+    cells.eq(7).text(data.area_val || '');
 }
 
 // Tab handling
@@ -1029,23 +1245,22 @@ $(document).on('submit', '#window-form', function(e) {
     data.area_unit = 'sqft';
     data.ui_unit = 'in';
     
-    // Show loading indicator
-    var submitBtn = $(this).find('button[type="submit"]');
-    var originalText = submitBtn.text();
-    submitBtn.prop('disabled', true).text('Saving...');
+    // Check if we're editing an existing row
+    var editingRow = $('tr[data-to-delete="true"]');
+    if (editingRow.length > 0) {
+        // Update existing row
+        updateWindowsTableRow(editingRow, data);
+        editingRow.removeAttr('data-to-delete');
+        alert_float('success', 'Window updated!');
+    } else {
+        // Add new row
+        addToWindowsTable(data);
+        alert_float('success', 'Window added to measurement!');
+    }
     
-    // Save via AJAX
-    saveWindowDoorAjax(data, function(success, response) {
-        submitBtn.prop('disabled', false).text(originalText);
-        
-        if (success) {
-            alert_float('success', 'Window saved successfully!');
-            $('#windowModal').modal('hide');
-            loadMeasurements(); // Reload measurements list
-        } else {
-            alert_float('danger', 'Error saving window: ' + (response.message || 'Unknown error'));
-        }
-    });
+    // Close modal and reset form
+    $('#windowModal').modal('hide');
+    $(this)[0].reset();
 });
 
 // Door form submission
@@ -1073,23 +1288,22 @@ $(document).on('submit', '#door-form', function(e) {
     data.area_unit = 'sqft';
     data.ui_unit = 'in';
     
-    // Show loading indicator
-    var submitBtn = $(this).find('button[type="submit"]');
-    var originalText = submitBtn.text();
-    submitBtn.prop('disabled', true).text('Saving...');
+    // Check if we're editing an existing row
+    var editingRow = $('tr[data-to-delete="true"]');
+    if (editingRow.length > 0) {
+        // Update existing row
+        updateDoorsTableRow(editingRow, data);
+        editingRow.removeAttr('data-to-delete');
+        alert_float('success', 'Door updated!');
+    } else {
+        // Add new row
+        addToDoorsTable(data);
+        alert_float('success', 'Door added to measurement!');
+    }
     
-    // Save via AJAX
-    saveWindowDoorAjax(data, function(success, response) {
-        submitBtn.prop('disabled', false).text(originalText);
-        
-        if (success) {
-            alert_float('success', 'Door saved successfully!');
-            $('#doorModal').modal('hide');
-            loadMeasurements(); // Reload measurements list
-        } else {
-            alert_float('danger', 'Error saving door: ' + (response.message || 'Unknown error'));
-        }
-    });
+    // Close modal and reset form
+    $('#doorModal').modal('hide');
+    $(this)[0].reset();
 });
 
 // AJAX save functionality for windows and doors
