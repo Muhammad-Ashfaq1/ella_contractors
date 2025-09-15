@@ -695,12 +695,13 @@ function populateMeasurementForm(data) {
     if (data.attributes_json) {
         try {
             var attributes = JSON.parse(data.attributes_json);
+            
+            // Display windows and doors data in their respective tables
+            displayExistingWindowsDoorsData(attributes);
+            
+            // Handle siding and roofing data
             Object.keys(attributes).forEach(function(category) {
-                if (category === 'windows' || category === 'doors') {
-                    // Handle windows and doors data
-                    populateWindowsDoorsTables(category, attributes[category]);
-                } else {
-                    // Handle siding and roofing data
+                if (category !== 'windows' && category !== 'doors') {
                     Object.keys(attributes[category]).forEach(function(field) {
                         $('input[name="' + category + '[' + field + ']"]').val(attributes[category][field]);
                     });
@@ -724,6 +725,29 @@ function populateWindowsDoorsTables(category, data) {
             } else if (category === 'doors') {
                 addToDoorsTable(item);
             }
+        });
+    }
+}
+
+// Display existing windows and doors data in the measurement modal
+function displayExistingWindowsDoorsData(attributes) {
+    // Clear existing data first
+    $('#windows-tbody').html('');
+    $('#doors-tbody').html('');
+    
+    if (attributes.windows && Array.isArray(attributes.windows)) {
+        attributes.windows.forEach(function(window, index) {
+            // Add rowId to track existing data
+            window.rowId = 'existing_window_' + index;
+            addToWindowsTable(window, true);
+        });
+    }
+    
+    if (attributes.doors && Array.isArray(attributes.doors)) {
+        attributes.doors.forEach(function(door, index) {
+            // Add rowId to track existing data
+            door.rowId = 'existing_door_' + index;
+            addToDoorsTable(door, true);
         });
     }
 }
@@ -831,9 +855,9 @@ function collectTableData(category) {
 }
 
 // Add window to windows table
-function addToWindowsTable(data) {
+function addToWindowsTable(data, isExisting = false) {
     var tbody = $('#windows-tbody');
-    var rowId = 'window_' + Date.now(); // Unique ID for the row
+    var rowId = isExisting ? (data.rowId || 'window_' + Date.now()) : 'window_' + Date.now();
     
     var row = '<tr id="' + rowId + '">';
     row += '<td>' + (data.designator || '') + '</td>';
@@ -854,9 +878,9 @@ function addToWindowsTable(data) {
 }
 
 // Add door to doors table
-function addToDoorsTable(data) {
+function addToDoorsTable(data, isExisting = false) {
     var tbody = $('#doors-tbody');
-    var rowId = 'door_' + Date.now(); // Unique ID for the row
+    var rowId = isExisting ? (data.rowId || 'door_' + Date.now()) : 'door_' + Date.now();
     
     var row = '<tr id="' + rowId + '">';
     row += '<td>' + (data.designator || '') + '</td>';
@@ -991,8 +1015,8 @@ $('#category-tabs a[data-toggle="tab"]').on('click', function(e) {
     $('#category-tabs li').removeClass('active');
     $(this).parent().addClass('active');
 
-    // Load dynamic data for windows and doors tabs
-    if (category === 'windows' || category === 'doors') {
+    // Only load dynamic data for windows and doors tabs if we're not editing an existing measurement
+    if ((category === 'windows' || category === 'doors') && !$('#measurement_id').val()) {
         loadMeasurementsByCategory(category);
     }
 });
