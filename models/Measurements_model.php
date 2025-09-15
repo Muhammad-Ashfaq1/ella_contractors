@@ -44,7 +44,7 @@ class Measurements_model extends App_Model
 	public function create($data)
 	{
 		$fillable = [
-			'category','rel_type','rel_id','designator','name','location_label','level_label',
+			'category','rel_type','rel_id','appointment_id','designator','name','location_label','level_label',
 			'quantity','width_val','height_val','length_val','area_val','united_inches_val',
 			'length_unit','area_unit','ui_unit','attributes_json','notes','status_code','sort_order',
 			'intCreatedByCode','intAlteredByCode','intRecordStatusCode','intBranchCode','intCompanyCode'
@@ -63,7 +63,7 @@ class Measurements_model extends App_Model
 	public function update($id, $data)
 	{
 		$fillable = [
-			'category','rel_type','rel_id','designator','name','location_label','level_label',
+			'category','rel_type','rel_id','appointment_id','designator','name','location_label','level_label',
 			'quantity','width_val','height_val','length_val','area_val','united_inches_val',
 			'length_unit','area_unit','ui_unit','attributes_json','notes','status_code','sort_order',
 			'intAlteredByCode','intRecordStatusCode','intBranchCode','intCompanyCode'
@@ -95,8 +95,15 @@ class Measurements_model extends App_Model
 		$this->db->from($this->table);
 		$this->db->join(db_prefix() . 'leads l', 'l.id = ' . $this->table . '.rel_id AND ' . $this->table . '.rel_type = "lead"', 'left');
 		$this->db->join(db_prefix() . 'clients c', 'c.userid = ' . $this->table . '.rel_id AND ' . $this->table . '.rel_type = "customer"', 'left');
-		$this->db->where($this->table . '.rel_type', $rel_type);
-		$this->db->where($this->table . '.rel_id', $rel_id);
+		
+		// Handle appointment-specific measurements
+		if ($rel_type === 'appointment') {
+			$this->db->where($this->table . '.appointment_id', $rel_id);
+		} else {
+			$this->db->where($this->table . '.rel_type', $rel_type);
+			$this->db->where($this->table . '.rel_id', $rel_id);
+		}
+		
 		$this->db->order_by($this->table . '.category ASC, ' . $this->table . '.sort_order ASC, ' . $this->table . '.id ASC');
 		return $this->db->get()->result_array();
 	}

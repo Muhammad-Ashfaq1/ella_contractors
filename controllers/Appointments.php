@@ -455,6 +455,7 @@ class Appointments extends AdminController
         // Set appointment relationship
         $post['rel_type'] = 'appointment';
         $post['rel_id'] = $appointment_id;
+        $post['appointment_id'] = $appointment_id;
 
         // Handle category-specific attributes (same as original measurements controller)
         $categorySpecificData = [];
