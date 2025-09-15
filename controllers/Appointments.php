@@ -402,6 +402,7 @@ class Appointments extends AdminController
      */
     public function get_measurements($appointment_id)
     {
+        log_message('debug', 'Getting measurements for appointment: ' . $appointment_id);
         if (!has_permission('ella_contractors', '', 'view')) {
             ajax_access_denied();
         }
