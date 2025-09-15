@@ -251,8 +251,9 @@ function ella_contractors_activate_module() {
         $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractors_measurements` (
             `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             `category` ENUM(\'windows\',\'doors\',\'roofing\',\'siding\',\'other\') NOT NULL DEFAULT \'other\',
-            `rel_type` ENUM(\'customer\',\'lead\',\'project\',\'other\') NOT NULL DEFAULT \'customer\',
+            `rel_type` ENUM(\'customer\',\'lead\',\'project\',\'appointment\',\'other\') NOT NULL DEFAULT \'customer\',
             `rel_id` BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            `appointment_id` BIGINT UNSIGNED NULL DEFAULT NULL,
             `designator` VARCHAR(64) NULL,
             `name` VARCHAR(191) NOT NULL,
             `location_label` VARCHAR(128) NULL,
@@ -279,9 +280,19 @@ function ella_contractors_activate_module() {
             `intCompanyCode` INT NULL,
             PRIMARY KEY (`id`),
             KEY `idx_cat_rel` (`category`,`rel_type`,`rel_id`),
+            KEY `idx_appointment` (`appointment_id`),
             KEY `idx_location_level` (`location_label`,`level_label`),
             KEY `idx_created` (`dtmCreated`)
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+    } else {
+        // Check if appointment_id column exists, if not add it
+        if (!$CI->db->field_exists('appointment_id', db_prefix() . 'ella_contractors_measurements')) {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractors_measurements` ADD COLUMN `appointment_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_id`');
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractors_measurements` ADD KEY `idx_appointment` (`appointment_id`)');
+        }
+        
+        // Check if 'appointment' is in rel_type enum, if not add it
+        $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractors_measurements` MODIFY COLUMN `rel_type` ENUM(\'customer\',\'lead\',\'project\',\'appointment\',\'other\') NOT NULL DEFAULT \'customer\'');
     }
     
     // Create upload directories
