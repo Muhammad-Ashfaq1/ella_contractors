@@ -525,6 +525,14 @@ var appointmentId = <?php echo $appointment['id']; ?>;
 $(document).ready(function() {
     // Load measurements when page loads
     loadMeasurements();
+    
+    // Reload measurements when measurement modal is closed
+    $('#measurementModal').on('hidden.bs.modal', function() {
+        // Small delay to ensure any pending operations complete
+        setTimeout(function() {
+            loadMeasurements();
+        }, 100);
+    });
 });
 
 // Global functions for modal operations
@@ -634,6 +642,12 @@ function openMeasurementModal(measurementId = null) {
     $('#measurement_id').val('');
     $('#measurementModalLabel').text('Add Measurement');
     $('#selected-category').val('siding');
+    
+    // Clear windows and doors tables for new measurements
+    if (!measurementId) {
+        $('#windows-tbody').html('');
+        $('#doors-tbody').html('');
+    }
     
     if (measurementId) {
         // Load measurement data for editing
