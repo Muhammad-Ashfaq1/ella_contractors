@@ -153,6 +153,365 @@
                 </div>
             </div>
         </div>
+
+        <!-- Tabs Section -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <!-- Nav tabs -->
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active">
+                                <a href="#measurements-tab" aria-controls="measurements-tab" role="tab" data-toggle="tab">
+                                    <i class="fa fa-square-o"></i> Measurements
+                                </a>
+                            </li>
+                            <li role="presentation">
+                                <a href="#estimates-tab" aria-controls="estimates-tab" role="tab" data-toggle="tab">
+                                    <i class="fa fa-file-text-o"></i> Estimates
+                                    <span class="label label-info" style="display: none;" id="estimates-count">0</span>
+                                </a>
+                            </li>
+                        </ul>
+
+                        <!-- Tab panes -->
+                        <div class="tab-content">
+                            <!-- Measurements Tab -->
+                            <div role="tabpanel" class="tab-pane active" id="measurements-tab">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="pull-right">
+                                            <button type="button" class="btn btn-info btn-sm" onclick="openMeasurementModal()">
+                                                <i class="fa fa-plus"></i> Add Measurement
+                                            </button>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                        <hr class="hr-panel-heading" />
+                                        
+                                        <div id="measurements-container">
+                                            <!-- Measurements will be loaded here via AJAX -->
+                                            <div class="text-center">
+                                                <i class="fa fa-spinner fa-spin fa-2x"></i>
+                                                <p>Loading measurements...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Estimates Tab -->
+                            <div role="tabpanel" class="tab-pane" id="estimates-tab">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="text-center text-muted">
+                                            <i class="fa fa-file-text-o fa-3x"></i>
+                                            <h4>Estimates</h4>
+                                            <p>Estimates functionality will be added here in the next phase.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Measurement Modal -->
+<div class="modal fade" id="measurementModal" tabindex="-1" role="dialog" aria-labelledby="measurementModalLabel">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="measurementModalLabel">Add Measurement</h4>
+            </div>
+            <form id="measurementForm" method="post" action="javascript:void(0);" onsubmit="return false;">
+                <div class="modal-body">
+                    <input type="hidden" id="measurement_id" name="id" value="">
+                    <input type="hidden" name="rel_type" value="appointment">
+                    <input type="hidden" name="rel_id" value="<?php echo $appointment['id']; ?>">
+                    
+                    <!-- Tab Navigation -->
+                    <ul class="nav nav-tabs mb-3" id="category-tabs">
+                        <li class="active">
+                            <a href="#siding-tab" data-toggle="tab" data-category="siding">Siding</a>
+                        </li>
+                        <li>
+                            <a href="#roofing-tab" data-toggle="tab" data-category="roofing">Roofing</a>
+                        </li>
+                        <li>
+                            <a href="#windows-tab" data-toggle="tab" data-category="windows">Windows</a>
+                        </li>
+                        <li>
+                            <a href="#doors-tab" data-toggle="tab" data-category="doors">Doors</a>
+                        </li>
+                    </ul>
+                    <input type="hidden" name="category" id="selected-category" value="siding">
+                    
+                    <div class="tab-content">
+                        <!-- Siding Tab -->
+                        <div class="tab-pane active" id="siding-tab">
+                            <?php $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'siding', 'row' => null]); ?>
+                        </div>
+
+                        <!-- Roofing Tab -->
+                        <div class="tab-pane" id="roofing-tab">
+                            <?php $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'roofing', 'row' => null]); ?>
+                        </div>
+
+                        <!-- Windows Tab -->
+                        <div class="tab-pane" id="windows-tab">
+                            <?php $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'windows', 'row' => null]); ?>
+                        </div>
+
+                        <!-- Doors Tab -->
+                        <div class="tab-pane" id="doors-tab">
+                            <?php $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'doors', 'row' => null]); ?>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveMeasurement">Save Measurement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Window Modal -->
+<div class="modal fade" id="windowModal" tabindex="-1" role="dialog" aria-labelledby="windowModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="windowModalLabel">Add New Window</h4>
+            </div>
+            <form id="window-form" method="post">
+                <input type="hidden" name="id" value="">
+                <input type="hidden" name="rel_type" value="appointment">
+                <input type="hidden" name="rel_id" value="<?php echo $appointment['id']; ?>">
+                <input type="hidden" name="category" value="windows">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>TYPE</label>
+                                <button type="button" class="btn btn-info btn-block">Window</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>NAME <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>DESIGNATOR</label>
+                                <input type="text" name="designator" class="form-control" placeholder="e.g., W1, W2">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>LOCATION</label>
+                                <select name="location_label" class="form-control">
+                                    <option value="">Select Location</option>
+                                    <?php for($i = 1; $i <= 10; $i++): ?>
+                                    <option value="Bedroom <?= $i; ?>">Bedroom <?= $i; ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>LEVEL</label>
+                                <select name="level_label" class="form-control">
+                                    <option value="">Select Level</option>
+                                    <?php for($i = 1; $i <= 10; $i++): ?>
+                                    <option value="<?= $i; ?>"><?= $i; ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>QUANTITY</label>
+                                <input type="number" name="quantity" class="form-control" value="1" min="1">
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <h5>Measurements</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>WIDTH (inches)</label>
+                                <input type="number" name="width_val" class="form-control" value="0" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>HEIGHT (inches)</label>
+                                <input type="number" name="height_val" class="form-control" value="0" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>UI: <span id="ui-display">0 in</span></label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Area: <span id="area-display">0 sqft</span></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>NOTES</label>
+                                <textarea name="notes" class="form-control" rows="2" placeholder="Additional notes"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fa fa-save"></i> Save Window
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Door Modal -->
+<div class="modal fade" id="doorModal" tabindex="-1" role="dialog" aria-labelledby="doorModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="doorModalLabel">Add New Door</h4>
+            </div>
+            <form id="door-form" method="post">
+                <input type="hidden" name="id" value="">
+                <input type="hidden" name="rel_type" value="appointment">
+                <input type="hidden" name="rel_id" value="<?php echo $appointment['id']; ?>">
+                <input type="hidden" name="category" value="doors">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>TYPE</label>
+                                <button type="button" class="btn btn-info btn-block">Door</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>NAME <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>DESIGNATOR</label>
+                                <input type="text" name="designator" class="form-control" placeholder="e.g., D1, D2">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>LOCATION</label>
+                                <select name="location_label" class="form-control">
+                                    <option value="">Select Location</option>
+                                    <?php for($i = 1; $i <= 10; $i++): ?>
+                                    <option value="Bedroom <?= $i; ?>">Bedroom <?= $i; ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>LEVEL</label>
+                                <select name="level_label" class="form-control">
+                                    <option value="">Select Level</option>
+                                    <?php for($i = 1; $i <= 10; $i++): ?>
+                                    <option value="<?= $i; ?>"><?= $i; ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>QUANTITY</label>
+                                <input type="number" name="quantity" class="form-control" value="1" min="1">
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <h5>Measurements</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>WIDTH (inches)</label>
+                                <input type="number" name="width_val" class="form-control" value="0" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>HEIGHT (inches)</label>
+                                <input type="number" name="height_val" class="form-control" value="0" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>UI: <span id="door-ui-display">0 in</span></label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Area: <span id="door-area-display">0 sqft</span></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>NOTES</label>
+                                <textarea name="notes" class="form-control" rows="2" placeholder="Additional notes"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fa fa-save"></i> Save Door
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -161,6 +520,12 @@
 <script>
 var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
 var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
+var appointmentId = <?php echo $appointment['id']; ?>;
+
+$(document).ready(function() {
+    // Load measurements when page loads
+    loadMeasurements();
+});
 
 // Global functions for modal operations
 function editAppointment(appointmentId) {
@@ -191,5 +556,577 @@ function deleteAppointment(appointmentId) {
             }
         });
     }
+}
+
+// Measurements Functions
+function loadMeasurements() {
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_measurements/' + appointmentId,
+        type: 'GET',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                displayMeasurements(response.data);
+            } else {
+                $('#measurements-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No measurements found for this appointment.</p></div>');
+            }
+        },
+        error: function() {
+            $('#measurements-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading measurements.</p></div>');
+        }
+    });
+}
+
+function displayMeasurements(measurements) {
+    if (measurements.length === 0) {
+        $('#measurements-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No measurements found for this appointment.</p></div>');
+        return;
+    }
+
+    var html = '<div class="table-responsive"><table class="table table-striped table-hover">';
+    html += '<thead><tr>';
+    html += '<th>Category</th>';
+    html += '<th>Name</th>';
+    html += '<th>Designator</th>';
+    html += '<th>Dimensions</th>';
+    html += '<th>Area</th>';
+    html += '<th>Quantity</th>';
+    html += '<th>Location</th>';
+    html += '<th width="120px">Actions</th>';
+    html += '</tr></thead><tbody>';
+
+    measurements.forEach(function(measurement) {
+        var dimensions = '';
+        if (measurement.width_val && measurement.height_val) {
+            dimensions = measurement.width_val + '" × ' + measurement.height_val + '"';
+        }
+        
+        var area = '';
+        if (measurement.area_val) {
+            area = parseFloat(measurement.area_val).toFixed(2) + ' sq ft';
+        }
+
+        html += '<tr>';
+        html += '<td><span class="label label-info">' + measurement.category.toUpperCase() + '</span></td>';
+        html += '<td>' + measurement.name + '</td>';
+        html += '<td>' + (measurement.designator || '-') + '</td>';
+        html += '<td>' + dimensions + '</td>';
+        html += '<td>' + area + '</td>';
+        html += '<td>' + measurement.quantity + '</td>';
+        html += '<td>' + (measurement.location_label || '-') + '</td>';
+        html += '<td>';
+        html += '<button class="btn btn-default btn-xs" onclick="editMeasurement(' + measurement.id + ')" title="Edit"><i class="fa fa-edit"></i></button> ';
+        html += '<button class="btn btn-danger btn-xs" onclick="deleteMeasurement(' + measurement.id + ')" title="Delete"><i class="fa fa-trash"></i></button>';
+        html += '</td>';
+        html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    $('#measurements-container').html(html);
+}
+
+function openMeasurementModal(measurementId = null) {
+    // Reset form
+    $('#measurementForm')[0].reset();
+    $('#measurement_id').val('');
+    $('#measurementModalLabel').text('Add Measurement');
+    $('#selected-category').val('siding');
+    
+    if (measurementId) {
+        // Load measurement data for editing
+        loadMeasurementData(measurementId);
+    }
+    
+    $('#measurementModal').modal('show');
+}
+
+function loadMeasurementData(measurementId) {
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_measurement/' + appointmentId + '/' + measurementId,
+        type: 'GET',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                var data = response.data;
+                
+                // Populate form fields
+                $('#measurement_id').val(data.id);
+                $('#selected-category').val(data.category);
+                
+                // Switch to the appropriate tab
+                $('#category-tabs a[data-category="' + data.category + '"]').click();
+                
+                // Load the measurement data into the form
+                setTimeout(function() {
+                    populateMeasurementForm(data);
+                }, 100);
+                
+                $('#measurementModalLabel').text('Edit Measurement');
+            } else {
+                alert_float('danger', response.message);
+            }
+        },
+        error: function() {
+            alert_float('danger', 'Error loading measurement data');
+        }
+    });
+}
+
+function populateMeasurementForm(data) {
+    // Populate basic fields if they exist
+    if (data.designator) $('input[name="designator"]').val(data.designator);
+    if (data.name) $('input[name="name"]').val(data.name);
+    if (data.location_label) $('select[name="location_label"]').val(data.location_label);
+    if (data.level_label) $('select[name="level_label"]').val(data.level_label);
+    if (data.width_val) $('input[name="width_val"]').val(data.width_val);
+    if (data.height_val) $('input[name="height_val"]').val(data.height_val);
+    if (data.quantity) $('input[name="quantity"]').val(data.quantity);
+    if (data.united_inches_val) $('input[name="united_inches_val"]').val(data.united_inches_val);
+    if (data.area_val) $('input[name="area_val"]').val(data.area_val);
+    if (data.notes) $('input[name="notes"]').val(data.notes);
+    
+    // Populate category-specific attributes
+    if (data.attributes_json) {
+        try {
+            var attributes = JSON.parse(data.attributes_json);
+            Object.keys(attributes).forEach(function(category) {
+                Object.keys(attributes[category]).forEach(function(field) {
+                    $('input[name="' + category + '[' + field + ']"]').val(attributes[category][field]);
+                });
+            });
+        } catch (e) {
+            console.error('Error parsing attributes:', e);
+        }
+    }
+}
+
+function editMeasurement(measurementId) {
+    openMeasurementModal(measurementId);
+}
+
+function deleteMeasurement(measurementId) {
+    if (confirm('Are you sure you want to delete this measurement?')) {
+        $.ajax({
+            url: admin_url + 'ella_contractors/appointments/delete_measurement/' + appointmentId + '/' + measurementId,
+            type: 'POST',
+            data: {
+                [csrf_token_name]: csrf_hash
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    loadMeasurements(); // Reload measurements
+                } else {
+                    alert_float('danger', response.message);
+                }
+            },
+            error: function() {
+                alert_float('danger', 'Error deleting measurement');
+            }
+        });
+    }
+}
+
+// Collect all tabs data function (from original measurements form)
+function collectAllTabsData() {
+    var allData = {};
+    
+    // Collect data from each category tab
+    ['siding', 'roofing', 'windows', 'doors'].forEach(function(category) {
+        var categoryData = {};
+        
+        // Get all inputs for this category
+        $('input[name^="' + category + '["]').each(function() {
+            var name = $(this).attr('name');
+            var value = $(this).val();
+            if (value !== '' && value !== null && value !== undefined) {
+                // Extract field name from name attribute like "siding[siding_total_area]"
+                var fieldName = name.match(/\[([^\]]+)\]/)[1];
+                categoryData[fieldName] = value;
+            }
+        });
+        
+        if (Object.keys(categoryData).length > 0) {
+            allData[category] = categoryData;
+        }
+    });
+    
+    return allData;
+}
+
+// Tab handling
+$('#category-tabs a[data-toggle="tab"]').on('click', function(e) {
+    e.preventDefault();
+    var category = $(this).data('category');
+    $('#selected-category').val(category);
+
+    // Show the corresponding tab content
+    $('.tab-pane').removeClass('active');
+    $('#' + category + '-tab').addClass('active');
+
+    // Update active tab
+    $('#category-tabs li').removeClass('active');
+    $(this).parent().addClass('active');
+
+    // Load dynamic data for windows and doors tabs
+    if (category === 'windows' || category === 'doors') {
+        loadMeasurementsByCategory(category);
+    }
+});
+
+// Load measurements by category for windows and doors
+function loadMeasurementsByCategory(category) {
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_measurements/' + appointmentId,
+        type: 'GET',
+        data: {
+            [csrf_token_name]: csrf_hash,
+            category: category
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response && response.success && response.data) {
+                populateMeasurementsTable(category, response.data);
+            } else {
+                // Clear the table if no data
+                $('#' + category + '-tbody').html('');
+            }
+        },
+        error: function() {
+            console.error('Error loading ' + category + ' measurements');
+        }
+    });
+}
+
+// Populate measurements table for windows and doors
+function populateMeasurementsTable(category, measurements) {
+    var tbody = $('#' + category + '-tbody');
+    tbody.html('');
+    
+    measurements.forEach(function(measurement) {
+        if (measurement.category === category) {
+            var row = '<tr>';
+            row += '<td>' + (measurement.designator || '') + '</td>';
+            row += '<td>' + (measurement.name || '') + '</td>';
+            row += '<td>' + (measurement.location_label || '') + '</td>';
+            row += '<td>' + (measurement.level_label || '') + '</td>';
+            row += '<td>' + (measurement.width_val || '') + '</td>';
+            row += '<td>' + (measurement.height_val || '') + '</td>';
+            row += '<td>' + (measurement.united_inches_val || '') + '</td>';
+            row += '<td>' + (measurement.area_val || '') + '</td>';
+            row += '<td>';
+            row += '<button class="btn btn-default btn-xs" onclick="editMeasurement(' + measurement.id + ')" title="Edit"><i class="fa fa-edit"></i></button> ';
+            row += '<button class="btn btn-danger btn-xs" onclick="deleteMeasurement(' + measurement.id + ')" title="Delete"><i class="fa fa-trash"></i></button>';
+            row += '</td>';
+            row += '</tr>';
+            tbody.append(row);
+        }
+    });
+}
+
+// Auto-calculate UI and Area when width/height change
+function calculateMeasurements() {
+    var width = parseFloat($('input[name="width_val"]').val()) || 0;
+    var height = parseFloat($('input[name="height_val"]').val()) || 0;
+    var lengthUnit = $('input[name="length_unit"]').val() || 'in';
+    var areaUnit = $('input[name="area_unit"]').val() || 'sqft';
+
+    if (width > 0 && height > 0) {
+        // Calculate United Inches (width + height)
+        $('input[name="united_inches_val"]').val((width + height).toFixed(2));
+
+        // Calculate Area (convert to sqft if inches)
+        if (lengthUnit === 'in' && areaUnit === 'sqft') {
+            var area = (width * height) / 144.0;
+            $('input[name="area_val"]').val(area.toFixed(4));
+        }
+    }
+}
+
+// Bind calculation to width/height inputs
+$(document).on('input change', 'input[name="width_val"], input[name="height_val"], input[name="length_unit"], input[name="area_unit"]', calculateMeasurements);
+
+// Save measurement using original measurements system
+$('#saveMeasurement').on('click', function() {
+    var formData = $('#measurementForm').serializeArray();
+    var data = {};
+    
+    // Convert form data to object
+    $.each(formData, function(i, field) {
+        data[field.name] = field.value;
+    });
+    
+    // Collect data from all tabs (roofing, siding, windows, doors)
+    var allTabsData = collectAllTabsData();
+    
+    // Merge all data
+    $.extend(data, allTabsData);
+    
+    // Set category to 'combined' since we're saving all tabs
+    data.category = 'combined';
+    
+    // Validation
+    if (Object.keys(allTabsData).length === 0) {
+        alert('Please enter at least one measurement in any category before saving.');
+        return false;
+    }
+    
+    // Show loading indicator
+    var submitBtn = $(this);
+    var originalText = submitBtn.text();
+    submitBtn.prop('disabled', true).text('Saving...');
+    
+    // Save via AJAX using appointments controller
+    saveMeasurementAjax(data, function(success, response) {
+        // Reset button
+        submitBtn.prop('disabled', false).text(originalText);
+        
+        if (success) {
+            alert_float('success', 'Measurement saved successfully!');
+            $('#measurementModal').modal('hide');
+            loadMeasurements(); // Reload measurements list
+        } else {
+            alert_float('danger', 'Error saving measurement: ' + (response.message || 'Unknown error'));
+        }
+    });
+});
+
+// AJAX save functionality for measurements
+function saveMeasurementAjax(formData, callback) {
+    // Get CSRF token
+    var csrfData = <?php echo json_encode(get_csrf_for_ajax()); ?>;
+    
+    // Add CSRF token to form data
+    formData[csrfData.token_name] = csrfData.hash;
+    
+    // Debug logging
+    console.log('Sending AJAX request with data:', formData);
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/save_measurement/' + appointmentId,
+        type: 'POST',
+        data: formData,
+        dataType: 'json',
+        success: function(response) {
+            console.log('AJAX Response:', response);
+            if (response.success) {
+                if (typeof callback === 'function') {
+                    callback(true, response);
+                }
+            } else {
+                if (typeof callback === 'function') {
+                    callback(false, response);
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            console.error('Response Text:', xhr.responseText);
+            if (typeof callback === 'function') {
+                callback(false, {error: error, responseText: xhr.responseText});
+            }
+        }
+    });
+}
+
+// Window Modal Functions
+$(document).on('click', '#js-add-window', function(e) {
+    e.preventDefault();
+    console.log('Window modal button clicked');
+    
+    // Reset form and title
+    $('#window-form')[0].reset();
+    $('#windowModal .modal-title').text('Add New Window');
+    $('#ui-display').text('0 in');
+    $('#area-display').text('0 sqft');
+    
+    $('#windowModal').modal({
+        backdrop: 'static',
+        keyboard: false
+    }).modal('show');
+});
+
+// Door Modal Functions
+$(document).on('click', '[data-target="#doorModal"]', function(e) {
+    e.preventDefault();
+    console.log('Door modal button clicked');
+    
+    // Reset form and title
+    $('#door-form')[0].reset();
+    $('#doorModal .modal-title').text('Add New Door');
+    $('#door-ui-display').text('0 in');
+    $('#door-area-display').text('0 sqft');
+    
+    $('#doorModal').modal({
+        backdrop: 'static',
+        keyboard: false
+    }).modal('show');
+});
+
+// Window form calculations
+$(document).on('input change', 'input[name="width_val"], input[name="height_val"]', function() {
+    var width = parseFloat($('input[name="width_val"]').val()) || 0;
+    var height = parseFloat($('input[name="height_val"]').val()) || 0;
+    
+    if (width > 0 && height > 0) {
+        var ui = width + height;
+        var area = (width * height) / 144.0; // Convert to sqft
+        
+        $('#ui-display').text(ui.toFixed(2) + ' in');
+        $('#area-display').text(area.toFixed(2) + ' sqft');
+    } else {
+        $('#ui-display').text('0 in');
+        $('#area-display').text('0 sqft');
+    }
+});
+
+// Door form calculations
+$(document).on('input change', '#door-form input[name="width_val"], #door-form input[name="height_val"]', function() {
+    var width = parseFloat($('#door-form input[name="width_val"]').val()) || 0;
+    var height = parseFloat($('#door-form input[name="height_val"]').val()) || 0;
+    
+    if (width > 0 && height > 0) {
+        var ui = width + height;
+        var area = (width * height) / 144.0; // Convert to sqft
+        
+        $('#door-ui-display').text(ui.toFixed(2) + ' in');
+        $('#door-area-display').text(area.toFixed(2) + ' sqft');
+    } else {
+        $('#door-ui-display').text('0 in');
+        $('#door-area-display').text('0 sqft');
+    }
+});
+
+// Window form submission
+$(document).on('submit', '#window-form', function(e) {
+    e.preventDefault();
+    
+    var formData = $(this).serializeArray();
+    var data = {};
+    
+    // Convert form data to object
+    $.each(formData, function(i, field) {
+        data[field.name] = field.value;
+    });
+    
+    // Calculate UI and area if not set
+    var width = parseFloat(data.width_val) || 0;
+    var height = parseFloat(data.height_val) || 0;
+    if (width && height) {
+        data.united_inches_val = width + height;
+        data.area_val = (width * height) / 144.0;
+    }
+    
+    // Set default values
+    data.length_unit = 'in';
+    data.area_unit = 'sqft';
+    data.ui_unit = 'in';
+    
+    // Show loading indicator
+    var submitBtn = $(this).find('button[type="submit"]');
+    var originalText = submitBtn.text();
+    submitBtn.prop('disabled', true).text('Saving...');
+    
+    // Save via AJAX
+    saveWindowDoorAjax(data, function(success, response) {
+        submitBtn.prop('disabled', false).text(originalText);
+        
+        if (success) {
+            alert_float('success', 'Window saved successfully!');
+            $('#windowModal').modal('hide');
+            loadMeasurements(); // Reload measurements list
+        } else {
+            alert_float('danger', 'Error saving window: ' + (response.message || 'Unknown error'));
+        }
+    });
+});
+
+// Door form submission
+$(document).on('submit', '#door-form', function(e) {
+    e.preventDefault();
+    
+    var formData = $(this).serializeArray();
+    var data = {};
+    
+    // Convert form data to object
+    $.each(formData, function(i, field) {
+        data[field.name] = field.value;
+    });
+    
+    // Calculate UI and area if not set
+    var width = parseFloat(data.width_val) || 0;
+    var height = parseFloat(data.height_val) || 0;
+    if (width && height) {
+        data.united_inches_val = width + height;
+        data.area_val = (width * height) / 144.0;
+    }
+    
+    // Set default values
+    data.length_unit = 'in';
+    data.area_unit = 'sqft';
+    data.ui_unit = 'in';
+    
+    // Show loading indicator
+    var submitBtn = $(this).find('button[type="submit"]');
+    var originalText = submitBtn.text();
+    submitBtn.prop('disabled', true).text('Saving...');
+    
+    // Save via AJAX
+    saveWindowDoorAjax(data, function(success, response) {
+        submitBtn.prop('disabled', false).text(originalText);
+        
+        if (success) {
+            alert_float('success', 'Door saved successfully!');
+            $('#doorModal').modal('hide');
+            loadMeasurements(); // Reload measurements list
+        } else {
+            alert_float('danger', 'Error saving door: ' + (response.message || 'Unknown error'));
+        }
+    });
+});
+
+// AJAX save functionality for windows and doors
+function saveWindowDoorAjax(formData, callback) {
+    // Get CSRF token
+    var csrfData = <?php echo json_encode(get_csrf_for_ajax()); ?>;
+    
+    // Add CSRF token to form data
+    formData[csrfData.token_name] = csrfData.hash;
+    
+    // Debug logging
+    console.log('Sending AJAX request with data:', formData);
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/save_measurement/' + appointmentId,
+        type: 'POST',
+        data: formData,
+        dataType: 'json',
+        success: function(response) {
+            console.log('AJAX Response:', response);
+            if (response.success) {
+                if (typeof callback === 'function') {
+                    callback(true, response);
+                }
+            } else {
+                if (typeof callback === 'function') {
+                    callback(false, response);
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            console.error('Response Text:', xhr.responseText);
+            if (typeof callback === 'function') {
+                callback(false, {error: error, responseText: xhr.responseText});
+            }
+        }
+    });
 }
 </script>

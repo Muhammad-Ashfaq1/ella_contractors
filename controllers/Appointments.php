@@ -6,6 +6,7 @@ class Appointments extends AdminController
     {
         parent::__construct();
         $this->load->model('ella_contractors/Ella_appointments_model', 'appointments_model');
+        $this->load->model('ella_contractors/Measurements_model', 'measurements_model');
         $this->load->model('staff_model');
         $this->load->model('clients_model');
         $this->load->model('leads_model');
@@ -81,6 +82,9 @@ class Appointments extends AdminController
         $data['title'] = 'View Appointment';
         $data['appointment'] = (array) $appointment; // Convert object to array
         $data['attendees'] = $this->appointments_model->get_appointment_attendees($id);
+        
+        // Load measurements for this appointment
+        $data['measurements'] = $this->measurements_model->get_related_measurements('appointment', $id);
         
         $this->load->view('appointments/view', $data);
     }
@@ -391,5 +395,154 @@ class Appointments extends AdminController
                 $this->appointments_model->add_attendee($appointment_id, $staff_id);
             }
         }
+    }
+
+    /**
+     * Get measurements for appointment (AJAX)
+     */
+    public function get_measurements($appointment_id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $measurements = $this->measurements_model->get_related_measurements('appointment', $appointment_id);
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $measurements
+        ]);
+    }
+
+    /**
+     * Get single measurement for editing (AJAX)
+     */
+    public function get_measurement($appointment_id, $measurement_id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $measurement = $this->measurements_model->find($measurement_id);
+        
+        // Verify measurement belongs to this appointment
+        if (!$measurement || $measurement['rel_type'] != 'appointment' || $measurement['rel_id'] != $appointment_id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Measurement not found or access denied'
+            ]);
+            return;
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $measurement
+        ]);
+    }
+
+    /**
+     * Save measurement for appointment (AJAX) - Using original measurements system
+     */
+    public function save_measurement($appointment_id)
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            ajax_access_denied();
+        }
+
+        $post = $this->input->post(null, true);
+        $id = isset($post['id']) ? (int) $post['id'] : 0;
+
+        // Set appointment relationship
+        $post['rel_type'] = 'appointment';
+        $post['rel_id'] = $appointment_id;
+
+        // Handle category-specific attributes (same as original measurements controller)
+        $categorySpecificData = [];
+        $categories = ['siding', 'roofing', 'windows', 'doors'];
+        
+        foreach ($categories as $category) {
+            if (isset($post[$category]) && is_array($post[$category])) {
+                $categorySpecificData[$category] = $post[$category];
+                unset($post[$category]);
+            }
+        }
+
+        // Merge with existing attributes_json if editing
+        if ($id > 0) {
+            $existing = $this->measurements_model->find($id);
+            $existing_attributes = json_decode($existing['attributes_json'] ?? '{}', true);
+            $post['attributes_json'] = json_encode(array_merge($existing_attributes, $categorySpecificData));
+        } else {
+            $post['attributes_json'] = json_encode($categorySpecificData);
+        }
+
+        // Handle basic measurement fields if they exist
+        if (isset($post['width_val']) && isset($post['height_val'])) {
+            $width = (float) $post['width_val'];
+            $height = (float) $post['height_val'];
+            if ($width && $height) {
+                if (!isset($post['united_inches_val']) || $post['united_inches_val'] === '') {
+                    $post['united_inches_val'] = $width + $height;
+                }
+                if (!isset($post['area_val']) || $post['area_val'] === '') {
+                    $lenU = $post['length_unit'] ?? 'in';
+                    $areaU = $post['area_unit'] ?? 'sqft';
+                    if ($lenU === 'in' && $areaU === 'sqft') {
+                        $post['area_val'] = ($width * $height) / 144.0;
+                    }
+                }
+            }
+        }
+
+        // Set default values for required fields
+        $post['designator'] = $post['designator'] ?? '';
+        $post['name'] = $post['name'] ?? 'Unnamed ' . ucfirst($post['category'] ?? 'item');
+        $post['location_label'] = $post['location_label'] ?? '';
+        $post['level_label'] = $post['level_label'] ?? '';
+        $post['quantity'] = $post['quantity'] ?? 1;
+        $post['length_unit'] = $post['length_unit'] ?? 'in';
+        $post['area_unit'] = $post['area_unit'] ?? 'sqft';
+        $post['ui_unit'] = $post['ui_unit'] ?? 'in';
+
+        if ($id > 0) {
+            $ok = $this->measurements_model->update($id, $post);
+            $msg = $ok ? 'Measurement updated successfully' : 'Nothing changed';
+        } else {
+            $ok = (bool) $this->measurements_model->create($post);
+            $msg = $ok ? 'Measurement created successfully' : 'Failed to create measurement';
+        }
+
+        echo json_encode([
+            'success' => $ok,
+            'message' => $msg,
+            'data' => $ok ? $this->measurements_model->find($id ?: $this->db->insert_id()) : null
+        ]);
+    }
+
+    /**
+     * Delete measurement for appointment (AJAX)
+     */
+    public function delete_measurement($appointment_id, $measurement_id)
+    {
+        if (!has_permission('ella_contractors', '', 'delete')) {
+            ajax_access_denied();
+        }
+
+        // Verify measurement belongs to this appointment
+        $measurement = $this->measurements_model->find($measurement_id);
+        if (!$measurement || $measurement['rel_type'] != 'appointment' || $measurement['rel_id'] != $appointment_id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Measurement not found or access denied'
+            ]);
+            return;
+        }
+
+        $ok = $this->measurements_model->delete($measurement_id);
+        
+        echo json_encode([
+            'success' => $ok,
+            'message' => $ok ? 'Measurement deleted successfully' : 'Failed to delete measurement'
+        ]);
     }
 }
