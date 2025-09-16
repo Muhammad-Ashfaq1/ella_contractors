@@ -547,4 +547,252 @@ class Appointments extends AdminController
             'message' => $ok ? 'Measurement deleted successfully' : 'Failed to delete measurement'
         ]);
     }
+
+    // ==================== ESTIMATES MANAGEMENT ====================
+
+
+    /**
+     * Save estimate for appointment
+     */
+    public function save_estimate()
+    {
+        if (!has_permission('ella_contractors', '', 'create') && !has_permission('ella_contractors', '', 'edit')) {
+            access_denied('ella_contractors');
+        }
+
+        $this->load->model('ella_contractors/Ella_estimates_model', 'estimates_model');
+        $this->load->library('form_validation');
+        
+        $this->form_validation->set_rules('estimate_name', 'Estimate Name', 'required');
+        $this->form_validation->set_rules('status', 'Status', 'required');
+
+        if ($this->form_validation->run() == FALSE) {
+            echo json_encode([
+                'success' => false,
+                'message' => validation_errors()
+            ]);
+            return;
+        }
+
+            $data = [
+                'estimate_name' => $this->input->post('estimate_name'),
+                'description' => $this->input->post('description'),
+                // 'client_id' => $this->input->post('client_id') ?: null,  // Commented out for now
+                // 'lead_id' => $this->input->post('lead_id') ?: null,      // Commented out for now
+                'appointment_id' => $this->input->post('appointment_id'),
+                'status' => $this->input->post('status')
+            ];
+
+        $estimate_id = $this->input->post('estimate_id');
+        
+        try {
+            if ($estimate_id) {
+                // Update existing estimate
+                if ($this->estimates_model->update_estimate($estimate_id, $data)) {
+                    // Handle line items
+                    $this->handle_estimate_line_items($estimate_id);
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'Estimate updated successfully'
+                    ]);
+                } else {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Failed to update estimate'
+                    ]);
+                }
+            } else {
+                // Create new estimate
+                $estimate_id = $this->estimates_model->create_estimate($data);
+                if ($estimate_id) {
+                    // Handle line items
+                    $this->handle_estimate_line_items($estimate_id);
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'Estimate created successfully'
+                    ]);
+                } else {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Failed to create estimate'
+                    ]);
+                }
+            }
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Handle estimate line items
+     */
+    private function handle_estimate_line_items($estimate_id)
+    {
+        $line_items = $this->input->post('line_items');
+        
+        if ($line_items && is_array($line_items)) {
+            // Delete existing line items
+            $this->db->where('estimate_id', $estimate_id);
+            $this->db->delete(db_prefix() . 'ella_contractor_estimate_line_items');
+            
+            // Add new line items
+            foreach ($line_items as $item) {
+                if (!empty($item['line_item_id']) && !empty($item['quantity']) && !empty($item['unit_price'])) {
+                    $this->estimates_model->add_line_item_to_estimate(
+                        $estimate_id,
+                        $item['line_item_id'],
+                        $item['quantity'],
+                        $item['unit_price']
+                    );
+                }
+            }
+            
+            // Update estimate totals
+            $this->estimates_model->update_estimate_totals($estimate_id);
+        }
+    }
+
+    /**
+     * Get estimate data for AJAX
+     */
+    public function get_estimate_data($id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $this->load->model('ella_contractors/Ella_estimates_model', 'estimates_model');
+        
+        $estimate = (array) $this->estimates_model->get_estimate($id);
+        $estimate['line_items'] = $this->estimates_model->get_estimate_line_items($id);
+        
+        echo json_encode($estimate);
+    }
+
+    /**
+     * DataTable server-side processing for appointment estimates
+     */
+    public function estimates_table($appointment_id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $this->load->model('ella_contractors/Ella_estimates_model', 'estimates_model');
+        
+        // Get estimates for this appointment
+        $estimates = $this->estimates_model->get_estimates(null, null, null, $appointment_id);
+        
+        // Format data for DataTable
+        $data = [];
+        foreach ($estimates as $estimate) {
+            $statusClass = '';
+            switch($estimate['status']) {
+                case 'draft': $statusClass = 'label-warning'; break;
+                case 'sent': $statusClass = 'label-info'; break;
+                case 'accepted': $statusClass = 'label-success'; break;
+                case 'rejected': $statusClass = 'label-danger'; break;
+                case 'expired': $statusClass = 'label-default'; break;
+            }
+            
+            $data[] = [
+                'estimate_name' => $estimate['estimate_name'],
+                'status' => '<span class="label ' . $statusClass . '">' . strtoupper($estimate['status']) . '</span>',
+                'line_items_count' => $estimate['line_items_count'] ?: 0,
+                'total_quantity' => number_format($estimate['total_quantity'] ?: 0, 2),
+                'total_amount' => '$' . number_format($estimate['total_amount'] ?: 0, 2),
+                'created_by_name' => $estimate['created_by_name'] ?: '-',
+                'created_at' => _d($estimate['created_at']),
+                'updated_at' => _d($estimate['updated_at']),
+                'actions' => '<a href="' . admin_url('ella_contractors/appointments/estimates/' . $appointment_id . '?edit=' . $estimate['id']) . '" class="btn btn-default btn-xs" title="Edit"><i class="fa fa-edit"></i></a> ' .
+                           '<a href="' . admin_url('ella_contractors/appointments/delete_estimate/' . $appointment_id . '/' . $estimate['id']) . '" class="btn btn-danger btn-xs" title="Delete" onclick="return confirm(\'Are you sure?\')"><i class="fa fa-trash"></i></a>'
+            ];
+        }
+        
+        echo json_encode([
+            'data' => $data,
+            'recordsTotal' => count($data),
+            'recordsFiltered' => count($data)
+        ]);
+    }
+
+    /**
+     * Delete estimate for appointment
+     */
+    public function delete_estimate($appointment_id, $estimate_id)
+    {
+        if (!has_permission('ella_contractors', '', 'delete')) {
+            ajax_access_denied();
+        }
+
+        $this->load->model('ella_contractors/Ella_estimates_model', 'estimates_model');
+        
+        // Verify estimate belongs to this appointment
+        $estimate = $this->estimates_model->get_estimate($estimate_id);
+        if (!$estimate || $estimate->appointment_id != $appointment_id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Estimate not found or access denied'
+            ]);
+            return;
+        }
+
+        if ($this->estimates_model->delete_estimate($estimate_id)) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Estimate deleted successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to delete estimate'
+            ]);
+        }
+    }
+
+    /**
+     * Remove line item from estimate
+     */
+    public function remove_estimate_line_item($id)
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            ajax_access_denied();
+        }
+
+        $this->load->model('ella_contractors/Ella_estimates_model', 'estimates_model');
+        
+        if ($this->estimates_model->remove_line_item_from_estimate($id)) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Line item removed successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to remove line item'
+            ]);
+        }
+    }
+
+    /**
+     * Get estimates for appointment (AJAX)
+     */
+    public function get_estimates($appointment_id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $this->load->model('ella_contractors/Ella_estimates_model', 'estimates_model');
+        
+        $estimates = $this->estimates_model->get_estimates(null, null, null, $appointment_id);
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $estimates
+        ]);
+    }
 }

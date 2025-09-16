@@ -203,10 +203,20 @@
                             <div role="tabpanel" class="tab-pane" id="estimates-tab">
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <div class="text-center text-muted">
-                                            <i class="fa fa-file-text-o fa-3x"></i>
-                                            <h4>Estimates</h4>
-                                            <p>Estimates functionality will be added here in the next phase.</p>
+                                        <div class="pull-right">
+                                            <button type="button" class="btn btn-info btn-sm" onclick="openEstimateModal()">
+                                                <i class="fa fa-plus"></i> New Estimate
+                                            </button>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                        <hr class="hr-panel-heading" />
+                                        
+                                        <div id="estimates-container">
+                                            <!-- Estimates will be loaded here via AJAX -->
+                                            <div class="text-center">
+                                                <i class="fa fa-spinner fa-spin fa-2x"></i>
+                                                <p>Loading estimates...</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -515,6 +525,14 @@
     </div>
 </div>
 
+<?php 
+// Include estimate modal data
+$data['appointment'] = $appointment;
+// $data['clients'] = $this->clients_model->get();  // Commented out for now
+// $data['leads'] = $this->leads_model->get();      // Commented out for now
+$this->load->view('appointments/estimate_modal', $data);
+?>
+
 <?php init_tail(); ?>
 
 <script>
@@ -526,12 +544,20 @@ $(document).ready(function() {
     // Load measurements when page loads
     loadMeasurements();
     
+    // Load estimates when page loads
+    loadEstimates();
+    
     // Reload measurements when measurement modal is closed
     $('#measurementModal').on('hidden.bs.modal', function() {
         // Small delay to ensure any pending operations complete
         setTimeout(function() {
             loadMeasurements();
         }, 100);
+    });
+    
+    // Reload estimates when estimates tab is shown
+    $('a[href="#estimates-tab"]').on('click', function() {
+        loadEstimates();
     });
 });
 
@@ -586,6 +612,112 @@ function loadMeasurements() {
             $('#measurements-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading measurements.</p></div>');
         }
     });
+}
+
+// Estimates Functions
+function loadEstimates() {
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_estimates/' + appointmentId,
+        type: 'GET',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                displayEstimates(response.data);
+            } else {
+                $('#estimates-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No estimates found for this appointment.</p></div>');
+            }
+        },
+        error: function() {
+            $('#estimates-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading estimates.</p></div>');
+        }
+    });
+}
+
+function displayEstimates(estimates) {
+    if (estimates.length === 0) {
+        $('#estimates-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No estimates found for this appointment.</p></div>');
+        return;
+    }
+
+    var html = '<div class="table-responsive"><table class="table table-striped table-hover">';
+    html += '<thead><tr>';
+    html += '<th>Estimate Name</th>';
+    html += '<th>Status</th>';
+    html += '<th>Line Items</th>';
+    html += '<th>Total Amount</th>';
+    html += '<th>Created By</th>';
+    html += '<th>Created Date</th>';
+    html += '<th width="120px">Actions</th>';
+    html += '</tr></thead><tbody>';
+
+    estimates.forEach(function(estimate) {
+        var statusClass = '';
+        var statusText = estimate.status;
+        
+        switch(estimate.status) {
+            case 'draft':
+                statusClass = 'label-warning';
+                break;
+            case 'sent':
+                statusClass = 'label-info';
+                break;
+            case 'accepted':
+                statusClass = 'label-success';
+                break;
+            case 'rejected':
+                statusClass = 'label-danger';
+                break;
+            case 'expired':
+                statusClass = 'label-default';
+                break;
+        }
+        
+        var totalAmount = estimate.total_amount ? parseFloat(estimate.total_amount).toFixed(2) : '0.00';
+        var createdDate = estimate.created_at ? new Date(estimate.created_at).toLocaleDateString() : '-';
+
+        html += '<tr>';
+        html += '<td><strong>' + estimate.estimate_name + '</strong></td>';
+        html += '<td><span class="label ' + statusClass + '">' + statusText.toUpperCase() + '</span></td>';
+        html += '<td>' + (estimate.line_items_count || 0) + '</td>';
+        html += '<td>$' + totalAmount + '</td>';
+        html += '<td>' + (estimate.created_by_name || '-') + '</td>';
+        html += '<td>' + createdDate + '</td>';
+        html += '<td>';
+        html += '<button class="btn btn-default btn-xs" onclick="openEstimateModal(' + estimate.id + ')" title="Edit"><i class="fa fa-edit"></i></button> ';
+        html += '<button class="btn btn-danger btn-xs" onclick="deleteEstimate(' + estimate.id + ')" title="Delete"><i class="fa fa-trash"></i></button>';
+        html += '</td>';
+        html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    $('#estimates-container').html(html);
+}
+
+function deleteEstimate(estimateId) {
+    if (confirm('Are you sure you want to delete this estimate?')) {
+        $.ajax({
+            url: admin_url + 'ella_contractors/appointments/delete_estimate/' + appointmentId + '/' + estimateId,
+            type: 'POST',
+            data: {
+                [csrf_token_name]: csrf_hash
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', 'Estimate deleted successfully');
+                    loadEstimates(); // Reload estimates
+                } else {
+                    alert_float('danger', response.message || 'Failed to delete estimate');
+                }
+            },
+            error: function() {
+                alert_float('danger', 'Error deleting estimate');
+            }
+        });
+    }
 }
 
 function displayMeasurements(measurements) {

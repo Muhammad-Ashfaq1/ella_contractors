@@ -12,7 +12,7 @@ class Ella_estimates_model extends App_Model
     /**
      * Get all estimates with line items count and totals
      */
-    public function get_estimates($client_id = null, $lead_id = null, $status = null)
+    public function get_estimates($client_id = null, $lead_id = null, $status = null, $appointment_id = null)
     {
         $this->db->select('e.*, 
                           CONCAT(s.firstname, " ", s.lastname) as created_by_name,
@@ -33,6 +33,10 @@ class Ella_estimates_model extends App_Model
         
         if ($status) {
             $this->db->where('e.status', $status);
+        }
+        
+        if ($appointment_id) {
+            $this->db->where('e.appointment_id', $appointment_id);
         }
         
         $this->db->order_by('e.created_at', 'DESC');
