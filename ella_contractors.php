@@ -211,6 +211,7 @@ function ella_contractors_activate_module() {
             `description` text,
             `client_id` int(11) DEFAULT NULL,
             `lead_id` int(11) DEFAULT NULL,
+            `appointment_id` int(11) DEFAULT NULL,
             `status` enum(\'draft\',\'sent\',\'accepted\',\'rejected\',\'expired\') DEFAULT \'draft\',
             `total_amount` decimal(10,2) DEFAULT 0.00,
             `total_quantity` decimal(10,2) DEFAULT 0.00,
@@ -221,10 +222,17 @@ function ella_contractors_activate_module() {
             PRIMARY KEY (`id`),
             KEY `client_id` (`client_id`),
             KEY `lead_id` (`lead_id`),
+            KEY `appointment_id` (`appointment_id`),
             KEY `status` (`status`),
             KEY `created_by` (`created_by`),
             KEY `created_at` (`created_at`)
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+    } else {
+        // Check if appointment_id column exists, if not add it
+        if (!$CI->db->field_exists('appointment_id', db_prefix() . 'ella_contractor_estimates')) {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD COLUMN `appointment_id` int(11) DEFAULT NULL AFTER `lead_id`');
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD KEY `appointment_id` (`appointment_id`)');
+        }
     }
     
     // Create ella_contractor_estimate_line_items table (pivot table)
