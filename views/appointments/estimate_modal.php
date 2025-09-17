@@ -67,6 +67,16 @@
                         
                         <!-- Line Items Management -->
                         <div id="line_items_container">
+                            <select name="" id="line_items_select" class="selectpicker display-block" data-width="100%" data-none-selected-text="Select Line Item">
+                                <option value="">Select Line Item1</option>
+                                <option value="">Select Line Item2</option>
+                                <option value="">Select Line Item3</option>
+                                <option value="">Select Line Item4</option>
+                                <option value="">Select Line Item5</option>
+                                <option value="">Select Line Item6</option>
+                                <option value="">Select Line Item7</option>
+                                <option value="">Select Line Item8</option>
+                            </select>
                             <!-- Line items will be dynamically added here -->
                         </div>
                         
@@ -187,11 +197,12 @@ function initEstimatesModal() {
         $('#estimate_id').val('');
         $('#estimateModalLabel .add-title').removeClass('hide');
         $('#estimateModalLabel .edit-title').addClass('hide');
+
         
         // Reset line items
         $('#line_items_container').html('');
         lineItemIndex = 0;
-        
+
         // Add initial line item
         addLineItemRow();
         
@@ -272,6 +283,8 @@ function initEstimatesModal() {
     
     function addLineItemRow(itemData = null) {
         lineItemIndex++;
+
+        console.log('lineItemIndex data', itemData);
         var lineItemHtml = `
             <div class="line-item-row" style="margin-bottom: 10px; border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
                 <div class="row">
@@ -376,10 +389,12 @@ function initEstimatesModal() {
     
     // Load line item options when estimate modal opens
     $("body").on('show.bs.modal', '#estimateModal', function() {
-        $.get(admin_url + 'ella_contractors/get_line_items_ajax')
+        var lineItemOptions = $.get(admin_url + 'ella_contractors/get_line_items_ajax')
         .done(function(options) {
+            console.log('options data outside ', options);
             if (options && Array.isArray(options)) {
                 lineItemOptions = options;
+                console.log('lineItemOptions data innside ', lineItemOptions);
                 fillAllSelects();
                 calculateTotals();
             }

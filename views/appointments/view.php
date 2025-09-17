@@ -528,8 +528,6 @@
 <?php 
 // Include estimate modal data
 $data['appointment'] = $appointment;
-// $data['clients'] = $this->clients_model->get();  // Commented out for now
-// $data['leads'] = $this->leads_model->get();      // Commented out for now
 $this->load->view('appointments/estimate_modal', $data);
 ?>
 

@@ -86,6 +86,10 @@ class Appointments extends AdminController
         // Load measurements for this appointment
         $data['measurements'] = $this->measurements_model->get_related_measurements('appointment', $id);
         
+        // Load clients and leads for estimate modal
+        $data['clients'] = $this->clients_model->get();
+        $data['leads'] = $this->leads_model->get();
+        
         $this->load->view('appointments/view', $data);
     }
 

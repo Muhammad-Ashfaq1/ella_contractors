@@ -347,9 +347,63 @@ $(document).ready(function() {
         modal.find('input[name="unit_price"]').val(unitPrice);
     });
     
+    // Function to get dynamic dropdown data
+    function getDynamicDropdownData(url, target) {
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function(response) {
+                console.log('custom js response', response);
+                if (!response.success) {
+                    console.error('Failed to fetch data:', response.message);
+                    return;
+                }
+                
+                var $target = $(target);
+                if ($target.length === 0) {
+                    console.error('Target element not found');
+                    return;
+                }
+                
+                // Clear existing options
+                $target.empty();
+                $target.append($('<option></option>').attr('value', '').text('Select...').prop('disabled', true).prop('selected', true));
+                
+                // Add data options
+                $.each(response.data, function(index, item) {
+                    $target.append($('<option></option>').attr('value', item.id).text(item.name).attr('data-cost', item.cost));
+                });
+                
+                // Initialize or refresh selectpicker safely
+                setTimeout(function() {
+                    try {
+                        if ($target.hasClass('selectpicker')) {
+                            // If already initialized, refresh
+                            if ($target.data('selectpicker')) {
+                                $target.selectpicker('refresh');
+                            } else {
+                                // Initialize for the first time
+                                $target.selectpicker();
+                            }
+                        } else {
+                            // Add selectpicker class and initialize
+                            $target.addClass('selectpicker');
+                            $target.selectpicker();
+                        }
+                    } catch(e) {
+                        console.log('Selectpicker initialization failed:', e);
+                        // Fallback: just use regular select
+                    }
+                }, 100);
+            },
+            error: function(xhr) {
+                console.error('Error fetching dynamic dropdown data:', xhr);
+            }
+        });
+    }
+
     // For add modal
     var addLineItemIndex = 0;
-    var addLineItemOptions = [];
     
     $('#add_line_item_modal').on('show.bs.modal', function () {
         // Reset to initial row
@@ -395,12 +449,9 @@ $(document).ready(function() {
         `);
         addLineItemIndex = 0;
         
-        // Load options
-        $.get(admin_url + 'ella_contractors/get_line_items_ajax').done(function(options) {
-            addLineItemOptions = options;
-            fillAllAddSelects();
-            calculateAddTotals();
-        });
+        // Load options using the dynamic dropdown function
+        fillAllAddSelects();
+        calculateAddTotals();
     });
     
     // Add line item button in modal
@@ -448,7 +499,11 @@ $(document).ready(function() {
         `;
         $('#add_line_items_container').append(lineItemHtml);
         $('.selectpicker').selectpicker();
-        fillAllAddSelects();
+        
+        // Use the dynamic dropdown function for the new select
+        var newSelect = $('#add_line_items_container .add-line-item-select').last();
+        getDynamicDropdownData(admin_url + 'ella_contractors/get_line_items_ajax', newSelect);
+        
         calculateAddTotals();
     });
     
@@ -494,13 +549,9 @@ $(document).ready(function() {
     
     function fillAllAddSelects() {
         $('.add-line-item-select').each(function() {
-            $(this).empty();
-            $(this).append('<option value="">Select Line Item</option>');
-            addLineItemOptions.forEach(function(opt) {
-                var option = $('<option></option>').val(opt.value).text(opt.text).attr('data-cost', opt.cost);
-                $(this).append(option);
-            });
-            $(this).selectpicker('refresh');
+            var $this = $(this);
+            // Use the dynamic dropdown function
+            getDynamicDropdownData(admin_url + 'ella_contractors/get_line_items_ajax', $this);
         });
     }
     init_selectpicker();

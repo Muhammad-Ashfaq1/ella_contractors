@@ -1249,32 +1249,38 @@ startxref
             ajax_access_denied();
         }
         
-        $line_items = $this->ella_line_items_model->get_line_items(null, true);
-        
+        $line_items = $this->ella_line_items_model->get_line_items(null, true);        
         // Debug logging
         log_message('debug', 'Line items count: ' . count($line_items));
         if (!empty($line_items)) {
             log_message('debug', 'First line item: ' . json_encode($line_items[0]));
         }
         
-        $options = [];
+        $data = [];
         foreach($line_items as $item) {
-            $options[] = [
-                'value' => $item['id'],
-                'text' => htmlspecialchars($item['name']) . ' - $' . number_format($item['cost'], 2),
+            $data[] = [
+                'id' => $item['id'],
+                'name' => htmlspecialchars($item['name']) . ' - $' . number_format($item['cost'], 2),
                 'cost' => $item['cost']
             ];
         }
         
         // Debug logging
-        log_message('debug', 'Options count: ' . count($options));
-        if (!empty($options)) {
-            log_message('debug', 'First option: ' . json_encode($options[0]));
+        log_message('debug', 'Data count: ' . count($data));
+        if (!empty($data)) {
+            log_message('debug', 'First data item: ' . json_encode($data[0]));
         }
+        
+        // Return in the format expected by the sample function
+        $response = [
+            'success' => true,
+            'data' => $data,
+            'message' => 'Line items loaded successfully'
+        ];
         
         // Set proper content type
         header('Content-Type: application/json');
-        echo json_encode($options);
+        echo json_encode($response);
     }
     
     // Test endpoint to debug line items
