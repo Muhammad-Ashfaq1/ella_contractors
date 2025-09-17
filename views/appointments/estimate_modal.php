@@ -191,11 +191,20 @@ function initEstimatesModal() {
         $('#line_items_container').html('');
         lineItemIndex = 0;
 
+        // If editing, set the hidden id immediately to avoid accidental create
+        if (estimateId) {
+            $('#estimate_id').val(estimateId);
+        }
+
         // Add initial line item
         addLineItemRow();
         
         // Load line items first
         loadLineItems().then(function() {
+            // Pre-set estimate_id so save goes to update even if details haven't loaded yet
+            if (estimateId) {
+                $('#estimate_id').val(estimateId);
+            }
             if (estimateId) {
                 loadEstimateForEdit(estimateId);
             }
