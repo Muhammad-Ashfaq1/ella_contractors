@@ -174,7 +174,8 @@ class Ella_estimates_model extends App_Model
         $this->db->join(db_prefix() . 'ella_contractor_line_items li', 'li.id = eli.line_item_id', 'left');
         $this->db->join(db_prefix() . 'ella_contractor_line_item_groups lig', 'lig.id = li.group_id', 'left');
         $this->db->where('eli.estimate_id', $estimate_id);
-        $this->db->order_by('li.group_name', 'ASC');
+        // Order by group name from the groups table alias
+        $this->db->order_by('lig.name', 'ASC');
         $this->db->order_by('li.name', 'ASC');
         
         return $this->db->get()->result_array();

@@ -52,7 +52,7 @@
                         
                         <div class="form-group">
                             <label for="status" class="control-label"><?php echo _l('status'); ?></label>
-                            <select class="selectpicker display-block" data-width="100%" name="status" data-none-selected-text="Select Status" required>
+                            <select id="status" class="selectpicker display-block" data-width="100%" name="status" data-none-selected-text="Select Status" required>
                                 <option value="">Select Status</option>
                                 <option value="draft">Draft</option>
                                 <option value="sent">Sent</option>
@@ -144,38 +144,37 @@ function initEstimatesModal() {
     var lineItemIndex = 0;
     var lineItemOptions = [];
     
+    // Populate a single line item select, preserving current selection
+    function populateLineItemSelect($select) {
+        var currentVal = $select.val();
+        var initialVal = $select.data('initial-value') || '';
+        $select.empty();
+        $select.append('<option value="">Select Line Item</option>');
+        if (lineItemOptions && lineItemOptions.length > 0) {
+            lineItemOptions.forEach(function(opt) {
+                var option = $('<option></option>')
+                    .val(opt.id || opt.value)
+                    .text(opt.name || opt.text || opt.title)
+                    .attr('data-cost', opt.cost || opt.unit_price || opt.price);
+                $select.append(option);
+            });
+        } else {
+            console.warn('No line items available to populate dropdown');
+        }
+        var valueToSet = currentVal || initialVal || '';
+        if (valueToSet !== '') {
+            $select.val(valueToSet).trigger('change');
+        }
+    }
+
     function fillAllSelects() {
         if (!$('.line-item-select').length) {
             setTimeout(fillAllSelects, 100);
             return;
         }
         
-        $('.line-item-select').each(function(index) {
-            var $this = $(this);
-            var initialVal = $this.data('initial-value') || '';
-            
-            $this.empty();
-            $this.append('<option value="">Select Line Item</option>');
-            
-            if (lineItemOptions && lineItemOptions.length > 0) {
-                lineItemOptions.forEach(function(opt) {
-                    var option = $('<option></option>')
-                        .val(opt.id || opt.value)
-                        .text(opt.name || opt.text || opt.title)
-                        .attr('data-cost', opt.cost || opt.unit_price || opt.price);
-                    $this.append(option);
-                });
-            } else {
-                console.warn('No line items available to populate dropdown');
-            }
-            
-            $this.val(initialVal);
-            
-            // Plain select; no selectpicker initialization
-            
-            if (initialVal) {
-                $this.trigger('change');
-            }
+        $('.line-item-select').each(function() {
+            populateLineItemSelect($(this));
         });
     }
     
@@ -326,8 +325,8 @@ function initEstimatesModal() {
             
             // No selectpicker init for line item select
             
-            // Fill the select with options
-            fillAllSelects();
+            // Fill only the new select with options to avoid resetting previous selections
+            populateLineItemSelect($select);
             
             // Set initial values if editing
             if (itemData) {
