@@ -97,7 +97,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label class="control-label"><?php echo _l('select_line_item'); ?></label>
-                                            <select class="selectpicker display-block line-item-select" data-width="100%" name="line_items[0][line_item_id]" data-none-selected-text="Select Line Item">
+                                            <select class="form-control line-item-select" name="line_items[0][line_item_id]">
                                                 <option value="">Select Line Item</option>
                                             </select>
                                         </div>
@@ -220,20 +220,17 @@ function initEstimatesModal() {
             
             if (lineItemOptions && lineItemOptions.length > 0) {
                 lineItemOptions.forEach(function(opt) {
-                    var option = $('<option></option>').val(opt.value).text(opt.text).attr('data-cost', opt.cost);
+                    var option = $('<option></option>')
+                        .val(opt.id || opt.value)
+                        .text(opt.name || opt.text)
+                        .attr('data-cost', opt.cost || opt.unit_price || opt.price);
                     $this.append(option);
                 });
             }
             
             $this.val(initialVal);
             
-            if (typeof $this.selectpicker === 'function') {
-                try {
-                    $this.selectpicker('refresh');
-                } catch(e) {
-                    console.log('Selectpicker refresh failed:', e);
-                }
-            }
+            // Plain select; no selectpicker initialization
             
             if (initialVal) {
                 $this.trigger('change');
@@ -368,7 +365,7 @@ function initEstimatesModal() {
                     <div class="col-md-4">
                         <div class="form-group">
                             <label class="control-label"><?php echo _l('select_line_item'); ?></label>
-                            <select class="selectpicker display-block line-item-select" data-width="100%" name="line_items[${lineItemIndex}][line_item_id]" data-none-selected-text="Select Line Item">
+                            <select class="form-control line-item-select" name="line_items[${lineItemIndex}][line_item_id]">
                                 <option value="">Select Line Item</option>
                             </select>
                         </div>
@@ -404,11 +401,7 @@ function initEstimatesModal() {
         `;
         $('#line_items_container').append(lineItemHtml);
         
-        if (typeof init_selectpicker === 'function') {
-            init_selectpicker();
-        } else if (typeof $().selectpicker === 'function') {
-            $('.selectpicker').selectpicker();
-        }
+        // No selectpicker init for line item select
         
         fillAllSelects();
         calculateTotals();
@@ -509,10 +502,19 @@ function initEstimatesModal() {
     
     // Load line item options when estimate modal opens
     $("body").on('show.bs.modal', '#estimateModal', function() {
-        $.get(admin_url + 'ella_contractors/get_line_items_ajax')
-        .done(function(options) {
-            if (options && Array.isArray(options)) {
-                lineItemOptions = options;
+        $.ajax({
+            url: admin_url + 'ella_contractors/get_line_items_ajax',
+            type: 'GET',
+            data: { [csrf_token_name]: csrf_hash },
+            dataType: 'json'
+        })
+        .done(function(response) {
+            if (response && response.success && Array.isArray(response.data)) {
+                lineItemOptions = response.data;
+                fillAllSelects();
+                calculateTotals();
+            } else if (Array.isArray(response)) {
+                lineItemOptions = response;
                 fillAllSelects();
                 calculateTotals();
             }

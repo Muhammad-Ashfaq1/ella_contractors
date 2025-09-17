@@ -171,13 +171,7 @@ function initEstimatesModal() {
             
             $this.val(initialVal);
             
-            if (typeof $this.selectpicker === 'function') {
-                try {
-                    $this.selectpicker('refresh');
-                } catch(e) {
-                    console.log('Selectpicker refresh failed:', e);
-                }
-            }
+            // Plain select; no selectpicker initialization
             
             if (initialVal) {
                 $this.trigger('change');
@@ -289,7 +283,7 @@ function initEstimatesModal() {
                     <div class="col-md-4">
                         <div class="form-group">
                             <label class="control-label"><?php echo _l('select_line_item'); ?></label>
-                            <select class="selectpicker display-block line-item-select" data-width="100%" name="line_items[${lineItemIndex}][line_item_id]" data-none-selected-text="Select Line Item">
+                            <select class="form-control line-item-select" name="line_items[${lineItemIndex}][line_item_id]">
                                 <option value="">Select Line Item</option>
                             </select>
                         </div>
@@ -325,16 +319,12 @@ function initEstimatesModal() {
         `;
         $('#line_items_container').append(lineItemHtml);
         
-        // Initialize selectpicker for the new row
+        // Initialize for the new row (plain select)
         setTimeout(function() {
             var $newRow = $('#line_items_container .line-item-row').last();
             var $select = $newRow.find('.line-item-select');
             
-            if (typeof init_selectpicker === 'function') {
-                init_selectpicker();
-            } else if (typeof $().selectpicker === 'function') {
-                $select.selectpicker();
-            }
+            // No selectpicker init for line item select
             
             // Fill the select with options
             fillAllSelects();
@@ -342,7 +332,6 @@ function initEstimatesModal() {
             // Set initial values if editing
             if (itemData) {
                 $select.val(itemData.line_item_id);
-                $select.selectpicker('refresh');
                 $select.trigger('change');
             }
             
@@ -392,12 +381,22 @@ function initEstimatesModal() {
     
     // Load line items function
     function loadLineItems() {
-        return $.get(admin_url + 'ella_contractors/get_line_items_ajax')
+        return $.ajax({
+            url: admin_url + 'ella_contractors/get_line_items_ajax',
+            type: 'GET',
+            data: { [csrf_token_name]: csrf_hash },
+            dataType: 'json'
+        })
         .done(function(response) {
             console.log('Line items response:', response);
             if (response && response.success && Array.isArray(response.data)) {
                 lineItemOptions = response.data;
                 console.log('Line items loaded:', lineItemOptions);
+                fillAllSelects();
+                calculateTotals();
+            } else if (Array.isArray(response)) {
+                // Fallback if endpoint returns plain array
+                lineItemOptions = response;
                 fillAllSelects();
                 calculateTotals();
             } else {
