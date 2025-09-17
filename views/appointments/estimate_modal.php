@@ -67,16 +67,6 @@
                         
                         <!-- Line Items Management -->
                         <div id="line_items_container">
-                            <select name="" id="line_items_select" class="selectpicker display-block" data-width="100%" data-none-selected-text="Select Line Item">
-                                <option value="">Select Line Item1</option>
-                                <option value="">Select Line Item2</option>
-                                <option value="">Select Line Item3</option>
-                                <option value="">Select Line Item4</option>
-                                <option value="">Select Line Item5</option>
-                                <option value="">Select Line Item6</option>
-                                <option value="">Select Line Item7</option>
-                                <option value="">Select Line Item8</option>
-                            </select>
                             <!-- Line items will be dynamically added here -->
                         </div>
                         
@@ -169,9 +159,14 @@ function initEstimatesModal() {
             
             if (lineItemOptions && lineItemOptions.length > 0) {
                 lineItemOptions.forEach(function(opt) {
-                    var option = $('<option></option>').val(opt.value).text(opt.text).attr('data-cost', opt.cost);
+                    var option = $('<option></option>')
+                        .val(opt.id || opt.value)
+                        .text(opt.name || opt.text || opt.title)
+                        .attr('data-cost', opt.cost || opt.unit_price || opt.price);
                     $this.append(option);
                 });
+            } else {
+                console.warn('No line items available to populate dropdown');
             }
             
             $this.val(initialVal);
@@ -206,9 +201,12 @@ function initEstimatesModal() {
         // Add initial line item
         addLineItemRow();
         
-        if (estimateId) {
-            loadEstimateForEdit(estimateId);
-        }
+        // Load line items first
+        loadLineItems().then(function() {
+            if (estimateId) {
+                loadEstimateForEdit(estimateId);
+            }
+        });
         
         $('#estimateModal').modal('show');
     };
@@ -327,24 +325,29 @@ function initEstimatesModal() {
         `;
         $('#line_items_container').append(lineItemHtml);
         
-        if (typeof init_selectpicker === 'function') {
-            init_selectpicker();
-        } else if (typeof $().selectpicker === 'function') {
-            $('.selectpicker').selectpicker();
-        }
-        
-        // Set initial values if editing
-        if (itemData) {
-            setTimeout(function() {
-                var $row = $('#line_items_container .line-item-row').last();
-                $row.find('.line-item-select').val(itemData.line_item_id);
-                $row.find('.line-item-select').selectpicker('refresh');
-                $row.find('.line-item-select').trigger('change');
-            }, 100);
-        }
-        
-        fillAllSelects();
-        calculateTotals();
+        // Initialize selectpicker for the new row
+        setTimeout(function() {
+            var $newRow = $('#line_items_container .line-item-row').last();
+            var $select = $newRow.find('.line-item-select');
+            
+            if (typeof init_selectpicker === 'function') {
+                init_selectpicker();
+            } else if (typeof $().selectpicker === 'function') {
+                $select.selectpicker();
+            }
+            
+            // Fill the select with options
+            fillAllSelects();
+            
+            // Set initial values if editing
+            if (itemData) {
+                $select.val(itemData.line_item_id);
+                $select.selectpicker('refresh');
+                $select.trigger('change');
+            }
+            
+            calculateTotals();
+        }, 100);
     }
     
     // Remove line item
@@ -387,22 +390,30 @@ function initEstimatesModal() {
         $('#total_amount').text(totalAmount.toFixed(2));
     }
     
-    // Load line item options when estimate modal opens
-    $("body").on('show.bs.modal', '#estimateModal', function() {
-        var lineItemOptions = $.get(admin_url + 'ella_contractors/get_line_items_ajax')
-        .done(function(options) {
-            console.log('options data outside ', options);
-            if (options && Array.isArray(options)) {
-                lineItemOptions = options;
-                console.log('lineItemOptions data innside ', lineItemOptions);
+    // Load line items function
+    function loadLineItems() {
+        return $.get(admin_url + 'ella_contractors/get_line_items_ajax')
+        .done(function(response) {
+            console.log('Line items response:', response);
+            if (response && response.success && Array.isArray(response.data)) {
+                lineItemOptions = response.data;
+                console.log('Line items loaded:', lineItemOptions);
                 fillAllSelects();
                 calculateTotals();
+            } else {
+                console.error('Invalid response format:', response);
+                alert_float('warning', 'No line items available');
             }
         })
         .fail(function(xhr, status, error) {
             console.error('Failed to load line items:', error);
             alert_float('danger', 'Failed to load line items: ' + error);
         });
+    }
+    
+    // Load line item options when estimate modal opens
+    $("body").on('show.bs.modal', '#estimateModal', function() {
+        loadLineItems();
     });
 }
 </script>
