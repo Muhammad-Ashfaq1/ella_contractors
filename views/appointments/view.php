@@ -316,6 +316,20 @@ $(document).ready(function() {
     // Load estimates when page loads
     loadEstimates();
     
+    // Check for tab parameter in URL and switch to appropriate tab
+    var urlParams = new URLSearchParams(window.location.search);
+    var tabParam = urlParams.get('tab');
+    if (tabParam) {
+        // Small delay to ensure data is loaded before switching tabs
+        setTimeout(function() {
+            if (tabParam === 'measurements') {
+                $('a[href="#measurements-tab"]').tab('show');
+            } else if (tabParam === 'estimates') {
+                $('a[href="#estimates-tab"]').tab('show');
+            }
+        }, 500);
+    }
+    
     // Reload measurements when measurement modal is closed
     $('#measurementModal').on('hidden.bs.modal', function() {
         // Small delay to ensure any pending operations complete

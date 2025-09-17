@@ -75,6 +75,21 @@ $this->load->view('appointments/modal', $data);
 .table-ella_appointments td {
     vertical-align: middle;
 }
+/* Clickable badge styling */
+.table-ella_appointments .label a,
+.table-ella_appointments .text-muted a {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+.table-ella_appointments .label a:hover,
+.table-ella_appointments .text-muted a:hover {
+    color: inherit;
+    text-decoration: none;
+    opacity: 0.8;
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+}
 </style>
 
 <script>
