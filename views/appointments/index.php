@@ -25,6 +25,8 @@
                                         <th><?php echo _l('appointment_meeting_date'); ?></th>
                                         <th><?php echo _l('client'); ?></th>
                                         <th><?php echo _l('appointment_status'); ?></th>
+                                        <th width="100px"><i class="fa fa-square-o"></i> Measurements</th>
+                                        <th width="100px"><i class="fa fa-file-text-o"></i> Estimates</th>
                                         <th width="120px"><?php echo _l('options'); ?></th>
                                     </tr>
                                 </thead>
@@ -50,6 +52,30 @@ $this->load->view('appointments/modal', $data);
 ?>
 
 <?php init_tail(); ?>
+
+<style>
+/* Custom styling for appointment count badges */
+.table-ella_appointments .label {
+    font-size: 11px;
+    padding: 4px 8px;
+    margin: 2px;
+    display: inline-block;
+}
+.table-ella_appointments .text-muted {
+    font-size: 11px;
+    padding: 4px 8px;
+    margin: 2px;
+    display: inline-block;
+    opacity: 0.6;
+}
+.table-ella_appointments th {
+    text-align: center;
+    vertical-align: middle;
+}
+.table-ella_appointments td {
+    vertical-align: middle;
+}
+</style>
 
 <script>
 var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';

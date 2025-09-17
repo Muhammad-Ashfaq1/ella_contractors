@@ -18,12 +18,30 @@ $aColumns = [
         WHEN ' . db_prefix() . 'appointly_appointments.approved = 1 THEN "Approved"
         ELSE "Pending"
     END as status',
+    'COALESCE(measurement_counts.measurement_count, 0) as measurement_count',
+    'COALESCE(estimate_counts.estimate_count, 0) as estimate_count',
     '1'
 ];
 
 $join = [
     'LEFT JOIN ' . db_prefix() . 'clients ON ' . db_prefix() . 'clients.userid = ' . db_prefix() . 'appointly_appointments.contact_id',
-    'LEFT JOIN ' . db_prefix() . 'leads ON ' . db_prefix() . 'leads.id = ' . db_prefix() . 'appointly_appointments.contact_id'
+    'LEFT JOIN ' . db_prefix() . 'leads ON ' . db_prefix() . 'leads.id = ' . db_prefix() . 'appointly_appointments.contact_id',
+    'LEFT JOIN (
+        SELECT 
+            appointment_id, 
+            COUNT(*) as measurement_count
+        FROM ' . db_prefix() . 'ella_contractors_measurements 
+        WHERE appointment_id IS NOT NULL 
+        GROUP BY appointment_id
+    ) measurement_counts ON measurement_counts.appointment_id = ' . db_prefix() . 'appointly_appointments.id',
+    'LEFT JOIN (
+        SELECT 
+            appointment_id, 
+            COUNT(*) as estimate_count
+        FROM ' . db_prefix() . 'ella_contractor_estimates 
+        WHERE appointment_id IS NOT NULL 
+        GROUP BY appointment_id
+    ) estimate_counts ON estimate_counts.appointment_id = ' . db_prefix() . 'appointly_appointments.id'
 ];
 
 $where = [];
@@ -70,6 +88,20 @@ foreach ($rResult as $aRow) {
             $status_class = 'label-warning';
     }
     $row[] = '<span class="label ' . $status_class . '">' . $aRow['status'] . '</span>';
+    
+    // Display measurement count with badge
+    $measurement_count = (int) $aRow['measurement_count'];
+    $measurement_badge = $measurement_count > 0 
+        ? '<div class="text-center"><span class="label label-info" title="Measurements"><i class="fa fa-square-o"></i> ' . $measurement_count . '</span></div>'
+        : '<div class="text-center"><span class="text-muted" title="No measurements"><i class="fa fa-square-o"></i> 0</span></div>';
+    $row[] = $measurement_badge;
+    
+    // Display estimate count with badge
+    $estimate_count = (int) $aRow['estimate_count'];
+    $estimate_badge = $estimate_count > 0 
+        ? '<div class="text-center"><span class="label label-success" title="Estimates"><i class="fa fa-file-text-o"></i> ' . $estimate_count . '</span></div>'
+        : '<div class="text-center"><span class="text-muted" title="No estimates"><i class="fa fa-file-text-o"></i> 0</span></div>';
+    $row[] = $estimate_badge;
     
     $options = '';
     if ($has_permission_view) {
