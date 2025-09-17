@@ -36,13 +36,6 @@ function ella_contractors_init_menu() {
         // Submenu items with icons
         $submenu = [
             [
-                'slug' => 'ella_contractors_jobs_leads',
-                'name' => 'Jobs / Leads',
-                'href' => admin_url('leads'),
-                'icon' => 'fa fa-briefcase',
-                'position' => 5,
-            ],
-            [
                 'slug' => 'ella_contractors_appointments',
                 'name' => 'Appointments',
                 'href' => admin_url('ella_contractors/appointments'),
@@ -54,14 +47,13 @@ function ella_contractors_init_menu() {
                 'name' => 'Past Appts',
                 'href' => admin_url('ella_contractors/appointments/past'),
                 'icon' => 'fa fa-history',
-                'position' => 35,
+                'position' => 15,
             ],
             // [
             //     'slug' => 'ella_contractors_measurements',
             //     'name' => 'Measurements',
             //     'href' => admin_url('ella_contractors/measurements'),
             //     'icon' => 'fa fa-square-o',
-            //     'position' => 15,
             // ],
             [
                 'slug' => 'ella_contractors_presentations',
@@ -77,13 +69,13 @@ function ella_contractors_init_menu() {
                 'icon' => 'fa fa-list-alt',
                 'position' => 25,
             ],
-            [
-                'slug' => 'ella_contractors_estimates',
-                'name' => 'Estimates',
-                'href' => admin_url('ella_contractors/estimates'),
-                'icon' => 'fa fa-file-text-o',
-                'position' => 30,
-            ],
+            // [
+            //     'slug' => 'ella_contractors_estimates',
+            //     'name' => 'Estimates',
+            //     'href' => admin_url('ella_contractors/estimates'),
+            //     'icon' => 'fa fa-file-text-o',
+            //     'position' => 30,
+            // ],
             
         ];
 
