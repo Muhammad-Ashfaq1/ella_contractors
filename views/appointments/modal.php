@@ -120,25 +120,15 @@
                     </div>
                     
                     <div class="row">
-                        <div class="col-md-4">
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" name="approved" value="1" id="approved"> Approved
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" name="finished" value="1" id="finished"> Finished
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" name="cancelled" value="1" id="cancelled"> Cancelled
-                                </label>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="status">Status</label>
+                                <select class="form-control" id="status" name="status">
+                                    <option value="pending">Pending</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="finished">Finished</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
                             </div>
                         </div>
                     </div>

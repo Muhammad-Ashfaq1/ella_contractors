@@ -114,10 +114,12 @@ function loadAppointmentData(appointmentId) {
                 $('#notes').val(data.notes);
                 $('#type_id').val(data.type_id);
                 
-                // Set checkboxes
-                $('#approved').prop('checked', data.approved == 1);
-                $('#finished').prop('checked', data.finished == 1);
-                $('#cancelled').prop('checked', data.cancelled == 1);
+                // Set status dropdown
+                var status = 'pending';
+                if (parseInt(data.cancelled) === 1) status = 'cancelled';
+                else if (parseInt(data.finished) === 1) status = 'finished';
+                else if (parseInt(data.approved) === 1) status = 'approved';
+                $('#status').val(status);
                 
                 // Set attendees
                 var attendeeIds = [];

@@ -138,25 +138,21 @@
                                     </div>
                                     
                                     <div class="row">
-                                        <div class="col-md-4">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="approved" value="1" id="approved" <?php echo $appointment['approved'] ? 'checked' : ''; ?>> <?php echo _l('approved'); ?>
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="finished" value="1" id="finished" <?php echo $appointment['finished'] ? 'checked' : ''; ?>> <?php echo _l('finished'); ?>
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="cancelled" value="1" id="cancelled" <?php echo $appointment['cancelled'] ? 'checked' : ''; ?>> <?php echo _l('cancelled'); ?>
-                                                </label>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="status"><?php echo _l('appointment_status'); ?></label>
+                                                <?php
+                                                    $status = 'pending';
+                                                    if (!empty($appointment['cancelled'])) { $status = 'cancelled'; }
+                                                    else if (!empty($appointment['finished'])) { $status = 'finished'; }
+                                                    else if (!empty($appointment['approved'])) { $status = 'approved'; }
+                                                ?>
+                                                <select class="form-control" id="status" name="status">
+                                                    <option value="pending" <?php echo $status=='pending'?'selected':''; ?>><?php echo _l('pending'); ?></option>
+                                                    <option value="approved" <?php echo $status=='approved'?'selected':''; ?>><?php echo _l('approved'); ?></option>
+                                                    <option value="finished" <?php echo $status=='finished'?'selected':''; ?>><?php echo _l('finished'); ?></option>
+                                                    <option value="cancelled" <?php echo $status=='cancelled'?'selected':''; ?>><?php echo _l('cancelled'); ?></option>
+                                                </select>
                                             </div>
                                         </div>
                                     </div>

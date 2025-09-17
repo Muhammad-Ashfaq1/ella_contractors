@@ -110,6 +110,12 @@ class Appointments extends AdminController
         if ($this->form_validation->run() == FALSE) {
             set_alert('warning', validation_errors());
         } else {
+            // Map unified status dropdown to legacy boolean flags
+            $status = $this->input->post('status');
+            $approved = ($status === 'approved') ? 1 : 0;
+            $finished = ($status === 'finished') ? 1 : 0;
+            $cancelled = ($status === 'cancelled') ? 1 : 0;
+
             $data = [
                 'subject' => $this->input->post('subject'),
                 'description' => $this->input->post('description'),
@@ -122,9 +128,9 @@ class Appointments extends AdminController
                 'address' => $this->input->post('address'),
                 'notes' => $this->input->post('notes'),
                 'type_id' => $this->input->post('type_id') ?: 0,
-                'approved' => $this->input->post('approved') ? 1 : 0,
-                'finished' => $this->input->post('finished') ? 1 : 0,
-                'cancelled' => $this->input->post('cancelled') ? 1 : 0,
+                'approved' => $approved,
+                'finished' => $finished,
+                'cancelled' => $cancelled,
                 'source' => 'ella_contractor'
             ];
 
@@ -295,6 +301,12 @@ class Appointments extends AdminController
             return;
         }
 
+        // Map unified status dropdown to legacy boolean flags
+        $status = $this->input->post('status');
+        $approved = ($status === 'approved') ? 1 : 0;
+        $finished = ($status === 'finished') ? 1 : 0;
+        $cancelled = ($status === 'cancelled') ? 1 : 0;
+
         $data = [
             'subject' => $this->input->post('subject'),
             'description' => $this->input->post('description'),
@@ -307,9 +319,9 @@ class Appointments extends AdminController
             'address' => $this->input->post('address'),
             'notes' => $this->input->post('notes'),
             'type_id' => $this->input->post('type_id') ?: 0,
-            'approved' => $this->input->post('approved') ? 1 : 0,
-            'finished' => $this->input->post('finished') ? 1 : 0,
-            'cancelled' => $this->input->post('cancelled') ? 1 : 0,
+            'approved' => $approved,
+            'finished' => $finished,
+            'cancelled' => $cancelled,
             'source' => 'ella_contractor'
         ];
 
