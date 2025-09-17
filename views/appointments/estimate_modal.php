@@ -65,16 +65,16 @@
                         <hr>
                         <h5><strong><?php echo _l('estimate_line_items'); ?></strong></h5>
                         
-                        <!-- Line Items Management -->
+                        <!-- Service Items Management -->
                         <div id="line_items_container">
-                            <!-- Line items will be dynamically added here -->
+                            <!-- Service items will be dynamically added here -->
                         </div>
                         
-                        <!-- Add Line Item Button -->
+                        <!-- Add Service Item Button -->
                         <div class="row">
                             <div class="col-md-12">
                                 <button type="button" class="btn btn-success btn-sm" id="add_line_item_btn">
-                                    <i class="fa fa-plus"></i> Add Line Item
+                                    <i class="fa fa-plus"></i> Add Service Item
                                 </button>
                             </div>
                         </div>
@@ -154,7 +154,7 @@ function initEstimatesModal() {
         var currentVal = $select.val();
         var initialVal = $select.data('initial-value') || '';
         $select.empty();
-        $select.append('<option value="">Select Line Item</option>');
+        $select.append('<option value="">Select Service Item</option>');
         if (lineItemOptions && lineItemOptions.length > 0) {
             lineItemOptions.forEach(function(opt) {
                 var option = $('<option></option>')
@@ -297,7 +297,7 @@ function initEstimatesModal() {
                         <div class="form-group">
                             <label class="control-label"><?php echo _l('select_line_item'); ?></label>
                             <select class="form-control line-item-select" name="line_items[${lineItemIndex}][line_item_id]">
-                                <option value="">Select Line Item</option>
+                                <option value="">Select Service Item</option>
                             </select>
                         </div>
                     </div>

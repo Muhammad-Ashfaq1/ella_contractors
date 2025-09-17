@@ -62,9 +62,9 @@
                         <hr>
                         <h5><strong><?php echo _l('estimate_line_items'); ?></strong></h5>
                         
-                        <!-- Current Line Items Display -->
+                        <!-- Current Service Items Display -->
                         <div id="current_line_items_display" style="display: none;">
-                            <h6><strong>Current Line Items:</strong></h6>
+                            <h6><strong>Current Service Items:</strong></h6>
                             <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
                                 <table class="table table-striped table-sm">
                                     <thead>
@@ -80,7 +80,7 @@
                                     <tbody id="current_line_items_table">
                                         <tr id="no_line_items_row">
                                             <td colspan="6" class="text-center text-muted">
-                                                <i class="fa fa-info-circle"></i> No line items found
+                                                <i class="fa fa-info-circle"></i> No service items found
                                             </td>
                                         </tr>
                                     </tbody>
@@ -89,8 +89,8 @@
                             <hr>
                         </div>
                         
-                        <!-- Add New Line Items -->
-                        <h6><strong>Add Line Items:</strong></h6>
+                        <!-- Add New Service Items -->
+                        <h6><strong>Add Service Items:</strong></h6>
                         <div id="line_items_container">
                             <div class="line-item-row" style="margin-bottom: 10px;">
                                 <div class="row">
@@ -98,7 +98,7 @@
                                         <div class="form-group">
                                             <label class="control-label"><?php echo _l('select_line_item'); ?></label>
                                             <select class="form-control line-item-select" name="line_items[0][line_item_id]">
-                                                <option value="">Select Line Item</option>
+                                                <option value="">Select Service Item</option>
                                             </select>
                                         </div>
                                     </div>
@@ -135,7 +135,7 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <button type="button" class="btn btn-success btn-sm" id="add_line_item_btn">
-                                    <i class="fa fa-plus"></i> Add Line Item
+                                    <i class="fa fa-plus"></i> Add Service Item
                                 </button>
                             </div>
                         </div>
@@ -221,7 +221,7 @@ function initEstimatesModal() {
             var initialVal = $this.data('initial-value') || '';
             
             $this.empty();
-            $this.append('<option value="">Select Line Item</option>');
+            $this.append('<option value="">Select Service Item</option>');
             
             if (lineItemOptions && lineItemOptions.length > 0) {
                 lineItemOptions.forEach(function(opt) {
@@ -258,8 +258,8 @@ function initEstimatesModal() {
                     <div class="col-md-4">
                         <div class="form-group">
                             <label class="control-label"><?php echo _l('select_line_item'); ?></label>
-                            <select class="selectpicker display-block line-item-select" data-width="100%" name="line_items[0][line_item_id]" data-none-selected-text="Select Line Item">
-                                <option value="">Select Line Item</option>
+                            <select class="selectpicker display-block line-item-select" data-width="100%" name="line_items[0][line_item_id]" data-none-selected-text="Select Service Item">
+                                <option value="">Select Service Item</option>
                             </select>
                         </div>
                     </div>
@@ -376,7 +376,7 @@ function initEstimatesModal() {
                         <div class="form-group">
                             <label class="control-label"><?php echo _l('select_line_item'); ?></label>
                             <select class="form-control line-item-select" name="line_items[${lineItemIndex}][line_item_id]">
-                                <option value="">Select Line Item</option>
+                                <option value="">Select Service Item</option>
                             </select>
                         </div>
                     </div>
@@ -465,7 +465,7 @@ function initEstimatesModal() {
             tbody.append(`
                 <tr id="no_line_items_row">
                     <td colspan="6" class="text-center text-muted">
-                        <i class="fa fa-info-circle"></i> No line items found
+                        <i class="fa fa-info-circle"></i> No service items found
                     </td>
                 </tr>
             `);
@@ -496,16 +496,16 @@ function initEstimatesModal() {
         var id = $(this).data('id');
         var row = $(this).closest('tr');
         
-        if (confirm('Are you sure you want to remove this line item?')) {
+        if (confirm('Are you sure you want to remove this service item?')) {
             $.post(admin_url + 'ella_contractors/appointments/remove_estimate_line_item/' + id).done(function(response) {
                 row.remove();
-                alert_float('success', 'Line item removed successfully');
+                alert_float('success', 'Service item removed successfully');
                 
                 if ($('#current_line_items_table tr').length === 0) {
                     $('#current_line_items_display').hide();
                 }
             }).fail(function() {
-                alert_float('danger', 'Failed to remove line item');
+                alert_float('danger', 'Failed to remove service item');
             });
         }
     });
@@ -530,8 +530,8 @@ function initEstimatesModal() {
             }
         })
         .fail(function(xhr, status, error) {
-            console.error('Failed to load line items:', error);
-            alert_float('danger', 'Failed to load line items: ' + error);
+            console.error('Failed to load service items:', error);
+            alert_float('danger', 'Failed to load service items: ' + error);
         });
     });
 }

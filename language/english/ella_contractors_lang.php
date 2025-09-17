@@ -2,11 +2,11 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-$lang['new_line_item'] = 'New Line Item';
-$lang['edit_line_item'] = 'Edit Line Item';
-$lang['add_line_item'] = 'Add Line Item';
-$lang['line_item_name'] = 'Line Item Name';
-$lang['line_item_description'] = 'Line Item Description';
+$lang['new_line_item'] = 'New Service Item';
+$lang['edit_line_item'] = 'Edit Service Item';
+$lang['add_line_item'] = 'Add Service Item';
+$lang['line_item_name'] = 'Service Item Name';
+$lang['line_item_description'] = 'Service Item Description';
 $lang['cost'] = 'Cost';
 $lang['quantity'] = 'Quantity';
 $lang['unit_type'] = 'Unit Type';
@@ -17,7 +17,7 @@ $lang['item_group'] = 'Item Group';
 $lang['item_groups'] = 'Item Groups';
 $lang['item_group_name'] = 'Item Group Name';
 $lang['new_item_group'] = 'New Item Group';
-$lang['line_item'] = 'Line Item';
+$lang['line_item'] = 'Service Item';
 $lang['total_items_deleted'] = 'Total Items Deleted';
 $lang['mass_delete'] = 'Mass Delete';
 $lang['bulk_actions'] = 'Bulk Actions';
@@ -44,16 +44,16 @@ $lang['lead'] = 'Lead';
 $lang['status'] = 'Status';
 $lang['total_amount'] = 'Total Amount';
 $lang['total_quantity'] = 'Total Quantity';
-$lang['line_items_count'] = 'Line Items Count';
+$lang['line_items_count'] = 'Service Items Count';
 $lang['created_by'] = 'Created By';
 $lang['created_date'] = 'Created Date';
 $lang['last_updated'] = 'Last Updated';
-$lang['add_line_item'] = 'Add Line Item';
-$lang['remove_line_item'] = 'Remove Line Item';
+$lang['add_line_item'] = 'Add Service Item';
+$lang['remove_line_item'] = 'Remove Service Item';
 $lang['quantity'] = 'Quantity';
 $lang['unit_price'] = 'Unit Price';
 $lang['total_price'] = 'Total Price';
-$lang['select_line_item'] = 'Select Line Item';
+$lang['select_line_item'] = 'Select Service Item';
 
 // Appointments Language Strings
 $lang['back_to_appointments'] = 'Back to Appointments';
@@ -77,8 +77,8 @@ $lang['appointment_meeting_date'] = 'Meeting Date';
 $lang['appointment_status'] = 'Status';
 $lang['email'] = 'Email';
 $lang['address'] = 'Address';
-$lang['no_line_items'] = 'No line items added to this estimate';
-$lang['estimate_line_items'] = 'Estimate Line Items';
+$lang['no_line_items'] = 'No service items added to this estimate';
+$lang['estimate_line_items'] = 'Estimate Service Items';
 $lang['draft'] = 'Draft';
 $lang['sent'] = 'Sent';
 $lang['accepted'] = 'Accepted';

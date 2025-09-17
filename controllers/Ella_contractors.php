@@ -518,7 +518,7 @@ startxref
     // ==================== LINE ITEMS MANAGEMENT ====================
 
     /**
-     * Line Items Management
+     * Service Items Management
      */
     public function line_items()
     {
@@ -526,7 +526,7 @@ startxref
             access_denied('ella_contractors');
         }
         
-        $data['title'] = 'Line Items Management';
+        $data['title'] = 'Service Items Management';
         $data['groups'] = $this->ella_line_item_groups_model->get_groups();
         $data['unit_types'] = $this->ella_line_items_model->get_unit_types();
         $data['line_items'] = $this->ella_line_items_model->get_line_items();
@@ -535,7 +535,7 @@ startxref
     }
 
     /**
-     * Create Line Item
+     * Create Service Item
      */
     public function create_line_item()
     {

@@ -72,7 +72,7 @@ function ella_contractors_init_menu() {
             ],
             [
                 'slug' => 'ella_contractors_line_items',
-                'name' => 'Line Items',
+                'name' => 'Service Items',
                 'href' => admin_url('ella_contractors/line_items'),
                 'icon' => 'fa fa-list-alt',
                 'position' => 25,

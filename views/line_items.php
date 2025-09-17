@@ -44,8 +44,8 @@
       <div class="clearfix"></div>
       <hr class="hr-panel-heading" />
     <?php } ?>
-    <!-- Line Items Table -->
-    <h5>Line Items</h5>
+    <!-- Service Items Table -->
+    <h5>Service Items</h5>
     <table class="table table-striped table-line-items">
         <thead>
             <tr>
