@@ -469,6 +469,62 @@ class Appointments extends AdminController
         $post = $this->input->post(null, true);
         $id = isset($post['id']) ? (int) $post['id'] : 0;
 
+        // Bulk save handler for windows/doors (and optionally siding/roofing) arrays
+        $bulk = $this->input->post('bulk');
+        if ($bulk && is_array($bulk)) {
+            // Find or create a single combined measurement record for this appointment
+            $table = db_prefix() . 'ella_contractors_measurements';
+            // Find existing combined measurement either by appointment_id
+            // or by legacy pairing of rel_type + rel_id
+            $this->db->select('id')->from($table);
+            $this->db->group_start()
+                ->where('appointment_id', (int)$appointment_id)
+                ->or_group_start()
+                    ->where('rel_type', 'appointment')
+                    ->where('rel_id', (int)$appointment_id)
+                ->group_end()
+            ->group_end();
+            $this->db->where('category', 'combined');
+            $this->db->order_by('id', 'ASC');
+            $existing = $this->db->get()->row_array();
+
+            // Merge incoming bulk with existing attributes, updating only provided keys
+            $existing_attributes = [];
+            if ($existing) {
+                $row = $this->measurements_model->find((int)$existing['id']);
+                $existing_attributes = json_decode($row['attributes_json'] ?? '[]', true) ?: [];
+            }
+            foreach (['windows','doors','siding','roofing'] as $key) {
+                if (isset($bulk[$key])) {
+                    $existing_attributes[$key] = $bulk[$key];
+                }
+            }
+
+            $payload = [
+                'category' => 'combined',
+                'rel_type' => 'appointment',
+                'rel_id' => (int)$appointment_id,
+                'appointment_id' => (int)$appointment_id,
+                'name' => 'Combined Measurement',
+                'attributes_json' => json_encode($existing_attributes),
+            ];
+
+            if ($existing) {
+                $ok = $this->measurements_model->update((int)$existing['id'], $payload);
+                $respId = (int)$existing['id'];
+            } else {
+                $respId = (int)$this->measurements_model->create($payload);
+                $ok = $respId > 0;
+            }
+
+            echo json_encode([
+                'success' => (bool)$ok,
+                'message' => $ok ? 'Measurements saved successfully' : 'Failed to save measurements',
+                'data' => ['id' => $respId, 'attributes' => json_decode($payload['attributes_json'], true)],
+            ]);
+            return;
+        }
+
         // Set appointment relationship
         $post['rel_type'] = 'appointment';
         $post['rel_id'] = $appointment_id;

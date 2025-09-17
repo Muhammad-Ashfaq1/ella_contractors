@@ -276,7 +276,10 @@ $editing = isset($row) && !empty($row);
 <?php elseif ($category === 'windows') : ?>
     <div class="row">
         <div class="col-md-12">
-            <div class="btn-group pull-right">
+			<div class="btn-group pull-right">
+				<button type="button" class="btn btn-success" id="js-save-windows">
+					<i class="fa fa-save"></i> Save
+				</button>
                 <button type="button" class="btn btn-info" id="js-add-window-row">
                     <i class="fa fa-plus"></i> Add Window
                 </button>
@@ -309,8 +312,11 @@ $editing = isset($row) && !empty($row);
 <?php elseif ($category === 'doors') : ?>
     <div class="row">
         <div class="col-md-12">
-            <div class="btn-group pull-right">
-                <button type="button" class="btn btn-info" id="js-add-door-row">
+			<div class="btn-group pull-right">
+				<button type="button" class="btn btn-success" id="js-save-doors">
+					<i class="fa fa-save"></i> Save
+				</button>
+				<button type="button" class="btn btn-info" id="js-add-door-row">
                     <i class="fa fa-plus"></i> Add Door
                 </button>
             </div>

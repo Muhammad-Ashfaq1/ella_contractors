@@ -259,6 +259,7 @@
                         <li>
                             <a href="#doors-tab" data-toggle="tab" data-category="doors">Doors</a>
                         </li>
+                        
                     </ul>
                     <input type="hidden" name="category" id="selected-category" value="siding">
                     
@@ -496,35 +497,36 @@ function displayMeasurements(measurements) {
 
     var html = '<div class="table-responsive"><table class="table table-striped table-hover">';
     html += '<thead><tr>';
-    html += '<th>Category</th>';
-    html += '<th>Name</th>';
-    html += '<th>Designator</th>';
-    html += '<th>Dimensions</th>';
-    html += '<th>Area</th>';
-    html += '<th>Quantity</th>';
-    html += '<th>Location</th>';
-    html += '<th width="120px">Actions</th>';
+    html += '<th>Record</th>';
+    html += '<th>Windows</th>';
+    html += '<th>Doors</th>';
+    html += '<th>Siding Area (sqft)</th>';
+    html += '<th>Roofing Area (sqft)</th>';
+    html += '<th width="140px">Actions</th>';
     html += '</tr></thead><tbody>';
 
-    measurements.forEach(function(measurement) {
-        var dimensions = '';
-        if (measurement.width_val && measurement.height_val) {
-            dimensions = measurement.width_val + '" × ' + measurement.height_val + '"';
+    measurements.forEach(function(measurement, idx) {
+        var attrs = {};
+        try { attrs = JSON.parse(measurement.attributes_json || '{}'); } catch(e) {}
+        var windowsCount = (attrs.windows && Array.isArray(attrs.windows)) ? attrs.windows.length : 0;
+        var doorsCount = (attrs.doors && Array.isArray(attrs.doors)) ? attrs.doors.length : 0;
+        var sidingArea = 0.0;
+        if (attrs.siding) {
+            if (attrs.siding.siding_total_area) sidingArea = parseFloat(attrs.siding.siding_total_area) || 0;
+            else if (attrs.siding.siding_soffit_total) sidingArea = parseFloat(attrs.siding.siding_soffit_total) || 0;
         }
-        
-        var area = '';
-        if (measurement.area_val) {
-            area = parseFloat(measurement.area_val).toFixed(2) + ' sq ft';
+        var roofingArea = 0.0;
+        if (attrs.roofing) {
+            if (attrs.roofing.roof_total_area) roofingArea = parseFloat(attrs.roofing.roof_total_area) || 0;
+            else if (attrs.roofing.roof_sloped_area) roofingArea = parseFloat(attrs.roofing.roof_sloped_area) || 0;
         }
 
         html += '<tr>';
-        html += '<td><span class="label label-info">' + measurement.category.toUpperCase() + '</span></td>';
-        html += '<td>' + measurement.name + '</td>';
-        html += '<td>' + (measurement.designator || '-') + '</td>';
-        html += '<td>' + dimensions + '</td>';
-        html += '<td>' + area + '</td>';
-        html += '<td>' + measurement.quantity + '</td>';
-        html += '<td>' + (measurement.location_label || '-') + '</td>';
+        html += '<td><span class="label label-info">' + (measurement.category || 'combined').toUpperCase() + '</span> #' + measurement.id + '</td>';
+        html += '<td>' + windowsCount + '</td>';
+        html += '<td>' + doorsCount + '</td>';
+        html += '<td>' + sidingArea.toFixed(2) + '</td>';
+        html += '<td>' + roofingArea.toFixed(2) + '</td>';
         html += '<td>';
         html += '<button class="btn btn-default btn-xs" onclick="editMeasurement(' + measurement.id + ')" title="Edit"><i class="fa fa-edit"></i></button> ';
         html += '<button class="btn btn-danger btn-xs" onclick="deleteMeasurement(' + measurement.id + ')" title="Delete"><i class="fa fa-trash"></i></button>';
@@ -734,9 +736,9 @@ function collectTableData(category) {
     var tableData = [];
     var tbody = $('#' + category + '-tbody');
     if (tbody.length === 0) { return tableData; }
-
-    tbody.find('tr').each(function() {
-        var row = $(this);
+    
+        tbody.find('tr').each(function() {
+            var row = $(this);
         var isInline = row.hasClass('inline-measure-row');
         var data = {};
 
@@ -763,7 +765,7 @@ function collectTableData(category) {
 
         if (data.name) { tableData.push(data); }
     });
-
+    
     return tableData;
 }
 
@@ -965,7 +967,8 @@ function populateMeasurementsTable(category, measurements) {
     
     measurements.forEach(function(measurement) {
         if (measurement.category === category) {
-            var row = '<tr>';
+            var rowId = category + '_row_' + measurement.id;
+            var row = '<tr id="' + rowId + '" data-measurement-id="' + measurement.id + '">';
             row += '<td>' + (measurement.designator || '') + '</td>';
             row += '<td>' + (measurement.name || '') + '</td>';
             row += '<td>' + (measurement.location_label || '') + '</td>';
@@ -975,7 +978,7 @@ function populateMeasurementsTable(category, measurements) {
             row += '<td>' + (measurement.united_inches_val || '') + '</td>';
             row += '<td>' + (measurement.area_val || '') + '</td>';
             row += '<td>';
-            row += '<button class="btn btn-default btn-xs" onclick="editMeasurement(' + measurement.id + ')" title="Edit"><i class="fa fa-edit"></i></button> ';
+            row += '<button class="btn btn-default btn-xs" onclick="editTableRow(\'' + rowId + '\', \'' + category + '\')" title="Edit"><i class="fa fa-edit"></i></button> ';
             row += '<button class="btn btn-danger btn-xs" onclick="deleteMeasurement(' + measurement.id + ')" title="Delete"><i class="fa fa-trash"></i></button>';
             row += '</td>';
             row += '</tr>';
@@ -1051,6 +1054,67 @@ $('#saveMeasurement').on('click', function() {
     });
 });
 
+// Save only current category's inline rows (called by per-tab Save buttons)
+$(document).on('click', '#js-save-windows, #js-save-doors', function() {
+    var which = $(this).attr('id') === 'js-save-windows' ? 'windows' : 'doors';
+    var bulk = { windows: [], doors: [] };
+    var category = which;
+    var tbody = $('#' + category + '-tbody');
+    tbody.find('tr').each(function() {
+        var row = $(this);
+        var isInline = row.hasClass('inline-measure-row');
+        var item = { category: category, rel_type: 'appointment', rel_id: appointmentId, appointment_id: appointmentId, length_unit: 'in', area_unit: 'sqft', ui_unit: 'in' };
+        if (isInline) {
+            item.designator = row.find('.cell-designator').val() || '';
+            item.name = row.find('.cell-name').val() || '';
+            item.location_label = row.find('.cell-location').val() || '';
+            item.level_label = row.find('.cell-level').val() || '';
+            item.quantity = 1;
+            item.width_val = row.find('.cell-width').val() || '';
+            item.height_val = row.find('.cell-height').val() || '';
+            item.united_inches_val = row.find('.cell-ui-text').text() || '';
+            item.area_val = row.find('.cell-area-text').text() || '';
+        } else {
+            var cells = row.find('td');
+            item.designator = cells.eq(0).text().trim();
+            item.name = cells.eq(1).text().trim();
+            item.location_label = cells.eq(2).text().trim();
+            item.level_label = cells.eq(3).text().trim();
+            item.width_val = cells.eq(4).text().trim();
+            item.height_val = cells.eq(5).text().trim();
+            item.united_inches_val = cells.eq(6).text().trim();
+            item.area_val = cells.eq(7).text().trim();
+        }
+        if (row.data('measurement-id')) { item.id = row.data('measurement-id'); }
+        if (item.name) { bulk[category].push(item); }
+    });
+
+    var payload = { bulk: bulk };
+    payload[csrf_token_name] = csrf_hash;
+
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/save_measurement/' + appointmentId,
+        type: 'POST',
+        data: payload,
+        dataType: 'json',
+        success: function(resp) {
+            if (resp && resp.success) {
+                alert_float('success', (which === 'windows' ? 'Windows' : 'Doors') + ' saved');
+                // Update DOM rows with saved data retaining rows as inline editable
+                var savedList = (resp.data && resp.data.attributes && resp.data.attributes[which]) ? resp.data.attributes[which] : [];
+                var tbody = $('#' + which + '-tbody');
+                tbody.html('');
+                savedList.forEach(function(item) { appendInlineRow(which, item); });
+            } else {
+                alert_float('danger', (resp && resp.message) ? resp.message : 'Failed to save');
+            }
+        },
+        error: function(xhr) {
+            alert_float('danger', 'Error saving: ' + (xhr.statusText || 'Unknown'));
+        }
+    });
+});
+
 // AJAX save functionality for measurements
 function saveMeasurementAjax(formData, callback) {
     // Get CSRF token
@@ -1100,10 +1164,12 @@ $(document).on('click', '#js-add-door-row', function(e) {
     appendInlineRow('doors');
 });
 
-function buildLocationOptions() {
+function buildLocationOptions(selected) {
     var html = '<option value="">Select Location</option>';
     for (var i = 1; i <= 10; i++) {
-        html += '<option value="Bedroom ' + i + '">Bedroom ' + i + '</option>';
+        var val = 'Bedroom ' + i;
+        var sel = (String(selected) === String(val)) ? ' selected' : '';
+        html += '<option value="' + val + '"' + sel + '>' + val + '</option>';
     }
     return html;
 }
@@ -1121,10 +1187,10 @@ function appendInlineRow(category, existingData) {
     var tbody = $('#' + category + '-tbody');
     var rowId = category + '_inline_' + Date.now();
     var d = existingData || {};
-    var row = '<tr id="' + rowId + '" class="inline-measure-row" data-category="' + category + '">';
+    var row = '<tr id="' + rowId + '" class="inline-measure-row" data-category="' + category + '"' + (d.id ? ' data-measurement-id="' + d.id + '"' : '') + '>';
     row += '<td><input type="text" class="form-control input-sm cell-designator" value="' + (d.designator || '') + '"></td>';
     row += '<td><input type="text" class="form-control input-sm cell-name" value="' + (d.name || '') + '" required></td>';
-    row += '<td><select class="form-control input-sm cell-location">' + buildLocationOptions() + '</select></td>';
+    row += '<td><select class="form-control input-sm cell-location">' + buildLocationOptions(d.location_label) + '</select></td>';
     row += '<td><select class="form-control input-sm cell-level">' + buildLevelOptions(d.level_label) + '</select></td>';
     row += '<td><input type="number" step="0.01" class="form-control input-sm cell-width" value="' + (d.width_val || '') + '"></td>';
     row += '<td><input type="number" step="0.01" class="form-control input-sm cell-height" value="' + (d.height_val || '') + '"></td>';
@@ -1139,6 +1205,7 @@ function appendInlineRow(category, existingData) {
 function editTableRow(rowId, category) {
     var row = $('#' + rowId);
     var cells = row.find('td');
+    var existingId = row.data('measurement-id') || '';
     var data = {
         designator: cells.eq(0).text(),
         name: cells.eq(1).text(),
@@ -1147,7 +1214,8 @@ function editTableRow(rowId, category) {
         width_val: cells.eq(4).text(),
         height_val: cells.eq(5).text(),
         united_inches_val: cells.eq(6).text(),
-        area_val: cells.eq(7).text()
+        area_val: cells.eq(7).text(),
+        id: existingId
     };
     row.remove();
     appendInlineRow(category, data);
@@ -1168,4 +1236,26 @@ $(document).on('input change', '.inline-measure-row .cell-width, .inline-measure
         row.find('.cell-area-text').text('');
     }
 });
+
+function renderSavedRow(row, category, data, id) {
+    var rowId = row.attr('id');
+    var html = '';
+    html += '<td>' + (data.designator || '') + '</td>';
+    html += '<td>' + (data.name || '') + '</td>';
+    html += '<td>' + (data.location_label || '') + '</td>';
+    html += '<td>' + (data.level_label || '') + '</td>';
+    html += '<td>' + (data.width_val || '') + '</td>';
+    html += '<td>' + (data.height_val || '') + '</td>';
+    html += '<td>' + (data.united_inches_val || '') + '</td>';
+    html += '<td>' + (data.area_val || '') + '</td>';
+    var actions = '';
+    actions += '<button class="btn btn-default btn-xs" onclick="editTableRow(\'' + rowId + '\', \'' + category + '\')" title="Edit"><i class="fa fa-edit"></i></button> ';
+    if (id) {
+        actions += '<button class="btn btn-danger btn-xs" onclick="deleteMeasurement(' + id + ')" title="Delete"><i class="fa fa-trash"></i></button>';
+    } else {
+        actions += '<button class="btn btn-danger btn-xs" onclick="removeTableRow(\'' + rowId + '\')" title="Remove"><i class="fa fa-trash"></i></button>';
+    }
+    html += '<td>' + actions + '</td>';
+    row.removeClass('inline-measure-row').attr('data-measurement-id', id || '').html(html);
+}
 </script>
