@@ -1261,7 +1261,10 @@ startxref
             $data[] = [
                 'id' => $item['id'],
                 'name' => htmlspecialchars($item['name']) . ' - $' . number_format($item['cost'], 2),
-                'cost' => $item['cost']
+                'cost' => $item['cost'],
+                'unit_price' => $item['cost'],
+                'description' => $item['description'] ?? '',
+                'unit_type' => $item['unit_type'] ?? ''
             ];
         }
         
