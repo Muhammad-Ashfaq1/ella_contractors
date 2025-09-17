@@ -274,19 +274,19 @@ $editing = isset($row) && !empty($row);
 		</div>
 	</div>
 <?php elseif ($category === 'windows') : ?>
-	<div class="row">
-		<div class="col-md-12">
-			<div class="btn-group pull-right">
-				<button type="button" class="btn btn-info" data-toggle="modal" id="js-add-window">
-					<i class="fa fa-plus"></i> Add Window
-				</button>
-			</div>
-		</div>
-	</div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="btn-group pull-right">
+                <button type="button" class="btn btn-info" id="js-add-window-row">
+                    <i class="fa fa-plus"></i> Add Window
+                </button>
+            </div>
+        </div>
+    </div>
 	<br>
 	<div class="row">
 		<div class="table-responsive">
-		<table class="table table-striped dataTable no-footer" id="windows-table">
+        <table class="table table-striped dataTable no-footer" id="windows-table">
 			<thead>
 				<tr>
 					<th>Designator</th>
@@ -307,19 +307,19 @@ $editing = isset($row) && !empty($row);
 		</div>
 	</div>
 <?php elseif ($category === 'doors') : ?>
-	<div class="row">
-		<div class="col-md-12">
-			<div class="btn-group pull-right">
-				<button type="button" class="btn btn-info" data-toggle="modal" data-target="#doorModal">
-					<i class="fa fa-plus"></i> Add Door
-				</button>
-			</div>
-		</div>
-	</div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="btn-group pull-right">
+                <button type="button" class="btn btn-info" id="js-add-door-row">
+                    <i class="fa fa-plus"></i> Add Door
+                </button>
+            </div>
+        </div>
+    </div>
 	<br>
 	<div class="row">
 		<div class="table-responsive">
-			<table class="table table-striped dataTable no-footer" id="doors-table">
+            <table class="table table-striped dataTable no-footer" id="doors-table">
 				<thead>
 					<tr>
 						<th>Designator</th>

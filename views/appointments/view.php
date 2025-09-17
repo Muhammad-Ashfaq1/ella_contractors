@@ -293,237 +293,7 @@
     </div>
 </div>
 
-<!-- Window Modal -->
-<div class="modal fade" id="windowModal" tabindex="-1" role="dialog" aria-labelledby="windowModalLabel">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                <h4 class="modal-title" id="windowModalLabel">Add New Window</h4>
-            </div>
-            <form id="window-form" method="post">
-                <input type="hidden" name="id" value="">
-                <input type="hidden" name="rel_type" value="appointment">
-                <input type="hidden" name="rel_id" value="<?php echo $appointment['id']; ?>">
-                <input type="hidden" name="category" value="windows">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>TYPE</label>
-                                <button type="button" class="btn btn-info btn-block">Window</button>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>NAME <span class="text-danger">*</span></label>
-                                <input type="text" name="name" class="form-control" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>DESIGNATOR</label>
-                                <input type="text" name="designator" class="form-control" placeholder="e.g., W1, W2">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>LOCATION</label>
-                                <select name="location_label" class="form-control">
-                                    <option value="">Select Location</option>
-                                    <?php for($i = 1; $i <= 10; $i++): ?>
-                                    <option value="Bedroom <?= $i; ?>">Bedroom <?= $i; ?></option>
-                                    <?php endfor; ?>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>LEVEL</label>
-                                <select name="level_label" class="form-control">
-                                    <option value="">Select Level</option>
-                                    <?php for($i = 1; $i <= 10; $i++): ?>
-                                    <option value="<?= $i; ?>"><?= $i; ?></option>
-                                    <?php endfor; ?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>QUANTITY</label>
-                                <input type="number" name="quantity" class="form-control" value="1" min="1">
-                            </div>
-                        </div>
-                    </div>
-                    <hr>
-                    <h5>Measurements</h5>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>WIDTH (inches)</label>
-                                <input type="number" name="width_val" class="form-control" value="0" step="0.01">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>HEIGHT (inches)</label>
-                                <input type="number" name="height_val" class="form-control" value="0" step="0.01">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>UI: <span id="ui-display">0 in</span></label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Area: <span id="area-display">0 sqft</span></label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label>NOTES</label>
-                                <textarea name="notes" class="form-control" rows="2" placeholder="Additional notes"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-info">
-                        <i class="fa fa-save"></i> Save Window
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Door Modal -->
-<div class="modal fade" id="doorModal" tabindex="-1" role="dialog" aria-labelledby="doorModalLabel">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                <h4 class="modal-title" id="doorModalLabel">Add New Door</h4>
-            </div>
-            <form id="door-form" method="post">
-                <input type="hidden" name="id" value="">
-                <input type="hidden" name="rel_type" value="appointment">
-                <input type="hidden" name="rel_id" value="<?php echo $appointment['id']; ?>">
-                <input type="hidden" name="category" value="doors">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>TYPE</label>
-                                <button type="button" class="btn btn-info btn-block">Door</button>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>NAME <span class="text-danger">*</span></label>
-                                <input type="text" name="name" class="form-control" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>DESIGNATOR</label>
-                                <input type="text" name="designator" class="form-control" placeholder="e.g., D1, D2">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>LOCATION</label>
-                                <select name="location_label" class="form-control">
-                                    <option value="">Select Location</option>
-                                    <?php for($i = 1; $i <= 10; $i++): ?>
-                                    <option value="Bedroom <?= $i; ?>">Bedroom <?= $i; ?></option>
-                                    <?php endfor; ?>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>LEVEL</label>
-                                <select name="level_label" class="form-control">
-                                    <option value="">Select Level</option>
-                                    <?php for($i = 1; $i <= 10; $i++): ?>
-                                    <option value="<?= $i; ?>"><?= $i; ?></option>
-                                    <?php endfor; ?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>QUANTITY</label>
-                                <input type="number" name="quantity" class="form-control" value="1" min="1">
-                            </div>
-                        </div>
-                    </div>
-                    <hr>
-                    <h5>Measurements</h5>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>WIDTH (inches)</label>
-                                <input type="number" name="width_val" class="form-control" value="0" step="0.01">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>HEIGHT (inches)</label>
-                                <input type="number" name="height_val" class="form-control" value="0" step="0.01">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>UI: <span id="door-ui-display">0 in</span></label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Area: <span id="door-area-display">0 sqft</span></label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label>NOTES</label>
-                                <textarea name="notes" class="form-control" rows="2" placeholder="Additional notes"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-info">
-                        <i class="fa fa-save"></i> Save Door
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<!-- Inline editing is used for Windows and Doors instead of nested modals -->
 
 <?php 
 // Include estimate modal data
@@ -962,39 +732,38 @@ function collectAllTabsData() {
 // Collect data from windows and doors tables
 function collectTableData(category) {
     var tableData = [];
-    var tableId = category + '-tbody';
-    var tbody = $('#' + tableId);
-    
-    if (tbody.length > 0) {
-        tbody.find('tr').each(function() {
-            var row = $(this);
-            var rowData = {};
-            
-            // Extract data from each cell in the row
-            row.find('td').each(function(index) {
-                var cell = $(this);
-                var value = cell.text().trim();
-                
-                // Map column index to field name
-                switch(index) {
-                    case 0: rowData.designator = value; break;
-                    case 1: rowData.name = value; break;
-                    case 2: rowData.location_label = value; break;
-                    case 3: rowData.level_label = value; break;
-                    case 4: rowData.width_val = value; break;
-                    case 5: rowData.height_val = value; break;
-                    case 6: rowData.united_inches_val = value; break;
-                    case 7: rowData.area_val = value; break;
-                }
-            });
-            
-            // Only add row if it has meaningful data
-            if (rowData.name && rowData.name !== '') {
-                tableData.push(rowData);
-            }
-        });
-    }
-    
+    var tbody = $('#' + category + '-tbody');
+    if (tbody.length === 0) { return tableData; }
+
+    tbody.find('tr').each(function() {
+        var row = $(this);
+        var isInline = row.hasClass('inline-measure-row');
+        var data = {};
+
+        if (isInline) {
+            data.designator = row.find('.cell-designator').val() || '';
+            data.name = row.find('.cell-name').val() || '';
+            data.location_label = row.find('.cell-location').val() || '';
+            data.level_label = row.find('.cell-level').val() || '';
+            data.width_val = row.find('.cell-width').val() || '';
+            data.height_val = row.find('.cell-height').val() || '';
+            data.united_inches_val = row.find('.cell-ui-text').text() || '';
+            data.area_val = row.find('.cell-area-text').text() || '';
+        } else {
+            var cells = row.find('td');
+            data.designator = cells.eq(0).text().trim();
+            data.name = cells.eq(1).text().trim();
+            data.location_label = cells.eq(2).text().trim();
+            data.level_label = cells.eq(3).text().trim();
+            data.width_val = cells.eq(4).text().trim();
+            data.height_val = cells.eq(5).text().trim();
+            data.united_inches_val = cells.eq(6).text().trim();
+            data.area_val = cells.eq(7).text().trim();
+        }
+
+        if (data.name) { tableData.push(data); }
+    });
+
     return tableData;
 }
 
@@ -1320,195 +1089,83 @@ function saveMeasurementAjax(formData, callback) {
     });
 }
 
-// Window Modal Functions
-$(document).on('click', '#js-add-window', function(e) {
+// Inline add row handlers for Windows and Doors
+$(document).on('click', '#js-add-window-row', function(e) {
     e.preventDefault();
-    console.log('Window modal button clicked');
-    
-    // Reset form and title
-    $('#window-form')[0].reset();
-    $('#windowModal .modal-title').text('Add New Window');
-    $('#ui-display').text('0 in');
-    $('#area-display').text('0 sqft');
-    
-    $('#windowModal').modal({
-        backdrop: 'static',
-        keyboard: false
-    }).modal('show');
+    appendInlineRow('windows');
 });
 
-// Door Modal Functions
-$(document).on('click', '[data-target="#doorModal"]', function(e) {
+$(document).on('click', '#js-add-door-row', function(e) {
     e.preventDefault();
-    console.log('Door modal button clicked');
-    
-    // Reset form and title
-    $('#door-form')[0].reset();
-    $('#doorModal .modal-title').text('Add New Door');
-    $('#door-ui-display').text('0 in');
-    $('#door-area-display').text('0 sqft');
-    
-    $('#doorModal').modal({
-        backdrop: 'static',
-        keyboard: false
-    }).modal('show');
+    appendInlineRow('doors');
 });
 
-// Window form calculations
-$(document).on('input change', 'input[name="width_val"], input[name="height_val"]', function() {
-    var width = parseFloat($('input[name="width_val"]').val()) || 0;
-    var height = parseFloat($('input[name="height_val"]').val()) || 0;
-    
-    if (width > 0 && height > 0) {
-        var ui = width + height;
-        var area = (width * height) / 144.0; // Convert to sqft
-        
-        $('#ui-display').text(ui.toFixed(2) + ' in');
-        $('#area-display').text(area.toFixed(2) + ' sqft');
-    } else {
-        $('#ui-display').text('0 in');
-        $('#area-display').text('0 sqft');
+function buildLocationOptions() {
+    var html = '<option value="">Select Location</option>';
+    for (var i = 1; i <= 10; i++) {
+        html += '<option value="Bedroom ' + i + '">Bedroom ' + i + '</option>';
     }
-});
-
-// Door form calculations
-$(document).on('input change', '#door-form input[name="width_val"], #door-form input[name="height_val"]', function() {
-    var width = parseFloat($('#door-form input[name="width_val"]').val()) || 0;
-    var height = parseFloat($('#door-form input[name="height_val"]').val()) || 0;
-    
-    if (width > 0 && height > 0) {
-        var ui = width + height;
-        var area = (width * height) / 144.0; // Convert to sqft
-        
-        $('#door-ui-display').text(ui.toFixed(2) + ' in');
-        $('#door-area-display').text(area.toFixed(2) + ' sqft');
-    } else {
-        $('#door-ui-display').text('0 in');
-        $('#door-area-display').text('0 sqft');
-    }
-});
-
-// Window form submission
-$(document).on('submit', '#window-form', function(e) {
-    e.preventDefault();
-    
-    var formData = $(this).serializeArray();
-    var data = {};
-    
-    // Convert form data to object
-    $.each(formData, function(i, field) {
-        data[field.name] = field.value;
-    });
-    
-    // Calculate UI and area if not set
-    var width = parseFloat(data.width_val) || 0;
-    var height = parseFloat(data.height_val) || 0;
-    if (width && height) {
-        data.united_inches_val = width + height;
-        data.area_val = (width * height) / 144.0;
-    }
-    
-    // Set default values
-    data.length_unit = 'in';
-    data.area_unit = 'sqft';
-    data.ui_unit = 'in';
-    
-    // Check if we're editing an existing row
-    var editingRow = $('tr[data-to-delete="true"]');
-    if (editingRow.length > 0) {
-        // Update existing row
-        updateWindowsTableRow(editingRow, data);
-        editingRow.removeAttr('data-to-delete');
-        alert_float('success', 'Window updated!');
-    } else {
-        // Add new row
-        addToWindowsTable(data);
-        alert_float('success', 'Window added to measurement!');
-    }
-    
-    // Close modal and reset form
-    $('#windowModal').modal('hide');
-    $(this)[0].reset();
-});
-
-// Door form submission
-$(document).on('submit', '#door-form', function(e) {
-    e.preventDefault();
-    
-    var formData = $(this).serializeArray();
-    var data = {};
-    
-    // Convert form data to object
-    $.each(formData, function(i, field) {
-        data[field.name] = field.value;
-    });
-    
-    // Calculate UI and area if not set
-    var width = parseFloat(data.width_val) || 0;
-    var height = parseFloat(data.height_val) || 0;
-    if (width && height) {
-        data.united_inches_val = width + height;
-        data.area_val = (width * height) / 144.0;
-    }
-    
-    // Set default values
-    data.length_unit = 'in';
-    data.area_unit = 'sqft';
-    data.ui_unit = 'in';
-    
-    // Check if we're editing an existing row
-    var editingRow = $('tr[data-to-delete="true"]');
-    if (editingRow.length > 0) {
-        // Update existing row
-        updateDoorsTableRow(editingRow, data);
-        editingRow.removeAttr('data-to-delete');
-        alert_float('success', 'Door updated!');
-    } else {
-        // Add new row
-        addToDoorsTable(data);
-        alert_float('success', 'Door added to measurement!');
-    }
-    
-    // Close modal and reset form
-    $('#doorModal').modal('hide');
-    $(this)[0].reset();
-});
-
-// AJAX save functionality for windows and doors
-function saveWindowDoorAjax(formData, callback) {
-    // Get CSRF token
-    var csrfData = <?php echo json_encode(get_csrf_for_ajax()); ?>;
-    
-    // Add CSRF token to form data
-    formData[csrfData.token_name] = csrfData.hash;
-    
-    // Debug logging
-    console.log('Sending AJAX request with data:', formData);
-    
-    $.ajax({
-        url: admin_url + 'ella_contractors/appointments/save_measurement/' + appointmentId,
-        type: 'POST',
-        data: formData,
-        dataType: 'json',
-        success: function(response) {
-            console.log('AJAX Response:', response);
-            if (response.success) {
-                if (typeof callback === 'function') {
-                    callback(true, response);
-                }
-            } else {
-                if (typeof callback === 'function') {
-                    callback(false, response);
-                }
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('AJAX Error:', error);
-            console.error('Response Text:', xhr.responseText);
-            if (typeof callback === 'function') {
-                callback(false, {error: error, responseText: xhr.responseText});
-            }
-        }
-    });
+    return html;
 }
+
+function buildLevelOptions(selected) {
+    var html = '<option value="">Select Level</option>';
+    for (var i = 1; i <= 10; i++) {
+        var sel = (String(selected) === String(i)) ? ' selected' : '';
+        html += '<option value="' + i + '"' + sel + '>' + i + '</option>';
+    }
+    return html;
+}
+
+function appendInlineRow(category, existingData) {
+    var tbody = $('#' + category + '-tbody');
+    var rowId = category + '_inline_' + Date.now();
+    var d = existingData || {};
+    var row = '<tr id="' + rowId + '" class="inline-measure-row" data-category="' + category + '">';
+    row += '<td><input type="text" class="form-control input-sm cell-designator" value="' + (d.designator || '') + '"></td>';
+    row += '<td><input type="text" class="form-control input-sm cell-name" value="' + (d.name || '') + '" required></td>';
+    row += '<td><select class="form-control input-sm cell-location">' + buildLocationOptions() + '</select></td>';
+    row += '<td><select class="form-control input-sm cell-level">' + buildLevelOptions(d.level_label) + '</select></td>';
+    row += '<td><input type="number" step="0.01" class="form-control input-sm cell-width" value="' + (d.width_val || '') + '"></td>';
+    row += '<td><input type="number" step="0.01" class="form-control input-sm cell-height" value="' + (d.height_val || '') + '"></td>';
+    row += '<td><span class="cell-ui-text">' + (d.united_inches_val || '') + '</span></td>';
+    row += '<td><span class="cell-area-text">' + (d.area_val || '') + '</span></td>';
+    row += '<td><button class="btn btn-danger btn-xs" onclick="removeTableRow(\'' + rowId + '\')" title="Remove"><i class="fa fa-trash"></i></button></td>';
+    row += '</tr>';
+    tbody.append(row);
+}
+
+// Convert existing text row into inline editable inputs
+function editTableRow(rowId, category) {
+    var row = $('#' + rowId);
+    var cells = row.find('td');
+    var data = {
+        designator: cells.eq(0).text(),
+        name: cells.eq(1).text(),
+        location_label: cells.eq(2).text(),
+        level_label: cells.eq(3).text(),
+        width_val: cells.eq(4).text(),
+        height_val: cells.eq(5).text(),
+        united_inches_val: cells.eq(6).text(),
+        area_val: cells.eq(7).text()
+    };
+    row.remove();
+    appendInlineRow(category, data);
+}
+
+// Auto-calc UI & Area inside inline rows
+$(document).on('input change', '.inline-measure-row .cell-width, .inline-measure-row .cell-height', function() {
+    var row = $(this).closest('tr');
+    var width = parseFloat(row.find('.cell-width').val()) || 0;
+    var height = parseFloat(row.find('.cell-height').val()) || 0;
+    if (width > 0 && height > 0) {
+        var ui = width + height;
+        var area = (width * height) / 144.0;
+        row.find('.cell-ui-text').text(ui.toFixed(2));
+        row.find('.cell-area-text').text(area.toFixed(2));
+    } else {
+        row.find('.cell-ui-text').text('');
+        row.find('.cell-area-text').text('');
+    }
+});
 </script>
