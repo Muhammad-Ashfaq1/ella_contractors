@@ -182,7 +182,12 @@ function manage_estimate(form) {
         if (response.success == true) {
             alert_float('success', response.message || 'Estimate saved successfully');
             $('#estimateModal').modal('hide');
-            loadEstimates(); // Reload estimates in main tab
+            // Use global refresh function to reload data and switch to estimates tab
+            if (typeof refreshAppointmentData === 'function') {
+                refreshAppointmentData('estimates-tab');
+            } else {
+                loadEstimates(); // Fallback to old method
+            }
         } else {
             alert_float('danger', response.message || 'Failed to save estimate');
         }
@@ -344,7 +349,12 @@ function initEstimatesModal() {
                 success: function(response) {
                     if (response.success) {
                         alert_float('success', 'Estimate deleted successfully');
-                        loadEstimates(); // Reload estimates in main tab
+                        // Use global refresh function to reload data and switch to estimates tab
+                        if (typeof refreshAppointmentData === 'function') {
+                            refreshAppointmentData('estimates-tab');
+                        } else {
+                            loadEstimates(); // Fallback to old method
+                        }
                     } else {
                         alert_float('danger', response.message || 'Failed to delete estimate');
                     }

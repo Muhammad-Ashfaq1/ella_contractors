@@ -321,6 +321,18 @@ $(document).ready(function() {
         // Small delay to ensure any pending operations complete
         setTimeout(function() {
             loadMeasurements();
+            // Switch to measurements tab to show updated data
+            $('a[href="#measurements-tab"]').tab('show');
+        }, 100);
+    });
+    
+    // Reload estimates when estimate modal is closed
+    $('#estimateModal').on('hidden.bs.modal', function() {
+        // Small delay to ensure any pending operations complete
+        setTimeout(function() {
+            loadEstimates();
+            // Switch to estimates tab to show updated data
+            $('a[href="#estimates-tab"]').tab('show');
         }, 100);
     });
     
@@ -334,6 +346,18 @@ $(document).ready(function() {
 function editAppointment(appointmentId) {
     // Redirect to edit page or open modal
     window.location.href = admin_url + 'ella_contractors/appointments/edit/' + appointmentId;
+}
+
+// Global function to refresh all data and switch to appropriate tab
+function refreshAppointmentData(activeTab = null) {
+    // Reload both measurements and estimates
+    loadMeasurements();
+    loadEstimates();
+    
+    // Switch to specified tab or stay on current tab
+    if (activeTab) {
+        $('a[href="#' + activeTab + '"]').tab('show');
+    }
 }
 
 function deleteAppointment(appointmentId) {
@@ -684,7 +708,12 @@ function deleteMeasurement(measurementId) {
             success: function(response) {
                 if (response.success) {
                     alert_float('success', response.message);
-                    loadMeasurements(); // Reload measurements
+                    // Use global refresh function to reload data and switch to measurements tab
+                    if (typeof refreshAppointmentData === 'function') {
+                        refreshAppointmentData('measurements-tab');
+                    } else {
+                        loadMeasurements(); // Fallback to old method
+                    }
                 } else {
                     alert_float('danger', response.message);
                 }
@@ -1047,7 +1076,12 @@ $('#saveMeasurement').on('click', function() {
         if (success) {
             alert_float('success', 'Measurement saved successfully!');
             $('#measurementModal').modal('hide');
-            loadMeasurements(); // Reload measurements list
+            // Use global refresh function to reload data and switch to measurements tab
+            if (typeof refreshAppointmentData === 'function') {
+                refreshAppointmentData('measurements-tab');
+            } else {
+                loadMeasurements(); // Fallback to old method
+            }
         } else {
             alert_float('danger', 'Error saving measurement: ' + (response.message || 'Unknown error'));
         }
@@ -1105,6 +1139,12 @@ $(document).on('click', '#js-save-windows, #js-save-doors', function() {
                 var tbody = $('#' + which + '-tbody');
                 tbody.html('');
                 savedList.forEach(function(item) { appendInlineRow(which, item); });
+                // Also refresh the main measurements list
+                if (typeof refreshAppointmentData === 'function') {
+                    refreshAppointmentData('measurements-tab');
+                } else {
+                    loadMeasurements(); // Fallback to old method
+                }
             } else {
                 alert_float('danger', (resp && resp.message) ? resp.message : 'Failed to save');
             }
