@@ -635,28 +635,63 @@ class Appointments extends AdminController
      */
     private function handle_estimate_line_items($estimate_id)
     {
-        $line_items = $this->input->post('line_items');
-        
-        if ($line_items && is_array($line_items)) {
-            // Delete existing line items
-            $this->db->where('estimate_id', $estimate_id);
-            $this->db->delete(db_prefix() . 'ella_contractor_estimate_line_items');
-            
-            // Add new line items
-            foreach ($line_items as $item) {
-                if (!empty($item['line_item_id']) && !empty($item['quantity']) && !empty($item['unit_price'])) {
-                    $this->estimates_model->add_line_item_to_estimate(
-                        $estimate_id,
-                        $item['line_item_id'],
-                        $item['quantity'],
-                        $item['unit_price']
-                    );
-                }
-            }
-            
-            // Update estimate totals
-            $this->estimates_model->update_estimate_totals($estimate_id);
-        }
+		$line_items = $this->input->post('line_items');
+		
+		if ($line_items && is_array($line_items)) {
+			// Normalize and merge duplicates by line_item_id to satisfy unique constraint
+			$merged = [];
+			foreach ($line_items as $item) {
+				$line_item_id = isset($item['line_item_id']) ? (int) $item['line_item_id'] : 0;
+				$quantity = isset($item['quantity']) ? (float) $item['quantity'] : 0;
+				$unit_price = isset($item['unit_price']) ? (float) $item['unit_price'] : 0;
+				
+				if ($line_item_id > 0 && $quantity > 0 && $unit_price >= 0) {
+					if (!isset($merged[$line_item_id])) {
+						$merged[$line_item_id] = [
+							'quantity' => 0.0,
+							'unit_price' => $unit_price,
+						];
+					}
+					// Sum quantities; use the latest provided unit_price
+					$merged[$line_item_id]['quantity'] += $quantity;
+					$merged[$line_item_id]['unit_price'] = $unit_price ?: $merged[$line_item_id]['unit_price'];
+				}
+			}
+			
+			// Delete existing line items then insert merged set
+			$this->db->where('estimate_id', $estimate_id);
+			$this->db->delete(db_prefix() . 'ella_contractor_estimate_line_items');
+			
+			// Validate foreign keys: ensure line_item_id exists
+			$idsToInsert = array_map('intval', array_keys($merged));
+			$existingIds = [];
+			if (!empty($idsToInsert)) {
+				$q = $this->db->select('id')
+					->from(db_prefix() . 'ella_contractor_line_items')
+					->where_in('id', $idsToInsert)
+					->get();
+				foreach ($q->result() as $row) {
+					$existingIds[(int)$row->id] = true;
+				}
+			}
+			
+			foreach ($merged as $lid => $data) {
+				$lid = (int)$lid;
+				if (!isset($existingIds[$lid])) {
+					log_message('error', 'Skipping insertion of non-existent line_item_id ' . $lid . ' for estimate ' . $estimate_id);
+					continue;
+				}
+				$this->estimates_model->add_line_item_to_estimate(
+					$estimate_id,
+					$lid,
+					(float)$data['quantity'],
+					(float)$data['unit_price']
+				);
+			}
+			
+			// Update estimate totals
+			$this->estimates_model->update_estimate_totals($estimate_id);
+		}
     }
 
     /**
