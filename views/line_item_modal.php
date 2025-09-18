@@ -58,11 +58,14 @@
                     <?php echo render_custom_fields('line_items'); ?>
                 </div>
                 <?php echo render_select('group_id',$groups,array('id','name'),'item_group'); ?>
-                <div class="form-group">
-                    <div class="checkbox">
-                        <input type="checkbox" name="is_active" id="is_active" value="1" checked>
-                        <label for="is_active"><?php echo _l('active'); ?></label>
-                    </div>
+
+
+                <div class="form-group select-placeholder" >
+                    <label for="is_active"> Status </label>
+                    <select name="is_active" id="is_active" class="selectpicker" data-width="100%" data-live-search="true">
+                        <option value="1"><?php echo _l('active'); ?></option>
+                        <option value="0"><?php echo _l('inactive'); ?></option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -132,8 +135,7 @@ function init_line_item_js() {
                 $itemModal.find('input[name="quantity"]').val(response.quantity);
                 $('select[name="unit_type"]').selectpicker('val', response.unit_type).change();
                 $itemModal.find('#group_id').selectpicker('val', response.group_id);
-                $itemModal.find('input[name="is_active"]').prop('checked', response.is_active == 1);
-
+                $itemModal.find('select[name="is_active"]').selectpicker('val', response.is_active);
                 $('#custom_fields_line_items').html(response.custom_fields_html);
 
                 init_selectpicker();

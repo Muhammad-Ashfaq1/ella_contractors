@@ -14,34 +14,31 @@ class Ella_line_items_model extends App_Model
      */
     public function get_line_items($group_id = null, $active_only = false)
     {
-        $this->db->select('*,' . db_prefix() . 'ella_contractor_line_item_groups.name as group_name');
-        $this->db->from(db_prefix() . 'ella_contractor_line_items');
-        $this->db->join(db_prefix() . 'ella_contractor_line_item_groups', db_prefix() . 'ella_contractor_line_item_groups.id = ' . db_prefix() . 'ella_contractor_line_items.group_id', 'left');
-        
-        if ($group_id) {
-            $this->db->where('group_id', $group_id);
+        $items  = db_prefix() . 'ella_contractor_line_items';
+        $groups = db_prefix() . 'ella_contractor_line_item_groups';
+
+        $this->db->select("
+            {$items}.*,
+            {$groups}.name AS group_name,
+            {$groups}.id   AS group_pk
+        ");
+        $this->db->from($items);
+        $this->db->join($groups, "{$groups}.id = {$items}.group_id", 'left');
+
+        if (!is_null($group_id)) {
+            $this->db->where("{$items}.group_id", $group_id);
         }
-        
+
         if ($active_only) {
-            $this->db->where(db_prefix() . 'ella_contractor_line_items.is_active', 1);
+            $this->db->where("{$items}.is_active", 1);
         }
-        
-        $this->db->order_by('group_name', 'ASC');
-        $this->db->order_by(db_prefix() . 'ella_contractor_line_items.name', 'ASC');
-        
-        // Debug logging
-        log_message('debug', 'Line items query: ' . $this->db->last_query());
-        
-        $result = $this->db->get()->result_array();
-        
-        // Debug logging
-        log_message('debug', 'Line items result count: ' . count($result));
-        if (!empty($result)) {
-            log_message('debug', 'First line item result: ' . json_encode($result[0]));
-        }
-        
-        return $result;
+
+        $this->db->order_by("{$groups}.name", 'ASC');
+        $this->db->order_by("{$items}.name", 'ASC');
+
+        return $this->db->get()->result_array();
     }
+
 
     /**
      * Get single line item by ID
