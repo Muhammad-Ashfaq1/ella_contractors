@@ -237,8 +237,8 @@ class Appointments extends AdminController
         if (!has_permission('ella_contractors', '', 'view')) {
             access_denied('ella_contractors');
         }
-
         $data['title'] = 'Past Appointments';
+        $data['appointments'] = $this->appointments_model->get_past_appointments();
         $this->load->view('appointments/past', $data);
     }
 

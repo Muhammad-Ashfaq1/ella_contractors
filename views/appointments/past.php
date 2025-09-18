@@ -25,11 +25,111 @@
                                         <th><?php echo _l('appointment_meeting_date'); ?></th>
                                         <th><?php echo _l('client'); ?></th>
                                         <th><?php echo _l('appointment_status'); ?></th>
-                                        <th width="120px"><?php echo _l('options'); ?></th>
+                                        <th width="100px"><i class="fa fa-square-o"></i> Measurements</th>
+                                        <th width="100px"><i class="fa fa-file-text-o"></i> Estimates</th>
+                                        <th width="80px"><?php echo _l('options'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Data will be loaded via AJAX -->
+                                    <?php if (!empty($appointments)): ?>
+                                        <?php foreach ($appointments as $appointment): ?>
+                                            <?php
+                                            // Get measurement count for this appointment
+                                            $this->db->where('appointment_id', $appointment['id']);
+                                            $measurement_count = $this->db->count_all_results(db_prefix() . 'ella_contractors_measurements');
+                                            
+                                            // Get estimate count for this appointment
+                                            $this->db->where('appointment_id', $appointment['id']);
+                                            $estimate_count = $this->db->count_all_results(db_prefix() . 'ella_contractor_estimates');
+                                            
+                                            // Determine status
+                                            $status = 'Pending';
+                                            $status_class = 'label-warning';
+                                            if ($appointment['cancelled']) {
+                                                $status = 'Cancelled';
+                                                $status_class = 'label-danger';
+                                            } elseif ($appointment['finished']) {
+                                                $status = 'Finished';
+                                                $status_class = 'label-success';
+                                            } elseif ($appointment['approved']) {
+                                                $status = 'Approved';
+                                                $status_class = 'label-info';
+                                            }
+                                            
+                                            // Get client name
+                                            $client_name = '';
+                                            if (!empty($appointment['client_name'])) {
+                                                $client_name = $appointment['client_name'];
+                                            } elseif (!empty($appointment['lead_name'])) {
+                                                $client_name = $appointment['lead_name'];
+                                            } else {
+                                                $client_name = $appointment['name'];
+                                            }
+                                            ?>
+                                            <tr>
+                                                <td>
+                                                    <div class="checkbox">
+                                                        <input type="checkbox" value="<?php echo $appointment['id']; ?>">
+                                                        <label></label>
+                                                    </div>
+                                                </td>
+                                                <td><?php echo $appointment['id']; ?></td>
+                                                <td>
+                                                    <a href="<?php echo admin_url('ella_contractors/appointments/view/' . $appointment['id']); ?>">
+                                                        <?php echo $appointment['subject']; ?>
+                                                    </a>
+                                                </td>
+                                                <td><?php echo _dt($appointment['date'] . ' ' . $appointment['start_hour']); ?></td>
+                                                <td><?php echo $client_name; ?></td>
+                                                <td>
+                                                    <span class="label <?php echo $status_class; ?>"><?php echo $status; ?></span>
+                                                </td>
+                                                <td>
+                                                    <div class="text-center">
+                                                        <?php
+                                                        $measurement_url = admin_url('ella_contractors/appointments/view/' . $appointment['id'] . '?tab=measurements');
+                                                        if ($measurement_count > 0): ?>
+                                                            <a href="<?php echo $measurement_url; ?>" class="label label-info" title="Click to view measurements">
+                                                                <i class="fa fa-square-o"></i> <?php echo $measurement_count; ?>
+                                                            </a>
+                                                        <?php else: ?>
+                                                            <a href="<?php echo $measurement_url; ?>" class="text-muted" title="Click to add measurements">
+                                                                <i class="fa fa-square-o"></i> 0
+                                                            </a>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="text-center">
+                                                        <?php
+                                                        $estimate_url = admin_url('ella_contractors/appointments/view/' . $appointment['id'] . '?tab=estimates');
+                                                        if ($estimate_count > 0): ?>
+                                                            <a href="<?php echo $estimate_url; ?>" class="label label-success" title="Click to view estimates">
+                                                                <i class="fa fa-file-text-o"></i> <?php echo $estimate_count; ?>
+                                                            </a>
+                                                        <?php else: ?>
+                                                            <a href="<?php echo $estimate_url; ?>" class="text-muted" title="Click to add estimates">
+                                                                <i class="fa fa-file-text-o"></i> 0
+                                                            </a>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <a href="<?php echo admin_url('ella_contractors/appointments/view/' . $appointment['id']); ?>" 
+                                                       class="btn btn-default btn-xs" title="View Details">
+                                                        <i class="fa fa-eye"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="9" class="text-center text-muted">
+                                                <i class="fa fa-info-circle fa-2x"></i>
+                                                <p>No past appointments found.</p>
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -40,169 +140,49 @@
     </div>
 </div>
 
-<?php 
-// Include modal data
-$data['staff'] = $this->staff_model->get();
-$data['clients'] = $this->clients_model->get();
-$data['leads'] = $this->leads_model->get();
-$data['appointment_types'] = $this->appointments_model->get_appointment_types();
-$this->load->view('appointments/modal', $data);
-?>
-
 <?php init_tail(); ?>
 
+<style>
+/* Custom styling for appointment count badges */
+.table-ella_appointments_past .label {
+    font-size: 11px;
+    padding: 4px 8px;
+    margin: 2px;
+    display: inline-block;
+}
+.table-ella_appointments_past .text-muted {
+    font-size: 11px;
+    padding: 4px 8px;
+    margin: 2px;
+    display: inline-block;
+    opacity: 0.6;
+}
+.table-ella_appointments_past th {
+    text-align: center;
+    vertical-align: middle;
+}
+.table-ella_appointments_past td {
+    vertical-align: middle;
+}
+/* Clickable badge styling */
+.table-ella_appointments_past .label a,
+.table-ella_appointments_past .text-muted a {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+.table-ella_appointments_past .label a:hover,
+.table-ella_appointments_past .text-muted a:hover {
+    color: inherit;
+    text-decoration: none;
+    opacity: 0.8;
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+}
+</style>
+
 <script>
-var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
-var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
-
 $(document).ready(function() {
-    // Initialize DataTable for past appointments
-    initDataTable('.table-ella_appointments_past', admin_url + 'ella_contractors/appointments/table', undefined, undefined, {past: 1}, [2, 'desc']);
-    
-    // Initialize selectpicker
-    $('.selectpicker').selectpicker();
-});
-
-// Global functions for modal operations
-function openAppointmentModal(appointmentId = null) {
-    // Reset form
-    $('#appointmentForm')[0].reset();
-    $('#appointment_id').val('');
-    $('#appointmentModalLabel').text('Create Appointment');
-    
-    // Set today's date as default
-    $('#date').val('<?php echo date('Y-m-d'); ?>');
-    
-    // Refresh selectpicker
-    $('.selectpicker').selectpicker('refresh');
-    
-    if (appointmentId) {
-        // Load appointment data for editing
-        loadAppointmentData(appointmentId);
-    }
-}
-
-function loadAppointmentData(appointmentId) {
-    console.log('Loading appointment data for ID:', appointmentId);
-    
-    $.ajax({
-        url: admin_url + 'ella_contractors/appointments/get_appointment_data',
-        type: 'POST',
-        data: {
-            id: appointmentId,
-            [csrf_token_name]: csrf_hash
-        },
-        dataType: 'json',
-        success: function(response) {
-            console.log('Appointment data response:', response);
-            
-            if (response.success) {
-                var data = response.data;
-                console.log('Appointment data:', data);
-                
-                // Populate form fields
-                $('#appointment_id').val(data.id);
-                $('#subject').val(data.subject);
-                $('#date').val(data.date);
-                $('#start_hour').val(data.start_hour);
-                $('#contact_id').val(data.contact_id);
-                $('#name').val(data.name);
-                $('#email').val(data.email);
-                $('#phone').val(data.phone);
-                $('#address').val(data.address);
-                $('#description').val(data.description);
-                $('#notes').val(data.notes);
-                $('#type_id').val(data.type_id);
-                
-                // Set status dropdown
-                var status = 'pending';
-                if (parseInt(data.cancelled) === 1) status = 'cancelled';
-                else if (parseInt(data.finished) === 1) status = 'finished';
-                else if (parseInt(data.approved) === 1) status = 'approved';
-                $('#status').val(status);
-                
-                // Set attendees
-                var attendeeIds = [];
-                if (data.attendees) {
-                    $.each(data.attendees, function(index, attendee) {
-                        attendeeIds.push(attendee.staff_id);
-                    });
-                }
-                $('#attendees').val(attendeeIds);
-                
-                // Update modal title
-                $('#appointmentModalLabel').text('Edit Appointment');
-                
-                // Refresh selectpicker
-                $('.selectpicker').selectpicker('refresh');
-            } else {
-                console.log('Error loading appointment:', response.message);
-                alert_float('danger', response.message);
-            }
-        },
-        error: function(xhr, status, error) {
-            console.log('AJAX Error loading appointment:', xhr.responseText);
-            alert_float('danger', 'Error loading appointment data: ' + error);
-        }
-    });
-}
-
-function editAppointment(appointmentId) {
-    openAppointmentModal(appointmentId);
-    $('#appointmentModal').modal('show');
-}
-
-function deleteAppointment(appointmentId) {
-    if (confirm('Are you sure you want to delete this appointment?')) {
-        $.ajax({
-            url: admin_url + 'ella_contractors/appointments/delete_ajax',
-            type: 'POST',
-            data: {
-                id: appointmentId,
-                [csrf_token_name]: csrf_hash
-            },
-            dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    alert_float('success', response.message);
-                    $('.table-ella_appointments_past').DataTable().ajax.reload();
-                } else {
-                    alert_float('danger', response.message);
-                }
-            },
-            error: function() {
-                alert_float('danger', 'Error deleting appointment');
-            }
-        });
-    }
-}
-
-// Save appointment
-$('#saveAppointment').on('click', function() {
-    var formData = $('#appointmentForm').serialize();
-    
-    // Debug: Log form data
-    console.log('Form data:', formData);
-    
-    $.ajax({
-        url: admin_url + 'ella_contractors/appointments/save_ajax',
-        type: 'POST',
-        data: formData + '&' + csrf_token_name + '=' + csrf_hash,
-        dataType: 'json',
-        success: function(response) {
-            console.log('Response:', response);
-            if (response.success) {
-                alert_float('success', response.message);
-                $('#appointmentModal').modal('hide');
-                $('.table-ella_appointments_past').DataTable().ajax.reload();
-            } else {
-                alert_float('danger', response.message);
-            }
-        },
-        error: function(xhr, status, error) {
-            console.log('AJAX Error:', xhr.responseText);
-            alert_float('danger', 'Error saving appointment: ' + error);
-        }
-    });
+    console.log('hello from js past');
 });
 </script>

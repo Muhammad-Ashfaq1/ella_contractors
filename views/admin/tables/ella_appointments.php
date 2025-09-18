@@ -107,13 +107,21 @@ foreach ($rResult as $aRow) {
     
     $options = '';
     if ($has_permission_view) {
-        $options .= '<a href="' . admin_url('ella_contractors/appointments/view/' . $aRow['id']) . '" class="btn btn-default btn-xs"><i class="fa fa-eye"></i></a> ';
+        $options .= '<a href="' . admin_url('ella_contractors/appointments/view/' . $aRow['id']) . '" class="btn btn-default btn-xs" title="View Details"><i class="fa fa-eye"></i></a>';
     }
-    if ($has_permission_edit) {
-        $options .= '<a href="javascript:void(0)" class="btn btn-info btn-xs" onclick="editAppointment(' . $aRow['id'] . ')"><i class="fa fa-edit"></i></a> ';
-    }
-    if ($has_permission_delete) {
-        $options .= '<a href="javascript:void(0)" class="btn btn-danger btn-xs" onclick="deleteAppointment(' . $aRow['id'] . ')"><i class="fa fa-trash"></i></a>';
+    
+    // Only show edit/delete for current appointments, not past ones
+    if (isset($past) && $past == 1) {
+        // Past appointments - view only
+        // No additional options needed
+    } else {
+        // Current appointments - full options
+        if ($has_permission_edit) {
+            $options .= ' <a href="javascript:void(0)" class="btn btn-info btn-xs" onclick="editAppointment(' . $aRow['id'] . ')" title="Edit"><i class="fa fa-edit"></i></a>';
+        }
+        if ($has_permission_delete) {
+            $options .= ' <a href="javascript:void(0)" class="btn btn-danger btn-xs" onclick="deleteAppointment(' . $aRow['id'] . ')" title="Delete"><i class="fa fa-trash"></i></a>';
+        }
     }
     
     $row[] = $options;
