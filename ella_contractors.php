@@ -516,21 +516,146 @@ function ella_contractors_activate_module() {
 function ella_contractors_deactivate_module() {
     $CI = &get_instance();
 
-    // Rollback code - commented out for now, uncomment when needed
-    // Drop tables if they exist
-    // if ($CI->db->table_exists(db_prefix() . 'ella_contractor_media')) {
-    //     $CI->db->query('DROP TABLE `' . db_prefix() . 'ella_contractor_media`');
-    // }
+    // ========================================
+    // COLUMN DROPPING FUNCTIONALITY
+    // ========================================
+    // Uncomment the code below when you need to remove rel_type, rel_id, org_id columns
+    // during module deactivation. This will clean up the database structure.
     
-    // if ($CI->db->table_exists(db_prefix() . 'ella_media_folders')) {
-    //     $CI->db->query('DROP TABLE `' . db_prefix() . 'ella_media_folders`');
-    // }
+    /*
+    // List of EllaContractor tables that have the new columns
+    $tables = [
+        'ella_contractor_media',
+        'ella_contractor_line_item_groups',
+        'ella_contractor_line_items', 
+        'ella_contractor_estimates',
+        'ella_contractor_estimate_line_items',
+        'ella_contractors_measurements'
+    ];
     
-    // Optionally remove upload directories (be careful with this)
-    // $base_path = FCPATH . 'uploads/ella_presentations/';
-    // if (is_dir($base_path)) {
-    //     rmdir($base_path);
-    // }
+    foreach ($tables as $table) {
+        $full_table_name = db_prefix() . $table;
+        
+        // Check if table exists before attempting to drop columns
+        if (!$CI->db->table_exists($full_table_name)) {
+            log_message('info', "Table {$full_table_name} does not exist, skipping column drops");
+            continue;
+        }
+        
+        log_message('info', "Processing table for column drops: {$full_table_name}");
+        
+        // Drop indexes first (to avoid constraint issues)
+        try {
+            $CI->db->query("ALTER TABLE `{$full_table_name}` DROP INDEX IF EXISTS `idx_rel_type_id`");
+            log_message('info', "Dropped idx_rel_type_id index from {$full_table_name}");
+        } catch (Exception $e) {
+            log_message('debug', "Index idx_rel_type_id may not exist on {$full_table_name}: " . $e->getMessage());
+        }
+        
+        try {
+            $CI->db->query("ALTER TABLE `{$full_table_name}` DROP INDEX IF EXISTS `idx_org_id`");
+            log_message('info', "Dropped idx_org_id index from {$full_table_name}");
+        } catch (Exception $e) {
+            log_message('debug', "Index idx_org_id may not exist on {$full_table_name}: " . $e->getMessage());
+        }
+        
+        // Drop columns in reverse order (org_id, rel_id, rel_type)
+        if ($CI->db->field_exists('org_id', $full_table_name)) {
+            $CI->db->query("ALTER TABLE `{$full_table_name}` DROP COLUMN `org_id`");
+            log_message('info', "Dropped org_id column from {$full_table_name}");
+        }
+        
+        if ($CI->db->field_exists('rel_id', $full_table_name)) {
+            $CI->db->query("ALTER TABLE `{$full_table_name}` DROP COLUMN `rel_id`");
+            log_message('info', "Dropped rel_id column from {$full_table_name}");
+        }
+        
+        if ($CI->db->field_exists('rel_type', $full_table_name)) {
+            $CI->db->query("ALTER TABLE `{$full_table_name}` DROP COLUMN `rel_type`");
+            log_message('info', "Dropped rel_type column from {$full_table_name}");
+        }
+        
+        log_message('info', "Completed column drops for table: {$full_table_name}");
+    }
+    
+    log_message('info', 'EllaContractor column deactivation completed successfully');
+    */
+    
+    // ========================================
+    // TABLE DROPPING FUNCTIONALITY  
+    // ========================================
+    // Uncomment the code below when you need to completely remove all EllaContractor tables
+    // during module deactivation. WARNING: This will delete all data!
+    
+    /*
+    // Drop tables if they exist (in reverse dependency order)
+    $tables_to_drop = [
+        'ella_contractor_estimate_line_items',  // Pivot table first
+        'ella_contractor_estimates',
+        'ella_contractor_line_items',
+        'ella_contractor_line_item_groups',
+        'ella_contractors_measurements',
+        'ella_contractor_media',
+        'ella_media_folders'
+    ];
+    
+    foreach ($tables_to_drop as $table) {
+        $full_table_name = db_prefix() . $table;
+        if ($CI->db->table_exists($full_table_name)) {
+            $CI->db->query("DROP TABLE `{$full_table_name}`");
+            log_message('info', "Dropped table: {$full_table_name}");
+        }
+    }
+    */
+    
+    // ========================================
+    // DIRECTORY CLEANUP FUNCTIONALITY
+    // ========================================
+    // Uncomment the code below when you need to remove upload directories
+    // during module deactivation. WARNING: This will delete all uploaded files!
+    
+    /*
+    // Remove upload directories (be careful with this)
+    $directories_to_remove = [
+        FCPATH . 'uploads/ella_presentations/',
+        FCPATH . 'uploads/ella_line_items/'
+    ];
+    
+    foreach ($directories_to_remove as $dir) {
+        if (is_dir($dir)) {
+            // Remove all files in directory first
+            $files = glob($dir . '*');
+            foreach ($files as $file) {
+                if (is_file($file)) {
+                    unlink($file);
+                }
+            }
+            // Remove directory
+            rmdir($dir);
+            log_message('info', "Removed directory: {$dir}");
+        }
+    }
+    */
+    
+    // ========================================
+    // OPTION CLEANUP FUNCTIONALITY
+    // ========================================
+    // Uncomment the code below when you need to remove module options
+    // during module deactivation
+    
+    /*
+    // Remove module-specific options
+    $options_to_remove = [
+        'ella_contractors_version'
+    ];
+    
+    foreach ($options_to_remove as $option) {
+        delete_option($option);
+        log_message('info', "Removed option: {$option}");
+    }
+    */
+    
+    log_message('info', 'EllaContractor module deactivated (no cleanup performed - uncomment desired cleanup code above)');
 }
 
 
