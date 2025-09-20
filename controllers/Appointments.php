@@ -853,12 +853,29 @@ class Appointments extends AdminController
                 'message' => 'Estimate deleted successfully'
             ]);
         } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Failed to delete estimate'
-            ]);
-        }
+        echo json_encode([
+            'success' => false,
+            'message' => 'Failed to delete estimate'
+        ]);
     }
+    }
+    /**
+     * AJAX endpoint to get appointment types for global appointment creation
+     */
+    public function get_types()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $types = $this->appointments_model->get_appointment_types();
+        
+        echo json_encode([
+            'success' => true,
+            'types' => $types
+        ]);
+    }
+
 
     /**
      * Remove line item from estimate
@@ -879,7 +896,7 @@ class Appointments extends AdminController
         } else {
             echo json_encode([
                 'success' => false,
-                'message' => 'Failed to remove line item'
+                'message' => 'Failed to remove line item',
             ]);
         }
     }

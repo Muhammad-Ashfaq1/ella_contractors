@@ -72,3 +72,7 @@ $route[$module_name . '/appointments/delete_measurement/(:num)/(:num)'] = 'Appoi
 // AJAX endpoints
 $route[$module_name . '/get_line_items_ajax'] = $module_name . '/get_line_items_ajax';
 $route[$module_name . '/get_estimates_ajax'] = $module_name . '/get_estimates_ajax';
+
+// Global appointment AJAX endpoints
+$route[$module_name . '/appointments/get_types'] = 'Appointments/get_types';
+$route[$module_name . '/appointments/save_ajax'] = 'Appointments/save_ajax';
