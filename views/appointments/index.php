@@ -247,3 +247,6 @@ $('#saveAppointment').on('click', function() {
     });
 });
 </script>
+
+<!-- Include global appointment.js for lead modal functionality -->
+<script src="<?php echo base_url('assets/js/global/appointment.js'); ?>"></script>
