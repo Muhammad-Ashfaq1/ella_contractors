@@ -110,12 +110,6 @@ class Appointments extends AdminController
         if ($this->form_validation->run() == FALSE) {
             set_alert('warning', validation_errors());
         } else {
-            // Map status dropdown to legacy boolean flags
-            $status = $this->input->post('status');
-            $approved = ($status === 'approved') ? 1 : 0;
-            $finished = ($status === 'finished') ? 1 : 0;
-            $cancelled = ($status === 'cancelled') ? 1 : 0;
-
             $data = [
                 'subject' => $this->input->post('subject'),
                 'description' => $this->input->post('description'),
@@ -128,9 +122,7 @@ class Appointments extends AdminController
                 'address' => $this->input->post('address'),
                 'notes' => $this->input->post('notes'),
                 'type_id' => $this->input->post('type_id') ?: 0,
-                'approved' => $approved,
-                'finished' => $finished,
-                'cancelled' => $cancelled,
+                'appointment_status' => $this->input->post('status'),
                 'source' => 'ella_contractor'
             ];
 
@@ -289,12 +281,6 @@ class Appointments extends AdminController
             return;
         }
 
-        // Map status dropdown to legacy boolean flags
-        $status = $this->input->post('status');
-        $approved = ($status === 'approved') ? 1 : 0;
-        $finished = ($status === 'finished') ? 1 : 0;
-        $cancelled = ($status === 'cancelled') ? 1 : 0;
-
         $data = [
             'subject' => $this->input->post('subject'),
             'description' => $this->input->post('description'),
@@ -307,9 +293,7 @@ class Appointments extends AdminController
             'address' => $this->input->post('address'),
             'notes' => $this->input->post('notes'),
             'type_id' => $this->input->post('type_id') ?: 0,
-            'approved' => $approved,
-            'finished' => $finished,
-            'cancelled' => $cancelled,
+            'appointment_status' => $this->input->post('status'),
             'source' => 'ella_contractor'
         ];
 

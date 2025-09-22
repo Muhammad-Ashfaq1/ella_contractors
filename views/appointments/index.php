@@ -187,10 +187,7 @@ function loadAppointmentData(appointmentId) {
                 $('#type_id').val(data.type_id);
                 
                 // Set status dropdown
-                var status = 'scheduled';
-                if (parseInt(data.cancelled) === 1) status = 'cancelled';
-                else if (parseInt(data.finished) === 1) status = 'complete';
-                else if (parseInt(data.approved) === 1) status = 'complete';
+                var status = data.appointment_status || 'scheduled';
                 $('#status').val(status);
                 
                 // Set attendees

@@ -14,12 +14,7 @@ $aColumns = [
     db_prefix() . 'appointly_appointments.subject as subject',
     db_prefix() . 'appointly_appointments.date as date',
     db_prefix() . 'appointly_appointments.start_hour as start_hour',
-    'CASE 
-        WHEN ' . db_prefix() . 'appointly_appointments.cancelled = 1 THEN "Cancelled"
-        WHEN ' . db_prefix() . 'appointly_appointments.finished = 1 THEN "Complete"
-        WHEN ' . db_prefix() . 'appointly_appointments.approved = 1 THEN "Complete"
-        ELSE "Scheduled"
-    END as status',
+    'COALESCE(' . db_prefix() . 'appointly_appointments.appointment_status, "scheduled") as status',
     'COALESCE(measurement_counts.measurement_count, 0) as measurement_count',
     'COALESCE(estimate_counts.estimate_count, 0) as estimate_count',
     '1'
@@ -51,9 +46,10 @@ $where = [];
 // Filter to show only appointments created from EllaContractors module
 $where[] = 'AND ' . db_prefix() . 'appointly_appointments.source = "ella_contractor"';
 
-// Filter for past appointments if requested
-if (isset($past) && $past == 1) {
-    $where[] = 'AND ' . db_prefix() . 'appointly_appointments.date < CURDATE()';
+// Filter by status if requested
+if (isset($_POST['columns'][5]['search']['value']) && !empty($_POST['columns'][5]['search']['value'])) {
+    $status_filter = $_POST['columns'][5]['search']['value'];
+    $where[] = 'AND COALESCE(' . db_prefix() . 'appointly_appointments.appointment_status, "scheduled") = "' . $status_filter . '"';
 }
 
 $result = data_tables_init($aColumns, 'id', db_prefix() . 'appointly_appointments', $join, $where, [], '', '', []);
@@ -96,20 +92,25 @@ foreach ($rResult as $aRow) {
     $row[] = $date_formatted;
     
     $status_class = '';
+    $status_label = '';
     switch ($aRow['status']) {
-        case 'Cancelled':
+        case 'cancelled':
             $status_class = 'label-danger';
+            $status_label = 'Cancelled';
             break;
-        case 'Complete':
+        case 'complete':
             $status_class = 'label-success';
+            $status_label = 'Complete';
             break;
-        case 'Scheduled':
+        case 'scheduled':
             $status_class = 'label-info';
+            $status_label = 'Scheduled';
             break;
         default:
             $status_class = 'label-warning';
+            $status_label = ucfirst($aRow['status']);
     }
-    $row[] = '<span class="label ' . $status_class . '">' . $aRow['status'] . '</span>';
+    $row[] = '<span class="label ' . $status_class . '">' . $status_label . '</span>';
     
     // Display measurement count with clickable badge
     $measurement_count = (int) $aRow['measurement_count'];
@@ -123,7 +124,7 @@ foreach ($rResult as $aRow) {
     $estimate_count = (int) $aRow['estimate_count'];
     $estimate_url = admin_url('ella_contractors/appointments/view/' . $aRow['id'] . '?tab=estimates');
     $estimate_badge = $estimate_count > 0 
-        ? '<div class="t,ext-center"><a href="' . $estimate_url . '" class="label label-success" title="Click to view estimates"><i class="fa fa-file-text-o"></i> ' . $estimate_count . '</a></div>'
+        ? '<div class="text-center"><a href="' . $estimate_url . '" class="label label-success" title="Click to view estimates"><i class="fa fa-file-text-o"></i> ' . $estimate_count . '</a></div>'
         : '<div class="text-center"><a href="' . $estimate_url . '" class="text-muted" title="Click to add estimates"><i class="fa fa-file-text-o"></i> 0</a></div>';
     $row[] = $estimate_badge;
     
@@ -132,18 +133,12 @@ foreach ($rResult as $aRow) {
         $options .= '<a href="' . admin_url('ella_contractors/appointments/view/' . $aRow['id']) . '" class="btn btn-default btn-xs" title="View Details"><i class="fa fa-eye"></i></a>';
     }
     
-    // Only show edit/delete for current appointments, not past ones
-    if (isset($past) && $past == 1) {
-        // Past appointments - view only
-        // No additional options needed
-    } else {
-        // Current appointments - full options
-        if ($has_permission_edit) {
-            $options .= ' <a href="javascript:void(0)" class="btn btn-info btn-xs" onclick="editAppointment(' . $aRow['id'] . ')" title="Edit"><i class="fa fa-edit"></i></a>';
-        }
-        if ($has_permission_delete) {
-            $options .= ' <a href="javascript:void(0)" class="btn btn-danger btn-xs" onclick="deleteAppointment(' . $aRow['id'] . ')" title="Delete"><i class="fa fa-trash"></i></a>';
-        }
+    // Show full options for all appointments
+    if ($has_permission_edit) {
+        $options .= ' <a href="javascript:void(0)" class="btn btn-info btn-xs" onclick="editAppointment(' . $aRow['id'] . ')" title="Edit"><i class="fa fa-edit"></i></a>';
+    }
+    if ($has_permission_delete) {
+        $options .= ' <a href="javascript:void(0)" class="btn btn-danger btn-xs" onclick="deleteAppointment(' . $aRow['id'] . ')" title="Delete"><i class="fa fa-trash"></i></a>';
     }
     
     $row[] = $options;

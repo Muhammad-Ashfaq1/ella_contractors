@@ -501,6 +501,14 @@ function ella_contractors_activate_module() {
         }
     }
     
+    // Add appointment_status column to appointly_appointments table if it doesn't exist
+    if ($CI->db->field_exists('appointment_status', db_prefix() . 'appointly_appointments')) {
+        log_message('info', 'appointment_status column already exists in appointly_appointments table');
+    } else {
+        $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `appointment_status` ENUM(\'scheduled\',\'cancelled\',\'complete\') NULL DEFAULT \'scheduled\' AFTER `cancelled`');
+        log_message('info', 'Added appointment_status column to appointly_appointments table');
+    }
+    
     // Set module version
     update_option('ella_contractors_version', '1.0.0');
     

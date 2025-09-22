@@ -204,23 +204,8 @@ class Ella_appointments_model extends App_Model
     {
         $where = [];
         
-        switch ($status) {
-            case 'scheduled':
-                $where = [
-                    'cancelled' => 0,
-                    'finished' => 0,
-                    'approved' => 0
-                ];
-                break;
-            case 'complete':
-                $this->db->group_start();
-                $this->db->where('finished', 1);
-                $this->db->or_where('approved', 1);
-                $this->db->group_end();
-                break;
-            case 'cancelled':
-                $where = ['cancelled' => 1];
-                break;
+        if (!empty($status)) {
+            $where = ['appointment_status' => $status];
         }
         
         if ($limit) {
