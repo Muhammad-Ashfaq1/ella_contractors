@@ -123,8 +123,6 @@ $(document).ready(function() {
         var status = $(this).val();
         var table = $('.table-ella_appointments').DataTable();
         
-        console.log('Status filter changed to:', status);
-        
         // Clear existing column searches
         table.columns().search('');
         
@@ -132,11 +130,9 @@ $(document).ready(function() {
         if (status !== '') {
             // Use the custom parameter approach instead of column search
             table.ajax.url(admin_url + 'ella_contractors/appointments/table?status_filter=' + encodeURIComponent(status));
-            console.log('Applied status filter "' + status + '" via custom parameter');
         } else {
             // Reset to original URL without filter
             table.ajax.url(admin_url + 'ella_contractors/appointments/table');
-            console.log('Cleared status filter');
         }
         
         // Reload the table with new URL
@@ -147,7 +143,6 @@ $(document).ready(function() {
 // Global functions for modal operations
 function openAppointmentModal(appointmentId = null) {
     if ($('#appointmentForm').length === 0) {
-        console.error('Appointment form not found!');
         return;
     }
     
@@ -183,11 +178,8 @@ function loadAppointmentData(appointmentId) {
         },
         dataType: 'json',
         success: function(response) {
-            console.log('Appointment data response:', response);
-            
             if (response.success) {
                 var data = response.data;
-                console.log('Appointment data:', data);
                 
                 // Populate form fields
                 $('#appointment_id').val(data.id);
@@ -212,12 +204,10 @@ function loadAppointmentData(appointmentId) {
                         // It's a client - format: client_userid
                         var clientValue = 'client_' + data.contact_id;
                         $('#contact_id').val(clientValue);
-                        console.log('Setting client value:', clientValue);
                     } else if (data.lead_name) {
                         // It's a lead - format: lead_id
                         var leadValue = 'lead_' + data.contact_id;
                         $('#contact_id').val(leadValue);
-                        console.log('Setting lead value:', leadValue);
                     } else {
                         // Fallback - try to find the contact_id in the dropdown
                         // Check if it exists as client or lead
@@ -226,18 +216,14 @@ function loadAppointmentData(appointmentId) {
                         
                         if (clientOption.length > 0) {
                             $('#contact_id').val('client_' + data.contact_id);
-                            console.log('Found client option, setting:', 'client_' + data.contact_id);
                         } else if (leadOption.length > 0) {
                             $('#contact_id').val('lead_' + data.contact_id);
-                            console.log('Found lead option, setting:', 'lead_' + data.contact_id);
                         } else {
                             $('#contact_id').val('');
-                            console.log('No matching option found, clearing contact');
                         }
                     }
                 } else {
                     $('#contact_id').val('');
-                    console.log('No contact_id, clearing contact');
                 }
                 
                 // Set attendees
@@ -255,20 +241,16 @@ function loadAppointmentData(appointmentId) {
                 // Refresh selectpicker
                 $('.selectpicker').selectpicker('refresh');
             } else {
-                console.log('Error loading appointment:', response.message);
                 alert_float('danger', response.message);
             }
         },
         error: function(xhr, status, error) {
-            console.log('AJAX Error loading appointment:', xhr.responseText);
             alert_float('danger', 'Error loading appointment data: ' + error);
         }
     });
 }
 
 function loadAppointmentDataAndShowModal(appointmentId) {
-    console.log('Loading appointment data for ID:', appointmentId);
-    
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/get_appointment_data',
         type: 'POST',
@@ -278,11 +260,8 @@ function loadAppointmentDataAndShowModal(appointmentId) {
         },
         dataType: 'json',
         success: function(response) {
-            console.log('Appointment data response:', response);
-            
             if (response.success) {
                 var data = response.data;
-                console.log('Appointment data:', data);
                 
                 // Populate form fields
                 $('#appointment_id').val(data.id);
@@ -302,23 +281,15 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 $('#status').val(status);
                 
                 // Handle contact selection - determine if it's a client or lead
-                console.log('Contact data:', {
-                    contact_id: data.contact_id,
-                    client_name: data.client_name,
-                    lead_name: data.lead_name
-                });
-                
                 if (data.contact_id) {
                     if (data.client_name) {
                         // It's a client - format: client_userid
                         var clientValue = 'client_' + data.contact_id;
                         $('#contact_id').val(clientValue);
-                        console.log('Setting client value:', clientValue);
                     } else if (data.lead_name) {
                         // It's a lead - format: lead_id
                         var leadValue = 'lead_' + data.contact_id;
                         $('#contact_id').val(leadValue);
-                        console.log('Setting lead value:', leadValue);
                     } else {
                         // Fallback - try to find the contact_id in the dropdown
                         // Check if it exists as client or lead
@@ -327,18 +298,14 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                         
                         if (clientOption.length > 0) {
                             $('#contact_id').val('client_' + data.contact_id);
-                            console.log('Found client option, setting:', 'client_' + data.contact_id);
                         } else if (leadOption.length > 0) {
                             $('#contact_id').val('lead_' + data.contact_id);
-                            console.log('Found lead option, setting:', 'lead_' + data.contact_id);
                         } else {
                             $('#contact_id').val('');
-                            console.log('No matching option found, clearing contact');
                         }
                     }
                 } else {
                     $('#contact_id').val('');
-                    console.log('No contact_id, clearing contact');
                 }
                 
                 // Set attendees
@@ -357,16 +324,13 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 $('.selectpicker').selectpicker('refresh');
                 
                 // Show modal after data is loaded
-                console.log('Data loaded successfully, showing modal');
                 $('#appointmentModal').modal('show');
                 
             } else {
-                console.log('Error loading appointment:', response.message);
                 alert_float('danger', response.message);
             }
         },
         error: function(xhr, status, error) {
-            console.log('AJAX Error loading appointment:', xhr.responseText);
             alert_float('danger', 'Error loading appointment data: ' + error);
         }
     });
@@ -377,8 +341,6 @@ function editAppointment(appointmentId) {
         alert_float('danger', 'Invalid appointment ID');
         return;
     }
-    
-    console.log('Edit appointment called with ID:', appointmentId);
     
     // Reset form first
     $('#appointmentForm')[0].reset();
@@ -424,18 +386,12 @@ function deleteAppointment(appointmentId) {
 $('#saveAppointment').on('click', function() {
     var formData = $('#appointmentForm').serialize();
     
-    // Debug: Log form data and status specifically
-    console.log('Form data:', formData);
-    console.log('Status field value:', $('#status').val());
-    console.log('Status field selected option:', $('#status option:selected').val());
-    
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/save_ajax',
         type: 'POST',
         data: formData + '&' + csrf_token_name + '=' + csrf_hash,
         dataType: 'json',
         success: function(response) {
-            console.log('Response:', response);
             if (response.success) {
                 alert_float('success', response.message);
                 $('#appointmentModal').modal('hide');
@@ -445,7 +401,6 @@ $('#saveAppointment').on('click', function() {
             }
         },
         error: function(xhr, status, error) {
-            console.log('AJAX Error:', xhr.responseText);
             alert_float('danger', 'Error saving appointment: ' + error);
         }
     });

@@ -132,9 +132,7 @@ class Appointments extends AdminController
         if ($this->form_validation->run() == FALSE) {
             set_alert('warning', validation_errors());
         } else {
-            // Debug: Log the status being saved
-            $status_value = $this->input->post('status');
-            error_log('Ella Appointments - Status being saved: ' . $status_value);
+        $status_value = $this->input->post('status');
             
             // Ensure appointment_status column exists
             $this->ensure_appointment_status_column();
@@ -165,8 +163,6 @@ class Appointments extends AdminController
                 'source' => 'ella_contractor'
             ];
             
-            // Debug: Log the complete data array
-            error_log('Ella Appointments - Data being saved: ' . json_encode($data));
 
             $appointment_id = $this->input->post('appointment_id');
             
@@ -275,11 +271,7 @@ class Appointments extends AdminController
 
         $id = $this->input->post('id');
         
-        // Debug: Log the ID being requested
-        error_log('Ella Appointments - Getting appointment data for ID: ' . $id);
-        
         if (!$id) {
-            error_log('Ella Appointments - No ID provided');
             echo json_encode([
                 'success' => false,
                 'message' => 'No appointment ID provided'
@@ -294,15 +286,12 @@ class Appointments extends AdminController
             $appointment_data = (array) $appointment;
             $appointment_data['attendees'] = $this->appointments_model->get_appointment_attendees($id);
             
-            // Debug: Log the appointment data
-            error_log('Ella Appointments - Appointment data found: ' . json_encode($appointment_data));
             
             echo json_encode([
                 'success' => true,
                 'data' => $appointment_data
             ]);
         } else {
-            error_log('Ella Appointments - Appointment not found for ID: ' . $id);
             echo json_encode([
                 'success' => false,
                 'message' => 'Appointment not found'
@@ -332,9 +321,7 @@ class Appointments extends AdminController
             return;
         }
 
-            // Debug: Log the status being saved via AJAX
             $status_value = $this->input->post('status');
-            error_log('Ella Appointments AJAX - Status being saved: ' . $status_value);
             
             // Ensure appointment_status column exists
             $this->ensure_appointment_status_column();
@@ -365,11 +352,6 @@ class Appointments extends AdminController
                 'source' => 'ella_contractor'
             ];
             
-            // Debug: Log the complete data array
-            error_log('Ella Appointments AJAX - Data being saved: ' . json_encode($data));
-
-        // Debug: Log the data being sent
-        log_message('debug', 'Appointment data: ' . json_encode($data));
 
         $appointment_id = $this->input->post('appointment_id');
         

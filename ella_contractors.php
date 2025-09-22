@@ -154,16 +154,26 @@ function ella_contractors_activate_module() {
             $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_media` ADD COLUMN `org_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_id`');
         }
         
-        // Add indexes if they don't exist
-        try {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_media` ADD INDEX `idx_rel_type_id` (`rel_type`, `rel_id`)');
-        } catch (Exception $e) {
-            // Index might already exist, ignore error
-        }
-        try {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_media` ADD INDEX `idx_org_id` (`org_id`)');
-        } catch (Exception $e) {
-            // Index might already exist, ignore error
+        // Add indexes if they don't exist (only for existing tables)
+        if ($CI->db->table_exists(db_prefix() . 'ella_contractor_media')) {
+            // Check if indexes exist before adding them
+            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_media` WHERE Key_name = 'idx_rel_type_id'")->result();
+            if (empty($indexes)) {
+                try {
+                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_media` ADD INDEX `idx_rel_type_id` (`rel_type`, `rel_id`)');
+                } catch (Exception $e) {
+                    // Index might already exist, ignore error
+                }
+            }
+            
+            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_media` WHERE Key_name = 'idx_org_id'")->result();
+            if (empty($indexes)) {
+                try {
+                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_media` ADD INDEX `idx_org_id` (`org_id`)');
+                } catch (Exception $e) {
+                    // Index might already exist, ignore error
+                }
+            }
         }
     }
     
@@ -197,16 +207,26 @@ function ella_contractors_activate_module() {
             $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_item_groups` ADD COLUMN `org_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_id`');
         }
         
-        // Add indexes if they don't exist
-        try {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_item_groups` ADD INDEX `idx_rel_type_id` (`rel_type`, `rel_id`)');
-        } catch (Exception $e) {
-            // Index might already exist, ignore error
-        }
-        try {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_item_groups` ADD INDEX `idx_org_id` (`org_id`)');
-        } catch (Exception $e) {
-            // Index might already exist, ignore error
+        // Add indexes if they don't exist (only for existing tables)
+        if ($CI->db->table_exists(db_prefix() . 'ella_contractor_line_item_groups')) {
+            // Check if indexes exist before adding them
+            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_line_item_groups` WHERE Key_name = 'idx_rel_type_id'")->result();
+            if (empty($indexes)) {
+                try {
+                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_item_groups` ADD INDEX `idx_rel_type_id` (`rel_type`, `rel_id`)');
+                } catch (Exception $e) {
+                    // Index might already exist, ignore error
+                }
+            }
+            
+            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_line_item_groups` WHERE Key_name = 'idx_org_id'")->result();
+            if (empty($indexes)) {
+                try {
+                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_item_groups` ADD INDEX `idx_org_id` (`org_id`)');
+                } catch (Exception $e) {
+                    // Index might already exist, ignore error
+                }
+            }
         }
     }
     
@@ -259,16 +279,26 @@ function ella_contractors_activate_module() {
             $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD COLUMN `org_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_id`');
         }
         
-        // Add indexes if they don't exist
-        try {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD INDEX `idx_rel_type_id` (`rel_type`, `rel_id`)');
-        } catch (Exception $e) {
-            // Index might already exist, ignore error
-        }
-        try {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD INDEX `idx_org_id` (`org_id`)');
-        } catch (Exception $e) {
-            // Index might already exist, ignore error
+        // Add indexes if they don't exist (only for existing tables)
+        if ($CI->db->table_exists(db_prefix() . 'ella_contractor_line_items')) {
+            // Check if indexes exist before adding them
+            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_line_items` WHERE Key_name = 'idx_rel_type_id'")->result();
+            if (empty($indexes)) {
+                try {
+                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD INDEX `idx_rel_type_id` (`rel_type`, `rel_id`)');
+                } catch (Exception $e) {
+                    // Index might already exist, ignore error
+                }
+            }
+            
+            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_line_items` WHERE Key_name = 'idx_org_id'")->result();
+            if (empty($indexes)) {
+                try {
+                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD INDEX `idx_org_id` (`org_id`)');
+                } catch (Exception $e) {
+                    // Index might already exist, ignore error
+                }
+            }
         }
     }
     
@@ -319,16 +349,26 @@ function ella_contractors_activate_module() {
             $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD COLUMN `org_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_id`');
         }
         
-        // Add indexes if they don't exist
-        try {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD INDEX `idx_rel_type_id` (`rel_type`, `rel_id`)');
-        } catch (Exception $e) {
-            // Index might already exist, ignore error
-        }
-        try {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD INDEX `idx_org_id` (`org_id`)');
-        } catch (Exception $e) {
-            // Index might already exist, ignore error
+        // Add indexes if they don't exist (only for existing tables)
+        if ($CI->db->table_exists(db_prefix() . 'ella_contractor_estimates')) {
+            // Check if indexes exist before adding them
+            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_estimates` WHERE Key_name = 'idx_rel_type_id'")->result();
+            if (empty($indexes)) {
+                try {
+                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD INDEX `idx_rel_type_id` (`rel_type`, `rel_id`)');
+                } catch (Exception $e) {
+                    // Index might already exist, ignore error
+                }
+            }
+            
+            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_estimates` WHERE Key_name = 'idx_org_id'")->result();
+            if (empty($indexes)) {
+                try {
+                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD INDEX `idx_org_id` (`org_id`)');
+                } catch (Exception $e) {
+                    // Index might already exist, ignore error
+                }
+            }
         }
     }
     
@@ -366,16 +406,26 @@ function ella_contractors_activate_module() {
             $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimate_line_items` ADD COLUMN `org_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_id`');
         }
         
-        // Add indexes if they don't exist
-        try {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimate_line_items` ADD INDEX `idx_rel_type_id` (`rel_type`, `rel_id`)');
-        } catch (Exception $e) {
-            // Index might already exist, ignore error
-        }
-        try {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimate_line_items` ADD INDEX `idx_org_id` (`org_id`)');
-        } catch (Exception $e) {
-            // Index might already exist, ignore error
+        // Add indexes if they don't exist (only for existing tables)
+        if ($CI->db->table_exists(db_prefix() . 'ella_contractor_estimate_line_items')) {
+            // Check if indexes exist before adding them
+            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_estimate_line_items` WHERE Key_name = 'idx_rel_type_id'")->result();
+            if (empty($indexes)) {
+                try {
+                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimate_line_items` ADD INDEX `idx_rel_type_id` (`rel_type`, `rel_id`)');
+                } catch (Exception $e) {
+                    // Index might already exist, ignore error
+                }
+            }
+            
+            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_estimate_line_items` WHERE Key_name = 'idx_org_id'")->result();
+            if (empty($indexes)) {
+                try {
+                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimate_line_items` ADD INDEX `idx_org_id` (`org_id`)');
+                } catch (Exception $e) {
+                    // Index might already exist, ignore error
+                }
+            }
         }
     }
 
