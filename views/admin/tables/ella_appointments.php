@@ -2,6 +2,9 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
+// Prevent any output before JSON
+ob_clean();
+
 $has_permission_delete = has_permission('ella_contractors', '', 'delete');
 $has_permission_view   = has_permission('ella_contractors', '', 'view');
 $has_permission_edit   = has_permission('ella_contractors', '', 'edit');
@@ -146,4 +149,10 @@ foreach ($rResult as $aRow) {
     $output['aaData'][] = $row;
 }
 
+// Set proper JSON headers
+header('Content-Type: application/json');
+header('Cache-Control: no-cache, must-revalidate');
+
+// Output JSON and exit to prevent any additional output
 echo json_encode($output);
+exit;

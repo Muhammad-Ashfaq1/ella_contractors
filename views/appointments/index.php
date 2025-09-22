@@ -10,7 +10,7 @@
                         <div class="_buttons">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <button type="button" class="btn btn-info" data-toggle="modal" data-target="#appointmentModal" onclick="openAppointmentModal()">
+                                    <button type="button" class="btn btn-info" onclick="console.log('Button clicked'); openAppointmentModal(); $('#appointmentModal').modal('show');">
                                         <i class="fa fa-plus"></i>New Appointment
                                     </button>
                                 </div>
@@ -137,6 +137,11 @@ $(document).ready(function() {
 
 // Global functions for modal operations
 function openAppointmentModal(appointmentId = null) {
+    if ($('#appointmentForm').length === 0) {
+        console.error('Appointment form not found!');
+        return;
+    }
+    
     // Reset form
     $('#appointmentForm')[0].reset();
     $('#appointment_id').val('');
@@ -154,9 +159,7 @@ function openAppointmentModal(appointmentId = null) {
     }
 }
 
-function loadAppointmentData(appointmentId) {
-    console.log('Loading appointment data for ID:', appointmentId);
-    
+function loadAppointmentData(appointmentId) {    
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/get_appointment_data',
         type: 'POST',
@@ -218,7 +221,9 @@ function loadAppointmentData(appointmentId) {
 
 function editAppointment(appointmentId) {
     openAppointmentModal(appointmentId);
-    $('#appointmentModal').modal('show');
+    setTimeout(function() {
+        $('#appointmentModal').modal('show');
+    }, 100);
 }
 
 function deleteAppointment(appointmentId) {
