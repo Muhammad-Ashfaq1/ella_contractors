@@ -9,7 +9,7 @@
                     <div class="panel-body">
                         <div class="_buttons">
                             <button type="button" class="btn btn-info" data-toggle="modal" data-target="#appointmentModal" onclick="openAppointmentModal()">
-                                <i class="fa fa-plus"></i> <?php echo _l('new_appointment'); ?>
+                                <i class="fa fa-plus"></i>New Appointment
                             </button>
                         </div>
                         <div class="clearfix"></div>
@@ -22,7 +22,7 @@
                                         <th width="50px"></th>
                                         <th><?php echo _l('id'); ?></th>
                                         <th><?php echo _l('appointment_subject'); ?></th>
-                                        <th><?php echo _l('appointment_meeting_date'); ?></th>
+                                        <th>Scheduled Date</th>
                                         <th><?php echo _l('client'); ?></th>
                                         <th><?php echo _l('appointment_status'); ?></th>
                                         <th width="100px"><i class="fa fa-square-o"></i> Measurements</th>
