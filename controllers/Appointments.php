@@ -112,8 +112,8 @@ class Appointments extends AdminController
         } else {
             // Map unified status dropdown to legacy boolean flags
             $status = $this->input->post('status');
-            $approved = ($status === 'approved') ? 1 : 0;
-            $finished = ($status === 'finished') ? 1 : 0;
+            $approved = ($status === 'complete') ? 1 : 0;
+            $finished = ($status === 'complete') ? 1 : 0;
             $cancelled = ($status === 'cancelled') ? 1 : 0;
 
             $data = [
@@ -303,8 +303,8 @@ class Appointments extends AdminController
 
         // Map unified status dropdown to legacy boolean flags
         $status = $this->input->post('status');
-        $approved = ($status === 'approved') ? 1 : 0;
-        $finished = ($status === 'finished') ? 1 : 0;
+        $approved = ($status === 'complete') ? 1 : 0;
+        $finished = ($status === 'complete') ? 1 : 0;
         $cancelled = ($status === 'cancelled') ? 1 : 0;
 
         $data = [

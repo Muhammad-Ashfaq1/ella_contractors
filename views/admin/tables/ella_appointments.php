@@ -9,14 +9,16 @@ $has_permission_edit   = has_permission('ella_contractors', '', 'edit');
 $aColumns = [
     '1',
     db_prefix() . 'appointly_appointments.id as id',
+    'COALESCE(' . db_prefix() . 'leads.name, "") as lead_name',
+    'COALESCE(' . db_prefix() . 'leads.id, "") as lead_id',
     db_prefix() . 'appointly_appointments.subject as subject',
-    'CONCAT(' . db_prefix() . 'appointly_appointments.date, " ", ' . db_prefix() . 'appointly_appointments.start_hour) as date_time',
-    'COALESCE(' . db_prefix() . 'clients.company, ' . db_prefix() . 'leads.name, ' . db_prefix() . 'appointly_appointments.name) as client_name',
+    db_prefix() . 'appointly_appointments.date as date',
+    db_prefix() . 'appointly_appointments.start_hour as start_hour',
     'CASE 
         WHEN ' . db_prefix() . 'appointly_appointments.cancelled = 1 THEN "Cancelled"
-        WHEN ' . db_prefix() . 'appointly_appointments.finished = 1 THEN "Finished"
-        WHEN ' . db_prefix() . 'appointly_appointments.approved = 1 THEN "Approved"
-        ELSE "Pending"
+        WHEN ' . db_prefix() . 'appointly_appointments.finished = 1 THEN "Complete"
+        WHEN ' . db_prefix() . 'appointly_appointments.approved = 1 THEN "Complete"
+        ELSE "Scheduled"
     END as status',
     'COALESCE(measurement_counts.measurement_count, 0) as measurement_count',
     'COALESCE(estimate_counts.estimate_count, 0) as estimate_count',
@@ -66,22 +68,42 @@ foreach ($rResult as $aRow) {
     
     $row[] = $aRow['id'];
     
+    // Lead column with hyperlink
+    $lead_name = $aRow['lead_name'];
+    $lead_id = $aRow['lead_id'];
+    if (!empty($lead_name) && !empty($lead_id)) {
+        $lead_link = '<a href="' . admin_url('leads/lead/' . $lead_id) . '" target="_blank">' . $lead_name . '</a>';
+    } else {
+        $lead_link = '<span class="text-muted">No Lead</span>';
+    }
+    $row[] = $lead_link;
+    
     $subject = '<a href="' . admin_url('ella_contractors/appointments/view/' . $aRow['id']) . '">' . $aRow['subject'] . '</a>';
     $row[] = $subject;
     
-    $row[] = _dt($aRow['date_time']);
-    
-    $row[] = $aRow['client_name'];
+    // Format date as "July 5th, 2025" with time underneath
+    $date_formatted = '';
+    if (!empty($aRow['date'])) {
+        $date_obj = DateTime::createFromFormat('Y-m-d', $aRow['date']);
+        if ($date_obj) {
+            $date_formatted = $date_obj->format('F jS, Y');
+        }
+        
+        if (!empty($aRow['start_hour'])) {
+            $date_formatted .= '<br><small class="text-muted">' . $aRow['start_hour'] . '</small>';
+        }
+    }
+    $row[] = $date_formatted;
     
     $status_class = '';
     switch ($aRow['status']) {
         case 'Cancelled':
             $status_class = 'label-danger';
             break;
-        case 'Finished':
+        case 'Complete':
             $status_class = 'label-success';
             break;
-        case 'Approved':
+        case 'Scheduled':
             $status_class = 'label-info';
             break;
         default:

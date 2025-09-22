@@ -21,9 +21,9 @@
                                     <tr>
                                         <th width="50px"></th>
                                         <th><?php echo _l('id'); ?></th>
+                                        <th>Lead</th>
                                         <th><?php echo _l('appointment_subject'); ?></th>
                                         <th>Scheduled Date</th>
-                                        <th><?php echo _l('client'); ?></th>
                                         <th><?php echo _l('appointment_status'); ?></th>
                                         <th width="100px"><i class="fa fa-square-o"></i> Measurements</th>
                                         <th width="100px"><i class="fa fa-file-text-o"></i> Estimates</th>
@@ -156,10 +156,10 @@ function loadAppointmentData(appointmentId) {
                 $('#type_id').val(data.type_id);
                 
                 // Set status dropdown
-                var status = 'pending';
+                var status = 'scheduled';
                 if (parseInt(data.cancelled) === 1) status = 'cancelled';
-                else if (parseInt(data.finished) === 1) status = 'finished';
-                else if (parseInt(data.approved) === 1) status = 'approved';
+                else if (parseInt(data.finished) === 1) status = 'complete';
+                else if (parseInt(data.approved) === 1) status = 'complete';
                 $('#status').val(status);
                 
                 // Set attendees

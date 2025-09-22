@@ -124,10 +124,9 @@
                             <div class="form-group">
                                 <label for="status">Status</label>
                                 <select class="form-control" id="status" name="status">
-                                    <option value="pending">Pending</option>
-                                    <option value="approved">Approved</option>
-                                    <option value="finished">Finished</option>
+                                    <option value="scheduled">Scheduled</option>
                                     <option value="cancelled">Cancelled</option>
+                                    <option value="complete">Complete</option>
                                 </select>
                             </div>
                         </div>
