@@ -260,7 +260,11 @@ function ella_contractors_activate_module() {
         // Check if group_id column exists, if not add it
         if (!$CI->db->field_exists('group_id', db_prefix() . 'ella_contractor_line_items')) {
             $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD COLUMN `group_id` int(11) DEFAULT 0 AFTER `unit_type`');
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD KEY `group_id` (`group_id`)');
+            try {
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD KEY `group_id` (`group_id`)');
+            } catch (Exception $e) {
+                // Key might already exist, ignore error
+            }
         }
         
         // Check if group_name column exists, if it does remove it
@@ -335,7 +339,11 @@ function ella_contractors_activate_module() {
         // Check if appointment_id column exists, if not add it
         if (!$CI->db->field_exists('appointment_id', db_prefix() . 'ella_contractor_estimates')) {
             $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD COLUMN `appointment_id` int(11) DEFAULT NULL AFTER `lead_id`');
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD KEY `appointment_id` (`appointment_id`)');
+            try {
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD KEY `appointment_id` (`appointment_id`)');
+            } catch (Exception $e) {
+                // Key might already exist, ignore error
+            }
         }
         
         // Add rel_type, rel_id, org_id columns if they don't exist
@@ -471,7 +479,11 @@ function ella_contractors_activate_module() {
         // Check if appointment_id column exists, if not add it
         if (!$CI->db->field_exists('appointment_id', db_prefix() . 'ella_contractors_measurements')) {
             $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractors_measurements` ADD COLUMN `appointment_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_id`');
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractors_measurements` ADD KEY `idx_appointment` (`appointment_id`)');
+            try {
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractors_measurements` ADD KEY `idx_appointment` (`appointment_id`)');
+            } catch (Exception $e) {
+                // Key might already exist, ignore error
+            }
         }
         
         // Check if 'appointment' is in rel_type enum, if not add it
@@ -482,11 +494,17 @@ function ella_contractors_activate_module() {
             $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractors_measurements` ADD COLUMN `org_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_id`');
         }
         
-        // Add org_id index if it doesn't exist
-        try {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractors_measurements` ADD INDEX `idx_org_id` (`org_id`)');
-        } catch (Exception $e) {
-            // Index might already exist, ignore error
+        // Add org_id index if it doesn't exist (only for existing tables)
+        if ($CI->db->table_exists(db_prefix() . 'ella_contractors_measurements')) {
+            // Check if index exists before adding it
+            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractors_measurements` WHERE Key_name = 'idx_org_id'")->result();
+            if (empty($indexes)) {
+                try {
+                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractors_measurements` ADD INDEX `idx_org_id` (`org_id`)');
+                } catch (Exception $e) {
+                    // Index might already exist, ignore error
+                }
+            }
         }
     }
     
