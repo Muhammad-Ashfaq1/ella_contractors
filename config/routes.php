@@ -56,7 +56,6 @@ $route[$module_name . '/appointments/save'] = 'Appointments/save';
 $route[$module_name . '/appointments/delete/(:num)'] = 'Appointments/delete/$1';
 $route[$module_name . '/appointments/table'] = 'Appointments/table';
 $route[$module_name . '/appointments/upcoming'] = 'Appointments/upcoming';
-$route[$module_name . '/appointments/past'] = 'Appointments/past';
 
 // AJAX routes for modal operations
 $route[$module_name . '/appointments/get_appointment_data'] = 'Appointments/get_appointment_data';

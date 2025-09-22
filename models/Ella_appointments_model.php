@@ -126,8 +126,8 @@ class Ella_appointments_model extends App_Model
         return [
             'pending' => 'Pending',
             'approved' => 'Approved',
-            'cancelled' => 'Cancelled',
-            'finished' => 'Finished'
+            'finished' => 'Finished',
+            'cancelled' => 'Cancelled'
         ];
     }
 
@@ -198,18 +198,41 @@ class Ella_appointments_model extends App_Model
     }
 
     /**
-     * Get past appointments
+     * Get appointments by status
      * Only shows appointments created from EllaContractors module
      */
-    public function get_past_appointments($limit = 10)
+    public function get_appointments_by_status($status, $limit = null)
     {
-        $where = [
-            'date <' => date('Y-m-d')
-        ];
+        $where = [];
         
-        $this->db->order_by('date', 'DESC');
-        $this->db->order_by('start_hour', 'DESC');
-        $this->db->limit($limit);
+        switch ($status) {
+            case 'pending':
+                $where = [
+                    'cancelled' => 0,
+                    'finished' => 0,
+                    'approved' => 0
+                ];
+                break;
+            case 'approved':
+                $where = [
+                    'approved' => 1,
+                    'cancelled' => 0
+                ];
+                break;
+            case 'finished':
+                $where = [
+                    'finished' => 1,
+                    'cancelled' => 0
+                ];
+                break;
+            case 'cancelled':
+                $where = ['cancelled' => 1];
+                break;
+        }
+        
+        if ($limit) {
+            $this->db->limit($limit);
+        }
         
         return $this->get_appointments($where);
     }

@@ -110,10 +110,10 @@ class Appointments extends AdminController
         if ($this->form_validation->run() == FALSE) {
             set_alert('warning', validation_errors());
         } else {
-            // Map unified status dropdown to legacy boolean flags
+            // Map status dropdown to legacy boolean flags
             $status = $this->input->post('status');
-            $approved = ($status === 'complete') ? 1 : 0;
-            $finished = ($status === 'complete') ? 1 : 0;
+            $approved = ($status === 'approved') ? 1 : 0;
+            $finished = ($status === 'finished') ? 1 : 0;
             $cancelled = ($status === 'cancelled') ? 1 : 0;
 
             $data = [
@@ -229,18 +229,6 @@ class Appointments extends AdminController
         $this->load->view('appointments/upcoming', $data);
     }
 
-    /**
-     * Get past appointments
-     */
-    public function past()
-    {
-        if (!has_permission('ella_contractors', '', 'view')) {
-            access_denied('ella_contractors');
-        }
-        $data['title'] = 'Past Appointments';
-        $data['appointments'] = $this->appointments_model->get_past_appointments();
-        $this->load->view('appointments/past', $data);
-    }
 
     /**
      * Get appointment data for modal (AJAX)
@@ -301,10 +289,10 @@ class Appointments extends AdminController
             return;
         }
 
-        // Map unified status dropdown to legacy boolean flags
+        // Map status dropdown to legacy boolean flags
         $status = $this->input->post('status');
-        $approved = ($status === 'complete') ? 1 : 0;
-        $finished = ($status === 'complete') ? 1 : 0;
+        $approved = ($status === 'approved') ? 1 : 0;
+        $finished = ($status === 'finished') ? 1 : 0;
         $cancelled = ($status === 'cancelled') ? 1 : 0;
 
         $data = [

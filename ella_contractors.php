@@ -42,13 +42,6 @@ function ella_contractors_init_menu() {
                 'icon' => 'fa fa-calendar-check-o',
                 'position' => 10,
             ],
-            [
-                'slug' => 'ella_contractors_past_appointments',
-                'name' => 'Past Appts',
-                'href' => admin_url('ella_contractors/appointments/past'),
-                'icon' => 'fa fa-history',
-                'position' => 15,
-            ],
             // [
             //     'slug' => 'ella_contractors_measurements',
             //     'name' => 'Measurements',
