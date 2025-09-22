@@ -197,7 +197,6 @@ class Estimates extends AdminController
                 try {
                     $data = $this->input->post();
 
-                    // die(json_encode($data));
                     
                     if (empty($data['estimate_id'])) {
                         if (!has_permission('ella_contractors', '', 'create')) {

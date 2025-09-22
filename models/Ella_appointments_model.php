@@ -124,10 +124,9 @@ class Ella_appointments_model extends App_Model
     public function get_statuses()
     {
         return [
-            'pending' => 'Pending',
-            'approved' => 'Approved',
-            'finished' => 'Finished',
-            'cancelled' => 'Cancelled'
+            'scheduled' => 'Scheduled',
+            'cancelled' => 'Cancelled',
+            'complete' => 'Complete'
         ];
     }
 
@@ -206,24 +205,18 @@ class Ella_appointments_model extends App_Model
         $where = [];
         
         switch ($status) {
-            case 'pending':
+            case 'scheduled':
                 $where = [
                     'cancelled' => 0,
                     'finished' => 0,
                     'approved' => 0
                 ];
                 break;
-            case 'approved':
-                $where = [
-                    'approved' => 1,
-                    'cancelled' => 0
-                ];
-                break;
-            case 'finished':
-                $where = [
-                    'finished' => 1,
-                    'cancelled' => 0
-                ];
+            case 'complete':
+                $this->db->group_start();
+                $this->db->where('finished', 1);
+                $this->db->or_where('approved', 1);
+                $this->db->group_end();
                 break;
             case 'cancelled':
                 $where = ['cancelled' => 1];

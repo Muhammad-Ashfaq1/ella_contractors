@@ -836,7 +836,6 @@ startxref
         $data['leads'] = $this->leads_model->get();
         $data['line_items'] = $this->ella_line_items_model->get_line_items(null, true);
 
-        // die(json_encode($data['line_items']));
         $data['title'] = 'Estimates Management';
         $data['estimates'] = $this->ella_estimates_model->get_estimates();
         $data['statuses'] = $this->ella_estimates_model->get_statuses();

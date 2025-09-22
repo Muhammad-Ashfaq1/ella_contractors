@@ -8,9 +8,24 @@
                 <div class="panel_s">
                     <div class="panel-body">
                         <div class="_buttons">
-                            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#appointmentModal" onclick="openAppointmentModal()">
-                                <i class="fa fa-plus"></i>New Appointment
-                            </button>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <button type="button" class="btn btn-info" data-toggle="modal" data-target="#appointmentModal" onclick="openAppointmentModal()">
+                                        <i class="fa fa-plus"></i>New Appointment
+                                    </button>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group pull-right">
+                                        <label for="statusFilter" style="margin-right: 10px;">Filter by Status:</label>
+                                        <select id="statusFilter" class="form-control selectpicker" data-live-search="true" style="width: 200px; display: inline-block;">
+                                            <option value="">All Appointments</option>
+                                            <option value="scheduled">Scheduled</option>
+                                            <option value="complete">Complete</option>
+                                            <option value="cancelled">Cancelled</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="clearfix"></div>
                         <hr class="hr-panel-heading" />
@@ -102,6 +117,22 @@ $(document).ready(function() {
     
     // Initialize selectpicker
     $('.selectpicker').selectpicker();
+    
+    // Handle status filter change
+    $('#statusFilter').on('change', function() {
+        var status = $(this).val();
+        var table = $('.table-ella_appointments').DataTable();
+        
+        // Add status filter to the DataTable
+        if (status === '') {
+            // Show all appointments
+            table.search('').columns().search('').draw();
+        } else {
+            // Filter by status
+            // We'll use a custom filter function since status is computed in the SQL
+            table.column(5).search(status).draw();
+        }
+    });
 });
 
 // Global functions for modal operations
