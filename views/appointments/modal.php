@@ -56,12 +56,12 @@
                                     <option value="">Select Client/Lead</option>
                                     <optgroup label="Clients">
                                         <?php foreach($clients as $client): ?>
-                                            <option value="<?php echo $client['userid']; ?>"><?php echo $client['company']; ?></option>
+                                            <option value="client_<?php echo $client['userid']; ?>"><?php echo $client['company']; ?></option>
                                         <?php endforeach; ?>
                                     </optgroup>
                                     <optgroup label="Leads">
                                         <?php foreach($leads as $lead): ?>
-                                            <option value="<?php echo $lead['id']; ?>"><?php echo $lead['name']; ?></option>
+                                            <option value="lead_<?php echo $lead['id']; ?>"><?php echo $lead['name']; ?></option>
                                         <?php endforeach; ?>
                                     </optgroup>
                                 </select>

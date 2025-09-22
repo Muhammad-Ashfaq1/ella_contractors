@@ -139,12 +139,22 @@ class Appointments extends AdminController
             // Ensure appointment_status column exists
             $this->ensure_appointment_status_column();
             
+            // Process contact_id - handle client_/lead_ prefixes
+            $contact_id = $this->input->post('contact_id');
+            if ($contact_id) {
+                if (strpos($contact_id, 'client_') === 0) {
+                    $contact_id = str_replace('client_', '', $contact_id);
+                } elseif (strpos($contact_id, 'lead_') === 0) {
+                    $contact_id = str_replace('lead_', '', $contact_id);
+                }
+            }
+            
             $data = [
                 'subject' => $this->input->post('subject'),
                 'description' => $this->input->post('description'),
                 'date' => $this->input->post('date'),
                 'start_hour' => $this->input->post('start_hour'),
-                'contact_id' => $this->input->post('contact_id') ?: null,
+                'contact_id' => $contact_id ?: null,
                 'name' => $this->input->post('name'),
                 'email' => $this->input->post('email'),
                 'phone' => $this->input->post('phone'),
@@ -266,7 +276,16 @@ class Appointments extends AdminController
         $id = $this->input->post('id');
         
         // Debug: Log the ID being requested
-        log_message('debug', 'Getting appointment data for ID: ' . $id);
+        error_log('Ella Appointments - Getting appointment data for ID: ' . $id);
+        
+        if (!$id) {
+            error_log('Ella Appointments - No ID provided');
+            echo json_encode([
+                'success' => false,
+                'message' => 'No appointment ID provided'
+            ]);
+            return;
+        }
         
         $appointment = $this->appointments_model->get_appointment($id);
         
@@ -276,14 +295,14 @@ class Appointments extends AdminController
             $appointment_data['attendees'] = $this->appointments_model->get_appointment_attendees($id);
             
             // Debug: Log the appointment data
-            log_message('debug', 'Appointment data: ' . json_encode($appointment_data));
+            error_log('Ella Appointments - Appointment data found: ' . json_encode($appointment_data));
             
             echo json_encode([
                 'success' => true,
                 'data' => $appointment_data
             ]);
         } else {
-            log_message('debug', 'Appointment not found for ID: ' . $id);
+            error_log('Ella Appointments - Appointment not found for ID: ' . $id);
             echo json_encode([
                 'success' => false,
                 'message' => 'Appointment not found'
@@ -320,12 +339,22 @@ class Appointments extends AdminController
             // Ensure appointment_status column exists
             $this->ensure_appointment_status_column();
             
+            // Process contact_id - handle client_/lead_ prefixes
+            $contact_id = $this->input->post('contact_id');
+            if ($contact_id) {
+                if (strpos($contact_id, 'client_') === 0) {
+                    $contact_id = str_replace('client_', '', $contact_id);
+                } elseif (strpos($contact_id, 'lead_') === 0) {
+                    $contact_id = str_replace('lead_', '', $contact_id);
+                }
+            }
+            
             $data = [
                 'subject' => $this->input->post('subject'),
                 'description' => $this->input->post('description'),
                 'date' => $this->input->post('date'),
                 'start_hour' => $this->input->post('start_hour'),
-                'contact_id' => $this->input->post('contact_id') ?: null,
+                'contact_id' => $contact_id ?: null,
                 'name' => $this->input->post('name'),
                 'email' => $this->input->post('email'),
                 'phone' => $this->input->post('phone'),
