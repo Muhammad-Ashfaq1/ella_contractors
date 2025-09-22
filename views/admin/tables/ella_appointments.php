@@ -51,15 +51,17 @@ $where = [];
 $where[] = 'AND ' . db_prefix() . 'appointly_appointments.source = "ella_contractor"';
 
 // Filter by status if requested (check both column search and custom parameter)
+// DataTable columns: 0=checkbox, 1=ID, 2=Lead, 3=Subject, 4=Date, 5=Status, 6=Measurements, 7=Estimates, 8=Options
 $status_filter = '';
+
+// Look for status filter in multiple places
 if (isset($_POST['columns'][5]['search']['value']) && !empty($_POST['columns'][5]['search']['value'])) {
     $status_filter = $_POST['columns'][5]['search']['value'];
 } elseif (isset($_POST['status_filter']) && !empty($_POST['status_filter'])) {
     $status_filter = $_POST['status_filter'];
+} elseif (isset($_GET['status_filter']) && !empty($_GET['status_filter'])) {
+    $status_filter = $_GET['status_filter'];
 }
-
-// Debug: Log the status filter (commented out for production)
-// error_log('Status filter received: ' . $status_filter);
 
 if (!empty($status_filter)) {
     // Use direct appointment_status column filtering with case-insensitive comparison
@@ -70,6 +72,7 @@ $result = data_tables_init($aColumns, 'id', db_prefix() . 'appointly_appointment
 
 $output  = $result['output'];
 $rResult = $result['rResult'];
+
 
 foreach ($rResult as $aRow) {
     $row = [];

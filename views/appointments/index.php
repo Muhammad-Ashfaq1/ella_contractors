@@ -128,16 +128,19 @@ $(document).ready(function() {
         // Clear existing column searches
         table.columns().search('');
         
-        // Apply status filter to the status column (column index 5)
+        // Apply status filter using custom parameter approach
         if (status !== '') {
-            table.column(5).search(status, false, false);
-            console.log('Applied status filter to column 5');
+            // Use the custom parameter approach instead of column search
+            table.ajax.url(admin_url + 'ella_contractors/appointments/table?status_filter=' + encodeURIComponent(status));
+            console.log('Applied status filter "' + status + '" via custom parameter');
         } else {
+            // Reset to original URL without filter
+            table.ajax.url(admin_url + 'ella_contractors/appointments/table');
             console.log('Cleared status filter');
         }
         
-        // Redraw the table to apply filters
-        table.draw();
+        // Reload the table with new URL
+        table.ajax.reload();
     });
 });
 
