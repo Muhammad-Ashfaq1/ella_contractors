@@ -11,6 +11,28 @@ class Appointments extends AdminController
         $this->load->model('clients_model');
         $this->load->model('leads_model');
     }
+    
+    /**
+     * Ensure appointment_status column exists in the database
+     */
+    private function ensure_appointment_status_column()
+    {
+        if (!$this->db->field_exists('appointment_status', db_prefix() . 'appointly_appointments')) {
+            try {
+                // Add the column
+                $this->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `appointment_status` ENUM(\'scheduled\',\'cancelled\',\'complete\') NULL DEFAULT \'scheduled\' AFTER `cancelled`');
+                
+                // Update existing records
+                $this->db->query('UPDATE `' . db_prefix() . 'appointly_appointments` SET `appointment_status` = "cancelled" WHERE `cancelled` = 1');
+                $this->db->query('UPDATE `' . db_prefix() . 'appointly_appointments` SET `appointment_status` = "complete" WHERE `finished` = 1 OR `approved` = 1');
+                $this->db->query('UPDATE `' . db_prefix() . 'appointly_appointments` SET `appointment_status` = "scheduled" WHERE `appointment_status` IS NULL');
+                
+                error_log('Ella Appointments - Created appointment_status column and updated existing records');
+            } catch (Exception $e) {
+                error_log('Ella Appointments - Error creating appointment_status column: ' . $e->getMessage());
+            }
+        }
+    }
 
     /**
      * Appointments listing page
@@ -110,6 +132,13 @@ class Appointments extends AdminController
         if ($this->form_validation->run() == FALSE) {
             set_alert('warning', validation_errors());
         } else {
+            // Debug: Log the status being saved
+            $status_value = $this->input->post('status');
+            error_log('Ella Appointments - Status being saved: ' . $status_value);
+            
+            // Ensure appointment_status column exists
+            $this->ensure_appointment_status_column();
+            
             $data = [
                 'subject' => $this->input->post('subject'),
                 'description' => $this->input->post('description'),
@@ -122,9 +151,12 @@ class Appointments extends AdminController
                 'address' => $this->input->post('address'),
                 'notes' => $this->input->post('notes'),
                 'type_id' => $this->input->post('type_id') ?: 0,
-                'appointment_status' => $this->input->post('status'),
+                'appointment_status' => $status_value ?: 'scheduled',
                 'source' => 'ella_contractor'
             ];
+            
+            // Debug: Log the complete data array
+            error_log('Ella Appointments - Data being saved: ' . json_encode($data));
 
             $appointment_id = $this->input->post('appointment_id');
             
@@ -281,21 +313,31 @@ class Appointments extends AdminController
             return;
         }
 
-        $data = [
-            'subject' => $this->input->post('subject'),
-            'description' => $this->input->post('description'),
-            'date' => $this->input->post('date'),
-            'start_hour' => $this->input->post('start_hour'),
-            'contact_id' => $this->input->post('contact_id') ?: null,
-            'name' => $this->input->post('name'),
-            'email' => $this->input->post('email'),
-            'phone' => $this->input->post('phone'),
-            'address' => $this->input->post('address'),
-            'notes' => $this->input->post('notes'),
-            'type_id' => $this->input->post('type_id') ?: 0,
-            'appointment_status' => $this->input->post('status'),
-            'source' => 'ella_contractor'
-        ];
+            // Debug: Log the status being saved via AJAX
+            $status_value = $this->input->post('status');
+            error_log('Ella Appointments AJAX - Status being saved: ' . $status_value);
+            
+            // Ensure appointment_status column exists
+            $this->ensure_appointment_status_column();
+            
+            $data = [
+                'subject' => $this->input->post('subject'),
+                'description' => $this->input->post('description'),
+                'date' => $this->input->post('date'),
+                'start_hour' => $this->input->post('start_hour'),
+                'contact_id' => $this->input->post('contact_id') ?: null,
+                'name' => $this->input->post('name'),
+                'email' => $this->input->post('email'),
+                'phone' => $this->input->post('phone'),
+                'address' => $this->input->post('address'),
+                'notes' => $this->input->post('notes'),
+                'type_id' => $this->input->post('type_id') ?: 0,
+                'appointment_status' => $status_value ?: 'scheduled',
+                'source' => 'ella_contractor'
+            ];
+            
+            // Debug: Log the complete data array
+            error_log('Ella Appointments AJAX - Data being saved: ' . json_encode($data));
 
         // Debug: Log the data being sent
         log_message('debug', 'Appointment data: ' . json_encode($data));

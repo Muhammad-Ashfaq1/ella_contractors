@@ -261,8 +261,10 @@ function deleteAppointment(appointmentId) {
 $('#saveAppointment').on('click', function() {
     var formData = $('#appointmentForm').serialize();
     
-    // Debug: Log form data
+    // Debug: Log form data and status specifically
     console.log('Form data:', formData);
+    console.log('Status field value:', $('#status').val());
+    console.log('Status field selected option:', $('#status option:selected').val());
     
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/save_ajax',

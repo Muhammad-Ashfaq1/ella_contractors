@@ -17,6 +17,7 @@ $aColumns = [
     db_prefix() . 'appointly_appointments.subject as subject',
     db_prefix() . 'appointly_appointments.date as date',
     db_prefix() . 'appointly_appointments.start_hour as start_hour',
+    // Use direct appointment_status column access
     'COALESCE(' . db_prefix() . 'appointly_appointments.appointment_status, "scheduled") as status',
     'COALESCE(measurement_counts.measurement_count, 0) as measurement_count',
     'COALESCE(estimate_counts.estimate_count, 0) as estimate_count',
@@ -57,11 +58,12 @@ if (isset($_POST['columns'][5]['search']['value']) && !empty($_POST['columns'][5
     $status_filter = $_POST['status_filter'];
 }
 
-// Debug: Log the status filter
-error_log('Status filter received: ' . $status_filter);
+// Debug: Log the status filter (commented out for production)
+// error_log('Status filter received: ' . $status_filter);
 
 if (!empty($status_filter)) {
-    $where[] = 'AND COALESCE(' . db_prefix() . 'appointly_appointments.appointment_status, "scheduled") = "' . $status_filter . '"';
+    // Use direct appointment_status column filtering with case-insensitive comparison
+    $where[] = 'AND LOWER(COALESCE(' . db_prefix() . 'appointly_appointments.appointment_status, "scheduled")) = "' . strtolower($status_filter) . '"';
 }
 
 $result = data_tables_init($aColumns, 'id', db_prefix() . 'appointly_appointments', $join, $where, [], '', '', []);
