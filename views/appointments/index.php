@@ -123,15 +123,21 @@ $(document).ready(function() {
         var status = $(this).val();
         var table = $('.table-ella_appointments').DataTable();
         
-        // Add status filter to the DataTable
-        if (status === '') {
-            // Show all appointments
-            table.search('').columns().search('').draw();
+        console.log('Status filter changed to:', status);
+        
+        // Clear existing column searches
+        table.columns().search('');
+        
+        // Apply status filter to the status column (column index 5)
+        if (status !== '') {
+            table.column(5).search(status, false, false);
+            console.log('Applied status filter to column 5');
         } else {
-            // Filter by status
-            // We'll use a custom filter function since status is computed in the SQL
-            table.column(5).search(status).draw();
+            console.log('Cleared status filter');
         }
+        
+        // Redraw the table to apply filters
+        table.draw();
     });
 });
 

@@ -49,9 +49,18 @@ $where = [];
 // Filter to show only appointments created from EllaContractors module
 $where[] = 'AND ' . db_prefix() . 'appointly_appointments.source = "ella_contractor"';
 
-// Filter by status if requested
+// Filter by status if requested (check both column search and custom parameter)
+$status_filter = '';
 if (isset($_POST['columns'][5]['search']['value']) && !empty($_POST['columns'][5]['search']['value'])) {
     $status_filter = $_POST['columns'][5]['search']['value'];
+} elseif (isset($_POST['status_filter']) && !empty($_POST['status_filter'])) {
+    $status_filter = $_POST['status_filter'];
+}
+
+// Debug: Log the status filter
+error_log('Status filter received: ' . $status_filter);
+
+if (!empty($status_filter)) {
     $where[] = 'AND COALESCE(' . db_prefix() . 'appointly_appointments.appointment_status, "scheduled") = "' . $status_filter . '"';
 }
 
