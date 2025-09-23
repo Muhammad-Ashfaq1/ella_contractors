@@ -40,8 +40,8 @@
                                         <th><?php echo _l('appointment_subject'); ?></th>
                                         <th>Scheduled Date</th>
                                         <th><?php echo _l('appointment_status'); ?></th>
-                                        <th width="100px"><i class="fa fa-square-o"></i> Measurements</th>
-                                        <th width="100px"><i class="fa fa-file-text-o"></i> Estimates</th>
+                                        <th width="100px">Measurements</th>
+                                        <th width="100px">Estimates</th>
                                         <th width="120px"><?php echo _l('options'); ?></th>
                                     </tr>
                                 </thead>
