@@ -17,7 +17,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="subject">Subject <span class="text-danger">*</span> 
-                                    <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="Give this appointment a friendly name to remember"></i>
+                                    <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="Give this appointment a friendly name to remember"></i>
                                 </label>
                                 <input type="text" class="form-control" id="subject" name="subject" required>
                             </div>
@@ -77,7 +77,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="attendees">Attendees 
-                                    <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="Which staff members will be joining you or handling this Appointment?"></i>
+                                    <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="Which staff members will be joining you or handling this Appointment?"></i>
                                 </label>
                                 <select class="form-control selectpicker" id="attendees" name="attendees[]" multiple>
                                     <?php foreach($staff as $member): ?>
