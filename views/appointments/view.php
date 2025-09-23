@@ -77,9 +77,23 @@
                         <hr class="hr-panel-heading" />
                         
                         <div class="row">
-                            <div class="col-md-12">
+                            <div class="col-md-8">
                                 <h4 class="no-margin"><?php echo $appointment['subject']; ?></h4>
                                 <p class="text-muted"><?php echo _l('appointment_details'); ?></p>
+                            </div>
+                            <div class="col-md-4 text-right">
+                                <!-- Status Display -->
+                                <div class="status-display">
+                                    <?php if($appointment['cancelled']): ?>
+                                        <span class="label label-danger"><?php echo _l('cancelled'); ?></span>
+                                    <?php elseif($appointment['finished']): ?>
+                                        <span class="label label-success"><?php echo _l('finished'); ?></span>
+                                    <?php elseif($appointment['approved']): ?>
+                                        <span class="label label-info"><?php echo _l('approved'); ?></span>
+                                    <?php else: ?>
+                                        <span class="label label-warning"><?php echo _l('pending'); ?></span>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
                         
@@ -116,24 +130,44 @@
                                     </tr>
                                     <tr>
                                         <td><strong><?php echo _l('appointment_start_datetime'); ?>:</strong></td>
-                                        <td><?php echo _d($appointment['date']) . ' ' . date("H:i A", strtotime($appointment['start_hour'])); ?></td>
+                                        <td>
+                                            <?php 
+                                            // Format date as "July 5th, 2025" to match listing format
+                                            $date_obj = DateTime::createFromFormat('Y-m-d', $appointment['date']);
+                                            if ($date_obj) {
+                                                echo $date_obj->format('F jS, Y');
+                                            } else {
+                                                echo _d($appointment['date']);
+                                            }
+                                            
+                                            // Add time underneath
+                                            if (!empty($appointment['start_hour'])) {
+                                                echo '<br><small class="text-muted">' . htmlspecialchars($appointment['start_hour']) . '</small>';
+                                            }
+                                            ?>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td><strong><?php echo _l('appointment_end_datetime'); ?>:</strong></td>
-                                        <td><?php echo _d($appointment['end_date'] ?? $appointment['date']) . ' ' . date("H:i A", strtotime($appointment['end_hour'] ?? $appointment['start_hour'])); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong><?php echo _l('appointment_status'); ?>:</strong></td>
                                         <td>
-                                            <?php if($appointment['cancelled']): ?>
-                                                <span class="label label-danger"><?php echo _l('cancelled'); ?></span>
-                                            <?php elseif($appointment['finished']): ?>
-                                                <span class="label label-success"><?php echo _l('finished'); ?></span>
-                                            <?php elseif($appointment['approved']): ?>
-                                                <span class="label label-info"><?php echo _l('approved'); ?></span>
-                                            <?php else: ?>
-                                                <span class="label label-warning"><?php echo _l('pending'); ?></span>
-                                            <?php endif; ?>
+                                            <?php 
+                                            // Use end_date if available, otherwise use start date
+                                            $end_date = $appointment['end_date'] ?? $appointment['date'];
+                                            $end_time = $appointment['end_hour'] ?? $appointment['start_hour'];
+                                            
+                                            // Format date as "July 5th, 2025" to match listing format
+                                            $end_date_obj = DateTime::createFromFormat('Y-m-d', $end_date);
+                                            if ($end_date_obj) {
+                                                echo $end_date_obj->format('F jS, Y');
+                                            } else {
+                                                echo _d($end_date);
+                                            }
+                                            
+                                            // Add time underneath
+                                            if (!empty($end_time)) {
+                                                echo '<br><small class="text-muted">' . htmlspecialchars($end_time) . '</small>';
+                                            }
+                                            ?>
                                         </td>
                                     </tr>
                                 </table>
