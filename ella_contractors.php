@@ -582,6 +582,27 @@ function ella_contractors_activate_module() {
             $CI->db->query('UPDATE `' . db_prefix() . 'appointly_appointments` SET `appointment_status` = "scheduled" WHERE `appointment_status` IS NULL');
             log_message('info', 'Updated existing appointment records with new status values');
         }
+        
+        // Add end_date and end_time columns to appointly_appointments table if they don't exist
+        if (!$CI->db->field_exists('end_date', db_prefix() . 'appointly_appointments')) {
+            try {
+                // Add end_date column
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `end_date` DATE NULL AFTER `date`');
+                log_message('info', 'Ella Appointments - Created end_date column');
+            } catch (Exception $e) {
+                log_message('error', 'Ella Appointments - Error creating end_date column: ' . $e->getMessage());
+            }
+        }
+        
+        if (!$CI->db->field_exists('end_time', db_prefix() . 'appointly_appointments')) {
+            try {
+                // Add end_time column
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `end_time` TIME NULL AFTER `start_hour`');
+                log_message('info', 'Ella Appointments - Created end_time column');
+            } catch (Exception $e) {
+                log_message('error', 'Ella Appointments - Error creating end_time column: ' . $e->getMessage());
+            }
+        }
     
     // Set module version
     update_option('ella_contractors_version', '1.0.0');

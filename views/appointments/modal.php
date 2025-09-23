@@ -16,7 +16,9 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="subject">Subject <span class="text-danger">*</span></label>
+                                <label for="subject">Subject <span class="text-danger">*</span> 
+                                    <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="Give this appointment a friendly name to remember"></i>
+                                </label>
                                 <input type="text" class="form-control" id="subject" name="subject" required>
                             </div>
                         </div>
@@ -36,14 +38,29 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="date">Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="date" name="date" required>
+                                <label for="start_date">Start Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="start_hour">Start Time <span class="text-danger">*</span></label>
-                                <input type="time" class="form-control" id="start_hour" name="start_hour" required>
+                                <label for="start_time">Start Time <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" id="start_time" name="start_time" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="end_date">End Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="end_time">End Time <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" id="end_time" name="end_time" required>
                             </div>
                         </div>
                     </div>
@@ -59,7 +76,9 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="attendees">Attendees</label>
+                                <label for="attendees">Attendees 
+                                    <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="Which staff members will be joining you or handling this Appointment?"></i>
+                                </label>
                                 <select class="form-control selectpicker" id="attendees" name="attendees[]" multiple>
                                     <?php foreach($staff as $member): ?>
                                         <option value="<?php echo $member['staffid']; ?>"><?php echo $member['firstname'] . ' ' . $member['lastname']; ?></option>
@@ -97,11 +116,6 @@
                                 <input type="text" class="form-control" id="address" name="address">
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="description">Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                     </div>
                     
                     <div class="form-group">

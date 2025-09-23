@@ -33,6 +33,7 @@ class Appointments extends AdminController
             }
         }
     }
+    
 
     /**
      * Appointments listing page
@@ -126,8 +127,10 @@ class Appointments extends AdminController
 
         $this->load->library('form_validation');
         $this->form_validation->set_rules('subject', 'Subject', 'required');
-        $this->form_validation->set_rules('date', 'Date', 'required');
-        $this->form_validation->set_rules('start_hour', 'Start Time', 'required');
+        $this->form_validation->set_rules('start_date', 'Start Date', 'required');
+        $this->form_validation->set_rules('start_time', 'Start Time', 'required');
+        $this->form_validation->set_rules('end_date', 'End Date', 'required');
+        $this->form_validation->set_rules('end_time', 'End Time', 'required');
 
         if ($this->form_validation->run() == FALSE) {
             set_alert('warning', validation_errors());
@@ -149,9 +152,10 @@ class Appointments extends AdminController
             
             $data = [
                 'subject' => $this->input->post('subject'),
-                'description' => $this->input->post('description'),
-                'date' => $this->input->post('date'),
-                'start_hour' => $this->input->post('start_hour'),
+                'date' => $this->input->post('start_date'),
+                'start_hour' => $this->input->post('start_time'),
+                'end_date' => $this->input->post('end_date'),
+                'end_time' => $this->input->post('end_time'),
                 'contact_id' => $contact_id ?: null,
                 'name' => $this->input->post('name'),
                 'email' => $this->input->post('email'),
@@ -310,8 +314,10 @@ class Appointments extends AdminController
 
         $this->load->library('form_validation');
         $this->form_validation->set_rules('subject', 'Subject', 'required');
-        $this->form_validation->set_rules('date', 'Date', 'required');
-        $this->form_validation->set_rules('start_hour', 'Start Time', 'required');
+        $this->form_validation->set_rules('start_date', 'Start Date', 'required');
+        $this->form_validation->set_rules('start_time', 'Start Time', 'required');
+        $this->form_validation->set_rules('end_date', 'End Date', 'required');
+        $this->form_validation->set_rules('end_time', 'End Time', 'required');
 
         if ($this->form_validation->run() == FALSE) {
             echo json_encode([
@@ -338,9 +344,10 @@ class Appointments extends AdminController
             
             $data = [
                 'subject' => $this->input->post('subject'),
-                'description' => $this->input->post('description'),
-                'date' => $this->input->post('date'),
-                'start_hour' => $this->input->post('start_hour'),
+                'date' => $this->input->post('start_date'),
+                'start_hour' => $this->input->post('start_time'),
+                'end_date' => $this->input->post('end_date'),
+                'end_time' => $this->input->post('end_time'),
                 'contact_id' => $contact_id ?: null,
                 'name' => $this->input->post('name'),
                 'email' => $this->input->post('email'),
@@ -673,7 +680,6 @@ class Appointments extends AdminController
 
             $data = [
                 'estimate_name' => $this->input->post('estimate_name'),
-                'description' => $this->input->post('description'),
                 // 'client_id' => $this->input->post('client_id') ?: null,  // Commented out for now
                 // 'lead_id' => $this->input->post('lead_id') ?: null,      // Commented out for now
                 'appointment_id' => $this->input->post('appointment_id'),

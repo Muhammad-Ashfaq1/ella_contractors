@@ -170,6 +170,9 @@ $(document).ready(function() {
     // Initialize selectpicker
     $('.selectpicker').selectpicker();
     
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+    
     // Initialize AJAX search for leads and clients
     init_combined_ajax_search('#contact_id.ajax-search');
     
@@ -208,7 +211,9 @@ function openAppointmentModal(appointmentId = null) {
     
     // Set today's date as default (only for new appointments)
     if (!appointmentId) {
-        $('#date').val('<?php echo date('Y-m-d'); ?>');
+        var today = '<?php echo date('Y-m-d'); ?>';
+        $('#start_date').val(today);
+        $('#end_date').val(today);
     }
     
     // Refresh selectpicker
@@ -242,13 +247,14 @@ function loadAppointmentData(appointmentId) {
                 // Populate form fields
                 $('#appointment_id').val(data.id);
                 $('#subject').val(data.subject);
-                $('#date').val(data.date);
-                $('#start_hour').val(data.start_hour);
+                $('#start_date').val(data.start_date || data.date);
+                $('#end_date').val(data.end_date || data.date);
+                $('#start_time').val(data.start_time || data.start_hour);
+                $('#end_time').val(data.end_time || data.start_hour);
                 $('#name').val(data.name);
                 $('#email').val(data.email);
                 $('#phone').val(data.phone);
                 $('#address').val(data.address);
-                $('#description').val(data.description);
                 $('#notes').val(data.notes);
                 $('#type_id').val(data.type_id);
                 
@@ -327,13 +333,14 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 // Populate form fields
                 $('#appointment_id').val(data.id);
                 $('#subject').val(data.subject);
-                $('#date').val(data.date);
-                $('#start_hour').val(data.start_hour);
+                $('#start_date').val(data.start_date || data.date);
+                $('#end_date').val(data.end_date || data.date);
+                $('#start_time').val(data.start_time || data.start_hour);
+                $('#end_time').val(data.end_time || data.start_hour);
                 $('#name').val(data.name);
                 $('#email').val(data.email);
                 $('#phone').val(data.phone);
                 $('#address').val(data.address);
-                $('#description').val(data.description);
                 $('#notes').val(data.notes);
                 $('#type_id').val(data.type_id);
                 
