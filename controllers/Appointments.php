@@ -975,4 +975,55 @@ class Appointments extends AdminController
             'data' => $estimates
         ]);
     }
+
+    /**
+     * Duplicate appointment via AJAX
+     */
+    public function duplicate_ajax()
+    {
+        $appointment_id = $this->input->post('id');
+        
+        if (!$appointment_id) {
+            echo json_encode(['success' => false, 'message' => 'Invalid appointment ID']);
+            return;
+        }
+
+        // Get original appointment data
+        $original = $this->appointments_model->get($appointment_id);
+        
+        if (!$original) {
+            echo json_encode(['success' => false, 'message' => 'Appointment not found']);
+            return;
+        }
+
+        // Prepare data for new appointment
+        $data = [
+            'subject' => $original['subject'] . ' (Copy)',
+            'date' => $original['date'],
+            'start_hour' => $original['start_hour'],
+            'end_hour' => $original['end_hour'] ?? $original['start_hour'],
+            'name' => $original['name'],
+            'email' => $original['email'],
+            'phone' => $original['phone'],
+            'address' => $original['address'],
+            'description' => $original['description'],
+            'notes' => $original['notes'],
+            'type_id' => $original['type_id'],
+            'source' => 'ella_contractor',
+            'created_by' => get_staff_user_id(),
+            'approved' => 0,
+            'cancelled' => 0,
+            'finished' => 0,
+            'send_reminder' => $original['send_reminder'] ?? 0
+        ];
+
+        // Insert new appointment
+        $new_id = $this->appointments_model->add($data);
+        
+        if ($new_id) {
+            echo json_encode(['success' => true, 'message' => 'Appointment duplicated successfully', 'data' => ['id' => $new_id]]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to duplicate appointment']);
+        }
+    }
 }

@@ -27,15 +27,47 @@
                                 <p class="text-muted"><?php echo _l('appointment_details'); ?></p>
                             </div>
                             <div class="col-md-4 text-right">
-                                <?php if($appointment['cancelled']): ?>
-                                    <span class="label label-danger"><?php echo _l('cancelled'); ?></span>
-                                <?php elseif($appointment['finished']): ?>
-                                    <span class="label label-success"><?php echo _l('finished'); ?></span>
-                                <?php elseif($appointment['approved']): ?>
-                                    <span class="label label-info"><?php echo _l('approved'); ?></span>
-                                <?php else: ?>
-                                    <span class="label label-warning"><?php echo _l('pending'); ?></span>
-                                <?php endif; ?>
+                                <div class="btn-group" role="group">
+                                    <?php if($appointment['cancelled']): ?>
+                                        <span class="label label-danger"><?php echo _l('cancelled'); ?></span>
+                                    <?php elseif($appointment['finished']): ?>
+                                        <span class="label label-success"><?php echo _l('finished'); ?></span>
+                                    <?php elseif($appointment['approved']): ?>
+                                        <span class="label label-info"><?php echo _l('approved'); ?></span>
+                                    <?php else: ?>
+                                        <span class="label label-warning"><?php echo _l('pending'); ?></span>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Action Buttons -->
+                                    <div class="btn-group pull-right" style="margin-left: 10px;">
+                                        <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <i class="fa fa-cog"></i> Actions <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a href="javascript:void(0)" onclick="sendSMSClient(<?php echo $appointment['id']; ?>)">
+                                                    <i class="fa fa-mobile"></i> <?php echo _l('sms_client'); ?>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="javascript:void(0)" onclick="sendEmailClient(<?php echo $appointment['id']; ?>)">
+                                                    <i class="fa fa-envelope"></i> <?php echo _l('email_client'); ?>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="javascript:void(0)" onclick="printAppointment(<?php echo $appointment['id']; ?>)">
+                                                    <i class="fa fa-print"></i> <?php echo _l('print_appointment'); ?>
+                                                </a>
+                                            </li>
+                                            <li role="separator" class="divider"></li>
+                                            <li>
+                                                <a href="javascript:void(0)" onclick="duplicateAppointment(<?php echo $appointment['id']; ?>)">
+                                                    <i class="fa fa-copy"></i> <?php echo _l('duplicate_appointment'); ?>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                 
@@ -52,12 +84,12 @@
                                         <td><?php echo $appointment['subject']; ?></td>
                                     </tr>
                                     <tr>
-                                        <td><strong><?php echo _l('appointment_meeting_date'); ?>:</strong></td>
-                                        <td><?php echo _d($appointment['date']); ?></td>
+                                        <td><strong><?php echo _l('appointment_start_datetime'); ?>:</strong></td>
+                                        <td><?php echo _d($appointment['date']) . ' ' . date("H:i A", strtotime($appointment['start_hour'])); ?></td>
                                     </tr>
                                     <tr>
-                                        <td><strong><?php echo _l('appointment_time'); ?>:</strong></td>
-                                        <td><?php echo $appointment['start_hour']; ?></td>
+                                        <td><strong><?php echo _l('appointment_end_datetime'); ?>:</strong></td>
+                                        <td><?php echo _d($appointment['end_date'] ?? $appointment['date']) . ' ' . date("H:i A", strtotime($appointment['end_hour'] ?? $appointment['start_hour'])); ?></td>
                                     </tr>
                                     <tr>
                                         <td><strong><?php echo _l('appointment_status'); ?>:</strong></td>
@@ -394,6 +426,83 @@ function deleteAppointment(appointmentId) {
             },
             error: function() {
                 alert_float('danger', '<?php echo _l('error_deleting_appointment'); ?>');
+            }
+        });
+    }
+}
+
+// Action Button Functions
+function sendSMSClient(appointmentId) {
+    // Get appointment data first
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_appointment_data/' + appointmentId,
+        type: 'GET',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success && response.data.phone) {
+                // Open SMS modal or redirect to SMS page
+                window.open(admin_url + 'leads/send_lead_sms/' + response.data.lead_id + '?phone=' + response.data.phone, '_blank');
+            } else {
+                alert_float('danger', '<?php echo _l('no_phone_number_available'); ?>');
+            }
+        },
+        error: function() {
+            alert_float('danger', '<?php echo _l('error_loading_appointment_data'); ?>');
+        }
+    });
+}
+
+function sendEmailClient(appointmentId) {
+    // Get appointment data first
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_appointment_data/' + appointmentId,
+        type: 'GET',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success && response.data.email) {
+                // Open email modal or redirect to email page
+                window.open(admin_url + 'leads/send_lead_email/' + response.data.lead_id + '?email=' + response.data.email, '_blank');
+            } else {
+                alert_float('danger', '<?php echo _l('no_email_available'); ?>');
+            }
+        },
+        error: function() {
+            alert_float('danger', '<?php echo _l('error_loading_appointment_data'); ?>');
+        }
+    });
+}
+
+function printAppointment(appointmentId) {
+    // Open print view in new window
+    window.open(admin_url + 'ella_contractors/appointments/print/' + appointmentId, '_blank');
+}
+
+function duplicateAppointment(appointmentId) {
+    if (confirm('<?php echo _l('confirm_duplicate_appointment'); ?>')) {
+        $.ajax({
+            url: admin_url + 'ella_contractors/appointments/duplicate_ajax',
+            type: 'POST',
+            data: {
+                id: appointmentId,
+                [csrf_token_name]: csrf_hash
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    window.location.href = admin_url + 'ella_contractors/appointments/edit/' + response.data.id;
+                } else {
+                    alert_float('danger', response.message);
+                }
+            },
+            error: function() {
+                alert_float('danger', '<?php echo _l('error_duplicating_appointment'); ?>');
             }
         });
     }
