@@ -100,3 +100,6 @@ $lang['no_email_available'] = 'No email address available for this appointment';
 $lang['error_loading_appointment_data'] = 'Error loading appointment data';
 $lang['confirm_duplicate_appointment'] = 'Are you sure you want to duplicate this appointment?';
 $lang['error_duplicating_appointment'] = 'Error duplicating appointment';
+$lang['send_reminder'] = 'Send Reminder';
+$lang['confirm_send_reminder'] = 'Are you sure you want to send a reminder to the client?';
+$lang['error_sending_reminder'] = 'Error sending reminder';

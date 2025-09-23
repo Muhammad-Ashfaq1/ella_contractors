@@ -1026,4 +1026,80 @@ class Appointments extends AdminController
             echo json_encode(['success' => false, 'message' => 'Failed to duplicate appointment']);
         }
     }
+
+    /**
+     * Send reminder to client via AJAX
+     */
+    public function send_reminder_ajax()
+    {
+        $appointment_id = $this->input->post('id');
+        
+        if (!$appointment_id) {
+            echo json_encode(['success' => false, 'message' => 'Invalid appointment ID']);
+            return;
+        }
+
+        // Get appointment data
+        $appointment = $this->appointments_model->get($appointment_id);
+        
+        if (!$appointment) {
+            echo json_encode(['success' => false, 'message' => 'Appointment not found']);
+            return;
+        }
+
+        // Check if appointment has email
+        if (!$appointment['email']) {
+            echo json_encode(['success' => false, 'message' => 'No email address available for this appointment']);
+            return;
+        }
+
+        // Prepare email data
+        $email_data = [
+            'to' => $appointment['email'],
+            'subject' => 'Appointment Reminder: ' . $appointment['subject'],
+            'message' => $this->build_reminder_message($appointment),
+            'from_name' => get_option('companyname'),
+            'from_email' => get_option('company_email')
+        ];
+
+        // Send email using CRM's email system
+        $this->load->library('email');
+        $this->email->clear();
+        $this->email->from($email_data['from_email'], $email_data['from_name']);
+        $this->email->to($email_data['to']);
+        $this->email->subject($email_data['subject']);
+        $this->email->message($email_data['message']);
+
+        if ($this->email->send()) {
+            echo json_encode(['success' => true, 'message' => 'Reminder sent successfully to ' . $appointment['email']]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to send reminder: ' . $this->email->print_debugger()]);
+        }
+    }
+
+    /**
+     * Build reminder message
+     */
+    private function build_reminder_message($appointment)
+    {
+        $message = "Dear " . $appointment['name'] . ",\n\n";
+        $message .= "This is a reminder about your upcoming appointment:\n\n";
+        $message .= "Subject: " . $appointment['subject'] . "\n";
+        $message .= "Date: " . _d($appointment['date']) . "\n";
+        $message .= "Time: " . date("H:i A", strtotime($appointment['start_hour'])) . "\n";
+        
+        if ($appointment['address']) {
+            $message .= "Address: " . $appointment['address'] . "\n";
+        }
+        
+        if ($appointment['description']) {
+            $message .= "\nDescription: " . $appointment['description'] . "\n";
+        }
+        
+        $message .= "\nPlease contact us if you need to reschedule or have any questions.\n\n";
+        $message .= "Best regards,\n";
+        $message .= get_option('companyname');
+        
+        return $message;
+    }
 }

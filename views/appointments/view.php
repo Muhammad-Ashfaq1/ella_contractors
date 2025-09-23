@@ -28,45 +28,15 @@
                             </div>
                             <div class="col-md-4 text-right">
                                 <div class="btn-group" role="group">
-                                    <?php if($appointment['cancelled']): ?>
-                                        <span class="label label-danger"><?php echo _l('cancelled'); ?></span>
-                                    <?php elseif($appointment['finished']): ?>
-                                        <span class="label label-success"><?php echo _l('finished'); ?></span>
-                                    <?php elseif($appointment['approved']): ?>
-                                        <span class="label label-info"><?php echo _l('approved'); ?></span>
-                                    <?php else: ?>
-                                        <span class="label label-warning"><?php echo _l('pending'); ?></span>
-                                    <?php endif; ?>
-                                    
-                                    <!-- Action Buttons -->
-                                    <div class="btn-group pull-right" style="margin-left: 10px;">
-                                        <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <i class="fa fa-cog"></i> Actions <span class="caret"></span>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li>
-                                                <a href="javascript:void(0)" onclick="sendSMSClient(<?php echo $appointment['id']; ?>)">
-                                                    <i class="fa fa-mobile"></i> <?php echo _l('sms_client'); ?>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="javascript:void(0)" onclick="sendEmailClient(<?php echo $appointment['id']; ?>)">
-                                                    <i class="fa fa-envelope"></i> <?php echo _l('email_client'); ?>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="javascript:void(0)" onclick="printAppointment(<?php echo $appointment['id']; ?>)">
-                                                    <i class="fa fa-print"></i> <?php echo _l('print_appointment'); ?>
-                                                </a>
-                                            </li>
-                                            <li role="separator" class="divider"></li>
-                                            <li>
-                                                <a href="javascript:void(0)" onclick="duplicateAppointment(<?php echo $appointment['id']; ?>)">
-                                                    <i class="fa fa-copy"></i> <?php echo _l('duplicate_appointment'); ?>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
+                                    <a href="javascript:void(0)" onclick="sendSMSClient(<?php echo $appointment['id']; ?>)" class="btn btn-success btn-sm" title="<?php echo _l('sms_client'); ?>">
+                                        <i class="fa fa-mobile"></i> <?php echo _l('sms_client'); ?>
+                                    </a>
+                                    <a href="mailto:<?php echo $appointment['email']; ?>" class="btn btn-primary btn-sm" title="<?php echo _l('email_client'); ?>">
+                                        <i class="fa fa-envelope"></i> <?php echo _l('email_client'); ?>
+                                    </a>
+                                    <a href="javascript:void(0)" onclick="sendReminderClient(<?php echo $appointment['id']; ?>)" class="btn btn-warning btn-sm" title="<?php echo _l('send_reminder'); ?>">
+                                        <i class="fa fa-bell"></i> <?php echo _l('send_reminder'); ?>
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -476,6 +446,30 @@ function sendEmailClient(appointmentId) {
             alert_float('danger', '<?php echo _l('error_loading_appointment_data'); ?>');
         }
     });
+}
+
+function sendReminderClient(appointmentId) {
+    if (confirm('<?php echo _l('confirm_send_reminder'); ?>')) {
+        $.ajax({
+            url: admin_url + 'ella_contractors/appointments/send_reminder_ajax',
+            type: 'POST',
+            data: {
+                id: appointmentId,
+                [csrf_token_name]: csrf_hash
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                } else {
+                    alert_float('danger', response.message);
+                }
+            },
+            error: function() {
+                alert_float('danger', '<?php echo _l('error_sending_reminder'); ?>');
+            }
+        });
+    }
 }
 
 function printAppointment(appointmentId) {

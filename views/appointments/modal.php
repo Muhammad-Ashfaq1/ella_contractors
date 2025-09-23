@@ -81,14 +81,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Contact Name</label>
-                                <input type="text" class="form-control" id="name" name="name">
+                                <label for="email">Email</label>
+                                <input type="email" class="form-control" id="email" name="email">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" class="form-control" id="email" name="email">
+                                <label for="phone">Phone</label>
+                                <input type="tel" class="form-control" id="phone" name="phone">
                             </div>
                         </div>
                     </div>
@@ -96,21 +96,16 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="phone">Phone</label>
-                                <input type="text" class="form-control" id="phone" name="phone">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
                                 <label for="address">Address</label>
                                 <input type="text" class="form-control" id="address" name="address">
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="notes">Notes</label>
-                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="notes">Notes</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="row">

@@ -270,7 +270,6 @@ function loadAppointmentData(appointmentId) {
                 $('#start_datetime').val(startDateTime);
                 $('#end_datetime').val(endDateTime);
                 
-                $('#name').val(data.name);
                 $('#email').val(data.email);
                 $('#phone').val(data.phone);
                 $('#address').val(data.address);
@@ -378,7 +377,6 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 $('#start_datetime').val(startDateTime);
                 $('#end_datetime').val(endDateTime);
                 
-                $('#name').val(data.name);
                 $('#email').val(data.email);
                 $('#phone').val(data.phone);
                 $('#address').val(data.address);
