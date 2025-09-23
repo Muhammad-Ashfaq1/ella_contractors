@@ -93,6 +93,7 @@ if ($CI->db->field_exists('source', db_prefix() . 'appointly_appointments')) {
 // Filter by status if requested (check both column search and custom parameter)
 // DataTable columns: 0=checkbox, 1=ID, 2=Lead, 3=Subject, 4=Date, 5=Status, 6=Measurements, 7=Estimates, 8=Options
 $status_filter = '';
+$date_filter = '';
 
 // Look for status filter in multiple places
 if (isset($_POST['columns'][5]['search']['value']) && !empty($_POST['columns'][5]['search']['value'])) {
@@ -103,9 +104,36 @@ if (isset($_POST['columns'][5]['search']['value']) && !empty($_POST['columns'][5
     $status_filter = $_GET['status_filter'];
 }
 
+// Look for date filter
+if (isset($_POST['date_filter']) && !empty($_POST['date_filter'])) {
+    $date_filter = $_POST['date_filter'];
+} elseif (isset($_GET['date_filter']) && !empty($_GET['date_filter'])) {
+    $date_filter = $_GET['date_filter'];
+}
+
 if (!empty($status_filter)) {
     // Use direct appointment_status column filtering with case-insensitive comparison
     $where[] = 'AND LOWER(COALESCE(' . db_prefix() . 'appointly_appointments.appointment_status, "scheduled")) = "' . strtolower($status_filter) . '"';
+}
+
+// Apply date filters
+if (!empty($date_filter)) {
+    $today = date('Y-m-d');
+    switch ($date_filter) {
+        case 'today':
+            $where[] = 'AND ' . db_prefix() . 'appointly_appointments.date = "' . $today . '"';
+            break;
+        case 'this_week':
+            $start_week = date('Y-m-d', strtotime('monday this week'));
+            $end_week = date('Y-m-d', strtotime('sunday this week'));
+            $where[] = 'AND ' . db_prefix() . 'appointly_appointments.date BETWEEN "' . $start_week . '" AND "' . $end_week . '"';
+            break;
+        case 'this_month':
+            $start_month = date('Y-m-01');
+            $end_month = date('Y-m-t');
+            $where[] = 'AND ' . db_prefix() . 'appointly_appointments.date BETWEEN "' . $start_month . '" AND "' . $end_month . '"';
+            break;
+    }
 }
 
 try {

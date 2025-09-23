@@ -41,6 +41,9 @@ function ella_contractors_init_menu() {
                 'href' => admin_url('ella_contractors/appointments'),
                 'icon' => 'fa fa-calendar-check-o',
                 'position' => 10,
+                'li_attributes' => [
+                    'data-menu-patterns' => 'ella_contractors/appointments'
+                ]
             ],
             // [
             //     'slug' => 'ella_contractors_measurements',

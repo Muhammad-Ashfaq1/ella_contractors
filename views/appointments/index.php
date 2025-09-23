@@ -16,13 +16,21 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group pull-right">
-                                        <!-- <label for="statusFilter" style="margin-right: 10px;">Filter by Status:</label> -->
-                                        <select id="statusFilter" class="form-control selectpicker" data-live-search="true" style="width: 200px; display: inline-block;">
-                                            <option value="">All Appointments</option>
-                                            <option value="scheduled">Scheduled</option>
-                                            <option value="complete">Complete</option>
-                                            <option value="cancelled">Cancelled</option>
-                                        </select>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <i class="fa fa-filter"></i> All Appointments <span class="caret"></span>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-right">
+                                                <li><a href="#" data-filter="all">All Appointments</a></li>
+                                                <li><a href="#" data-filter="scheduled">Scheduled</a></li>
+                                                <li><a href="#" data-filter="complete">Complete</a></li>
+                                                <li><a href="#" data-filter="cancelled">Cancelled</a></li>
+                                                <li role="separator" class="divider"></li>
+                                                <li><a href="#" data-filter="today">Today</a></li>
+                                                <li><a href="#" data-filter="this_week">This Week</a></li>
+                                                <li><a href="#" data-filter="this_month">This Month</a></li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -176,24 +184,40 @@ $(document).ready(function() {
     // Initialize AJAX search for leads and clients
     init_combined_ajax_search('#contact_id.ajax-search');
     
-    // Handle status filter change
-    $('#statusFilter').on('change', function() {
-        var status = $(this).val();
+    // Handle filter dropdown clicks
+    $('.dropdown-menu a[data-filter]').on('click', function(e) {
+        e.preventDefault();
+        var filter = $(this).data('filter');
         var table = $('.table-ella_appointments').DataTable();
+        
+        // Update dropdown button text
+        $(this).closest('.dropdown-menu').prev('.dropdown-toggle').html('<i class="fa fa-filter"></i> ' + $(this).text() + ' <span class="caret"></span>');
         
         // Clear existing column searches
         table.columns().search('');
         
-        // Apply status filter using custom parameter approach
-        if (status !== '') {
-            // Use the custom parameter approach instead of column search
-            table.ajax.url(admin_url + 'ella_contractors/appointments/table?status_filter=' + encodeURIComponent(status));
-        } else {
-            // Reset to original URL without filter
-            table.ajax.url(admin_url + 'ella_contractors/appointments/table');
+        // Build filter URL
+        var filterUrl = admin_url + 'ella_contractors/appointments/table';
+        var params = [];
+        
+        if (filter !== 'all') {
+            if (['scheduled', 'complete', 'cancelled'].indexOf(filter) !== -1) {
+                params.push('status_filter=' + encodeURIComponent(filter));
+            } else if (filter === 'today') {
+                params.push('date_filter=today');
+            } else if (filter === 'this_week') {
+                params.push('date_filter=this_week');
+            } else if (filter === 'this_month') {
+                params.push('date_filter=this_month');
+            }
         }
         
-        // Reload the table with new URL
+        if (params.length > 0) {
+            filterUrl += '?' + params.join('&');
+        }
+        
+        // Update table URL and reload
+        table.ajax.url(filterUrl);
         table.ajax.reload();
     });
 });
