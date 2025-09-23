@@ -1,6 +1,61 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 
+<style>
+.connected-buttons {
+    display: inline-flex;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.connected-buttons .connected-btn-left {
+    border-radius: 4px 0 0 4px;
+    border-right: none;
+    margin-right: 0;
+}
+
+.connected-buttons .connected-btn-middle {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.connected-buttons .connected-btn-right {
+    border-radius: 0 4px 4px 0;
+    border-left: none;
+    margin-left: 0;
+}
+
+.connected-buttons .btn {
+    position: relative;
+    z-index: 1;
+    white-space: nowrap;
+}
+
+.connected-buttons .btn:hover {
+    z-index: 2;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.connected-buttons .btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Ensure proper spacing and prevent layout issues */
+.action-buttons-container {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    clear: both;
+}
+</style>
+
 <div id="wrapper">
     <div class="content">
         <div class="row">
@@ -22,21 +77,27 @@
                         <hr class="hr-panel-heading" />
                         
                         <div class="row">
-                            <div class="col-md-8">
+                            <div class="col-md-12">
                                 <h4 class="no-margin"><?php echo $appointment['subject']; ?></h4>
                                 <p class="text-muted"><?php echo _l('appointment_details'); ?></p>
                             </div>
-                            <div class="col-md-4 text-right">
-                                <div class="btn-group" role="group">
-                                    <a href="javascript:void(0)" onclick="sendSMSClient(<?php echo $appointment['id']; ?>)" class="btn btn-success btn-sm" title="<?php echo _l('sms_client'); ?>">
-                                        <i class="fa fa-mobile"></i> <?php echo _l('sms_client'); ?>
-                                    </a>
-                                    <a href="mailto:<?php echo $appointment['email']; ?>" class="btn btn-primary btn-sm" title="<?php echo _l('email_client'); ?>">
-                                        <i class="fa fa-envelope"></i> <?php echo _l('email_client'); ?>
-                                    </a>
-                                    <a href="javascript:void(0)" onclick="sendReminderClient(<?php echo $appointment['id']; ?>)" class="btn btn-warning btn-sm" title="<?php echo _l('send_reminder'); ?>">
-                                        <i class="fa fa-bell"></i> <?php echo _l('send_reminder'); ?>
-                                    </a>
+                        </div>
+                        
+                        <!-- Action Buttons Row -->
+                        <div class="row">
+                            <div class="col-md-12 text-right">
+                                <div class="action-buttons-container">
+                                    <div class="btn-group connected-buttons" role="group">
+                                        <a href="javascript:void(0)" onclick="sendSMSClient(<?php echo $appointment['id']; ?>)" class="btn btn-success btn-sm connected-btn-left" title="<?php echo _l('sms_client'); ?>">
+                                            <i class="fa fa-mobile"></i> <?php echo _l('sms_client'); ?>
+                                        </a>
+                                        <a href="mailto:<?php echo $appointment['email']; ?>" class="btn btn-primary btn-sm connected-btn-middle" title="<?php echo _l('email_client'); ?>">
+                                            <i class="fa fa-envelope"></i> <?php echo _l('email_client'); ?>
+                                        </a>
+                                        <a href="javascript:void(0)" onclick="sendReminderClient(<?php echo $appointment['id']; ?>)" class="btn btn-warning btn-sm connected-btn-right" title="<?php echo _l('send_reminder'); ?>">
+                                            <i class="fa fa-bell"></i> <?php echo _l('send_reminder'); ?>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
