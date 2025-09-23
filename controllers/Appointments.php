@@ -34,6 +34,23 @@ class Appointments extends AdminController
         }
     }
     
+    /**
+     * Ensure send_reminder column exists in the database
+     */
+    private function ensure_send_reminder_column()
+    {
+        if (!$this->db->field_exists('send_reminder', db_prefix() . 'appointly_appointments')) {
+            try {
+                // Add the column
+                $this->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `send_reminder` TINYINT(1) DEFAULT 0 AFTER `appointment_status`');
+                
+                error_log('Ella Appointments - Created send_reminder column');
+            } catch (Exception $e) {
+                error_log('Ella Appointments - Error creating send_reminder column: ' . $e->getMessage());
+            }
+        }
+    }
+    
 
     /**
      * Appointments listing page
@@ -140,6 +157,9 @@ class Appointments extends AdminController
             // Ensure appointment_status column exists
             $this->ensure_appointment_status_column();
             
+            // Ensure send_reminder column exists
+            $this->ensure_send_reminder_column();
+            
             // Process contact_id - handle client_/lead_ prefixes
             $contact_id = $this->input->post('contact_id');
             if ($contact_id) {
@@ -164,7 +184,8 @@ class Appointments extends AdminController
                 'notes' => $this->input->post('notes'),
                 'type_id' => $this->input->post('type_id') ?: 0,
                 'appointment_status' => $status_value ?: 'scheduled',
-                'source' => 'ella_contractor'
+                'source' => 'ella_contractor',
+                'send_reminder' => $this->input->post('send_reminder') ? 1 : 0
             ];
             
 
@@ -332,6 +353,9 @@ class Appointments extends AdminController
             // Ensure appointment_status column exists
             $this->ensure_appointment_status_column();
             
+            // Ensure send_reminder column exists
+            $this->ensure_send_reminder_column();
+            
             // Process contact_id - handle client_/lead_ prefixes
             $contact_id = $this->input->post('contact_id');
             if ($contact_id) {
@@ -356,7 +380,8 @@ class Appointments extends AdminController
                 'notes' => $this->input->post('notes'),
                 'type_id' => $this->input->post('type_id') ?: 0,
                 'appointment_status' => $status_value ?: 'scheduled',
-                'source' => 'ella_contractor'
+                'source' => 'ella_contractor',
+                'send_reminder' => $this->input->post('send_reminder') ? 1 : 0
             ];
             
 

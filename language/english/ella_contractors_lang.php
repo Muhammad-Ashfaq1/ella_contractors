@@ -84,3 +84,6 @@ $lang['sent'] = 'Sent';
 $lang['accepted'] = 'Accepted';
 $lang['rejected'] = 'Rejected';
 $lang['expired'] = 'Expired';
+
+// Appointment Reminder Language Strings
+$lang['appointment_send_reminder_followup'] = 'Send reminder & follow up to customer';

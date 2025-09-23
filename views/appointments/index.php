@@ -211,9 +211,9 @@ function openAppointmentModal(appointmentId = null) {
     
     // Set today's date as default (only for new appointments)
     if (!appointmentId) {
-        var today = '<?php echo date('Y-m-d'); ?>';
-        $('#start_date').val(today);
-        $('#end_date').val(today);
+        var today = '<?php echo date('Y-m-d\TH:i'); ?>';
+        $('#start_datetime').val(today);
+        $('#end_datetime').val(today);
     }
     
     // Refresh selectpicker
@@ -247,16 +247,38 @@ function loadAppointmentData(appointmentId) {
                 // Populate form fields
                 $('#appointment_id').val(data.id);
                 $('#subject').val(data.subject);
-                $('#start_date').val(data.start_date || data.date);
-                $('#end_date').val(data.end_date || data.date);
-                $('#start_time').val(data.start_time || data.start_hour);
-                $('#end_time').val(data.end_time || data.start_hour);
+                
+                // Handle combined datetime fields
+                var startDateTime = '';
+                var endDateTime = '';
+                
+                if (data.start_date && data.start_time) {
+                    startDateTime = data.start_date + 'T' + data.start_time;
+                } else if (data.date && data.start_hour) {
+                    startDateTime = data.date + 'T' + data.start_hour;
+                }
+                
+                if (data.end_date && data.end_time) {
+                    endDateTime = data.end_date + 'T' + data.end_time;
+                } else if (data.date && data.start_hour) {
+                    // For end time, add 1 hour to start time as default
+                    var endTime = new Date(data.date + 'T' + data.start_hour);
+                    endTime.setHours(endTime.getHours() + 1);
+                    endDateTime = endTime.toISOString().slice(0, 16);
+                }
+                
+                $('#start_datetime').val(startDateTime);
+                $('#end_datetime').val(endDateTime);
+                
                 $('#name').val(data.name);
                 $('#email').val(data.email);
                 $('#phone').val(data.phone);
                 $('#address').val(data.address);
                 $('#notes').val(data.notes);
                 $('#type_id').val(data.type_id);
+                
+                // Handle reminder checkbox
+                $('#send_reminder').prop('checked', data.send_reminder == 1);
                 
                 // Set status dropdown
                 var status = data.appointment_status || 'scheduled';
@@ -333,16 +355,38 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 // Populate form fields
                 $('#appointment_id').val(data.id);
                 $('#subject').val(data.subject);
-                $('#start_date').val(data.start_date || data.date);
-                $('#end_date').val(data.end_date || data.date);
-                $('#start_time').val(data.start_time || data.start_hour);
-                $('#end_time').val(data.end_time || data.start_hour);
+                
+                // Handle combined datetime fields
+                var startDateTime = '';
+                var endDateTime = '';
+                
+                if (data.start_date && data.start_time) {
+                    startDateTime = data.start_date + 'T' + data.start_time;
+                } else if (data.date && data.start_hour) {
+                    startDateTime = data.date + 'T' + data.start_hour;
+                }
+                
+                if (data.end_date && data.end_time) {
+                    endDateTime = data.end_date + 'T' + data.end_time;
+                } else if (data.date && data.start_hour) {
+                    // For end time, add 1 hour to start time as default
+                    var endTime = new Date(data.date + 'T' + data.start_hour);
+                    endTime.setHours(endTime.getHours() + 1);
+                    endDateTime = endTime.toISOString().slice(0, 16);
+                }
+                
+                $('#start_datetime').val(startDateTime);
+                $('#end_datetime').val(endDateTime);
+                
                 $('#name').val(data.name);
                 $('#email').val(data.email);
                 $('#phone').val(data.phone);
                 $('#address').val(data.address);
                 $('#notes').val(data.notes);
                 $('#type_id').val(data.type_id);
+                
+                // Handle reminder checkbox
+                $('#send_reminder').prop('checked', data.send_reminder == 1);
                 
                 // Set status dropdown
                 var status = data.appointment_status || 'scheduled';
@@ -452,6 +496,22 @@ function deleteAppointment(appointmentId) {
 
 // Save appointment
 $('#saveAppointment').on('click', function() {
+    // Split datetime fields into separate date and time fields
+    var startDateTime = $('#start_datetime').val();
+    var endDateTime = $('#end_datetime').val();
+    
+    if (startDateTime) {
+        var startParts = startDateTime.split('T');
+        $('#start_date').val(startParts[0]);
+        $('#start_time').val(startParts[1]);
+    }
+    
+    if (endDateTime) {
+        var endParts = endDateTime.split('T');
+        $('#end_date').val(endParts[0]);
+        $('#end_time').val(endParts[1]);
+    }
+    
     var formData = $('#appointmentForm').serialize();
     
     $.ajax({

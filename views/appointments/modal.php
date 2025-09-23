@@ -12,6 +12,11 @@
             <div class="modal-body">
                 <form id="appointmentForm">
                     <input type="hidden" id="appointment_id" name="appointment_id" value="">
+                    <!-- Hidden fields for separate date and time (for backend compatibility) -->
+                    <input type="hidden" id="start_date" name="start_date" value="">
+                    <input type="hidden" id="start_time" name="start_time" value="">
+                    <input type="hidden" id="end_date" name="end_date" value="">
+                    <input type="hidden" id="end_time" name="end_time" value="">
                     
                     <div class="row">
                         <div class="col-md-6">
@@ -38,29 +43,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="start_date">Start Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="start_date" name="start_date" required>
+                                <label for="start_datetime">Start Date & Time <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="start_datetime" name="start_datetime" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="start_time">Start Time <span class="text-danger">*</span></label>
-                                <input type="time" class="form-control" id="start_time" name="start_time" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="end_date">End Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="end_date" name="end_date" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="end_time">End Time <span class="text-danger">*</span></label>
-                                <input type="time" class="form-control" id="end_time" name="end_time" required>
+                                <label for="end_datetime">End Date & Time <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="end_datetime" name="end_datetime" required>
                             </div>
                         </div>
                     </div>
@@ -132,6 +122,15 @@
                                     <option value="cancelled">Cancelled</option>
                                     <option value="complete">Complete</option>
                                 </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="checkbox">
+                                <input type="checkbox" name="send_reminder" id="send_reminder" value="1">
+                                <label for="send_reminder"><?= _l('appointment_send_reminder_followup'); ?></label>
                             </div>
                         </div>
                     </div>
