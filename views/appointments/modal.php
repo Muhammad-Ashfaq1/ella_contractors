@@ -52,18 +52,8 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="contact_id">Client/Lead</label>
-                                <select class="form-control" id="contact_id" name="contact_id">
+                                <select class="form-control ajax-search" id="contact_id" name="contact_id" data-live-search="true">
                                     <option value="">Select Client/Lead</option>
-                                    <optgroup label="Clients">
-                                        <?php foreach($clients as $client): ?>
-                                            <option value="client_<?php echo $client['userid']; ?>"><?php echo $client['company']; ?></option>
-                                        <?php endforeach; ?>
-                                    </optgroup>
-                                    <optgroup label="Leads">
-                                        <?php foreach($leads as $lead): ?>
-                                            <option value="lead_<?php echo $lead['id']; ?>"><?php echo $lead['name']; ?></option>
-                                        <?php endforeach; ?>
-                                    </optgroup>
                                 </select>
                             </div>
                         </div>

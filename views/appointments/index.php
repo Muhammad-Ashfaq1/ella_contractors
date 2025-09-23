@@ -111,12 +111,67 @@ $this->load->view('appointments/modal', $data);
 var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
 var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
 
+// Custom function to initialize combined AJAX search for leads and clients
+function init_combined_ajax_search(selector) {
+    var ajaxSelector = $(selector);
+    
+    if (ajaxSelector.length) {
+        var options = {
+            ajax: {
+                url: admin_url + 'misc/get_relation_data',
+                data: function () {
+                    var data = {};
+                    data.type = 'combined_contacts'; // Custom type for combined search
+                    data.rel_id = '';
+                    data.q = '{{{q}}}';
+                    return data;
+                }
+            },
+            locale: {
+                emptyTitle: 'Search for clients or leads...',
+                statusInitialized: 'Ready to search',
+                statusSearching: 'Searching...',
+                statusNoResults: 'No results found',
+                searchPlaceholder: 'Type to search clients or leads...',
+                currentlySelected: 'Currently selected'
+            },
+            requestDelay: 500,
+            cache: false,
+            preprocessData: function (processData) {
+                var bs_data = [];
+                var len = processData.length;
+                for (var i = 0; i < len; i++) {
+                    var tmp_data = {
+                        'value': processData[i].id,
+                        'text': processData[i].name,
+                    };
+                    if (processData[i].subtext) {
+                        tmp_data.data = {
+                            subtext: processData[i].subtext
+                        };
+                    }
+                    bs_data.push(tmp_data);
+                }
+                return bs_data;
+            },
+            preserveSelectedPosition: 'after',
+            preserveSelected: false
+        };
+        
+        ajaxSelector.selectpicker().ajaxSelectPicker(options);
+        ajaxSelector.selectpicker('val', '');
+    }
+}
+
 $(document).ready(function() {
     // Initialize DataTable for appointments
     initDataTable('.table-ella_appointments', admin_url + 'ella_contractors/appointments/table', undefined, undefined, {}, [2, 'desc']);
     
     // Initialize selectpicker
     $('.selectpicker').selectpicker();
+    
+    // Initialize AJAX search for leads and clients
+    init_combined_ajax_search('#contact_id.ajax-search');
     
     // Handle status filter change
     $('#statusFilter').on('change', function() {
@@ -158,6 +213,9 @@ function openAppointmentModal(appointmentId = null) {
     
     // Refresh selectpicker
     $('.selectpicker').selectpicker('refresh');
+    
+    // Refresh AJAX search
+    $('#contact_id.ajax-search').selectpicker('refresh');
     
     // Show modal immediately for new appointments
     if (!appointmentId) {
@@ -240,6 +298,9 @@ function loadAppointmentData(appointmentId) {
                 
                 // Refresh selectpicker
                 $('.selectpicker').selectpicker('refresh');
+                
+                // Refresh AJAX search after setting value
+                $('#contact_id.ajax-search').selectpicker('refresh');
             } else {
                 alert_float('danger', response.message);
             }
