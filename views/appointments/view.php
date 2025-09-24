@@ -269,6 +269,11 @@
                                     <span class="label label-info" style="display: none;" id="estimates-count">0</span>
                                 </a>
                             </li>
+                            <li role="presentation">
+                                <a href="#notes-tab" aria-controls="notes-tab" role="tab" data-toggle="tab">
+                                    <i class="fa fa-sticky-note-o"></i> Notes
+                                </a>
+                            </li>
                         </ul>
 
                         <!-- Tab panes -->
@@ -313,6 +318,52 @@
                                             <div class="text-center">
                                                 <i class="fa fa-spinner fa-spin fa-2x"></i>
                                                 <p>Loading estimates...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Notes Tab -->
+                            <div role="tabpanel" class="tab-pane" id="notes-tab">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <!-- Quick Add Note Button -->
+                                        <div class="pull-right mbot15">
+                                            <button type="button" class="btn btn-info btn-sm" onclick="toggleQuickNoteForm()" id="quick-note-btn">
+                                                <i class="fa fa-plus"></i> Quick Add Note
+                                            </button>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                        
+                                        <!-- Quick Add Note Form (Initially Hidden) -->
+                                        <div id="quick-note-form" class="hide mbot15">
+                                            <?php echo form_open(admin_url('ella_contractors/appointments/add_note/' . $appointment['id']), array('id' => 'appointment-notes')); ?>
+                                            <div class="form-group" id="appointmentnote">
+                                                <div class="lead emoji-picker-container leadnotes">
+                                                    <textarea id="appointment_note_description" name="appointment_note_description" class="form-control" rows="3" data-emojiable="true" placeholder="Add a quick note about this appointment..."></textarea>
+                                                </div>
+                                            </div>
+                                            <?php echo get_typos_by_category('notes'); ?>
+                                            <div class="text-right">
+                                                <button type="button" class="btn btn-default btn-sm" onclick="toggleQuickNoteForm()">Cancel</button>
+                                                <button type="submit" class="btn btn-info btn-sm">Add Note</button>
+                                            </div>
+                                            <?php echo form_close(); ?>
+                                        </div>
+                                        
+                                        <hr class="hr-panel-heading" />
+                                        
+                                        <!-- Notes Display -->
+                                        <div class="panel_s no-shadow">
+                                            <div class="panel-body">
+                                                <div id="appointment-notes-container">
+                                                    <!-- Notes will be loaded here via AJAX -->
+                                                    <div class="text-center">
+                                                        <i class="fa fa-spinner fa-spin fa-2x"></i>
+                                                        <p>Loading notes...</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -413,6 +464,9 @@ $(document).ready(function() {
     // Load estimates when page loads
     loadEstimates();
     
+    // Load notes when page loads
+    loadNotes();
+    
     // Check for tab parameter in URL and switch to appropriate tab
     var urlParams = new URLSearchParams(window.location.search);
     var tabParam = urlParams.get('tab');
@@ -450,6 +504,34 @@ $(document).ready(function() {
     // Reload estimates when estimates tab is shown
     $('a[href="#estimates-tab"]').on('click', function() {
         loadEstimates();
+    });
+    
+    // Reload notes when notes tab is shown
+    $('a[href="#notes-tab"]').on('click', function() {
+        loadNotes();
+    });
+    
+    // Submit notes on appointment modal do ajax not the regular request
+    $("body").on('submit', '#appointment-notes', function () {
+        var form = $(this);
+        var data = $(form).serialize();
+        $.post(form.attr('action'), data).done(function (response) {
+            response = JSON.parse(response);
+            if (response.success) {
+                // Clear the textarea and hide form
+                $("#appointment_note_description").val('');
+                $(".emoji-wysiwyg-editor").text('');
+                toggleQuickNoteForm(); // Hide the form
+                // Reload notes
+                loadNotes();
+                alert_float('success', 'Note added successfully!');
+            } else {
+                alert_float('danger', response.message || 'Failed to add note');
+            }
+        }).fail(function (data) {
+            alert_float('danger', data.responseText);
+        });
+        return false;
     });
 });
 
@@ -639,6 +721,158 @@ function loadEstimates() {
             $('#estimates-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading estimates.</p></div>');
         }
     });
+}
+
+// Notes Functions
+function loadNotes() {
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_notes/' + appointmentId,
+        type: 'GET',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                displayNotes(response.data);
+            } else {
+                $('#appointment-notes-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No notes found for this appointment.</p></div>');
+            }
+        },
+        error: function() {
+            $('#appointment-notes-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading notes.</p></div>');
+        }
+    });
+}
+
+function displayNotes(notes) {
+    if (notes.length === 0) {
+        $('#appointment-notes-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No notes found for this appointment.</p></div>');
+        return;
+    }
+
+    var html = '';
+    var len = notes.length;
+    var i = 0;
+    
+    notes.forEach(function(note) {
+        var timeAgo = moment(note.dateadded).fromNow();
+        var staffName = note.firstname + ' ' + note.lastname;
+        var staffProfileImage = note.profile_image ? note.profile_image : 'assets/images/user-placeholder.jpg';
+        
+        html += '<div class="feed-item">';
+        html += '<div class="date">';
+        html += '<span class="text-has-action" data-toggle="tooltip" data-title="' + note.dateadded + '" data-original-title="" title="">' + timeAgo + '</span>';
+        html += '</div>';
+        html += '<div class="text">';
+        html += '<a href="' + admin_url + 'admin/profile/' + note.addedfrom + '">';
+        html += '<img class="staff-profile-xs-image pull-left mright5" src="' + staffProfileImage + '" alt="' + staffName + '">';
+        html += '</a>';
+        html += '<b>' + staffName + '</b> - ' + note.description;
+        html += '</div>';
+        html += '<div class="text-right mtop5">';
+        html += '<button class="btn btn-default btn-xs" onclick="editNote(' + note.id + ')" title="Edit Note"><i class="fa fa-edit"></i></button> ';
+        html += '<button class="btn btn-danger btn-xs" onclick="deleteNote(' + note.id + ')" title="Delete Note"><i class="fa fa-trash"></i></button>';
+        html += '</div>';
+        html += '</div>';
+        
+        if (i >= 0 && i != len - 1) {
+            html += '<hr />';
+        }
+        i++;
+    });
+    
+    $('#appointment-notes-container').html(html);
+}
+
+// Toggle quick note form
+function toggleQuickNoteForm() {
+    $('#quick-note-form').toggleClass('hide');
+    if (!$('#quick-note-form').hasClass('hide')) {
+        $('#appointment_note_description').focus();
+    }
+}
+
+function editNote(noteId) {
+    // Get the note content
+    var noteElement = $('button[onclick="editNote(' + noteId + ')"]').closest('.feed-item');
+    var noteText = noteElement.find('.text').html();
+    
+    // Extract just the text content (remove HTML tags)
+    var textContent = noteText.replace(/<[^>]*>/g, '').replace(/^[^-]+-\s*/, '');
+    
+    // Create edit form
+    var editForm = '<div class="feed-item" data-note-edit="' + noteId + '">';
+    editForm += '<div class="form-group">';
+    editForm += '<textarea class="form-control" rows="3" id="edit-note-' + noteId + '">' + textContent + '</textarea>';
+    editForm += '</div>';
+    editForm += '<div class="text-right">';
+    editForm += '<button class="btn btn-default btn-xs" onclick="cancelEditNote(' + noteId + ')" title="Cancel">Cancel</button> ';
+    editForm += '<button class="btn btn-info btn-xs" onclick="updateNote(' + noteId + ')" title="Update">Update</button>';
+    editForm += '</div>';
+    editForm += '</div>';
+    
+    // Replace the note with edit form
+    noteElement.replaceWith(editForm);
+}
+
+function cancelEditNote(noteId) {
+    // Reload notes to restore original display
+    loadNotes();
+}
+
+function updateNote(noteId) {
+    var newDescription = $('#edit-note-' + noteId).val();
+    
+    if (!newDescription.trim()) {
+        alert_float('danger', 'Note description cannot be empty');
+        return;
+    }
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/add_note/' + appointmentId + '/' + noteId,
+        type: 'POST',
+        data: {
+            description: newDescription,
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                alert_float('success', 'Note updated successfully!');
+                loadNotes(); // Reload notes
+            } else {
+                alert_float('danger', response.message || 'Failed to update note');
+            }
+        },
+        error: function() {
+            alert_float('danger', 'Error updating note');
+        }
+    });
+}
+
+function deleteNote(noteId) {
+    if (confirm('Are you sure you want to delete this note?')) {
+        $.ajax({
+            url: admin_url + 'ella_contractors/appointments/delete_note/' + noteId,
+            type: 'POST',
+            data: {
+                [csrf_token_name]: csrf_hash
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', 'Note deleted successfully!');
+                    loadNotes(); // Reload notes
+                } else {
+                    alert_float('danger', response.message || 'Failed to delete note');
+                }
+            },
+            error: function() {
+                alert_float('danger', 'Error deleting note');
+            }
+        });
+    }
 }
 
 function displayEstimates(estimates) {

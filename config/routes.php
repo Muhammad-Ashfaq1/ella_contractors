@@ -68,6 +68,12 @@ $route[$module_name . '/appointments/get_measurement/(:num)/(:num)'] = 'Appointm
 $route[$module_name . '/appointments/save_measurement/(:num)'] = 'Appointments/save_measurement/$1';
 $route[$module_name . '/appointments/delete_measurement/(:num)/(:num)'] = 'Appointments/delete_measurement/$1/$2';
 
+// Appointment Notes routes
+$route[$module_name . '/appointments/get_notes/(:num)'] = 'Appointments/get_notes/$1';
+$route[$module_name . '/appointments/add_note/(:num)'] = 'Appointments/add_note/$1';
+$route[$module_name . '/appointments/add_note/(:num)/(:num)'] = 'Appointments/add_note/$1/$2';
+$route[$module_name . '/appointments/delete_note/(:num)'] = 'Appointments/delete_note/$1';
+
 // AJAX endpoints
 $route[$module_name . '/get_line_items_ajax'] = $module_name . '/get_line_items_ajax';
 $route[$module_name . '/get_estimates_ajax'] = $module_name . '/get_estimates_ajax';

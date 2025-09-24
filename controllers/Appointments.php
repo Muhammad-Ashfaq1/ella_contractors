@@ -1230,15 +1230,130 @@ class Appointments extends AdminController
         return $message;
     }
 
-    // private  function add_note($notes, $rel_id, $rel_type)
-    // {
-    //     if ($note) {
-    //         $success = $this->misc_model->add_note($note, $rel_type, $rel_id);
-    //         if ($success) {
-    //             set_alert('success', _l('added_successfully', _l('note')));
-    //         }
-    //     }
-    //     redirect($_SERVER['HTTP_REFERER']);
-    // }
+    /**
+     * Add or update note for appointment
+     * If note_id is provided, update existing note
+     * If no note_id, create new note
+     */
+    public function add_note($rel_id, $note_id = null)
+    {
+        if (!is_staff_member()) {
+            ajax_access_denied();
+        }
+
+        if ($this->input->post()) {
+            $data = $this->input->post();
+
+            // Handle the note description
+            $data['description'] = isset($data['appointment_note_description']) ? $data['appointment_note_description'] : $data['description'];
+            $data['description'] = replace_name_shortcodes($rel_id, $data['description']);
+
+            if (isset($data['appointment_note_description'])) {
+                unset($data['appointment_note_description']);
+            }
+
+            // Remove unnecessary fields that might cause issues
+            unset($data['contacted_indicator']);
+            unset($data['custom_contact_date']);
+            unset($data['date_contacted']);
+
+            if ($note_id) {
+                // Update existing note
+                $note = $this->db->get_where(db_prefix() . 'notes', ['id' => $note_id])->row();
+                if (!$note || ($note->addedfrom != get_staff_user_id() && !is_admin())) {
+                    echo json_encode(['success' => false, 'message' => 'You do not have permission to edit this note']);
+                    return;
+                }
+
+                $update_data = [
+                    'description' => nl2br($data['description'])
+                ];
+
+                $success = $this->misc_model->edit_note($update_data, $note_id);
+                
+                if ($success) {
+                    echo json_encode(['success' => true, 'message' => 'Note updated successfully']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Failed to update note']);
+                }
+            } else {
+                // Create new note
+                $note_id = $this->misc_model->add_note($data, 'appointment', $rel_id);
+                
+                if ($note_id) {
+                    echo json_encode(['success' => true, 'message' => 'Note added successfully']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Failed to add note']);
+                }
+            }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'No data received']);
+        }
+    }
+
+    /**
+     * Create initial note with appointment timestamp
+     * This is called when an appointment is created
+     */
+    public function create_initial_note($appointment_id)
+    {
+        // Check if notes already exist for this appointment
+        $existing_notes = $this->misc_model->get_notes($appointment_id, 'appointment');
+        if (!empty($existing_notes)) {
+            return false; // Notes already exist
+        }
+
+        // Get appointment data
+        $appointment = $this->appointments_model->get_appointment($appointment_id);
+        if (!$appointment) {
+            return false;
+        }
+
+        // Create initial note with appointment timestamp
+        $note_data = [
+            'description' => 'Appointment created on ' . _d($appointment->date) . ' at ' . date('H:i A', strtotime($appointment->start_hour)),
+            'dateadded' => $appointment->date . ' ' . $appointment->start_hour,
+            'addedfrom' => get_staff_user_id()
+        ];
+
+        $note_id = $this->misc_model->add_note($note_data, 'appointment', $appointment_id);
+        return $note_id;
+    }
+
+    /**
+     * Get notes for appointment
+     */
+    public function get_notes($appointment_id)
+    {
+        if (!is_staff_member()) {
+            ajax_access_denied();
+        }
+
+        $notes = $this->misc_model->get_notes($appointment_id, 'appointment');
+        
+        if ($notes) {
+            echo json_encode(['success' => true, 'data' => $notes]);
+        } else {
+            echo json_encode(['success' => true, 'data' => []]);
+        }
+    }
+
+    /**
+     * Delete note
+     */
+    public function delete_note($note_id)
+    {
+        if (!is_staff_member()) {
+            ajax_access_denied();
+        }
+
+        $success = $this->misc_model->delete_note($note_id);
+        
+        if ($success) {
+            echo json_encode(['success' => true, 'message' => 'Note deleted successfully']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to delete note or you do not have permission']);
+        }
+    }
 
 }
