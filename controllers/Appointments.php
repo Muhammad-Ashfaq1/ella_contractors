@@ -10,6 +10,7 @@ class Appointments extends AdminController
         $this->load->model('staff_model');
         $this->load->model('clients_model');
         $this->load->model('leads_model');
+        $this->load->model('misc_model');
     }
     
     /**
@@ -148,6 +149,7 @@ class Appointments extends AdminController
         $this->form_validation->set_rules('start_time', 'Start Time', 'required');
         $this->form_validation->set_rules('end_date', 'End Date', 'required');
         $this->form_validation->set_rules('end_time', 'End Time', 'required');
+
 
         if ($this->form_validation->run() == FALSE) {
             set_alert('warning', validation_errors());
@@ -327,19 +329,128 @@ class Appointments extends AdminController
     /**
      * Save appointment via AJAX (for modal)
      */
+    // public function save_ajax()
+    // {
+    //     if (!has_permission('ella_contractors', '', 'create') && !has_permission('ella_contractors', '', 'edit')) {
+    //         ajax_access_denied();
+    //     }
+
+    //     $this->load->library('form_validation');
+    //     $this->form_validation->set_rules('subject', 'Subject', 'required');
+    //     $this->form_validation->set_rules('start_date', 'Start Date', 'required');
+    //     $this->form_validation->set_rules('start_time', 'Start Time', 'required');
+    //     $this->form_validation->set_rules('end_date', 'End Date', 'required');
+    //     $this->form_validation->set_rules('end_time', 'End Time', 'required');
+
+    //     if ($this->form_validation->run() == FALSE) {
+    //         echo json_encode([
+    //             'success' => false,
+    //             'message' => validation_errors()
+    //         ]);
+    //         return;
+    //     }
+
+    //         $status_value = $this->input->post('status');
+            
+    //         // Ensure appointment_status column exists
+    //         $this->ensure_appointment_status_column();
+            
+    //         // Ensure send_reminder column exists
+    //         $this->ensure_send_reminder_column();
+            
+    //         // Process contact_id - handle client_/lead_ prefixes
+    //         $contact_id = $this->input->post('contact_id');
+    //         if ($contact_id) {
+    //             if (strpos($contact_id, 'client_') === 0) {
+    //                 $contact_id = str_replace('client_', '', $contact_id);
+    //             } elseif (strpos($contact_id, 'lead_') === 0) {
+    //                 $contact_id = str_replace('lead_', '', $contact_id);
+    //             }
+    //         }
+            
+    //         $data = [
+    //             'subject' => $this->input->post('subject'),
+    //             'date' => $this->input->post('start_date'),
+    //             'start_hour' => $this->input->post('start_time'),
+    //             'end_date' => $this->input->post('end_date'),
+    //             'end_time' => $this->input->post('end_time'),
+    //             'contact_id' => $contact_id ?: null,
+    //             'name' => $this->input->post('name'),
+    //             'email' => $this->input->post('email'),
+    //             'phone' => $this->input->post('phone'),
+    //             'address' => $this->input->post('address'),
+    //             'notes' => $this->input->post('notes'),
+    //             'type_id' => $this->input->post('type_id') ?: 0,
+    //             'appointment_status' => $status_value ?: 'scheduled',
+    //             'source' => 'ella_contractor',
+    //             'send_reminder' => $this->input->post('send_reminder') ? 1 : 0
+    //         ];
+            
+
+    //     $appointment_id = $this->input->post('appointment_id');
+        
+    //     try {
+    //         if ($appointment_id) {
+    //             // Update existing appointment
+    //             if ($this->appointments_model->update_appointment($appointment_id, $data)) {
+    //                 // Handle attendees
+    //                 $this->handle_attendees($appointment_id);
+
+
+
+
+    //                 echo json_encode([
+    //                     'success' => true,
+    //                     'message' => 'Appointment updated successfully'
+    //                 ]);
+    //             } else {
+    //                 echo json_encode([
+    //                     'success' => false,
+    //                     'message' => 'Failed to update appointment. Database error: ' . $this->db->last_query()
+    //                 ]);
+    //             }
+    //         } else {
+    //             // Create new appointment
+    //             $appointment_id = $this->appointments_model->create_appointment($data);
+    //             if ($appointment_id) {
+    //                 // Handle attendees
+    //                 $this->handle_attendees($appointment_id);
+
+    //                 if(!empty($this->input->post('notes')))
+    //                 {
+    //                     $this->misc_model->add_note($this->input->post('notes'), 'appointment', $appointment_id);
+    //                 }
+    //                 echo json_encode([
+    //                     'success' => true,
+    //                     'message' => 'Appointment created successfully'
+    //                 ]);
+    //             } else {
+    //                 echo json_encode([
+    //                     'success' => false,
+    //                     'message' => 'Failed to create appointment. Database error: ' . $this->db->last_query()
+    //                 ]);
+    //             }
+    //         }
+    //     } catch (Exception $e) {
+    //         echo json_encode([
+    //             'success' => false,
+    //             'message' => 'Error: ' . $e->getMessage()
+    //         ]);
+    //     }
+    // }
+
+
     public function save_ajax()
     {
         if (!has_permission('ella_contractors', '', 'create') && !has_permission('ella_contractors', '', 'edit')) {
             ajax_access_denied();
         }
-
         $this->load->library('form_validation');
         $this->form_validation->set_rules('subject', 'Subject', 'required');
         $this->form_validation->set_rules('start_date', 'Start Date', 'required');
         $this->form_validation->set_rules('start_time', 'Start Time', 'required');
         $this->form_validation->set_rules('end_date', 'End Date', 'required');
         $this->form_validation->set_rules('end_time', 'End Time', 'required');
-
         if ($this->form_validation->run() == FALSE) {
             echo json_encode([
                 'success' => false,
@@ -347,44 +458,42 @@ class Appointments extends AdminController
             ]);
             return;
         }
-
-            $status_value = $this->input->post('status');
-            
-            // Ensure appointment_status column exists
-            $this->ensure_appointment_status_column();
-            
-            // Ensure send_reminder column exists
-            $this->ensure_send_reminder_column();
-            
-            // Process contact_id - handle client_/lead_ prefixes
-            $contact_id = $this->input->post('contact_id');
-            if ($contact_id) {
-                if (strpos($contact_id, 'client_') === 0) {
-                    $contact_id = str_replace('client_', '', $contact_id);
-                } elseif (strpos($contact_id, 'lead_') === 0) {
-                    $contact_id = str_replace('lead_', '', $contact_id);
-                }
+        $status_value = $this->input->post('status');
+        
+        // Ensure appointment_status column exists
+        $this->ensure_appointment_status_column();
+        
+        // Ensure send_reminder column exists
+        $this->ensure_send_reminder_column();
+        
+        // Process contact_id - handle client_/lead_ prefixes
+        $contact_id = $this->input->post('contact_id');
+        if ($contact_id) {
+            if (strpos($contact_id, 'client_') === 0) {
+                $contact_id = str_replace('client_', '', $contact_id);
+            } elseif (strpos($contact_id, 'lead_') === 0) {
+                $contact_id = str_replace('lead_', '', $contact_id);
             }
-            
-            $data = [
-                'subject' => $this->input->post('subject'),
-                'date' => $this->input->post('start_date'),
-                'start_hour' => $this->input->post('start_time'),
-                'end_date' => $this->input->post('end_date'),
-                'end_time' => $this->input->post('end_time'),
-                'contact_id' => $contact_id ?: null,
-                'name' => $this->input->post('name'),
-                'email' => $this->input->post('email'),
-                'phone' => $this->input->post('phone'),
-                'address' => $this->input->post('address'),
-                'notes' => $this->input->post('notes'),
-                'type_id' => $this->input->post('type_id') ?: 0,
-                'appointment_status' => $status_value ?: 'scheduled',
-                'source' => 'ella_contractor',
-                'send_reminder' => $this->input->post('send_reminder') ? 1 : 0
-            ];
-            
-
+        }
+        
+        $data = [
+            'subject' => $this->input->post('subject'),
+            'date' => $this->input->post('start_date'),
+            'start_hour' => $this->input->post('start_time'),
+            'end_date' => $this->input->post('end_date'),
+            'end_time' => $this->input->post('end_time'),
+            'contact_id' => $contact_id ?: null,
+            'name' => $this->input->post('name'),
+            'email' => $this->input->post('email'),
+            'phone' => $this->input->post('phone'),
+            'address' => $this->input->post('address'),
+            'notes' => $this->input->post('notes'),
+            'type_id' => $this->input->post('type_id') ?: 0,
+            'appointment_status' => $status_value ?: 'scheduled',
+            'source' => 'ella_contractor',
+            'send_reminder' => $this->input->post('send_reminder') ? 1 : 0
+        ];
+        
         $appointment_id = $this->input->post('appointment_id');
         
         try {
@@ -393,6 +502,15 @@ class Appointments extends AdminController
                 if ($this->appointments_model->update_appointment($appointment_id, $data)) {
                     // Handle attendees
                     $this->handle_attendees($appointment_id);
+                    // Handle notes for update
+                    if (!empty($this->input->post('notes'))) {
+                        $note_data = [
+                            'description' => $this->input->post('notes'),
+                            'rel_type' => 'appointment',
+                            'rel_id' => $appointment_id
+                        ];
+                        $this->misc_model->add_note($note_data, 'appointment', $appointment_id);
+                    }
                     echo json_encode([
                         'success' => true,
                         'message' => 'Appointment updated successfully'
@@ -409,6 +527,15 @@ class Appointments extends AdminController
                 if ($appointment_id) {
                     // Handle attendees
                     $this->handle_attendees($appointment_id);
+                    // Handle notes for creation
+                    if (!empty($this->input->post('notes'))) {
+                        $note_data = [
+                            'description' => $this->input->post('notes'),
+                            'rel_type' => 'appointment',
+                            'rel_id' => $appointment_id
+                        ];
+                        $this->misc_model->add_note($note_data, 'appointment', $appointment_id);
+                    }
                     echo json_encode([
                         'success' => true,
                         'message' => 'Appointment created successfully'
@@ -1102,4 +1229,16 @@ class Appointments extends AdminController
         
         return $message;
     }
+
+    // private  function add_note($notes, $rel_id, $rel_type)
+    // {
+    //     if ($note) {
+    //         $success = $this->misc_model->add_note($note, $rel_type, $rel_id);
+    //         if ($success) {
+    //             set_alert('success', _l('added_successfully', _l('note')));
+    //         }
+    //     }
+    //     redirect($_SERVER['HTTP_REFERER']);
+    // }
+
 }
