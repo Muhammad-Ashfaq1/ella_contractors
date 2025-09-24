@@ -1,0 +1,168 @@
+/* Ella Contractors Module Styles */
+
+/* Custom icon styling for sidebar menu */
+.menu-icon[src*="ella-con.png"] {
+    width: 16px !important;
+    height: 16px !important;
+    object-fit: contain;
+    vertical-align: middle;
+    margin-right: 8px;
+    /* Make icon darker to match other sidebar icons */
+    filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
+    opacity: 0.8;
+}
+
+/* Darker icon on hover */
+.menu-item-ella_contractors:hover .menu-icon[src*="ella-con.png"] {
+    filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
+    opacity: 1;
+}
+
+/* Active state styling */
+.menu-item-ella_contractors.active .menu-icon[src*="ella-con.png"],
+.menu-item-ella_contractors.current .menu-icon[src*="ella-con.png"] {
+    filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
+    opacity: 1;
+}
+
+/* Ensure proper alignment with menu text */
+.menu-item-ella_contractors .menu-icon {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Module-specific styles */
+.ella-contractors-module {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Custom button styles for module actions */
+.ella-btn-primary {
+    background-color: #3498db;
+    border-color: #3498db;
+    color: white;
+}
+
+.ella-btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+.ella-btn-success {
+    background-color: #27ae60;
+    border-color: #27ae60;
+    color: white;
+}
+
+.ella-btn-success:hover {
+    background-color: #229954;
+    border-color: #229954;
+}
+
+/* Module header styling */
+.ella-module-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.ella-module-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 300;
+}
+
+/* Card styling for module content */
+.ella-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+/* Status badges */
+.ella-status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.ella-status-active {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.ella-status-inactive {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.ella-status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+/* Table styling */
+.ella-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ella-table th,
+.ella-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.ella-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Form styling */
+.ella-form-group {
+    margin-bottom: 20px;
+}
+
+.ella-form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #495057;
+}
+
+.ella-form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.ella-form-control:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .ella-module-header h1 {
+        font-size: 20px;
+    }
+    
+    .ella-card {
+        padding: 15px;
+    }
+    
+    .ella-table {
+        font-size: 14px;
+    }
+}

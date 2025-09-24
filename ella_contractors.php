@@ -15,6 +15,9 @@ define('ELLA_CONTRACTORS_MODULE_NAME', 'ella_contractors');
 // Register module menu
 hooks()->add_action('admin_init', 'ella_contractors_init_menu');
 
+// Register module assets
+hooks()->add_action('admin_init', 'ella_contractors_init_assets');
+
 // Register activation and deactivation hooks
 register_activation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_activate_module');
 register_deactivation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_deactivate_module');
@@ -28,9 +31,12 @@ function ella_contractors_init_menu() {
         $CI->app_menu->add_sidebar_menu_item('ella_contractors', [
             'slug' => 'ella_contractors',
             'name' => 'EllaContractor',
-            'icon' => 'fa fa-users',
+            'icon' => 'modules/ella_contractors/assets/images/ella-con.png',
             'position' => 30,
             'collapse' => true,
+            'li_attributes' => [
+                'data-menu-patterns' => 'ella_contractors/appointments,ella_contractors/appointments/view,ella_contractors/appointments/edit,ella_contractors/appointments/create,ella_contractors/presentations,ella_contractors/line_items'
+            ]
         ]);
 
         // Submenu items with icons
@@ -42,7 +48,7 @@ function ella_contractors_init_menu() {
                 'icon' => 'fa fa-calendar-check-o',
                 'position' => 10,
                 'li_attributes' => [
-                    'data-menu-patterns' => 'ella_contractors/appointments'
+                    'data-menu-patterns' => 'ella_contractors/appointments,ella_contractors/appointments/view,ella_contractors/appointments/edit,ella_contractors/appointments/create'
                 ]
             ],
             // [
@@ -79,6 +85,16 @@ function ella_contractors_init_menu() {
             $CI->app_menu->add_sidebar_children_item('ella_contractors', $item);
         }
     }
+}
+
+/**
+ * Initialize module assets
+ */
+function ella_contractors_init_assets() {
+    $CI = &get_instance();
+    
+    // Add CSS file
+    $CI->app_css->add('modules/ella_contractors/assets/css/ella-contractors.css', 'module');
 }
 
 function ella_contractors_activate_module() {
