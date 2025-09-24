@@ -282,7 +282,7 @@
                             <div role="tabpanel" class="tab-pane active" id="measurements-tab">
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <div class="pull-right">
+                                        <div class="pull-right mbot15">
                                             <button type="button" class="btn btn-info btn-sm" onclick="openMeasurementModal()">
                                                 <i class="fa fa-plus"></i> Add Measurement
                                             </button>
@@ -305,7 +305,7 @@
                             <div role="tabpanel" class="tab-pane" id="estimates-tab">
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <div class="pull-right">
+                                        <div class="pull-right mbot15">
                                             <button type="button" class="btn btn-info btn-sm" onclick="openEstimateModal()">
                                                 <i class="fa fa-plus"></i> New Estimate
                                             </button>
@@ -328,31 +328,36 @@
                             <div role="tabpanel" class="tab-pane" id="notes-tab">
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <!-- Quick Add Note Button -->
+                                        <!-- Add Note Button -->
                                         <div class="pull-right mbot15">
-                                            <button type="button" class="btn btn-info btn-sm" onclick="toggleQuickNoteForm()" id="quick-note-btn">
-                                                <i class="fa fa-plus"></i> Quick Add Note
+                                            <button type="button" class="btn btn-info btn-sm" onclick="toggleNoteForm()" id="note-btn">
+                                                <i class="fa fa-plus"></i> Add Note
                                             </button>
                                         </div>
                                         <div class="clearfix"></div>
                                         
-                                        <!-- Quick Add Note Form (Initially Hidden) -->
-                                        <div id="quick-note-form" class="hide mbot15">
+                                        <!-- Add Note Form (Initially Hidden) -->
+                                        <div id="note-form" class="hide mbot15">
                                             <?php echo form_open(admin_url('ella_contractors/appointments/add_note/' . $appointment['id']), array('id' => 'appointment-notes')); ?>
                                             <div class="form-group" id="appointmentnote">
                                                 <div class="lead emoji-picker-container leadnotes">
-                                                    <textarea id="appointment_note_description" name="appointment_note_description" class="form-control" rows="3" data-emojiable="true" placeholder="Add a quick note about this appointment..."></textarea>
+                                                    <textarea id="appointment_note_description" name="appointment_note_description" class="form-control" rows="3" data-emojiable="true" placeholder="Add a note about this appointment..."></textarea>
                                                 </div>
                                             </div>
                                             <?php echo get_typos_by_category('notes'); ?>
                                             <div class="text-right">
-                                                <button type="button" class="btn btn-default btn-sm" onclick="toggleQuickNoteForm()">Cancel</button>
+                                                <button type="button" class="btn btn-default btn-sm" onclick="toggleNoteForm()">Cancel</button>
                                                 <button type="submit" class="btn btn-info btn-sm">Add Note</button>
                                             </div>
                                             <?php echo form_close(); ?>
                                         </div>
                                         
                                         <hr class="hr-panel-heading" />
+                                        
+                                        <!-- Hidden tags template for editing -->
+                                        <div id="tags-template" class="hide">
+                                            <?php echo get_typos_by_category('notes'); ?>
+                                        </div>
                                         
                                         <!-- Notes Display -->
                                         <div class="panel_s no-shadow">
@@ -521,7 +526,7 @@ $(document).ready(function() {
                 // Clear the textarea and hide form
                 $("#appointment_note_description").val('');
                 $(".emoji-wysiwyg-editor").text('');
-                toggleQuickNoteForm(); // Hide the form
+                toggleNoteForm(); // Hide the form
                 // Reload notes
                 loadNotes();
                 alert_float('success', 'Note added successfully!');
@@ -758,7 +763,7 @@ function displayNotes(notes) {
     notes.forEach(function(note) {
         var timeAgo = moment(note.dateadded).fromNow();
         var staffName = note.firstname + ' ' + note.lastname;
-        var staffProfileImage = note.profile_image ? note.profile_image : 'assets/images/user-placeholder.jpg';
+        var staffProfileImage = note.profile_image && note.profile_image !== '' ? note.profile_image : admin_url + 'assets/images/user-placeholder.jpg';
         
         html += '<div class="feed-item">';
         html += '<div class="date">';
@@ -785,10 +790,10 @@ function displayNotes(notes) {
     $('#appointment-notes-container').html(html);
 }
 
-// Toggle quick note form
-function toggleQuickNoteForm() {
-    $('#quick-note-form').toggleClass('hide');
-    if (!$('#quick-note-form').hasClass('hide')) {
+// Toggle note form
+function toggleNoteForm() {
+    $('#note-form').toggleClass('hide');
+    if (!$('#note-form').hasClass('hide')) {
         $('#appointment_note_description').focus();
     }
 }
@@ -801,11 +806,20 @@ function editNote(noteId) {
     // Extract just the text content (remove HTML tags)
     var textContent = noteText.replace(/<[^>]*>/g, '').replace(/^[^-]+-\s*/, '');
     
-    // Create edit form
+    // Create edit form with tags section
     var editForm = '<div class="feed-item" data-note-edit="' + noteId + '">';
     editForm += '<div class="form-group">';
-    editForm += '<textarea class="form-control" rows="3" id="edit-note-' + noteId + '">' + textContent + '</textarea>';
+    editForm += '<div class="lead emoji-picker-container leadnotes">';
+    editForm += '<textarea class="form-control" rows="3" id="edit-note-' + noteId + '" data-emojiable="true">' + textContent + '</textarea>';
     editForm += '</div>';
+    editForm += '</div>';
+    
+    // Add tags section (clone from the template)
+    var tagsHtml = $('#tags-template').html();
+    if (tagsHtml) {
+        editForm += '<div class="form-group">' + tagsHtml + '</div>';
+    }
+    
     editForm += '<div class="text-right">';
     editForm += '<button class="btn btn-default btn-xs" onclick="cancelEditNote(' + noteId + ')" title="Cancel">Cancel</button> ';
     editForm += '<button class="btn btn-info btn-xs" onclick="updateNote(' + noteId + ')" title="Update">Update</button>';
