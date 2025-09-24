@@ -105,7 +105,7 @@
                                         <a href="javascript:void(0)" onclick="sendSMSClient(<?php echo $appointment['id']; ?>)" class="btn btn-success btn-sm connected-btn-left" title="<?php echo _l('sms_client'); ?>">
                                             <i class="fa fa-mobile"></i> <?php echo _l('sms_client'); ?>
                                         </a>
-                                        <a href="mailto:<?php echo $appointment['email']; ?>" class="btn btn-primary btn-sm connected-btn-middle" title="<?php echo _l('email_client'); ?>">
+                                        <a href="mailto:<?php echo $appointment['email']; ?>" class="btn btn-primary btn-sm connected-btn-middle" title="<?php echo _l('email_client'); ?>" target="_blank">
                                             <i class="fa fa-envelope"></i> <?php echo _l('email_client'); ?>
                                         </a>
                                         <a href="javascript:void(0)" onclick="sendReminderClient(<?php echo $appointment['id']; ?>)" class="btn btn-warning btn-sm connected-btn-right" title="<?php echo _l('send_reminder'); ?>">
@@ -761,7 +761,7 @@ function displayNotes(notes) {
     var i = 0;
     
     notes.forEach(function(note) {
-        var timeAgo = moment(note.dateadded).fromNow();
+        var timeAgo = note.time_ago || moment(note.dateadded).fromNow();
         var staffName = note.firstname + ' ' + note.lastname;
         var staffProfileImage = note.profile_image && note.profile_image !== '' ? note.profile_image : admin_url + 'assets/images/user-placeholder.jpg';
         
@@ -788,7 +788,36 @@ function displayNotes(notes) {
     });
     
     $('#appointment-notes-container').html(html);
+    
+    // Set up time refresh every minute
+    if (typeof window.notesTimeRefresh !== 'undefined') {
+        clearInterval(window.notesTimeRefresh);
+    }
+    
+    window.notesTimeRefresh = setInterval(function() {
+        refreshNotesTime();
+    }, 60000); // Refresh every minute
 }
+
+// Function to refresh time display for notes
+function refreshNotesTime() {
+    $('.feed-item .date .text-has-action').each(function() {
+        var $this = $(this);
+        var originalDate = $this.data('title');
+        if (originalDate) {
+            // Use moment.js to calculate fresh time
+            var timeAgo = moment(originalDate).fromNow();
+            $this.text(timeAgo);
+        }
+    });
+}
+
+// Cleanup function to clear interval when page is unloaded
+$(window).on('beforeunload', function() {
+    if (typeof window.notesTimeRefresh !== 'undefined') {
+        clearInterval(window.notesTimeRefresh);
+    }
+});
 
 // Toggle note form
 function toggleNoteForm() {

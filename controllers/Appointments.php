@@ -1332,6 +1332,10 @@ class Appointments extends AdminController
         $notes = $this->misc_model->get_notes($appointment_id, 'appointment');
         
         if ($notes) {
+            // Add time_ago for each note
+            foreach ($notes as &$note) {
+                $note['time_ago'] = time_ago($note['dateadded']);
+            }
             echo json_encode(['success' => true, 'data' => $notes]);
         } else {
             echo json_encode(['success' => true, 'data' => []]);
