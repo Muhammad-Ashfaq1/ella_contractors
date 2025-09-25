@@ -45,7 +45,7 @@
                                         <th width="50px"></th>
                                         <th><?php echo _l('id'); ?></th>
                                         <th>Lead</th>
-                                        <th><?php echo _l('appointment_subject'); ?></th>
+                                        <th style="min-width: 250px;"><?php echo _l('appointment_subject'); ?></th>
                                         <th>Scheduled Date</th>
                                         <th><?php echo _l('appointment_status'); ?></th>
                                         <th width="100px">Measurements</th>

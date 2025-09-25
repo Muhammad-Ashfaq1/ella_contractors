@@ -181,7 +181,7 @@ try {
         }
         $row[] = $lead_link;
         
-        $subject = '<a href="' . admin_url('ella_contractors/appointments/view/' . $aRow['id']) . '">' . htmlspecialchars($aRow['subject']) . '</a>';
+        $subject = '<a href="' . admin_url('ella_contractors/appointments/view/' . $aRow['id']) . '" class="appointment-subject-link" title="' . htmlspecialchars($aRow['subject']) . '">' . htmlspecialchars($aRow['subject']) . '</a>';
         $row[] = $subject;
         
         // Format date as "July 5th, 2025" with time underneath

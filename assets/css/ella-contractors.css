@@ -152,6 +152,28 @@
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
+/* Appointment Subject Styling */
+.appointment-subject {
+    font-size: 24px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
+}
+
+/* Table view appointment subject styling */
+.appointment-subject-link {
+    font-size: 15px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+    display: inline-block;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .ella-module-header h1 {
@@ -164,5 +186,13 @@
     
     .ella-table {
         font-size: 14px;
+    }
+    
+    .appointment-subject {
+        font-size: 20px;
+    }
+    
+    .appointment-subject-link {
+        max-width: 150px;
     }
 }

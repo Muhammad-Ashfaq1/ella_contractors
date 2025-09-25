@@ -78,7 +78,7 @@
                         
                         <div class="row">
                             <div class="col-md-8">
-                                <h4 class="no-margin"><?php echo $appointment['subject']; ?></h4>
+                                <h3 class="no-margin appointment-subject" title="<?php echo htmlspecialchars($appointment['subject']); ?>"><?php echo $appointment['subject']; ?></h3>
                                 <p class="text-muted"><?php echo _l('appointment_details'); ?></p>
                             </div>
                             <div class="col-md-4 text-right">
