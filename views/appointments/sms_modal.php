@@ -21,8 +21,25 @@
                     <div class="lead emoji-picker-container lead_sms_description">
                         <?php echo render_textarea('sms_body_textarea','','',array('placeholder'=>_l('message_body'), 'data-emojiable'=>'true'),array(),'mtop15'); ?>
                     </div>
-                    <?php echo get_typos_by_category('sms'); ?>
                     
+                    <!-- SMS Templates -->
+                    <div class="typos">
+                        <ul>
+                            <li><a href="javascript:void(0)" data-quick-typo-text="Hello, this is a check-in message.">CHECK-IN</a></li>
+                            <li><a href="javascript:void(0)" data-quick-typo-text="I have sent you an email with the information we discussed.">EMAIL SENT</a></li>
+                            <li><a href="javascript:void(0)" data-quick-typo-text="I have sent your proposal to your email on file.">PROPOSAL SENT</a></li>
+                            <li><a href="javascript:void(0)" data-quick-typo-text="Thank you for your message. I have received it.">RECEIVED</a></li>
+                            <li><a href="javascript:void(0)" data-quick-typo-text="{first_name}">FIRST NAME</a></li>
+                            <li><a href="javascript:void(0)" data-quick-typo-text="{last_name}">LAST NAME</a></li>
+                            <li><a href="javascript:void(0)" data-quick-typo-text="{full_name}">FULL NAME</a></li>
+                            <li><a href="javascript:void(0)" data-quick-typo-text="{agent_first_name}">AGENT FIRST NAME</a></li>
+                            <li><a href="javascript:void(0)" data-quick-typo-text="{agent_phone_number}">AGENT PHONE NUMBER</a></li>
+                            <li><a href="javascript:void(0)" data-quick-typo-text="{agent_email}">AGENT EMAIL</a></li>
+                            <li><a href="javascript:void(0)" data-quick-typo-text="Contact Card">CONTACT CARD</a></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- File Upload Form -->
                     <?php echo form_open_multipart('upload_image/upload',array('class'=>'staff-form','id'=>'imageUploadForm','autocomplete'=>'off')); ?>
                     <label style="float: left; width: 100%;" for="media_image" class="profile-image" id="ImageBrowse">Attach Image (.png, .jpg, .jpeg, .gif)</label>
                     <div class="drop-zone">
@@ -33,15 +50,23 @@
                     </div>
                     <?php echo form_close(); ?>
                     
+                    <!-- Action Buttons -->
                     <div class="text-right" style="float: right;">
                         <div class="savebtntemplate" id="smsVCalanderopenModalButton" style="display: inline-block; width: 240px;">
                             <button class="btn btn-primary" style="background: #9E9E9E; font-size: 15px !important;">Attach vCalendar</button>
                         </div>
-                        <button id="lead_send_sms" class="btn btn-info">
+                        <button id="appointment_send_sms" class="btn btn-info">
                             <?php echo _l('send_sms'); ?>
                             <div id="spinner" class="loader" style="display: none;"></div>
                         </button>
                     </div>
+                    
+                    <!-- Hidden vCalendar fields -->
+                    <input type="hidden" id="vc_fromdate" name="vc_fromdate" value="">
+                    <input type="hidden" id="vc_todate" name="vc_todate" value="">
+                    <input type="hidden" id="vc_summary" name="vc_summary" value="">
+                    <input type="hidden" id="vc_description" name="vc_description" value="">
+                    <input type="hidden" id="vc_location" name="vc_location" value="">
                 </div>
                 <div class="clearfix"></div>
                 <br />

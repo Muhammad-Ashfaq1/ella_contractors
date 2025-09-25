@@ -54,6 +54,179 @@
     margin-bottom: 15px;
     clear: both;
 }
+
+/* Dropzone styles - exactly like leads */
+.drop-zone {
+  max-width: 100%;
+  min-height: 150px;
+  height: auto;
+  padding: 25px;
+  display: inline-flex;
+  width: 98%;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: "Quicksand", sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  cursor: pointer;
+  color: #cccccc;
+  border: 4px dashed #009578;
+  border-radius: 10px;
+  margin-top: 10px;
+  margin-left: 0px;
+  float: left;
+  position: relative;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.drop-zone--over {
+  border-style: solid;
+}
+
+.drop-zone__input {
+  display: none;
+}
+
+.drop-zone__thumb {
+ width: 150px;
+  height: 150px;
+  margin: 5px;
+  background-color: #fff;
+  background-size: cover;
+  position: relative;
+  border-radius: 5px;
+   border: 1px solid #ccc;
+}
+
+.drop-zone__thumb img {
+  max-width: 100%;
+  max-height: 100px;
+  display: block;
+  height: 150px;
+  width: 150px;
+}
+
+button.delete-btn {
+    position: absolute;
+    right: 0;
+    background: red;
+    color: #fff;
+    border: none;
+}
+
+.drop-zone__input{
+    display: none !important;
+}
+
+.removeimage{
+    position: absolute;
+    top: 8px;
+    right: -10px;
+    background: red;
+    color: #fff;
+    border-radius: 100%;
+    width: 30px;
+    height: 30px;
+    z-index: 99999999;
+    text-align: center;
+}
+
+.addmorebtn{
+  background-color: #3ac529;
+    color: #fff;
+    padding: 2px 10px;
+    float: right;
+    border-radius: 7px;
+    width: 100px;
+    text-align: center;
+}
+
+.lead_send_sms{
+    width: 190px;
+}
+
+.upload-message{
+    color: red;
+}
+
+.loader {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 2s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.lead-email-activity .media-body{
+  margin-top: 20px;
+    position: relative;
+}
+
+.lead-email-activity .email_head_area{
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.lead-email-activity .email_body_area{
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.lead-email-activity .email_footer_area{
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.typos {
+    margin: 10px 0;
+}
+
+.typos ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.typos ul li {
+    margin: 0;
+}
+
+.typos ul li a {
+    display: inline-block;
+    padding: 5px 10px;
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 3px;
+    font-size: 12px;
+    transition: background-color 0.3s;
+}
+
+.typos ul li a:hover {
+    background: #0056b3;
+    color: white;
+    text-decoration: none;
+}
 </style>
 
 <div id="wrapper">
@@ -2292,3 +2465,6 @@ $(document).ready(function() {
 </script>
 
 <?php $this->load->view('appointments/sms_js.php'); ?>
+
+<!-- Load module CSS for SMS modal styling -->
+<link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/ella-contractors.css'); ?>">

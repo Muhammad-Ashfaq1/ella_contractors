@@ -83,3 +83,4 @@ $route[$module_name . '/appointments/get_types'] = 'Appointments/get_types';
 $route[$module_name . '/appointments/save_ajax'] = 'Appointments/save_ajax';
 $route[$module_name . '/appointments/send_sms'] = 'Appointments/send_sms';
 $route[$module_name . '/appointments/get_sms_logs'] = 'Appointments/get_sms_logs';
+$route[$module_name . '/appointments/upload_sms_media'] = 'Appointments/upload_sms_media';

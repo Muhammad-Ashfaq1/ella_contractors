@@ -1075,6 +1075,37 @@ class Appointments extends AdminController
             $media_url = $_POST['media_url'];
             $ics_url = '';
             
+            // Handle vCalendar attachment if provided
+            if (!empty($_POST['vc_fromdate']) && !empty($_POST['vc_todate'])) {
+                $lead = $this->leads_model->get($lead_id);
+                $agent_name = get_staff_full_name($lead->assigned);
+                $vc_fromdate = $_POST['vc_fromdate'];
+                $vc_todate = $_POST['vc_todate'];
+                
+                $vc_summary = $_POST['vc_summary'];
+                $vc_description = $_POST['vc_description'];
+                $vc_location = $_POST['vc_location'];
+                
+                if(empty($vc_summary)){
+                    $summary = "Your Call with ".$agent_name." from Ella's Bubbles";
+                }else{
+                    $summary = $vc_summary;
+                }
+                
+                if(empty($vc_description)){
+                    $description = "Ella's Bubbles Walk In Tubs is the Nation's Leader in Luxurious & Affordable Walk In Tubs since 2025.";
+                }else{
+                    $description = $vc_description;
+                }
+                
+                if(empty($vc_location)){
+                    $location = "Phone Call/Video Call";
+                }else{
+                    $location = $vc_location;
+                }
+                $ics_url = vcalendar_file_url($vc_fromdate,$vc_todate,$summary,$description,$location);
+            }
+            
             // Load leads model
             $this->load->model('leads_model');
             
@@ -1085,8 +1116,13 @@ class Appointments extends AdminController
             // Call the method to send SMS
             $response = $this->leads_model->send_sms($lead_id, $staff_id, $number, $sms_body, $media_url, $tcpa, $dnc_validation, $ics_url);
             
-            // Log activity
-            log_staff_status_activity('Added SMS Activity from Appointment Lead# [' . $lead_id . ']');
+            // Update lead last contact and log activity
+            if ($response['success']) {
+                update_lead_last_contact($lead_id, get_staff_user_id(), "SMS");
+                log_staff_status_activity('Added SMS Activity from Appointment Lead# [' . $lead_id . ']');
+                // Mark all SMS as read
+                $this->leads_model->updated_sms_log_status($lead_id, 'lead_id', '0');
+            }
         } else {
             $response['message'] = 'Something went wrong!';
             $response['success'] = false;
@@ -1111,18 +1147,145 @@ class Appointments extends AdminController
         // Load leads model
         $this->load->model('leads_model');
         
-        $sms_logs = array();
+        // Get SMS logs using the same method as leads
+        $sms_logs = $this->leads_model->get_lead_sms_logs($lead_id, 'lead_id');
         
-        if ($lead_id) {
-            $sms_logs = $this->leads_model->get_lead_sms_logs($lead_id, 'lead_id');
-        } elseif ($contact_number) {
-            $sms_logs = $this->leads_model->get_lead_sms_logs($contact_number, 'contact_number');
+        if ($sms_logs) {
+            // Add time_ago for each log
+            foreach ($sms_logs as &$log) {
+                $log['time_ago'] = time_ago($log['date_created']);
+            }
+            echo json_encode(['success' => true, 'data' => $sms_logs]);
+        } else {
+            echo json_encode(['success' => true, 'data' => []]);
+        }
+    }
+    
+    /**
+     * Get SMS template - matching leads functionality
+     */
+    public function get_template()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
         }
         
-        echo json_encode([
-            'success' => true,
-            'data' => $sms_logs
-        ]);
+        $response = array();
+        $template_id = $this->input->post('template_id');
+        
+        $templates = $this->db->select('*')
+            ->from(db_prefix() . 'custom_templates')
+            ->where('type', 'sms')
+            ->where('id', $template_id)
+            ->get()
+            ->result();
+            
+        if (!empty($templates)) {
+            $msg_body = $templates[0]->template_content;
+            $response['message'] = $msg_body;
+            $response['success'] = true;
+        } else {
+            $response['message'] = '';
+            $response['success'] = false;
+        }
+        
+        echo json_encode($response, true);
+    }
+    
+    /**
+     * Insert SMS template - matching leads functionality
+     */
+    public function insert_template()
+    {
+        if (!has_permission('ella_contractors', '', 'create')) {
+            ajax_access_denied();
+        }
+        
+        $response = array();
+        $sms_body_textarea = $this->input->post('sms_body_textarea');
+        $template_title = $this->input->post('template_title');
+        
+        $data = array(
+            "staff_id" => get_staff_user_id(),
+            "type" => "sms",
+            "template_name" => $template_title,
+            "template_content" => $sms_body_textarea,
+            "media_url" => "",
+            "last_seen" => ""
+        );
+        
+        $this->leads_model->add_customTemplate($data);
+        
+        $templates = $this->db->select('*')
+            ->from(db_prefix() . 'custom_templates')
+            ->where('type', 'sms')
+            ->get()
+            ->result();
+        
+        $response['message'] = $templates;
+        $response['success'] = true;
+        
+        echo json_encode($response, true);
+    }
+    
+    /**
+     * Send test SMS - matching leads functionality
+     */
+    public function send_test_sms()
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            ajax_access_denied();
+        }
+        
+        $response = array();
+        $test_number = $this->input->post('test_number');
+        $test_sms_body = $this->input->post('test_sms_body');
+        
+        if (empty($test_number) || empty($test_sms_body)) {
+            $response['message'] = 'Please provide both phone number and message';
+            $response['success'] = false;
+        } else {
+            // Load leads model
+            $this->load->model('leads_model');
+            
+            // Send test SMS using the same method as leads
+            $response = $this->leads_model->send_sms(0, get_staff_user_id(), $test_number, $test_sms_body, '', false, false, '');
+        }
+        
+        echo json_encode($response, true);
+    }
+    
+    public function upload_sms_media()
+    {
+        if (!has_permission('ella_contractors', '', 'create')) {
+            ajax_access_denied();
+        }
+        
+        // Use the existing upload_image controller
+        $this->load->library('upload');
+        
+        $config['upload_path'] = './uploads/leads/';
+        $config['allowed_types'] = 'png|jpg|jpeg|gif';
+        $config['max_size'] = 5120; // 5MB
+        $config['encrypt_name'] = TRUE;
+        
+        $this->upload->initialize($config);
+        
+        if ($this->upload->do_upload('media_image')) {
+            $upload_data = $this->upload->data();
+            $media_url = base_url('uploads/leads/' . $upload_data['file_name']);
+            
+            echo json_encode([
+                'success' => true,
+                'media_url' => $media_url,
+                'file_name' => $upload_data['file_name']
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => $this->upload->display_errors()
+            ]);
+        }
     }
 
     /**
