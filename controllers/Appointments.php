@@ -246,6 +246,97 @@ class Appointments extends AdminController
 
         redirect(admin_url('ella_contractors/appointments'));
     }
+    
+    /**
+     * Get relation data values
+     * @param string $rel_id
+     * @param string $rel_type
+     * @return json
+     */
+    public function get_relation_data_values($rel_id, $rel_type)
+    {
+        // Initialize the data object
+        $data = new StdClass();
+        
+        // Get lead/client data based on the relation type and ID
+        if ($rel_type == 'lead') {
+            // Load the leads model
+            $this->load->model('leads_model');
+            $lead = $this->leads_model->get($rel_id);
+            
+            if ($lead) {
+                $data->to = $lead->name;
+                $data->email = $lead->email;
+                $data->phone = $lead->phonenumber;
+                $data->address = $lead->address;
+                $data->city = $lead->city;
+                $data->state = $lead->state;
+                $data->zip = $lead->zip;
+                $data->country = $lead->country;
+                
+                // Get assigned staff email
+                if ($lead->assigned != 0) {
+                    $this->db->select('email');
+                    $this->db->where('staffid', $lead->assigned);
+                    $staff = $this->db->get(db_prefix() . 'staff')->row();
+                    $data->staffEmail = $staff ? $staff->email : '';
+                } else {
+                    $data->staffEmail = '';
+                }
+                
+                // Email validation status
+                $data->emailValidaionStatus = 1; // Default to valid
+                if ($lead->email && (!filter_var($lead->email, FILTER_VALIDATE_EMAIL) || strpos($lead->email, '@') === false)) {
+                    $data->emailValidaionStatus = 0; // Mark as invalid
+                }
+                
+                // Phone number validation
+                if ($lead->phonenumber) {
+                    $data->phonenumbertype = isset($lead->phonenumber_type) ? $lead->phonenumber_type : 'mobile';
+                    $data->phoneNumberValid = 1; // Default to valid
+                    if ($data->phonenumbertype == 'landline' || $data->phonenumbertype == 'invalid') {
+                        $data->phoneNumberValid = 0; // Mark as invalid
+                    }
+                } else {
+                    $data->phoneNumberValid = null;
+                }
+            }
+        } else if ($rel_type == 'customer') {
+            // Load the clients model
+            $this->load->model('clients_model');
+            $client = $this->clients_model->get($rel_id);
+            
+            if ($client) {
+                $data->to = $client->company;
+                $data->email = $client->email;
+                $data->phone = $client->phonenumber;
+                $data->address = $client->address;
+                $data->city = $client->city;
+                $data->state = $client->state;
+                $data->zip = $client->zip;
+                $data->country = $client->country;
+                
+                // Email validation status
+                $data->emailValidaionStatus = 1; // Default to valid
+                if ($client->email && (!filter_var($client->email, FILTER_VALIDATE_EMAIL) || strpos($client->email, '@') === false)) {
+                    $data->emailValidaionStatus = 0; // Mark as invalid
+                }
+                
+                // Phone number validation
+                if ($client->phonenumber) {
+                    $data->phonenumbertype = isset($client->phonenumber_type) ? $client->phonenumber_type : 'mobile';
+                    $data->phoneNumberValid = 1; // Default to valid
+                    if ($data->phonenumbertype == 'landline' || $data->phonenumbertype == 'invalid') {
+                        $data->phoneNumberValid = 0; // Mark as invalid
+                    }
+                } else {
+                    $data->phoneNumberValid = null;
+                }
+            }
+        }
+        
+        echo json_encode($data);
+    }
 
     /**
      * DataTable server-side processing
@@ -329,115 +420,6 @@ class Appointments extends AdminController
     /**
      * Save appointment via AJAX (for modal)
      */
-    // public function save_ajax()
-    // {
-    //     if (!has_permission('ella_contractors', '', 'create') && !has_permission('ella_contractors', '', 'edit')) {
-    //         ajax_access_denied();
-    //     }
-
-    //     $this->load->library('form_validation');
-    //     $this->form_validation->set_rules('subject', 'Subject', 'required');
-    //     $this->form_validation->set_rules('start_date', 'Start Date', 'required');
-    //     $this->form_validation->set_rules('start_time', 'Start Time', 'required');
-    //     $this->form_validation->set_rules('end_date', 'End Date', 'required');
-    //     $this->form_validation->set_rules('end_time', 'End Time', 'required');
-
-    //     if ($this->form_validation->run() == FALSE) {
-    //         echo json_encode([
-    //             'success' => false,
-    //             'message' => validation_errors()
-    //         ]);
-    //         return;
-    //     }
-
-    //         $status_value = $this->input->post('status');
-            
-    //         // Ensure appointment_status column exists
-    //         $this->ensure_appointment_status_column();
-            
-    //         // Ensure send_reminder column exists
-    //         $this->ensure_send_reminder_column();
-            
-    //         // Process contact_id - handle client_/lead_ prefixes
-    //         $contact_id = $this->input->post('contact_id');
-    //         if ($contact_id) {
-    //             if (strpos($contact_id, 'client_') === 0) {
-    //                 $contact_id = str_replace('client_', '', $contact_id);
-    //             } elseif (strpos($contact_id, 'lead_') === 0) {
-    //                 $contact_id = str_replace('lead_', '', $contact_id);
-    //             }
-    //         }
-            
-    //         $data = [
-    //             'subject' => $this->input->post('subject'),
-    //             'date' => $this->input->post('start_date'),
-    //             'start_hour' => $this->input->post('start_time'),
-    //             'end_date' => $this->input->post('end_date'),
-    //             'end_time' => $this->input->post('end_time'),
-    //             'contact_id' => $contact_id ?: null,
-    //             'name' => $this->input->post('name'),
-    //             'email' => $this->input->post('email'),
-    //             'phone' => $this->input->post('phone'),
-    //             'address' => $this->input->post('address'),
-    //             'notes' => $this->input->post('notes'),
-    //             'type_id' => $this->input->post('type_id') ?: 0,
-    //             'appointment_status' => $status_value ?: 'scheduled',
-    //             'source' => 'ella_contractor',
-    //             'send_reminder' => $this->input->post('send_reminder') ? 1 : 0
-    //         ];
-            
-
-    //     $appointment_id = $this->input->post('appointment_id');
-        
-    //     try {
-    //         if ($appointment_id) {
-    //             // Update existing appointment
-    //             if ($this->appointments_model->update_appointment($appointment_id, $data)) {
-    //                 // Handle attendees
-    //                 $this->handle_attendees($appointment_id);
-
-
-
-
-    //                 echo json_encode([
-    //                     'success' => true,
-    //                     'message' => 'Appointment updated successfully'
-    //                 ]);
-    //             } else {
-    //                 echo json_encode([
-    //                     'success' => false,
-    //                     'message' => 'Failed to update appointment. Database error: ' . $this->db->last_query()
-    //                 ]);
-    //             }
-    //         } else {
-    //             // Create new appointment
-    //             $appointment_id = $this->appointments_model->create_appointment($data);
-    //             if ($appointment_id) {
-    //                 // Handle attendees
-    //                 $this->handle_attendees($appointment_id);
-
-    //                 if(!empty($this->input->post('notes')))
-    //                 {
-    //                     $this->misc_model->add_note($this->input->post('notes'), 'appointment', $appointment_id);
-    //                 }
-    //                 echo json_encode([
-    //                     'success' => true,
-    //                     'message' => 'Appointment created successfully'
-    //                 ]);
-    //             } else {
-    //                 echo json_encode([
-    //                     'success' => false,
-    //                     'message' => 'Failed to create appointment. Database error: ' . $this->db->last_query()
-    //                 ]);
-    //             }
-    //         }
-    //     } catch (Exception $e) {
-    //         echo json_encode([
-    //             'success' => false,
-    //             'message' => 'Error: ' . $e->getMessage()
-    //         ]);
-    //     }
-    // }
 
 
     public function save_ajax()
@@ -468,22 +450,25 @@ class Appointments extends AdminController
         
         // Process contact_id - handle client_/lead_ prefixes
         $contact_id = $this->input->post('contact_id');
+        $contact_type = '';
         if ($contact_id) {
             if (strpos($contact_id, 'client_') === 0) {
                 $contact_id = str_replace('client_', '', $contact_id);
+                $contact_type = 'client';
             } elseif (strpos($contact_id, 'lead_') === 0) {
                 $contact_id = str_replace('lead_', '', $contact_id);
+                $contact_type = 'lead';
             }
         }
         
         $data = [
             'subject' => $this->input->post('subject'),
-            'date' => $this->input->post('start_date'),
-            'start_hour' => $this->input->post('start_time'),
-            'end_date' => $this->input->post('end_date'),
-            'end_time' => $this->input->post('end_time'),
+            'date' => $start_date,
+            'start_hour' => $start_time,
+            'end_date' => $end_date,
+            'end_time' => $end_time,
             'contact_id' => $contact_id ?: null,
-            'name' => $this->input->post('name'),
+            'contact_type' => $contact_type,
             'email' => $this->input->post('email'),
             'phone' => $this->input->post('phone'),
             'address' => $this->input->post('address'),

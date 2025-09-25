@@ -17,6 +17,9 @@
                     <input type="hidden" id="start_time" name="start_time" value="">
                     <input type="hidden" id="end_date" name="end_date" value="">
                     <input type="hidden" id="end_time" name="end_time" value="">
+                    <!-- Hidden fields for data validation -->
+                    <input type="hidden" id="email_validated" name="email_validated" value="1">
+                    <input type="hidden" id="phone_validated" name="phone_validated" value="">
                     
                     <div class="row">
                         <div class="col-md-6">

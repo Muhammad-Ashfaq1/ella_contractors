@@ -129,9 +129,10 @@ function init_combined_ajax_search(selector) {
                 url: admin_url + 'misc/get_relation_data',
                 data: function () {
                     var data = {};
-                    data.type = 'combined_contacts'; // Custom type for combined search
+                    data.type = 'lead'; // Use lead type for search
                     data.rel_id = '';
                     data.q = '{{{q}}}';
+                    data[csrf_token_name] = csrf_hash; // Add CSRF token
                     return data;
                 }
             },
@@ -183,6 +184,37 @@ $(document).ready(function() {
     
     // Initialize AJAX search for leads and clients
     init_combined_ajax_search('#contact_id.ajax-search');
+    
+    // Handle contact selection and populate form fields with lead/client data
+    $('#contact_id').on('change', function() {
+        var selectedValue = $(this).val();
+        if (selectedValue) {
+            var splitValue = selectedValue.split('_');
+            var relType = splitValue[0]; // 'lead' or 'client'
+            var relId = splitValue[1];   // The ID number
+            
+            if (relId) {
+                $.get(admin_url + 'ella_contractors/appointments/get_relation_data_values/' + relId + '/' + relType, function(response) {
+                    // Parse the JSON response
+                    var data = JSON.parse(response);
+                    
+                    // Populate form fields with the returned data
+                    $('#email').val(data.email || '');
+                    $('#phone').val(data.phone || '');
+                    $('#address').val(data.address || '');
+                    
+                    // Store validation status in hidden fields
+                    if (typeof data.emailValidaionStatus !== 'undefined') {
+                        $('#email_validated').val(data.emailValidaionStatus);
+                    }
+                    
+                    if (typeof data.phoneNumberValid !== 'undefined') {
+                        $('#phone_validated').val(data.phoneNumberValid);
+                    }
+                });
+            }
+        }
+    });
     
     // Handle filter dropdown clicks
     $('.dropdown-menu a[data-filter]').on('click', function(e) {
@@ -534,8 +566,10 @@ $('#saveAppointment').on('click', function() {
         $('#end_time').val(endParts[1]);
     }
     
+    // Get form data
     var formData = $('#appointmentForm').serialize();
     
+    // Add CSRF token
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/save_ajax',
         type: 'POST',
