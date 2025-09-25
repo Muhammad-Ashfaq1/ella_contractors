@@ -592,28 +592,6 @@ function deleteAppointment(appointmentId) {
 }
 
 // Action Button Functions
-function sendSMSClient(appointmentId) {
-    // Get appointment data first
-    $.ajax({
-        url: admin_url + 'ella_contractors/appointments/get_appointment_data/' + appointmentId,
-        type: 'GET',
-        data: {
-            [csrf_token_name]: csrf_hash
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success && response.data.phone) {
-                // Open SMS modal or redirect to SMS page
-                window.open(admin_url + 'leads/send_lead_sms/' + response.data.lead_id + '?phone=' + response.data.phone, '_blank');
-            } else {
-                alert_float('danger', '<?php echo _l('no_phone_number_available'); ?>');
-            }
-        },
-        error: function() {
-            alert_float('danger', '<?php echo _l('error_loading_appointment_data'); ?>');
-        }
-    });
-}
 
 function sendEmailClient(appointmentId) {
     // Get appointment data first

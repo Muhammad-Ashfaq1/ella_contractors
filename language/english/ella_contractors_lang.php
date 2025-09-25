@@ -91,11 +91,9 @@ $lang['appointment_send_reminder_followup'] = 'Send reminder & follow up to cust
 // Appointment View Language Strings
 $lang['appointment_start_datetime'] = 'Start Date & Time';
 $lang['appointment_end_datetime'] = 'End Date & Time';
-$lang['sms_client'] = 'SMS Client';
 $lang['email_client'] = 'Email Client';
 $lang['print_appointment'] = 'Print Appointment';
 $lang['duplicate_appointment'] = 'Duplicate Appointment';
-$lang['no_phone_number_available'] = 'No phone number available for this appointment';
 $lang['no_email_available'] = 'No email address available for this appointment';
 $lang['error_loading_appointment_data'] = 'Error loading appointment data';
 $lang['confirm_duplicate_appointment'] = 'Are you sure you want to duplicate this appointment?';
