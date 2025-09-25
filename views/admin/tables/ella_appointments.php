@@ -175,7 +175,7 @@ try {
         $lead_name = isset($aRow['lead_name']) ? $aRow['lead_name'] : '';
         $lead_id = isset($aRow['lead_id']) ? $aRow['lead_id'] : '';
         if (!empty($lead_name) && !empty($lead_id)) {
-            $lead_link = '<a href="' . admin_url('leads/lead/' . $lead_id) . '" target="_blank">' . htmlspecialchars($lead_name) . '</a>';
+            $lead_link = '<a href="' . admin_url('leads/index/' . $lead_id) . '">' . htmlspecialchars($lead_name) . '</a>';
         } else {
             $lead_link = '<span class="text-muted">No Lead</span>';
         }
@@ -237,9 +237,7 @@ try {
         $row[] = $estimate_badge;
         
         $options = '';
-        if ($has_permission_view) {
-            $options .= '<a href="' . admin_url('ella_contractors/appointments/view/' . $aRow['id']) . '" class="btn btn-default btn-xs" title="View Details"><i class="fa fa-eye"></i></a>';
-        }
+
         
         // Show full options for all appointments
         if ($has_permission_edit) {
