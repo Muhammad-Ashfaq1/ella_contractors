@@ -81,3 +81,5 @@ $route[$module_name . '/get_estimates_ajax'] = $module_name . '/get_estimates_aj
 // Global appointment AJAX endpoints
 $route[$module_name . '/appointments/get_types'] = 'Appointments/get_types';
 $route[$module_name . '/appointments/save_ajax'] = 'Appointments/save_ajax';
+$route[$module_name . '/appointments/send_sms'] = 'Appointments/send_sms';
+$route[$module_name . '/appointments/get_sms_logs'] = 'Appointments/get_sms_logs';

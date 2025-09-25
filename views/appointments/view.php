@@ -102,9 +102,12 @@
                             <div class="col-md-12 text-right">
                                 <div class="action-buttons-container">
                                     <div class="btn-group connected-buttons" role="group">
-                                        <a href="javascript:void(0)" onclick="sendSMSClient(<?php echo $appointment['id']; ?>)" class="btn btn-success btn-sm connected-btn-left" title="<?php echo _l('sms_client'); ?>">
-                                            <i class="fa fa-mobile"></i> <?php echo _l('sms_client'); ?>
-                                        </a>
+
+                                        <?php if (!empty($appointment['contact_id']) && !empty($appointment['phone'])): ?>
+                                            <a href="javascript:void(0)" class="btn btn-success" onclick="openSMSModal(<?php echo $appointment['contact_id']; ?>, '<?php echo $appointment['phone']; ?>')">
+                                                <i class="fa fa-comment"></i> Send SMS
+                                            </a>
+                                         <?php endif; ?>
                                         <a href="mailto:<?php echo $appointment['email']; ?>" class="btn btn-primary btn-sm connected-btn-middle" title="<?php echo _l('email_client'); ?>" target="_blank">
                                             <i class="fa fa-envelope"></i> <?php echo _l('email_client'); ?>
                                         </a>
@@ -1795,6 +1798,7 @@ function renderSavedRow(row, category, data, id) {
 </script>
 
 <?php $this->load->view('appointments/modal'); ?>
+<?php $this->load->view('appointments/sms_modal'); ?>
 
 <script>
 // Include the appointment modal functions from index.php
@@ -2308,3 +2312,5 @@ $(document).ready(function() {
     });
 });
 </script>
+
+<?php $this->load->view('appointments/sms_js.php'); ?>

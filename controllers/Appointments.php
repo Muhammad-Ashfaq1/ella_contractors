@@ -1056,6 +1056,76 @@ class Appointments extends AdminController
 
 
     /**
+     * Send SMS to lead from appointment
+     */
+    public function send_sms()
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            ajax_access_denied();
+        }
+        
+        $response = array();
+        
+        // Get the SMS POST data
+        if (isset($_POST['lead_id'])) {
+            $lead_id = $_POST['lead_id'];
+            $number = $_POST['contact_number'];
+            $staff_id = $_POST['sender_id'];
+            $sms_body = $_POST['sms_body'];
+            $media_url = $_POST['media_url'];
+            $ics_url = '';
+            
+            // Load leads model
+            $this->load->model('leads_model');
+            
+            // Set TCPA to false for ella_contractors module
+            $dnc_validation = false;
+            $tcpa = false;
+            
+            // Call the method to send SMS
+            $response = $this->leads_model->send_sms($lead_id, $staff_id, $number, $sms_body, $media_url, $tcpa, $dnc_validation, $ics_url);
+            
+            // Log activity
+            log_staff_status_activity('Added SMS Activity from Appointment Lead# [' . $lead_id . ']');
+        } else {
+            $response['message'] = 'Something went wrong!';
+            $response['success'] = false;
+        }
+        
+        // Return the json response
+        echo json_encode($response, true);
+    }
+    
+    /**
+     * Get SMS logs for appointment
+     */
+    public function get_sms_logs()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+        
+        $lead_id = $this->input->post('lead_id');
+        $contact_number = $this->input->post('contact_number');
+        
+        // Load leads model
+        $this->load->model('leads_model');
+        
+        $sms_logs = array();
+        
+        if ($lead_id) {
+            $sms_logs = $this->leads_model->get_lead_sms_logs($lead_id, 'lead_id');
+        } elseif ($contact_number) {
+            $sms_logs = $this->leads_model->get_lead_sms_logs($contact_number, 'contact_number');
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $sms_logs
+        ]);
+    }
+
+    /**
      * Remove line item from estimate
      */
     public function remove_estimate_line_item($id)
