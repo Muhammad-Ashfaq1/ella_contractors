@@ -300,6 +300,8 @@ class Appointments extends AdminController
                 } else {
                     $data->phoneNumberValid = null;
                 }
+            } else {
+                $data->error = 'Lead not found';
             }
         } else if ($rel_type == 'customer') {
             // Load the clients model
@@ -332,9 +334,14 @@ class Appointments extends AdminController
                 } else {
                     $data->phoneNumberValid = null;
                 }
+            } else {
+                $data->error = 'Client not found';
             }
+        } else {
+            $data->error = 'Invalid relation type';
         }
         
+        header('Content-Type: application/json');
         echo json_encode($data);
     }
 
@@ -433,6 +440,7 @@ class Appointments extends AdminController
         $this->form_validation->set_rules('start_time', 'Start Time', 'required');
         $this->form_validation->set_rules('end_date', 'End Date', 'required');
         $this->form_validation->set_rules('end_time', 'End Time', 'required');
+        $this->form_validation->set_rules('contact_id', 'Lead/Client', 'required', array('required' => 'Please select a lead or client'));
         if ($this->form_validation->run() == FALSE) {
             echo json_encode([
                 'success' => false,

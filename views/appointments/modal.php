@@ -61,8 +61,8 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="contact_id">Client/Lead</label>
-                                <select class="form-control ajax-search" id="contact_id" name="contact_id" data-live-search="true">
+                                <label for="contact_id">Client/Lead <span class="text-danger">*</span></label>
+                                <select class="form-control ajax-search" id="contact_id" name="contact_id" data-live-search="true" required>
                                     <option value="">Select Client/Lead</option>
                                 </select>
                             </div>

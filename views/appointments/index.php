@@ -129,7 +129,7 @@ function init_combined_ajax_search(selector) {
                 url: admin_url + 'misc/get_relation_data',
                 data: function () {
                     var data = {};
-                    data.type = 'lead'; // Use lead type for search
+                    data.type = 'lead'; // Search leads
                     data.rel_id = '';
                     data.q = '{{{q}}}';
                     data[csrf_token_name] = csrf_hash; // Add CSRF token
@@ -137,11 +137,11 @@ function init_combined_ajax_search(selector) {
                 }
             },
             locale: {
-                emptyTitle: 'Search for clients or leads...',
+                emptyTitle: 'Search for leads...',
                 statusInitialized: 'Ready to search',
                 statusSearching: 'Searching...',
                 statusNoResults: 'No results found',
-                searchPlaceholder: 'Type to search clients or leads...',
+                searchPlaceholder: 'Type to search leads...',
                 currentlySelected: 'Currently selected'
             },
             requestDelay: 500,
@@ -151,8 +151,8 @@ function init_combined_ajax_search(selector) {
                 var len = processData.length;
                 for (var i = 0; i < len; i++) {
                     var tmp_data = {
-                        'value': processData[i].id,
-                        'text': processData[i].name,
+                        'value': 'lead_' + processData[i].id, // Add lead_ prefix
+                        'text': processData[i].name + ' (Lead)',
                     };
                     if (processData[i].subtext) {
                         tmp_data.data = {
@@ -194,25 +194,45 @@ $(document).ready(function() {
             var relId = splitValue[1];   // The ID number
             
             if (relId) {
-                $.get(admin_url + 'ella_contractors/appointments/get_relation_data_values/' + relId + '/' + relType, function(response) {
-                    // Parse the JSON response
-                    var data = JSON.parse(response);
-                    
-                    // Populate form fields with the returned data
-                    $('#email').val(data.email || '');
-                    $('#phone').val(data.phone || '');
-                    $('#address').val(data.address || '');
-                    
-                    // Store validation status in hidden fields
-                    if (typeof data.emailValidaionStatus !== 'undefined') {
-                        $('#email_validated').val(data.emailValidaionStatus);
-                    }
-                    
-                    if (typeof data.phoneNumberValid !== 'undefined') {
-                        $('#phone_validated').val(data.phoneNumberValid);
+                $.ajax({
+                    url: admin_url + 'ella_contractors/appointments/get_relation_data_values/' + relId + '/' + relType,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.error) {
+                            alert_float('danger', data.error);
+                            return;
+                        }
+                        
+                        // Populate form fields with the returned data
+                        $('#email').val(data.email || '');
+                        $('#phone').val(data.phone || '');
+                        $('#address').val(data.address || '');
+                        
+                        // Store validation status in hidden fields
+                        if (typeof data.emailValidaionStatus !== 'undefined') {
+                            $('#email_validated').val(data.emailValidaionStatus);
+                        }
+                        
+                        if (typeof data.phoneNumberValid !== 'undefined') {
+                            $('#phone_validated').val(data.phoneNumberValid);
+                        }
+                        
+                        // Show success message
+                        if (data.email || data.phone || data.address) {
+                            alert_float('success', 'Contact information loaded successfully');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert_float('danger', 'Error loading lead information');
                     }
                 });
             }
+        } else {
+            // Clear form fields if no contact is selected
+            $('#email').val('');
+            $('#phone').val('');
+            $('#address').val('');
         }
     });
     
@@ -550,6 +570,27 @@ function deleteAppointment(appointmentId) {
 
 // Save appointment
 $('#saveAppointment').on('click', function() {
+    // Client-side validation
+    if (!$('#subject').val()) {
+        alert_float('danger', 'Subject is required');
+        return;
+    }
+    
+    if (!$('#start_datetime').val()) {
+        alert_float('danger', 'Start date & time is required');
+        return;
+    }
+    
+    if (!$('#end_datetime').val()) {
+        alert_float('danger', 'End date & time is required');
+        return;
+    }
+    
+    if (!$('#contact_id').val()) {
+        alert_float('danger', 'Please select a lead or client');
+        return;
+    }
+    
     // Split datetime fields into separate date and time fields
     var startDateTime = $('#start_datetime').val();
     var endDateTime = $('#end_datetime').val();
