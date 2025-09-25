@@ -94,16 +94,8 @@ class Appointments extends AdminController
             show_404();
         }
 
-        $data['title'] = 'Edit Appointment';
-        $data['appointment'] = (array) $appointment; // Convert object to array
-        $data['staff'] = $this->staff_model->get();
-        $data['clients'] = $this->clients_model->get();
-        $data['leads'] = $this->leads_model->get();
-        $data['appointment_types'] = $this->appointments_model->get_appointment_types();
-        $data['statuses'] = $this->appointments_model->get_statuses();
-        $data['attendees'] = $this->appointments_model->get_appointment_attendees($id);
-        
-        $this->load->view('appointments/edit', $data);
+        // Redirect to main page with edit parameter
+        redirect(admin_url('ella_contractors/appointments?edit=' . $id));
     }
 
     /**

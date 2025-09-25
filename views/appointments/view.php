@@ -542,8 +542,13 @@ $(document).ready(function() {
 
 // Global functions for modal operations
 function editAppointment(appointmentId) {
-    // Redirect to edit page or open modal
-    window.location.href = admin_url + 'ella_contractors/appointments/edit/' + appointmentId;
+    // Open modal for editing
+    if (typeof openAppointmentModal === 'function') {
+        openAppointmentModal(appointmentId);
+    } else {
+        // Fallback: redirect to main page with edit parameter
+        window.location.href = admin_url + 'ella_contractors/appointments?edit=' + appointmentId;
+    }
 }
 
 // Global function to refresh all data and switch to appropriate tab
@@ -1787,4 +1792,519 @@ function renderSavedRow(row, category, data, id) {
     html += '<td>' + actions + '</td>';
     row.removeClass('inline-measure-row').attr('data-measurement-id', id || '').html(html);
 }
+</script>
+
+<?php $this->load->view('appointments/modal'); ?>
+
+<script>
+// Include the appointment modal functions from index.php
+var admin_url = '<?php echo admin_url(); ?>';
+var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
+var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
+
+// Custom function to initialize combined AJAX search for leads and clients
+function init_combined_ajax_search(selector) {
+    var ajaxSelector = $(selector);
+    
+    if (ajaxSelector.length) {
+        var options = {
+            ajax: {
+                url: admin_url + 'misc/get_relation_data',
+                data: function () {
+                    var data = {};
+                    data.type = 'lead'; // Search leads
+                    data.rel_id = '';
+                    data.q = '{{{q}}}';
+                    data[csrf_token_name] = csrf_hash; // Add CSRF token
+                    return data;
+                }
+            },
+            locale: {
+                emptyTitle: 'Search for leads...',
+                statusInitialized: 'Ready to search',
+                statusSearching: 'Searching...',
+                statusNoResults: 'No results found',
+                searchPlaceholder: 'Type to search leads...',
+                currentlySelected: 'Currently selected'
+            },
+            requestDelay: 500,
+            cache: false,
+            preprocessData: function (processData) {
+                var bs_data = [];
+                var len = processData.length;
+                for (var i = 0; i < len; i++) {
+                    var tmp_data = {
+                        'value': 'lead_' + processData[i].id, // Add lead_ prefix
+                        'text': processData[i].name + ' (Lead)',
+                    };
+                    if (processData[i].subtext) {
+                        tmp_data.data = {
+                            subtext: processData[i].subtext
+                        };
+                    }
+                    bs_data.push(tmp_data);
+                }
+                return bs_data;
+            },
+            preserveSelectedPosition: 'after',
+            preserveSelected: false
+        };
+        
+        ajaxSelector.selectpicker().ajaxSelectPicker(options);
+        ajaxSelector.selectpicker('val', '');
+    }
+}
+
+// Reset appointment modal to default state
+function resetAppointmentModal() {
+    $('#appointmentForm')[0].reset();
+    $('#appointment_id').val('');
+    $('#appointmentModalLabel').text('Create Appointment');
+    $('#contact_id').html('<option value="">Select Client/Lead</option>');
+    $('#contact_id').selectpicker('val', '');
+    $('.selectpicker').selectpicker('refresh');
+}
+
+// Global functions for modal operations
+function openAppointmentModal(appointmentId = null) {
+    if ($('#appointmentForm').length === 0) {
+        return;
+    }
+    
+    // Reset form
+    resetAppointmentModal();
+    
+    // Set today's date as default (only for new appointments)
+    if (!appointmentId) {
+        var today = new Date().toISOString().slice(0, 16);
+        $('#start_datetime').val(today);
+        $('#end_datetime').val(today);
+    }
+    
+    // Show modal immediately for new appointments
+    if (!appointmentId) {
+        $('#appointmentModal').modal('show');
+    } else {
+        // For editing, use the dedicated function that loads data first
+        loadAppointmentDataAndShowModal(appointmentId);
+    }
+}
+
+function loadAppointmentData(appointmentId) {    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_appointment_data',
+        type: 'POST',
+        data: {
+            id: appointmentId,
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                var data = response.data;
+                
+                // Populate form fields
+                $('#appointment_id').val(data.id);
+                $('#subject').val(data.subject);
+                
+                // Handle combined datetime fields
+                var startDateTime = '';
+                var endDateTime = '';
+                
+                if (data.start_date && data.start_time) {
+                    startDateTime = data.start_date + 'T' + data.start_time;
+                } else if (data.date && data.start_hour) {
+                    startDateTime = data.date + 'T' + data.start_hour;
+                }
+                
+                if (data.end_date && data.end_time) {
+                    endDateTime = data.end_date + 'T' + data.end_time;
+                } else if (data.date && data.start_hour) {
+                    // For end time, add 1 hour to start time as default
+                    var endTime = new Date(data.date + 'T' + data.start_hour);
+                    endTime.setHours(endTime.getHours() + 1);
+                    endDateTime = endTime.toISOString().slice(0, 16);
+                }
+                
+                $('#start_datetime').val(startDateTime);
+                $('#end_datetime').val(endDateTime);
+                
+                $('#email').val(data.email);
+                $('#phone').val(data.phone);
+                $('#address').val(data.address);
+                $('#notes').val(data.notes);
+                $('#type_id').val(data.type_id);
+                
+                // Handle reminder checkbox
+                $('#send_reminder').prop('checked', data.send_reminder == 1);
+                
+                // Set status dropdown
+                var status = data.appointment_status || 'scheduled';
+                $('#status').val(status);
+                
+                // Refresh selectpicker
+                $('.selectpicker').selectpicker('refresh');
+                
+                // Re-initialize AJAX search for contact dropdown
+                $('#contact_id').off('change'); // Remove existing change handler
+                init_combined_ajax_search('#contact_id.ajax-search');
+                
+                // Re-add the change handler
+                $('#contact_id').on('change', function() {
+                    var selectedValue = $(this).val();
+                    if (selectedValue) {
+                        var splitValue = selectedValue.split('_');
+                        var relType = splitValue[0]; // 'lead' or 'client'
+                        var relId = splitValue[1];   // The ID number
+                        
+                        if (relId) {
+                            $.ajax({
+                                url: admin_url + 'ella_contractors/appointments/get_relation_data_values/' + relId + '/' + relType,
+                                type: 'GET',
+                                dataType: 'json',
+                                success: function(data) {
+                                    if (data.error) {
+                                        alert_float('danger', data.error);
+                                        return;
+                                    }
+                                    
+                                    // Only populate form fields if they are empty
+                                    if (!$('#email').val() && data.email) {
+                                        $('#email').val(data.email);
+                                    }
+                                    if (!$('#phone').val() && data.phone) {
+                                        $('#phone').val(data.phone);
+                                    }
+                                    if (!$('#address').val() && data.address) {
+                                        $('#address').val(data.address);
+                                    }
+                                    
+                                    // Store validation status in hidden fields
+                                    if (typeof data.emailValidaionStatus !== 'undefined') {
+                                        $('#email_validated').val(data.emailValidaionStatus);
+                                    }
+                                    
+                                    if (typeof data.phoneNumberValid !== 'undefined') {
+                                        $('#phone_validated').val(data.phoneNumberValid);
+                                    }
+                                },
+                                error: function(xhr, status, error) {
+                                    alert_float('danger', 'Error loading lead information');
+                                }
+                            });
+                        }
+                    } else {
+                        // Clear form fields if no contact is selected
+                        $('#email').val('');
+                        $('#phone').val('');
+                        $('#address').val('');
+                    }
+                });
+                
+                // Re-set the contact value after AJAX search is initialized
+                if (data.contact_dropdown_value && data.contact_display_name) {
+                    setTimeout(function() {
+                        var contactOption = '<option value="' + data.contact_dropdown_value + '">' + data.contact_display_name + ' (' + data.contact_type + ')</option>';
+                        $('#contact_id').append(contactOption);
+                        $('#contact_id').selectpicker('val', data.contact_dropdown_value);
+                    }, 100);
+                }
+                
+                // Set attendees
+                var attendeeIds = [];
+                if (data.attendees) {
+                    $.each(data.attendees, function(index, attendee) {
+                        attendeeIds.push(attendee.staff_id);
+                    });
+                }
+                $('#attendees').val(attendeeIds);
+                
+                // Update modal title
+                $('#appointmentModalLabel').text('Edit Appointment');
+                
+                // Refresh selectpicker
+                $('.selectpicker').selectpicker('refresh');
+            } else {
+                alert_float('danger', response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            alert_float('danger', 'Error loading appointment data: ' + error);
+        }
+    });
+}
+
+function loadAppointmentDataAndShowModal(appointmentId) {
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_appointment_data',
+        type: 'POST',
+        data: {
+            id: appointmentId,
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                var data = response.data;
+                
+                // Populate form fields
+                $('#appointment_id').val(data.id);
+                $('#subject').val(data.subject);
+                
+                // Handle combined datetime fields
+                var startDateTime = '';
+                var endDateTime = '';
+                
+                if (data.start_date && data.start_time) {
+                    startDateTime = data.start_date + 'T' + data.start_time;
+                } else if (data.date && data.start_hour) {
+                    startDateTime = data.date + 'T' + data.start_hour;
+                }
+                
+                if (data.end_date && data.end_time) {
+                    endDateTime = data.end_date + 'T' + data.end_time;
+                } else if (data.date && data.start_hour) {
+                    // For end time, add 1 hour to start time as default
+                    var endTime = new Date(data.date + 'T' + data.start_hour);
+                    endTime.setHours(endTime.getHours() + 1);
+                    endDateTime = endTime.toISOString().slice(0, 16);
+                }
+                
+                $('#start_datetime').val(startDateTime);
+                $('#end_datetime').val(endDateTime);
+                
+                $('#email').val(data.email);
+                $('#phone').val(data.phone);
+                $('#address').val(data.address);
+                $('#notes').val(data.notes);
+                $('#type_id').val(data.type_id);
+                
+                // Handle reminder checkbox
+                $('#send_reminder').prop('checked', data.send_reminder == 1);
+                
+                // Set status dropdown
+                var status = data.appointment_status || 'scheduled';
+                $('#status').val(status);
+                
+                // Refresh selectpicker
+                $('.selectpicker').selectpicker('refresh');
+                
+                // Re-initialize AJAX search for contact dropdown
+                $('#contact_id').off('change'); // Remove existing change handler
+                init_combined_ajax_search('#contact_id.ajax-search');
+                
+                // Re-add the change handler
+                $('#contact_id').on('change', function() {
+                    var selectedValue = $(this).val();
+                    if (selectedValue) {
+                        var splitValue = selectedValue.split('_');
+                        var relType = splitValue[0]; // 'lead' or 'client'
+                        var relId = splitValue[1];   // The ID number
+                        
+                        if (relId) {
+                            $.ajax({
+                                url: admin_url + 'ella_contractors/appointments/get_relation_data_values/' + relId + '/' + relType,
+                                type: 'GET',
+                                dataType: 'json',
+                                success: function(data) {
+                                    if (data.error) {
+                                        alert_float('danger', data.error);
+                                        return;
+                                    }
+                                    
+                                    // Only populate form fields if they are empty
+                                    if (!$('#email').val() && data.email) {
+                                        $('#email').val(data.email);
+                                    }
+                                    if (!$('#phone').val() && data.phone) {
+                                        $('#phone').val(data.phone);
+                                    }
+                                    if (!$('#address').val() && data.address) {
+                                        $('#address').val(data.address);
+                                    }
+                                    
+                                    // Store validation status in hidden fields
+                                    if (typeof data.emailValidaionStatus !== 'undefined') {
+                                        $('#email_validated').val(data.emailValidaionStatus);
+                                    }
+                                    
+                                    if (typeof data.phoneNumberValid !== 'undefined') {
+                                        $('#phone_validated').val(data.phoneNumberValid);
+                                    }
+                                },
+                                error: function(xhr, status, error) {
+                                    alert_float('danger', 'Error loading lead information');
+                                }
+                            });
+                        }
+                    } else {
+                        // Clear form fields if no contact is selected
+                        $('#email').val('');
+                        $('#phone').val('');
+                        $('#address').val('');
+                    }
+                });
+                
+                // Re-set the contact value after AJAX search is initialized
+                if (data.contact_dropdown_value && data.contact_display_name) {
+                    setTimeout(function() {
+                        var contactOption = '<option value="' + data.contact_dropdown_value + '">' + data.contact_display_name + ' (' + data.contact_type + ')</option>';
+                        $('#contact_id').append(contactOption);
+                        $('#contact_id').selectpicker('val', data.contact_dropdown_value);
+                    }, 100);
+                }
+                
+                // Set attendees
+                var attendeeIds = [];
+                if (data.attendees) {
+                    $.each(data.attendees, function(index, attendee) {
+                        attendeeIds.push(attendee.staff_id);
+                    });
+                }
+                $('#attendees').val(attendeeIds);
+                
+                // Update modal title
+                $('#appointmentModalLabel').text('Edit Appointment');
+                
+                // Refresh selectpicker
+                $('.selectpicker').selectpicker('refresh');
+                
+                // Show modal after data is loaded
+                $('#appointmentModal').modal('show');
+                
+            } else {
+                alert_float('danger', response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            alert_float('danger', 'Error loading appointment data: ' + error);
+        }
+    });
+}
+
+// Initialize modal functionality when document is ready
+$(document).ready(function() {
+    // Initialize selectpicker
+    $('.selectpicker').selectpicker();
+    
+    // Initialize AJAX search for leads and clients
+    init_combined_ajax_search('#contact_id.ajax-search');
+    
+    // Handle contact selection and populate form fields with lead/client data
+    $('#contact_id').on('change', function() {
+        var selectedValue = $(this).val();
+        if (selectedValue) {
+            var splitValue = selectedValue.split('_');
+            var relType = splitValue[0]; // 'lead' or 'client'
+            var relId = splitValue[1];   // The ID number
+            
+            if (relId) {
+                $.ajax({
+                    url: admin_url + 'ella_contractors/appointments/get_relation_data_values/' + relId + '/' + relType,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.error) {
+                            alert_float('danger', data.error);
+                            return;
+                        }
+                        
+                        // Only populate form fields if they are empty
+                        if (!$('#email').val() && data.email) {
+                            $('#email').val(data.email);
+                        }
+                        if (!$('#phone').val() && data.phone) {
+                            $('#phone').val(data.phone);
+                        }
+                        if (!$('#address').val() && data.address) {
+                            $('#address').val(data.address);
+                        }
+                        
+                        // Store validation status in hidden fields
+                        if (typeof data.emailValidaionStatus !== 'undefined') {
+                            $('#email_validated').val(data.emailValidaionStatus);
+                        }
+                        
+                        if (typeof data.phoneNumberValid !== 'undefined') {
+                            $('#phone_validated').val(data.phoneNumberValid);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert_float('danger', 'Error loading lead information');
+                    }
+                });
+            }
+        } else {
+            // Clear form fields if no contact is selected
+            $('#email').val('');
+            $('#phone').val('');
+            $('#address').val('');
+        }
+    });
+
+    // Save appointment
+    $('#saveAppointment').on('click', function() {
+        // Client-side validation
+        if (!$('#subject').val()) {
+            alert_float('danger', 'Subject is required');
+            return;
+        }
+        
+        if (!$('#start_datetime').val()) {
+            alert_float('danger', 'Start date & time is required');
+            return;
+        }
+        
+        if (!$('#end_datetime').val()) {
+            alert_float('danger', 'End date & time is required');
+            return;
+        }
+        
+        if (!$('#contact_id').val()) {
+            alert_float('danger', 'Please select a lead or client');
+            return;
+        }
+        
+        // Split datetime fields into separate date and time fields
+        var startDateTime = $('#start_datetime').val();
+        var endDateTime = $('#end_datetime').val();
+        
+        if (startDateTime) {
+            var startParts = startDateTime.split('T');
+            $('#start_date').val(startParts[0]);
+            $('#start_time').val(startParts[1]);
+        }
+        
+        if (endDateTime) {
+            var endParts = endDateTime.split('T');
+            $('#end_date').val(endParts[0]);
+            $('#end_time').val(endParts[1]);
+        }
+        
+        // Get form data
+        var formData = $('#appointmentForm').serialize();
+        
+        // Add CSRF token
+        $.ajax({
+            url: admin_url + 'ella_contractors/appointments/save_ajax',
+            type: 'POST',
+            data: formData + '&' + csrf_token_name + '=' + csrf_hash,
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    $('#appointmentModal').modal('hide');
+                    resetAppointmentModal();
+                    // Reload the page to show updated data
+                    window.location.reload();
+                } else {
+                    alert_float('danger', response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                alert_float('danger', 'Error saving appointment: ' + error);
+            }
+        });
+    });
+});
 </script>

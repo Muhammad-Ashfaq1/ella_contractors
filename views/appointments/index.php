@@ -185,6 +185,16 @@ $(document).ready(function() {
     // Initialize AJAX search for leads and clients
     init_combined_ajax_search('#contact_id.ajax-search');
     
+    // Check for edit parameter in URL
+    var urlParams = new URLSearchParams(window.location.search);
+    var editId = urlParams.get('edit');
+    if (editId) {
+        // Open modal for editing
+        openAppointmentModal(editId);
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
     // Handle contact selection and populate form fields with lead/client data
     $('#contact_id').on('change', function() {
         var selectedValue = $(this).val();
