@@ -411,6 +411,20 @@ class Appointments extends AdminController
             $appointment_data = (array) $appointment;
             $appointment_data['attendees'] = $this->appointments_model->get_appointment_attendees($id);
             
+            // Determine contact type and prepare contact data for dropdown
+            if ($appointment->client_name) {
+                $appointment_data['contact_type'] = 'client';
+                $appointment_data['contact_display_name'] = $appointment->client_name;
+                $appointment_data['contact_dropdown_value'] = 'client_' . $appointment->contact_id;
+            } elseif ($appointment->lead_name) {
+                $appointment_data['contact_type'] = 'lead';
+                $appointment_data['contact_display_name'] = $appointment->lead_name;
+                $appointment_data['contact_dropdown_value'] = 'lead_' . $appointment->contact_id;
+            } else {
+                $appointment_data['contact_type'] = '';
+                $appointment_data['contact_display_name'] = '';
+                $appointment_data['contact_dropdown_value'] = '';
+            }
             
             echo json_encode([
                 'success' => true,

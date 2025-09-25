@@ -282,9 +282,7 @@ function openAppointmentModal(appointmentId = null) {
     }
     
     // Reset form
-    $('#appointmentForm')[0].reset();
-    $('#appointment_id').val('');
-    $('#appointmentModalLabel').text('Create Appointment');
+    resetAppointmentModal();
     
     // Set today's date as default (only for new appointments)
     if (!appointmentId) {
@@ -292,12 +290,6 @@ function openAppointmentModal(appointmentId = null) {
         $('#start_datetime').val(today);
         $('#end_datetime').val(today);
     }
-    
-    // Refresh selectpicker
-    $('.selectpicker').selectpicker('refresh');
-    
-    // Refresh AJAX search
-    $('#contact_id.ajax-search').selectpicker('refresh');
     
     // Show modal immediately for new appointments
     if (!appointmentId) {
@@ -320,6 +312,7 @@ function loadAppointmentData(appointmentId) {
         success: function(response) {
             if (response.success) {
                 var data = response.data;
+                
                 
                 // Populate form fields
                 $('#appointment_id').val(data.id);
@@ -360,33 +353,6 @@ function loadAppointmentData(appointmentId) {
                 var status = data.appointment_status || 'scheduled';
                 $('#status').val(status);
                 
-                // Handle contact selection - determine if it's a client or lead
-                if (data.contact_id) {
-                    if (data.client_name) {
-                        // It's a client - format: client_userid
-                        var clientValue = 'client_' + data.contact_id;
-                        $('#contact_id').val(clientValue);
-                    } else if (data.lead_name) {
-                        // It's a lead - format: lead_id
-                        var leadValue = 'lead_' + data.contact_id;
-                        $('#contact_id').val(leadValue);
-                    } else {
-                        // Fallback - try to find the contact_id in the dropdown
-                        // Check if it exists as client or lead
-                        var clientOption = $('#contact_id option[value="client_' + data.contact_id + '"]');
-                        var leadOption = $('#contact_id option[value="lead_' + data.contact_id + '"]');
-                        
-                        if (clientOption.length > 0) {
-                            $('#contact_id').val('client_' + data.contact_id);
-                        } else if (leadOption.length > 0) {
-                            $('#contact_id').val('lead_' + data.contact_id);
-                        } else {
-                            $('#contact_id').val('');
-                        }
-                    }
-                } else {
-                    $('#contact_id').val('');
-                }
                 
                 // Set attendees
                 var attendeeIds = [];
@@ -403,8 +369,70 @@ function loadAppointmentData(appointmentId) {
                 // Refresh selectpicker
                 $('.selectpicker').selectpicker('refresh');
                 
-                // Refresh AJAX search after setting value
-                $('#contact_id.ajax-search').selectpicker('refresh');
+                // Re-initialize AJAX search for contact dropdown
+                $('#contact_id').off('change'); // Remove existing change handler
+                init_combined_ajax_search('#contact_id.ajax-search');
+                
+                // Re-add the change handler
+                $('#contact_id').on('change', function() {
+                    var selectedValue = $(this).val();
+                    if (selectedValue) {
+                        var splitValue = selectedValue.split('_');
+                        var relType = splitValue[0]; // 'lead' or 'client'
+                        var relId = splitValue[1];   // The ID number
+                        
+                        if (relId) {
+                            $.ajax({
+                                url: admin_url + 'ella_contractors/appointments/get_relation_data_values/' + relId + '/' + relType,
+                                type: 'GET',
+                                dataType: 'json',
+                                success: function(data) {
+                                    if (data.error) {
+                                        alert_float('danger', data.error);
+                                        return;
+                                    }
+                                    
+                                    // Only populate form fields if they are empty
+                                    if (!$('#email').val() && data.email) {
+                                        $('#email').val(data.email);
+                                    }
+                                    if (!$('#phone').val() && data.phone) {
+                                        $('#phone').val(data.phone);
+                                    }
+                                    if (!$('#address').val() && data.address) {
+                                        $('#address').val(data.address);
+                                    }
+                                    
+                                    // Store validation status in hidden fields
+                                    if (typeof data.emailValidaionStatus !== 'undefined') {
+                                        $('#email_validated').val(data.emailValidaionStatus);
+                                    }
+                                    
+                                    if (typeof data.phoneNumberValid !== 'undefined') {
+                                        $('#phone_validated').val(data.phoneNumberValid);
+                                    }
+                                },
+                                error: function(xhr, status, error) {
+                                    alert_float('danger', 'Error loading lead information');
+                                }
+                            });
+                        }
+                    } else {
+                        // Clear form fields if no contact is selected
+                        $('#email').val('');
+                        $('#phone').val('');
+                        $('#address').val('');
+                    }
+                });
+                
+                // Re-set the contact value after AJAX search is initialized
+                if (data.contact_dropdown_value && data.contact_display_name) {
+                    setTimeout(function() {
+                        var contactOption = '<option value="' + data.contact_dropdown_value + '">' + data.contact_display_name + ' (' + data.contact_type + ')</option>';
+                        $('#contact_id').append(contactOption);
+                        $('#contact_id').selectpicker('val', data.contact_dropdown_value);
+                    }, 100);
+                }
             } else {
                 alert_float('danger', response.message);
             }
@@ -467,33 +495,6 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 var status = data.appointment_status || 'scheduled';
                 $('#status').val(status);
                 
-                // Handle contact selection - determine if it's a client or lead
-                if (data.contact_id) {
-                    if (data.client_name) {
-                        // It's a client - format: client_userid
-                        var clientValue = 'client_' + data.contact_id;
-                        $('#contact_id').val(clientValue);
-                    } else if (data.lead_name) {
-                        // It's a lead - format: lead_id
-                        var leadValue = 'lead_' + data.contact_id;
-                        $('#contact_id').val(leadValue);
-                    } else {
-                        // Fallback - try to find the contact_id in the dropdown
-                        // Check if it exists as client or lead
-                        var clientOption = $('#contact_id option[value="client_' + data.contact_id + '"]');
-                        var leadOption = $('#contact_id option[value="lead_' + data.contact_id + '"]');
-                        
-                        if (clientOption.length > 0) {
-                            $('#contact_id').val('client_' + data.contact_id);
-                        } else if (leadOption.length > 0) {
-                            $('#contact_id').val('lead_' + data.contact_id);
-                        } else {
-                            $('#contact_id').val('');
-                        }
-                    }
-                } else {
-                    $('#contact_id').val('');
-                }
                 
                 // Set attendees
                 var attendeeIds = [];
@@ -509,6 +510,71 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 
                 // Refresh selectpicker
                 $('.selectpicker').selectpicker('refresh');
+                
+                // Re-initialize AJAX search for contact dropdown
+                $('#contact_id').off('change'); // Remove existing change handler
+                init_combined_ajax_search('#contact_id.ajax-search');
+                
+                // Re-add the change handler
+                $('#contact_id').on('change', function() {
+                    var selectedValue = $(this).val();
+                    if (selectedValue) {
+                        var splitValue = selectedValue.split('_');
+                        var relType = splitValue[0]; // 'lead' or 'client'
+                        var relId = splitValue[1];   // The ID number
+                        
+                        if (relId) {
+                            $.ajax({
+                                url: admin_url + 'ella_contractors/appointments/get_relation_data_values/' + relId + '/' + relType,
+                                type: 'GET',
+                                dataType: 'json',
+                                success: function(data) {
+                                    if (data.error) {
+                                        alert_float('danger', data.error);
+                                        return;
+                                    }
+                                    
+                                    // Only populate form fields if they are empty
+                                    if (!$('#email').val() && data.email) {
+                                        $('#email').val(data.email);
+                                    }
+                                    if (!$('#phone').val() && data.phone) {
+                                        $('#phone').val(data.phone);
+                                    }
+                                    if (!$('#address').val() && data.address) {
+                                        $('#address').val(data.address);
+                                    }
+                                    
+                                    // Store validation status in hidden fields
+                                    if (typeof data.emailValidaionStatus !== 'undefined') {
+                                        $('#email_validated').val(data.emailValidaionStatus);
+                                    }
+                                    
+                                    if (typeof data.phoneNumberValid !== 'undefined') {
+                                        $('#phone_validated').val(data.phoneNumberValid);
+                                    }
+                                },
+                                error: function(xhr, status, error) {
+                                    alert_float('danger', 'Error loading lead information');
+                                }
+                            });
+                        }
+                    } else {
+                        // Clear form fields if no contact is selected
+                        $('#email').val('');
+                        $('#phone').val('');
+                        $('#address').val('');
+                    }
+                });
+                
+                // Re-set the contact value after AJAX search is initialized
+                if (data.contact_dropdown_value && data.contact_display_name) {
+                    setTimeout(function() {
+                        var contactOption = '<option value="' + data.contact_dropdown_value + '">' + data.contact_display_name + ' (' + data.contact_type + ')</option>';
+                        $('#contact_id').append(contactOption);
+                        $('#contact_id').selectpicker('val', data.contact_dropdown_value);
+                    }, 100);
+                }
                 
                 // Show modal after data is loaded
                 $('#appointmentModal').modal('show');
@@ -542,6 +608,16 @@ function editAppointment(appointmentId) {
     
     // Load appointment data and then show modal
     loadAppointmentDataAndShowModal(appointmentId);
+}
+
+// Reset appointment modal to default state
+function resetAppointmentModal() {
+    $('#appointmentForm')[0].reset();
+    $('#appointment_id').val('');
+    $('#appointmentModalLabel').text('Create Appointment');
+    $('#contact_id').html('<option value="">Select Client/Lead</option>');
+    $('#contact_id').selectpicker('val', '');
+    $('.selectpicker').selectpicker('refresh');
 }
 
 function deleteAppointment(appointmentId) {
@@ -617,15 +693,16 @@ $('#saveAppointment').on('click', function() {
         type: 'POST',
         data: formData + '&' + csrf_token_name + '=' + csrf_hash,
         dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                alert_float('success', response.message);
-                $('#appointmentModal').modal('hide');
-                $('.table-ella_appointments').DataTable().ajax.reload();
-            } else {
-                alert_float('danger', response.message);
-            }
-        },
+               success: function(response) {
+                   if (response.success) {
+                       alert_float('success', response.message);
+                       $('#appointmentModal').modal('hide');
+                       resetAppointmentModal();
+                       $('.table-ella_appointments').DataTable().ajax.reload();
+                   } else {
+                       alert_float('danger', response.message);
+                   }
+               },
         error: function(xhr, status, error) {
             alert_float('danger', 'Error saving appointment: ' + error);
         }
