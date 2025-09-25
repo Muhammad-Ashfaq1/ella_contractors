@@ -458,25 +458,21 @@ class Appointments extends AdminController
         
         // Process contact_id - handle client_/lead_ prefixes
         $contact_id = $this->input->post('contact_id');
-        $contact_type = '';
         if ($contact_id) {
             if (strpos($contact_id, 'client_') === 0) {
                 $contact_id = str_replace('client_', '', $contact_id);
-                $contact_type = 'client';
             } elseif (strpos($contact_id, 'lead_') === 0) {
                 $contact_id = str_replace('lead_', '', $contact_id);
-                $contact_type = 'lead';
             }
         }
         
         $data = [
             'subject' => $this->input->post('subject'),
-            'date' => $start_date,
-            'start_hour' => $start_time,
-            'end_date' => $end_date,
-            'end_time' => $end_time,
+            'date' => $this->input->post('start_date'),
+            'start_hour' => $this->input->post('start_time'),
+            'end_date' => $this->input->post('end_date'),
+            'end_time' => $this->input->post('end_time'),
             'contact_id' => $contact_id ?: null,
-            'contact_type' => $contact_type,
             'email' => $this->input->post('email'),
             'phone' => $this->input->post('phone'),
             'address' => $this->input->post('address'),
