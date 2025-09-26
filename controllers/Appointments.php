@@ -506,6 +506,8 @@ class Appointments extends AdminController
                         ];
                         $this->misc_model->add_note($note_data, 'appointment', $appointment_id);
                     }
+                    // Handle attachments for update
+                    $this->handle_appointment_attachments($appointment_id);
                     echo json_encode([
                         'success' => true,
                         'message' => 'Appointment updated successfully'
@@ -531,6 +533,8 @@ class Appointments extends AdminController
                         ];
                         $this->misc_model->add_note($note_data, 'appointment', $appointment_id);
                     }
+                    // Handle attachments for creation
+                    $this->handle_appointment_attachments($appointment_id);
                     echo json_encode([
                         'success' => true,
                         'message' => 'Appointment created successfully'
@@ -1585,6 +1589,54 @@ class Appointments extends AdminController
             echo json_encode(['success' => true, 'message' => 'Note deleted successfully']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to delete note or you do not have permission']);
+        }
+    }
+
+    /**
+     * Handle appointment attachments
+     * @param int $appointment_id
+     */
+    private function handle_appointment_attachments($appointment_id)
+    {
+        $attachments = $this->input->post('attachments');
+        
+        if (!empty($attachments)) {
+            // Decode the attachments string (comma-separated file paths)
+            $file_paths = explode(',', $attachments);
+            
+            // Load the ella media model
+            $this->load->model('ella_media_model');
+            
+            foreach ($file_paths as $file_path) {
+                $file_path = trim($file_path);
+                if (!empty($file_path)) {
+                    // Get file info
+                    $full_path = FCPATH . $file_path;
+                    if (file_exists($full_path)) {
+                        $file_info = pathinfo($full_path);
+                        
+                        // Prepare data for database
+                        $media_data = [
+                            'rel_type' => 'appointment',
+                            'rel_id' => $appointment_id,
+                            'org_id' => null,
+                            'folder_id' => null,
+                            'lead_id' => null,
+                            'file_name' => $file_info['basename'],
+                            'original_name' => $file_info['basename'],
+                            'file_type' => mime_content_type($full_path),
+                            'file_size' => filesize($full_path),
+                            'description' => 'Appointment attachment',
+                            'is_default' => 0,
+                            'active' => 1,
+                            'date_uploaded' => date('Y-m-d H:i:s')
+                        ];
+                        
+                        // Insert into database
+                        $this->ella_media_model->add_media($media_data);
+                    }
+                }
+            }
         }
     }
 

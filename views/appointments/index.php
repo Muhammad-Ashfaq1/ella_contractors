@@ -1,6 +1,9 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 
+<!-- Load module CSS -->
+<!-- <link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/ella-contractors.css'); ?>"> -->
+
 <div id="wrapper">
     <div class="content">
         <div class="row">
@@ -664,6 +667,14 @@ function resetAppointmentModal() {
     $('#contact_id').html('<option value="">Select Client/Lead</option>');
     $('#contact_id').selectpicker('val', '');
     $('.selectpicker').selectpicker('refresh');
+    
+    // Clear uploaded files
+    $('#appointment_media_url').val('');
+    appointmentFiles = [];
+    
+    // Clear thumbnails
+    $('.drop-zone__thumb').remove();
+    $('.drop-zone__prompt').show();
 }
 
 function deleteAppointment(appointmentId) {
@@ -733,6 +744,12 @@ $('#saveAppointment').on('click', function() {
     // Get form data
     var formData = $('#appointmentForm').serialize();
     
+    // Add uploaded files data
+    var uploadedFiles = $('#appointment_media_url').val();
+    if (uploadedFiles) {
+        formData += '&attachments=' + encodeURIComponent(uploadedFiles);
+    }
+    
     // Add CSRF token
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/save_ajax',
@@ -754,6 +771,275 @@ $('#saveAppointment').on('click', function() {
         }
     });
 });
+
+// ========================================
+// APPOINTMENT DROPZONE FUNCTIONALITY START
+// ========================================
+
+// Global variables for file management
+var appointmentFiles = appointmentFiles || [];
+
+function getFileIdentifier(file) {
+    return file.name + '-' + file.size + '-' + file.lastModified;
+}
+
+function updateInputFiles(inputElement) {
+    const dt = new DataTransfer();
+    if (appointmentFiles.length > 0) {
+        appointmentFiles.forEach(file => {
+            dt.items.add(file);
+        });
+    }
+    inputElement.files = dt.files;
+    inputElement.required = appointmentFiles.length === 0;
+}
+
+function addNewFiles(newFiles, inputElement, dropZoneElement) {
+    // Check file types (allow common document and image types)
+    const allowedFileTypes = [
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        'application/pdf', 'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    ];
+    
+    const invalidFiles = newFiles.filter(file => !allowedFileTypes.includes(file.type));
+    
+    if (invalidFiles.length > 0) {
+        showMessage('Invalid file type. Only images, PDFs, and Office documents are allowed.', dropZoneElement);
+        return;
+    }
+    
+    // Check total file size (max 10MB for appointments)
+    const maxSize = 10 * 1024 * 1024; // 10 MB in bytes
+    const totalSize = appointmentFiles.reduce((acc, file) => acc + file.size, 0) +
+        newFiles.reduce((acc, file) => acc + file.size, 0);
+    
+    if (totalSize > maxSize) {
+        showMessage('Total file size exceeds the maximum limit of 10 MB.', dropZoneElement);
+        return;
+    }
+    
+    // Add new files
+    appointmentFiles = appointmentFiles.concat(newFiles);
+    updateInputFiles(inputElement);
+    newFiles.forEach(file => {
+        updateThumbnail(dropZoneElement, file, inputElement);
+    });
+}
+
+function showMessage(message, dropZoneElement) {
+    let messageElement = document.createElement('div');
+    messageElement.textContent = message;
+    messageElement.classList.add('upload-message');
+    
+    dropZoneElement.appendChild(messageElement);
+    setTimeout(() => {
+        messageElement.remove();
+    }, 5000);
+}
+
+function updateThumbnail(dropZoneElement, file, inputElement) {
+    let thumbnailElement = document.createElement("div");
+    thumbnailElement.classList.add("drop-zone__thumb");
+    
+    let thumbnailLabel = document.createElement("div");
+    thumbnailLabel.textContent = file.name;
+    thumbnailElement.appendChild(thumbnailLabel);
+    
+    // Show thumbnail for image files
+    if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            let img = document.createElement("img");
+            img.src = reader.result;
+            img.alt = file.name;
+            thumbnailElement.appendChild(img);
+        };
+    }
+    // Show icon for PDF files
+    else if (file.type === "application/pdf") {
+        let pdfIcon = document.createElement("i");
+        pdfIcon.classList.add("fa", "fa-file-pdf-o");
+        pdfIcon.style.fontSize = "48px";
+        pdfIcon.style.color = "#dc3545";
+        pdfIcon.style.marginTop = "30px";
+        thumbnailElement.appendChild(pdfIcon);
+    }
+    // Show icon for Office documents
+    else if (file.type.includes("word") || file.type.includes("document")) {
+        let docIcon = document.createElement("i");
+        docIcon.classList.add("fa", "fa-file-word-o");
+        docIcon.style.fontSize = "48px";
+        docIcon.style.color = "#2b579a";
+        docIcon.style.marginTop = "30px";
+        thumbnailElement.appendChild(docIcon);
+    }
+    else if (file.type.includes("excel") || file.type.includes("spreadsheet")) {
+        let xlsIcon = document.createElement("i");
+        xlsIcon.classList.add("fa", "fa-file-excel-o");
+        xlsIcon.style.fontSize = "48px";
+        xlsIcon.style.color = "#217346";
+        xlsIcon.style.marginTop = "30px";
+        thumbnailElement.appendChild(xlsIcon);
+    }
+    else if (file.type.includes("powerpoint") || file.type.includes("presentation")) {
+        let pptIcon = document.createElement("i");
+        pptIcon.classList.add("fa", "fa-file-powerpoint-o");
+        pptIcon.style.fontSize = "48px";
+        pptIcon.style.color = "#d24726";
+        pptIcon.style.marginTop = "30px";
+        thumbnailElement.appendChild(pptIcon);
+    }
+    
+    addDeleteButton(thumbnailElement, file, dropZoneElement, inputElement);
+    
+    const uploadPrompt = dropZoneElement.querySelector(".drop-zone__prompt");
+    dropZoneElement.insertBefore(thumbnailElement, uploadPrompt);
+}
+
+function addDeleteButton(thumbnailElement, file, dropZoneElement, inputElement) {
+    let deleteIcon = document.createElement("i");
+    deleteIcon.classList.add("fa", "fa-close");
+    
+    let deleteButton = document.createElement("button");
+    deleteButton.classList.add("delete-btn");
+    deleteButton.appendChild(deleteIcon);
+    
+    thumbnailElement.appendChild(deleteButton);
+    
+    deleteButton.addEventListener('click', function(event) {
+        event.stopPropagation();
+        
+        // Remove file from appointmentFiles array
+        appointmentFiles = appointmentFiles.filter(f => f !== file);
+        updateInputFiles(inputElement);
+        thumbnailElement.remove();
+        
+        // Show prompt if no more thumbnails
+        if (!dropZoneElement.querySelector(".drop-zone__thumb")) {
+            const prompt = dropZoneElement.querySelector(".drop-zone__prompt");
+            if (prompt) {
+                prompt.style.display = 'block';
+            }
+        }
+    });
+}
+
+function applyAppointmentEventListeners() {
+    document.querySelectorAll("#appointment_media_image").forEach((inputElement) => {
+        const dropZoneElement = inputElement.closest(".drop-zone");
+        
+        // Click event to trigger file select
+        dropZoneElement.addEventListener("click", () => {
+            inputElement.click();
+        });
+        
+        // File input change event
+        inputElement.addEventListener("change", () => {
+            const existingFileIdentifiers = appointmentFiles.map(getFileIdentifier);
+            const newFiles = Array.from(inputElement.files).filter(
+                file => !existingFileIdentifiers.includes(getFileIdentifier(file))
+            );
+            if (newFiles.length) {
+                addNewFiles(newFiles, inputElement, dropZoneElement);
+            }
+        });
+        
+        // Drag events
+        dropZoneElement.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dropZoneElement.classList.add("drop-zone--over");
+        });
+        
+        ["dragleave", "dragend"].forEach((type) => {
+            dropZoneElement.addEventListener(type, () => {
+                dropZoneElement.classList.remove("drop-zone--over");
+            });
+        });
+        
+        // Drop event
+        dropZoneElement.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropZoneElement.classList.remove("drop-zone--over");
+            
+            const droppedFiles = Array.from(e.dataTransfer.files);
+            const existingFileIdentifiers = appointmentFiles.map(getFileIdentifier);
+            const newFiles = droppedFiles.filter(
+                file => !existingFileIdentifiers.includes(getFileIdentifier(file))
+            );
+            
+            if (newFiles.length) {
+                addNewFiles(newFiles, inputElement, dropZoneElement);
+            }
+        });
+    });
+}
+
+// Initialize dropzone when document is ready
+$(document).ready(function() {
+    // Initialize selectpickers
+    $('.selectpicker').selectpicker();
+    
+    // Initialize dropzone event listeners
+    applyAppointmentEventListeners();
+    
+    // Handle file upload form submission
+    $('#appointmentFileUploadForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        var formData = new FormData(this);
+        var send_url = admin_url + 'upload_image/appointment_upload';
+        
+        $.ajax({
+            type: 'POST',
+            url: send_url,
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function(data) {
+                console.log('File upload success:', data);
+                var currentImagesResponse = $('.appointment_imagesresponse').val();
+                
+                if (currentImagesResponse) {
+                    currentImagesResponse += ',' + data;
+                } else {
+                    currentImagesResponse = data;
+                }
+                
+                $('.appointment_imagesresponse').val(currentImagesResponse);
+            },
+            error: function(data) {
+                console.log('File upload error:', data);
+                showMessage('Error uploading file. Please try again.', $('.drop-zone')[0]);
+            }
+        });
+    });
+    
+    // Handle file input change for immediate upload
+    $("#appointment_media_image").on("change", function() {
+        $("#appointmentFileUploadForm").submit();
+        $('.campaign_type').val('appointment');
+    });
+    
+    // Re-initialize dropzone when modal is shown (in case it's loaded dynamically)
+    $('#appointmentModal').on('shown.bs.modal', function() {
+        applyAppointmentEventListeners();
+        
+        // Initialize selectpickers
+        $('.selectpicker').selectpicker('refresh');
+    });
+});
+
+// ========================================
+// APPOINTMENT DROPZONE FUNCTIONALITY END
+// ========================================
+
 </script>
 
 <!-- Include global appointment.js for lead modal functionality -->

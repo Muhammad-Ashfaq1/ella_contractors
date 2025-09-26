@@ -71,13 +71,6 @@ function ella_contractors_init_menu() {
                 'icon' => 'fa fa-list-alt',
                 'position' => 25,
             ],
-            // [
-            //     'slug' => 'ella_contractors_estimates',
-            //     'name' => 'Estimates',
-            //     'href' => admin_url('ella_contractors/estimates'),
-            //     'icon' => 'fa fa-file-text-o',
-            //     'position' => 30,
-            // ],
             
         ];
 
@@ -93,8 +86,8 @@ function ella_contractors_init_menu() {
 function ella_contractors_init_assets() {
     $CI = &get_instance();
     
-    // Add CSS file
-    $CI->app_css->add('modules/ella_contractors/assets/css/ella-contractors.css', 'module');
+    // CSS files are now loaded individually in views where needed
+    // to avoid 404 errors and improve performance
 }
 
 function ella_contractors_activate_module() {

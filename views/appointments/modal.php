@@ -1,5 +1,109 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 
+<style>
+/* Dropzone styles for appointment modal */
+.drop-zone {
+  max-width: 100%;
+  min-height: 150px;
+  height: auto;
+  padding: 25px;
+  display: inline-flex;
+  width: 98%;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: "Quicksand", sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  cursor: pointer;
+  color: #cccccc;
+  border: 4px dashed #009578;
+  border-radius: 10px;
+  margin-top: 10px;
+  margin-left: 0px;
+  float: left;
+  position: relative;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.drop-zone--over {
+  border-style: solid;
+}
+
+.drop-zone__input {
+  display: none !important;
+}
+
+.drop-zone__thumb {
+  width: 150px;
+  height: 150px;
+  margin: 5px;
+  background-color: #fff;
+  background-size: cover;
+  position: relative;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.drop-zone__thumb img {
+  max-width: 100%;
+  max-height: 100px;
+  display: block;
+  height: 150px;
+  width: 150px;
+}
+
+button.delete-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  background: red;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  z-index: 99999999;
+  text-align: center;
+  cursor: pointer;
+}
+
+.drop-zone__thumb div {
+  content: attr(data-label);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 5px 0;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.75);
+  font-size: 14px;
+  text-align: center;
+}
+
+.upload-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.loader {
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3498db;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 2s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
+
 <div class="modal fade" id="appointmentModal" tabindex="-1" role="dialog" aria-labelledby="appointmentModalLabel">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -132,6 +236,27 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- File Upload Section -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <hr class="hr-panel-heading" />
+                            <h5><?php echo _l('appointment_attachments'); ?></h5>
+                            <p class="text-muted"><?php echo _l('appointment_attachments_help_text'); ?></p>
+                            
+                            <?php echo form_open_multipart('upload_image/appointment_upload', array('class' => 'staff-form', 'id' => 'appointmentFileUploadForm', 'autocomplete' => 'off')); ?>
+                            <label style="float: left; width: 100%;" for="appointment_media_image" class="profile-imagess" id="AppointmentImageBrowse">
+                                <?php echo _l('attach_files'); ?> (.pdf, .jpg, .jpeg, .png, .gif, .doc, .docx, .xls, .xlsx, .ppt, .pptx)
+                            </label>
+                            <div class="drop-zone">
+                                <span class="drop-zone__prompt">Drop or Click Here to Upload</span>
+                                <input type="file" name="appointment_media_image" class="form-control drop-zone__input" id="appointment_media_image" multiple>
+                                <input type="hidden" class="appointment_imagesresponse" id="appointment_media_url" name="appointment_media_url" value=""/>
+                                <input type="hidden" name="campaign_type" class="campaign_type" value="appointment" />
+                            </div>
+                            <?php echo form_close(); ?>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -141,3 +266,4 @@
         </div>
     </div>
 </div>
+
