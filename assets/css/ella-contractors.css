@@ -333,6 +333,34 @@
     font-style: italic;
 }
 
+/* Simple Measurements and Estimates Count Links */
+.table-ella_appointments .measurement-count-link,
+.table-ella_appointments .estimate-count-link {
+    cursor: pointer !important;
+    display: inline-block;
+    padding: 4px 8px;
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-radius: 3px;
+}
+
+.table-ella_appointments .measurement-count-link:hover,
+.table-ella_appointments .estimate-count-link:hover {
+    color: #007bff;
+    text-decoration: none;
+    background-color: rgba(0,123,255,0.1);
+    transform: scale(1.05);
+}
+
+.table-ella_appointments .text-center a {
+    cursor: pointer !important;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .ella-module-header h1 {
