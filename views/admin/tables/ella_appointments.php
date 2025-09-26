@@ -220,16 +220,20 @@ try {
         }
         $row[] = '<span class="label ' . $status_class . '">' . $status_label . '</span>';
         
-        // Display measurement count with simple clickable text
+        // Display measurement count with clickable badge
         $measurement_count = isset($aRow['measurement_count']) ? (int) $aRow['measurement_count'] : 0;
         $measurement_url = admin_url('ella_contractors/appointments/view/' . $aRow['id'] . '?tab=measurements');
-        $measurement_badge = '<div class="text-center"><a href="' . $measurement_url . '" class="measurement-count-link" title="Click to view measurements">' . $measurement_count . '</a></div>';
+        $measurement_badge = $measurement_count > 0 
+            ? '<div class="text-center"><a href="' . $measurement_url . '" class="label label-info" title="Click to view measurements"><i class="fa fa-square-o"></i> ' . $measurement_count . '</a></div>'
+            : '<div class="text-center"><a href="' . $measurement_url . '" class="text-muted" title="Click to add measurements"><i class="fa fa-square-o"></i> 0</a></div>';
         $row[] = $measurement_badge;
         
-        // Display estimate count with simple clickable text
+        // Display estimate count with clickable badge
         $estimate_count = isset($aRow['estimate_count']) ? (int) $aRow['estimate_count'] : 0;
         $estimate_url = admin_url('ella_contractors/appointments/view/' . $aRow['id'] . '?tab=estimates');
-        $estimate_badge = '<div class="text-center"><a href="' . $estimate_url . '" class="estimate-count-link" title="Click to view estimates">' . $estimate_count . '</a></div>';
+        $estimate_badge = $estimate_count > 0 
+            ? '<div class="text-center"><a href="' . $estimate_url . '" class="label label-success" title="Click to view estimates"><i class="fa fa-file-text-o"></i> ' . $estimate_count . '</a></div>'
+            : '<div class="text-center"><a href="' . $estimate_url . '" class="text-muted" title="Click to add estimates"><i class="fa fa-file-text-o"></i> 0</a></div>';
         $row[] = $estimate_badge;
         
         $options = '';

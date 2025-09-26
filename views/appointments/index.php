@@ -98,32 +98,56 @@ $this->load->view('appointments/modal', $data);
 .table-ella_appointments td {
     vertical-align: middle;
 }
-/* Simple Measurements and Estimates Count Links */
-.table-ella_appointments .measurement-count-link,
-.table-ella_appointments .estimate-count-link {
+/* Clickable badge styling */
+.table-ella_appointments .label a,
+.table-ella_appointments .text-muted a {
+    color: inherit;
+    text-decoration: none;
     cursor: pointer !important;
     display: inline-block;
     padding: 4px 8px;
-    color: #333;
-    text-decoration: none;
-    font-weight: 500;
-    transition: all 0.2s ease;
     border-radius: 3px;
+    transition: all 0.2s ease;
 }
 
-.table-ella_appointments .measurement-count-link:hover,
-.table-ella_appointments .estimate-count-link:hover {
-    color: #007bff;
+.table-ella_appointments .label a:hover,
+.table-ella_appointments .text-muted a:hover {
+    color: inherit;
     text-decoration: none;
-    background-color: rgba(0,123,255,0.1);
+    opacity: 0.8;
     transform: scale(1.05);
+    transition: all 0.2s ease;
+    background-color: rgba(0,0,0,0.1);
 }
 
+/* Specific styling for measurements and estimates blocks */
+.table-ella_appointments .label.label-info a,
+.table-ella_appointments .label.label-success a {
+    cursor: pointer !important;
+}
+
+.table-ella_appointments .text-muted a {
+    cursor: pointer !important;
+}
+
+/* Ensure the entire badge area is clickable */
 .table-ella_appointments .text-center a {
     cursor: pointer !important;
     display: inline-block;
     width: 100%;
     text-align: center;
+}
+
+/* Additional hover effects for better UX */
+.table-ella_appointments .label.label-info:hover,
+.table-ella_appointments .label.label-success:hover {
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.table-ella_appointments .text-muted:hover {
+    cursor: pointer;
+    opacity: 0.7;
 }
 </style>
 
