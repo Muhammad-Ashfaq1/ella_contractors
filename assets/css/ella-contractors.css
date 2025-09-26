@@ -1,7 +1,7 @@
 /* Ella Contractors Module Styles */
 
 /* Custom icon styling for sidebar menu */
-.menu-icon[src*="ella-con.png"] {
+.menu-icon[src*="ella-con1.png"] {
     width: 16px !important;
     height: 16px !important;
     object-fit: contain;
@@ -13,14 +13,14 @@
 }
 
 /* Darker icon on hover */
-.menu-item-ella_contractors:hover .menu-icon[src*="ella-con.png"] {
+.menu-item-ella_contractors:hover .menu-icon[src*="ella-con1.png"] {
     filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
     opacity: 1;
 }
 
 /* Active state styling */
-.menu-item-ella_contractors.active .menu-icon[src*="ella-con.png"],
-.menu-item-ella_contractors.current .menu-icon[src*="ella-con.png"] {
+.menu-item-ella_contractors.active .menu-icon[src*="ella-con1.png"],
+.menu-item-ella_contractors.current .menu-icon[src*="ella-con1.png"] {
     filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
     opacity: 1;
 }

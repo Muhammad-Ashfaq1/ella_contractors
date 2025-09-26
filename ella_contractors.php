@@ -31,7 +31,7 @@ function ella_contractors_init_menu() {
         $CI->app_menu->add_sidebar_menu_item('ella_contractors', [
             'slug' => 'ella_contractors',
             'name' => 'EllaContractor',
-            'icon' => 'modules/ella_contractors/assets/images/ella-con.png',
+            'icon' => 'modules/ella_contractors/assets/images/ella-con1.png',
             'position' => 30,
             'collapse' => true,
             'li_attributes' => [
