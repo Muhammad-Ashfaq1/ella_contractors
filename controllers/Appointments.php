@@ -1610,10 +1610,13 @@ class Appointments extends AdminController
             foreach ($file_paths as $file_path) {
                 $file_path = trim($file_path);
                 if (!empty($file_path)) {
-                    // Get file info
-                    $full_path = FCPATH . $file_path;
+                    // Get file info - file_path should already be relative to FCPATH
+                    $full_path = FCPATH . ltrim($file_path, '/');
                     if (file_exists($full_path)) {
                         $file_info = pathinfo($full_path);
+                        
+                        // Get original filename from the uploaded file
+                        $original_name = $file_info['filename'] . '.' . $file_info['extension'];
                         
                         // Prepare data for database
                         $media_data = [
@@ -1623,7 +1626,7 @@ class Appointments extends AdminController
                             'folder_id' => null,
                             'lead_id' => null,
                             'file_name' => $file_info['basename'],
-                            'original_name' => $file_info['basename'],
+                            'original_name' => $original_name,
                             'file_type' => mime_content_type($full_path),
                             'file_size' => filesize($full_path),
                             'description' => 'Appointment attachment',
@@ -1633,11 +1636,94 @@ class Appointments extends AdminController
                         ];
                         
                         // Insert into database
-                        $this->ella_media_model->add_media($media_data);
+                        $media_id = $this->ella_media_model->add_media($media_data);
+                        
+                        // Log for debugging
+                        if ($media_id) {
+                            log_message('debug', 'Appointment attachment saved: ID ' . $media_id . ' for appointment ' . $appointment_id);
+                        } else {
+                            log_message('error', 'Failed to save appointment attachment for appointment ' . $appointment_id);
+                        }
+                    } else {
+                        log_message('error', 'Appointment attachment file not found: ' . $full_path);
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Get appointment attachments for AJAX
+     * @param int $appointment_id
+     */
+    public function get_appointment_attachments($appointment_id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $this->load->model('ella_media_model');
+        $attachments = $this->ella_media_model->get_appointment_attachments($appointment_id);
+        
+        echo json_encode([
+            'success' => true,
+            'attachments' => $attachments
+        ]);
+    }
+
+    /**
+     * Delete appointment attachment
+     * @param int $attachment_id
+     */
+    public function delete_appointment_attachment($attachment_id)
+    {
+        if (!has_permission('ella_contractors', '', 'delete')) {
+            ajax_access_denied();
+        }
+
+        $this->load->model('ella_media_model');
+        $success = $this->ella_media_model->delete_appointment_attachment($attachment_id);
+        
+        if ($success) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Attachment deleted successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to delete attachment'
+            ]);
+        }
+    }
+
+    /**
+     * Download appointment attachment
+     * @param int $attachment_id
+     */
+    public function download_attachment($attachment_id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            access_denied('ella_contractors');
+        }
+
+        $this->load->model('ella_media_model');
+        $attachment = $this->ella_media_model->get_file($attachment_id);
+        
+        if (!$attachment || $attachment->rel_type !== 'appointment') {
+            show_404();
+        }
+
+        // Get file path
+        $file_path = FCPATH . 'uploads/appointments/' . $attachment->file_name;
+        
+        if (!file_exists($file_path)) {
+            show_404();
+        }
+
+        // Force download
+        $this->load->helper('download');
+        force_download($attachment->original_name, file_get_contents($file_path));
     }
 
 }
