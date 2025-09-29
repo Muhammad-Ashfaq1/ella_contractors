@@ -46,14 +46,14 @@
                                 <thead>
                                     <tr>
                                         <th width="50px"></th>
-                                        <th><?php echo _l('id'); ?></th>
-                                        <th>Lead</th>
-                                        <th style="min-width: 250px;"><?php echo _l('appointment_subject'); ?></th>
-                                        <th>Scheduled Date</th>
-                                        <th><?php echo _l('appointment_status'); ?></th>
-                                        <th width="100px">Measurements</th>
-                                        <th width="100px">Estimates</th>
-                                        <th width="120px"><?php echo _l('options'); ?></th>
+                                        <th class="text-center"><?php echo _l('id'); ?></th>
+                                        <th class="text-center">Lead</th>
+                                        <th class="text-center" style="min-width: 250px;">Appointment Name</th>
+                                        <th class="text-center">Scheduled</th>
+                                        <th class="text-center"><?php echo _l('appointment_status'); ?></th>
+                                        <th class="text-center" width="100px">Measurements</th>
+                                        <th class="text-center" width="100px">Estimates</th>
+                                        <th class="text-center" width="120px"><?php echo _l('options'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>

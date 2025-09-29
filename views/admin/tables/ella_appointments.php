@@ -167,9 +167,9 @@ try {
     foreach ($rResult as $aRow) {
         $row = [];
         
-        $row[] = '<div class="checkbox"><input type="checkbox" value="' . htmlspecialchars($aRow['id']) . '"><label></label></div>';
+        $row[] = '<div class="text-center"><div class="checkbox"><input type="checkbox" value="' . htmlspecialchars($aRow['id']) . '"><label></label></div></div>';
         
-        $row[] = htmlspecialchars($aRow['id']);
+        $row[] = '<div class="text-center">' . htmlspecialchars($aRow['id']) . '</div>';
         
         // Lead column with hyperlink
         $lead_name = isset($aRow['lead_name']) ? $aRow['lead_name'] : '';
@@ -179,12 +179,12 @@ try {
         } else {
             $lead_link = '<span class="text-muted">No Lead</span>';
         }
-        $row[] = $lead_link;
+        $row[] = '<div class="text-center">' . $lead_link . '</div>';
         
         $subject = '<a href="' . admin_url('ella_contractors/appointments/view/' . $aRow['id']) . '" class="appointment-subject-link" title="' . htmlspecialchars($aRow['subject']) . '">' . htmlspecialchars($aRow['subject']) . '</a>';
-        $row[] = $subject;
+        $row[] = '<div class="text-center">' . $subject . '</div>';
         
-        // Format date as "July 5th, 2025" with time underneath
+        // Format date as "July 5th, 2025" with US time format underneath
         $date_formatted = '';
         if (!empty($aRow['date'])) {
             $date_obj = DateTime::createFromFormat('Y-m-d', $aRow['date']);
@@ -193,10 +193,17 @@ try {
             }
             
             if (!empty($aRow['start_hour'])) {
-                $date_formatted .= '<br><small class="text-muted">' . htmlspecialchars($aRow['start_hour']) . '</small>';
+                // Convert to US time format (9:45am/9:45pm) - no leading zeros
+                $time_obj = DateTime::createFromFormat('H:i:s', $aRow['start_hour']);
+                if ($time_obj) {
+                    $us_time = $time_obj->format('g:ia');
+                    $date_formatted .= '<br><small class="text-muted">' . $us_time . '</small>';
+                } else {
+                    $date_formatted .= '<br><small class="text-muted">' . htmlspecialchars($aRow['start_hour']) . '</small>';
+                }
             }
         }
-        $row[] = $date_formatted;
+        $row[] = '<div class="text-center">' . $date_formatted . '</div>';
         
         $status_class = '';
         $status_label = '';
@@ -218,7 +225,7 @@ try {
                 $status_class = 'label-warning';
                 $status_label = strtoupper($status);
         }
-        $row[] = '<span class="label ' . $status_class . '">' . $status_label . '</span>';
+        $row[] = '<div class="text-center"><span class="label ' . $status_class . '">' . $status_label . '</span></div>';
         
         // Display measurement count with clickable badge
         $measurement_count = isset($aRow['measurement_count']) ? (int) $aRow['measurement_count'] : 0;
