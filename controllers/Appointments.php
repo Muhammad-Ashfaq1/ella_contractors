@@ -350,6 +350,79 @@ class Appointments extends AdminController
     }
 
     /**
+     * Update appointment status via AJAX
+     */
+    public function update_appointment_status()
+    {
+        if ($this->input->post() && $this->input->is_ajax_request()) {
+            $post_data = $this->input->post();
+            $appointment_id = $this->input->post('appointment_id');
+            $status = $this->input->post('status');
+            
+            // Validate appointment exists and user has permission
+            $appointment = $this->appointments_model->get_appointment($appointment_id);
+            if (!$appointment) {
+                echo json_encode([
+                    'success' => false,
+                    'class' => 'danger',
+                    'message' => 'Appointment not found!',
+                ]);
+                return;
+            }
+            
+            // Check permissions
+            $staff_id = get_staff_user_id();
+            if (!has_permission('ella_contractors', '', 'edit')) {
+                echo json_encode([
+                    'success' => false,
+                    'class' => 'danger',
+                    'message' => 'Access denied!',
+                ]);
+                return;
+            }
+            
+            // Update the appointment status
+            $update_data = [
+                'appointment_status' => $status
+            ];
+            
+            // Also update legacy fields for backward compatibility
+            if ($status === 'cancelled') {
+                $update_data['cancelled'] = 1;
+                $update_data['finished'] = 0;
+                $update_data['approved'] = 0;
+            } elseif ($status === 'complete') {
+                $update_data['cancelled'] = 0;
+                $update_data['finished'] = 1;
+                $update_data['approved'] = 1;
+            } else {
+                $update_data['cancelled'] = 0;
+                $update_data['finished'] = 0;
+                $update_data['approved'] = 0;
+            }
+            
+            $result = $this->appointments_model->update_appointment($appointment_id, $update_data);
+            
+            if ($result) {
+                // Log the activity
+                log_activity('Appointment Status Updated [ID: ' . $appointment_id . ', Status: ' . $status . ']');
+                
+                echo json_encode([
+                    'success' => true,
+                    'class' => 'success',
+                    'message' => 'Appointment status updated successfully!',
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'class' => 'danger',
+                    'message' => 'Failed to update appointment status!',
+                ]);
+            }
+        }
+    }
+
+    /**
      * Get appointments data for AJAX
      */
     public function get_appointments_ajax()

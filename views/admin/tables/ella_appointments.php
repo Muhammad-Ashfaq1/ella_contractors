@@ -214,9 +214,11 @@ try {
         }        
         $row[] = '<div class="text-center">' . $date_formatted . '</div>';
         
+        // Status column with dropdown (similar to leads implementation)
+        $status = isset($aRow['status']) ? $aRow['status'] : 'scheduled';
         $status_class = '';
         $status_label = '';
-        $status = isset($aRow['status']) ? $aRow['status'] : 'scheduled';
+        
         switch ($status) {
             case 'cancelled':
                 $status_class = 'label-danger';
@@ -234,7 +236,42 @@ try {
                 $status_class = 'label-warning';
                 $status_label = strtoupper($status);
         }
-        $row[] = '<div class="text-center"><span class="label ' . $status_class . '">' . $status_label . '</span></div>';
+        
+        // Create status dropdown similar to leads
+        $outputStatus = '<span class="toggle-status-area label ' . $status_class . '" style="display: block; padding-top: 15px;">' . $status_label;
+        
+        // Only show dropdown if user has edit permission
+        if ($has_permission_edit) {
+            $outputStatus .= '<div class="appointment-status-dropdown dropdown mleft5 table-export-exclude" style="display: block;">';
+            $outputStatus .= '<a href="#" style="font-size:14px;vertical-align:middle; display: block; width: 100%; height: 50px; margin-top: -30px; margin-bottom: -10px;" class="dropdown-toggle text-dark" id="tableAppointmentStatus-' . $aRow['id'] . '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">';
+            $outputStatus .= '<span data-toggle="tooltip" title="' . _l('ticket_single_change_status') . '"><i class="fa fa-caret-down" aria-hidden="true" style="opacity: 0;"></i></span>';
+            $outputStatus .= '</a>';
+            
+            $outputStatus .= '<ul id="appointment-status-' . $aRow['id'] . '" class="dropdown-menu dropdown-menu-right" aria-labelledby="tableAppointmentStatus-' . $aRow['id'] . '">';
+            
+            // Available statuses
+            $available_statuses = [
+                ['value' => 'scheduled', 'label' => _l('scheduled')],
+                ['value' => 'complete', 'label' => _l('complete')],
+                ['value' => 'cancelled', 'label' => _l('cancelled')]
+            ];
+            
+            foreach ($available_statuses as $status_option) {
+                if ($status !== $status_option['value']) {
+                    $outputStatus .= '<li>';
+                    $outputStatus .= '<a href="#" onclick="appointment_mark_as(\'' . $status_option['value'] . '\', ' . $aRow['id'] . '); return false;">';
+                    $outputStatus .= $status_option['label'];
+                    $outputStatus .= '</a>';
+                    $outputStatus .= '</li>';
+                }
+            }
+            
+            $outputStatus .= '</ul>';
+            $outputStatus .= '</div>';
+        }
+        
+        $outputStatus .= '</span>';
+        $row[] = '<div class="text-center">' . $outputStatus . '</div>';
         
         // Display measurement count with clickable badge
         $measurement_count = isset($aRow['measurement_count']) ? (int) $aRow['measurement_count'] : 0;

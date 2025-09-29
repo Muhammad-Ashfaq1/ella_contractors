@@ -98,6 +98,40 @@ $this->load->view('appointments/modal', $data);
     text-align: center;
     vertical-align: middle;
 }
+
+/* Appointment Status Dropdown Styling (similar to leads) */
+.appointment-status-dropdown {
+    position: relative;
+}
+
+.appointment-status-dropdown .dropdown-menu {
+    min-width: 150px;
+    max-width: 200px;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 1000;
+    margin-top: 2px;
+}
+
+.appointment-status-dropdown .dropdown-menu li a {
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+.appointment-status-dropdown .dropdown-menu li a:hover {
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.toggle-status-area {
+    cursor: pointer;
+    position: relative;
+}
+
+.toggle-status-area:hover {
+    opacity: 0.8;
+}
 .table-ella_appointments td {
     vertical-align: middle;
 }
@@ -1038,6 +1072,60 @@ $(document).ready(function() {
 
 // ========================================
 // APPOINTMENT DROPZONE FUNCTIONALITY END
+// ========================================
+
+// ========================================
+// APPOINTMENT STATUS DROPDOWN FUNCTIONALITY
+// ========================================
+
+/**
+ * Update appointment status via AJAX (similar to lead_mark_as function)
+ * @param {string} status - The new status (scheduled, complete, cancelled)
+ * @param {number} appointment_id - The appointment ID
+ */
+function appointment_mark_as(status, appointment_id) {
+    var data = {};
+    data.status = status;
+    data.appointment_id = appointment_id;
+    
+    // Show loading indicator
+    var statusElement = $('#tableAppointmentStatus-' + appointment_id).closest('.toggle-status-area');
+    var originalContent = statusElement.html();
+    statusElement.html('<i class="fa fa-spinner fa-spin"></i> Updating...');
+    
+    $.post(admin_url + 'ella_contractors/appointments/update_appointment_status', data)
+    .done(function (response) {
+        var result = JSON.parse(response);
+        
+        if (result.success) {
+            // Show success message
+            alert_float(result.class, result.message);
+            
+            // Reload the DataTable to reflect changes
+            if (typeof table_ella_appointments !== 'undefined') {
+                table_ella_appointments.DataTable().ajax.reload(null, false);
+            }
+        } else {
+            // Show error message
+            alert_float(result.class, result.message);
+            
+            // Restore original content
+            statusElement.html(originalContent);
+        }
+    })
+    .fail(function (xhr, status, error) {
+        // Show error message
+        alert_float('danger', 'Failed to update appointment status. Please try again.');
+        
+        // Restore original content
+        statusElement.html(originalContent);
+        
+        console.error('Appointment status update failed:', error);
+    });
+}
+
+// ========================================
+// APPOINTMENT STATUS DROPDOWN FUNCTIONALITY END
 // ========================================
 
 </script>
