@@ -128,7 +128,7 @@ button.delete-btn {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="subject">Subject <span class="text-danger">*</span> 
+                                <label for="subject"> Appointment Name <span class="text-danger">*</span> 
                                     <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="Give this appointment a friendly name to remember"></i>
                                 </label>
                                 <input type="text" class="form-control" id="subject" name="subject" required>

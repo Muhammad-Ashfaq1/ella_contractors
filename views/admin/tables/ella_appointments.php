@@ -184,25 +184,34 @@ try {
         $subject = '<a href="' . admin_url('ella_contractors/appointments/view/' . $aRow['id']) . '" class="appointment-subject-link" title="' . htmlspecialchars($aRow['subject']) . '">' . htmlspecialchars($aRow['subject']) . '</a>';
         $row[] = '<div class="text-center">' . $subject . '</div>';
         
-        // Format date as "July 5th, 2025" with US time format underneath
+        // Format date as "July 5th, 2025" with time underneath
         $date_formatted = '';
         if (!empty($aRow['date'])) {
             $date_obj = DateTime::createFromFormat('Y-m-d', $aRow['date']);
             if ($date_obj) {
                 $date_formatted = $date_obj->format('F jS, Y');
+            } else {
+                $date_formatted = htmlspecialchars($aRow['date']);
             }
             
             if (!empty($aRow['start_hour'])) {
-                // Convert to US time format (9:45am/9:45pm) - no leading zeros
+                // Try to parse time (assumes format like "09:45:00" or "09:45")
                 $time_obj = DateTime::createFromFormat('H:i:s', $aRow['start_hour']);
-                if ($time_obj) {
-                    $us_time = $time_obj->format('g:ia');
-                    $date_formatted .= '<br><small class="text-muted">' . $us_time . '</small>';
-                } else {
-                    $date_formatted .= '<br><small class="text-muted">' . htmlspecialchars($aRow['start_hour']) . '</small>';
+                if (!$time_obj) {
+                    $time_obj = DateTime::createFromFormat('H:i', $aRow['start_hour']);
                 }
+        
+                if ($time_obj) {
+                    // U.S. format => 9:45am / 9:45pm (no leading zeros)
+                    $time_formatted = strtolower($time_obj->format('g:ia'));
+                } else {
+                    // Fallback if parsing fails
+                    $time_formatted = htmlspecialchars($aRow['start_hour']);
+                }
+        
+                $date_formatted .= '<br><small class="">' . $time_formatted . '</small>';
             }
-        }
+        }        
         $row[] = '<div class="text-center">' . $date_formatted . '</div>';
         
         $status_class = '';
