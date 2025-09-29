@@ -257,15 +257,30 @@ button.delete-btn {
                             <div class="col-md-4 text-right">
                                 <!-- Status Display -->
                                 <div class="status-display">
-                                    <?php if($appointment['cancelled']): ?>
-                                        <span class="label label-danger"><?php echo _l('cancelled'); ?></span>
-                                    <?php elseif($appointment['finished']): ?>
-                                        <span class="label label-success"><?php echo _l('finished'); ?></span>
-                                    <?php elseif($appointment['approved']): ?>
-                                        <span class="label label-info"><?php echo _l('approved'); ?></span>
-                                    <?php else: ?>
-                                        <span class="label label-warning"><?php echo _l('pending'); ?></span>
-                                    <?php endif; ?>
+                                    <?php 
+                                    $status = isset($appointment['appointment_status']) ? $appointment['appointment_status'] : 'scheduled';
+                                    $status_class = '';
+                                    $status_label = '';
+                                    
+                                    switch ($status) {
+                                        case 'cancelled':
+                                            $status_class = 'label-danger';
+                                            $status_label = 'CANCELLED';
+                                            break;
+                                        case 'complete':
+                                            $status_class = 'label-success';
+                                            $status_label = 'COMPLETE';
+                                            break;
+                                        case 'scheduled':
+                                            $status_class = 'label-info';
+                                            $status_label = 'SCHEDULED';
+                                            break;
+                                        default:
+                                            $status_class = 'label-warning';
+                                            $status_label = strtoupper($status);
+                                    }
+                                    ?>
+                                    <span class="label <?php echo $status_class; ?>"><?php echo $status_label; ?></span>
                                 </div>
                             </div>
                         </div>

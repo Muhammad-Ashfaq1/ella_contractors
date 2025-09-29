@@ -204,19 +204,19 @@ try {
         switch ($status) {
             case 'cancelled':
                 $status_class = 'label-danger';
-                $status_label = 'Cancelled';
+                $status_label = _l('cancelled');
                 break;
             case 'complete':
                 $status_class = 'label-success';
-                $status_label = 'Complete';
+                $status_label = _l('complete');
                 break;
             case 'scheduled':
                 $status_class = 'label-info';
-                $status_label = 'Scheduled';
+                $status_label = _l('scheduled');
                 break;
             default:
                 $status_class = 'label-warning';
-                $status_label = ucfirst($status);
+                $status_label = strtoupper($status);
         }
         $row[] = '<span class="label ' . $status_class . '">' . $status_label . '</span>';
         

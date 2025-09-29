@@ -124,9 +124,9 @@ class Ella_appointments_model extends App_Model
     public function get_statuses()
     {
         return [
-            'scheduled' => 'Scheduled',
-            'cancelled' => 'Cancelled',
-            'complete' => 'Complete'
+            'scheduled' => _l('scheduled'),
+            'cancelled' => _l('cancelled'),
+            'complete' => _l('complete')
         ];
     }
 

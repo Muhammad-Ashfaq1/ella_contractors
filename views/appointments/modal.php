@@ -220,9 +220,9 @@ button.delete-btn {
                             <div class="form-group">
                                 <label for="status">Status</label>
                                 <select class="form-control" id="status" name="status">
-                                    <option value="scheduled">Scheduled</option>
-                                    <option value="cancelled">Cancelled</option>
-                                    <option value="complete">Complete</option>
+                                    <option value="scheduled"><?php echo _l('scheduled'); ?></option>
+                                    <option value="cancelled"><?php echo _l('cancelled'); ?></option>
+                                    <option value="complete"><?php echo _l('complete'); ?></option>
                                 </select>
                             </div>
                         </div>
