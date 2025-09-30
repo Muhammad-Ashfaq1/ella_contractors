@@ -1101,10 +1101,12 @@ function appointment_mark_as(status, appointment_id) {
             // Show success message
             alert_float(result.class, result.message);
             
-            // Reload the DataTable to reflect changes
-            if (typeof table_ella_appointments !== 'undefined') {
-                table_ella_appointments.DataTable().ajax.reload(null, false);
-            }
+            // Hide the status dropdown modal
+            $('#appointment-status-' + appointment_id).removeClass('open');
+            $('#tableAppointmentStatus-' + appointment_id).attr('aria-expanded', 'false');
+            
+            // Update the status cell in place instead of reloading entire table
+            updateAppointmentStatusInPlace(appointment_id, status);
         } else {
             // Show error message
             alert_float(result.class, result.message);
@@ -1122,6 +1124,127 @@ function appointment_mark_as(status, appointment_id) {
         
         console.error('Appointment status update failed:', error);
     });
+}
+
+/**
+ * Update appointment status display in place without reloading the table
+ * @param {number} appointment_id - The appointment ID
+ * @param {string} newStatus - The new status value
+ */
+function updateAppointmentStatusInPlace(appointment_id, newStatus) {
+    // Get the DataTable instance
+    var table = $('.table-ella_appointments').DataTable();
+    
+    // Check if DataTable is properly initialized
+    if (!table || typeof table.rows === 'undefined') {
+        console.warn('DataTable not properly initialized, reloading table...');
+        location.reload();
+        return;
+    }
+    
+    // Find the row with the matching appointment ID
+    var rowIndex = -1;
+    table.rows().every(function(rowIdx, data, node) {
+        if (data[1] == appointment_id) { // Column 1 is the ID column
+            rowIndex = rowIdx;
+            return false; // Break the loop
+        }
+    });
+    
+    if (rowIndex !== -1) {
+        // Get the current row data
+        var rowData = table.row(rowIndex).data();
+        
+        // Update the status in the row data (column 5 is the status column)
+        rowData[5] = newStatus;
+        
+        // Generate new status HTML
+        var statusHtml = generateStatusHtml(newStatus, appointment_id);
+        
+        // Update the status cell directly in the DOM
+        var statusCell = table.cell(rowIndex, 5).node();
+        $(statusCell).html('<div class="text-center">' + statusHtml + '</div>');
+        
+        // Update the row data in DataTable
+        table.row(rowIndex).data(rowData).draw(false);
+        
+        // Reinitialize tooltips for the updated status element
+        $('[data-toggle="tooltip"]').tooltip();
+    } else {
+        // Fallback: if row not found, reload the table
+        console.warn('Row not found for appointment ID:', appointment_id, 'reloading table...');
+        table.ajax.reload(null, false);
+    }
+}
+
+/**
+ * Generate status HTML for the given status value
+ * @param {string} status - The status value
+ * @param {number} appointment_id - The appointment ID
+ * @returns {string} HTML string for the status display
+ */
+function generateStatusHtml(status, appointment_id) {
+    var statusClass = '';
+    var statusLabel = '';
+    var hasPermission = <?php echo has_permission('ella_contractors', '', 'edit') ? 'true' : 'false'; ?>;
+    
+    // Determine status class and label based on status value
+    switch (status) {
+        case 'cancelled':
+            statusClass = 'label-danger';
+            statusLabel = '<?php echo strtoupper(_l('cancelled')); ?>';
+            break;
+        case 'complete':
+            statusClass = 'label-success';
+            statusLabel = '<?php echo strtoupper(_l('complete')); ?>';
+            break;
+        case 'scheduled':
+            statusClass = 'label-info';
+            statusLabel = '<?php echo strtoupper(_l('scheduled')); ?>';
+            break;
+        default:
+            statusClass = 'label-warning';
+            statusLabel = status.toUpperCase();
+    }
+    
+    // Create status display HTML
+    var statusHtml = '<span class="toggle-status-area label ' + statusClass + '" style="display: block; padding-top: 15px;">' + statusLabel;
+    
+    // Add dropdown if user has edit permission
+    if (hasPermission) {
+        statusHtml += '<div class="appointment-status-dropdown dropdown mleft5 table-export-exclude" style="display: block;">';
+        statusHtml += '<a href="#" style="font-size:14px;vertical-align:middle; display: block; width: 100%; height: 50px; margin-top: -30px; margin-bottom: -10px;" class="dropdown-toggle text-dark" id="tableAppointmentStatus-' + appointment_id + '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">';
+        statusHtml += '<span data-toggle="tooltip" title="<?php echo _l('ticket_single_change_status'); ?>"><i class="fa fa-caret-down" aria-hidden="true" style="opacity: 0;"></i></span>';
+        statusHtml += '</a>';
+        
+        statusHtml += '<ul id="appointment-status-' + appointment_id + '" class="dropdown-menu dropdown-menu-right" aria-labelledby="tableAppointmentStatus-' + appointment_id + '">';
+        
+        // Available statuses with capital letters
+        var availableStatuses = [
+            {value: 'scheduled', label: '<?php echo strtoupper(_l('scheduled')); ?>'},
+            {value: 'complete', label: '<?php echo strtoupper(_l('complete')); ?>'},
+            {value: 'cancelled', label: '<?php echo strtoupper(_l('cancelled')); ?>'}
+        ];
+        
+        // Add dropdown options for other statuses
+        for (var i = 0; i < availableStatuses.length; i++) {
+            var statusOption = availableStatuses[i];
+            if (status !== statusOption.value) {
+                statusHtml += '<li>';
+                statusHtml += '<a href="#" onclick="appointment_mark_as(\'' + statusOption.value + '\', ' + appointment_id + '); return false;">';
+                statusHtml += statusOption.label;
+                statusHtml += '</a>';
+                statusHtml += '</li>';
+            }
+        }
+        
+        statusHtml += '</ul>';
+        statusHtml += '</div>';
+    }
+    
+    statusHtml += '</span>';
+    
+    return statusHtml;
 }
 
 // ========================================
