@@ -406,24 +406,7 @@ button.delete-btn {
                                 </table>
                             </div>
                         </div>
-                
-                        <?php if($appointment['description']): ?>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <h5><?php echo _l('description'); ?></h5>
-                                <p><?php echo nl2br($appointment['description']); ?></p>
-                            </div>
-                        </div>
-                        <?php endif; ?>
                         
-                        <?php if($appointment['notes']): ?>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <h5><?php echo _l('notes'); ?></h5>
-                                <p><?php echo nl2br($appointment['notes']); ?></p>
-                            </div>
-                        </div>
-                        <?php endif; ?>
                         
                         <?php if(!empty($attendees)): ?>
                         <div class="row">
