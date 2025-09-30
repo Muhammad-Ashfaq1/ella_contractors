@@ -239,7 +239,7 @@ try {
         
         // Create status display with simple dropdown approach
         $outputStatus = '<div class="status-wrapper" style="position: relative; display: inline-block;">';
-        $outputStatus .= '<span class="status-button label ' . $status_class . '" id="status-btn-' . $aRow['id'] . '">';
+        $outputStatus .= '<span class="status-button label ' . $status_class . '" id="status-btn-' . $aRow['id'] . '" style="cursor: pointer !important;">';
         $outputStatus .= $status_label;
         $outputStatus .= '</span>';
         
