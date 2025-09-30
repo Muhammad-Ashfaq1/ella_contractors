@@ -108,10 +108,22 @@ $this->load->view('appointments/modal', $data);
 .status-button {
     cursor: pointer;
     transition: opacity 0.2s ease;
+    font-size: 13px;
+    padding: 10px 18px !important;
+    font-weight: 700;
+    min-width: 110px;
+    text-align: center;
+    display: inline-block;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
 .status-button:hover {
     opacity: 0.8;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
 .status-dropdown {
@@ -1216,7 +1228,7 @@ function generateStatusHtml(status, appointment_id) {
     
     // Create status display HTML - simple approach
     var statusHtml = '<div class="status-wrapper" style="position: relative; display: inline-block;">';
-    statusHtml += '<span class="status-button label ' + statusClass + '" id="status-btn-' + appointment_id + '" style="display: inline-block; padding: 6px 12px; cursor: pointer;">';
+    statusHtml += '<span class="status-button label ' + statusClass + '" id="status-btn-' + appointment_id + '">';
     statusHtml += statusLabel;
     statusHtml += '</span>';
     
