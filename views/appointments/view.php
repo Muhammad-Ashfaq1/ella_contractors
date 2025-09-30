@@ -370,9 +370,8 @@ button.delete-btn {
                                     <tr>
                                         <td><strong><?php echo _l('client'); ?>:</strong></td>
                                         <td>
-                                            <?php if($appointment['client_name']): ?>
-                                                <?php echo $appointment['client_name']; ?>
-                                            <?php elseif($appointment['lead_name']): ?>
+                                           
+                                            <?php if($appointment['lead_name']): ?>
                                                 <?php echo $appointment['lead_name']; ?>
                                             <?php else: ?>
                                                 <?php echo $appointment['name']; ?>
@@ -406,7 +405,7 @@ button.delete-btn {
                                 </table>
                             </div>
                         </div>
-                        
+                    
                         
                         <?php if(!empty($attendees)): ?>
                         <div class="row">
