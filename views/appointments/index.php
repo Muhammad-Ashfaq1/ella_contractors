@@ -14,7 +14,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <button type="button" class="btn btn-info" onclick="console.log('Button clicked'); openAppointmentModal(); $('#appointmentModal').modal('show');">
-                                        <i class="fa fa-plus"></i> New Appointment
+                                        <i class="fa fa-plus" style="margin-right: 2% !important;"></i> New Appointment
                                     </button>
                                 </div>
                                 <div class="col-md-6">
