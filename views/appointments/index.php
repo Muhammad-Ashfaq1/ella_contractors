@@ -99,38 +99,46 @@ $this->load->view('appointments/modal', $data);
     vertical-align: middle;
 }
 
-/* Appointment Status Dropdown Styling (similar to leads) */
-.appointment-status-dropdown {
+/* Simple Status Dropdown Styling */
+.status-wrapper {
     position: relative;
+    display: inline-block;
 }
 
-.appointment-status-dropdown .dropdown-menu {
-    min-width: 150px;
-    max-width: 200px;
-    position: absolute;
-    top: 100%;
-    right: 0;
-    z-index: 1000;
-    margin-top: 2px;
-}
-
-.appointment-status-dropdown .dropdown-menu li a {
-    padding: 8px 12px;
-    font-size: 13px;
-}
-
-.appointment-status-dropdown .dropdown-menu li a:hover {
-    background-color: #f5f5f5;
-    color: #333;
-}
-
-.toggle-status-area {
+.status-button {
     cursor: pointer;
-    position: relative;
+    transition: opacity 0.2s ease;
 }
 
-.toggle-status-area:hover {
+.status-button:hover {
     opacity: 0.8;
+}
+
+.status-dropdown {
+    position: absolute;
+    top: 0;
+    right: 100%;
+    z-index: 1000;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    min-width: 120px;
+}
+
+.status-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.2s ease;
+}
+
+.status-option:hover {
+    background-color: #f5f5f5;
+}
+
+.status-option:last-child {
+    border-bottom: none;
 }
 .table-ella_appointments td {
     vertical-align: middle;
@@ -1089,9 +1097,12 @@ function appointment_mark_as(status, appointment_id) {
     data.appointment_id = appointment_id;
     
     // Show loading indicator
-    var statusElement = $('#tableAppointmentStatus-' + appointment_id).closest('.toggle-status-area');
+    var statusElement = $('#status-btn-' + appointment_id);
     var originalContent = statusElement.html();
     statusElement.html('<i class="fa fa-spinner fa-spin"></i> Updating...');
+    
+    // Hide status menu immediately
+    $('#status-menu-' + appointment_id).hide();
     
     $.post(admin_url + 'ella_contractors/appointments/update_appointment_status', data)
     .done(function (response) {
@@ -1100,14 +1111,6 @@ function appointment_mark_as(status, appointment_id) {
         if (result.success) {
             // Show success message
             alert_float(result.class, result.message);
-            
-            // Hide the status dropdown modal immediately
-            $('#appointment-status-' + appointment_id).removeClass('open').hide();
-            $('#tableAppointmentStatus-' + appointment_id).attr('aria-expanded', 'false');
-            
-            // Close any Bootstrap dropdowns that might be open
-            $('.dropdown.open').removeClass('open');
-            $('[data-toggle="dropdown"][aria-expanded="true"]').attr('aria-expanded', 'false');
             
             // Update the status cell in place instead of reloading entire table
             updateAppointmentStatusInPlace(appointment_id, status);
@@ -1211,45 +1214,64 @@ function generateStatusHtml(status, appointment_id) {
             statusLabel = status.toUpperCase();
     }
     
-    // Create status display HTML
-    var statusHtml = '<span class="toggle-status-area label ' + statusClass + '" style="display: block; padding-top: 15px;">' + statusLabel;
+    // Create status display HTML - simple approach
+    var statusHtml = '<div class="status-wrapper" style="position: relative; display: inline-block;">';
+    statusHtml += '<span class="status-button label ' + statusClass + '" id="status-btn-' + appointment_id + '" style="display: inline-block; padding: 6px 12px; cursor: pointer;">';
+    statusHtml += statusLabel;
+    statusHtml += '</span>';
     
-    // Add dropdown if user has edit permission
+    // Dropdown menu positioned on the left side
     if (hasPermission) {
-        statusHtml += '<div class="appointment-status-dropdown dropdown mleft5 table-export-exclude" style="display: block;">';
-        statusHtml += '<a href="#" style="font-size:14px;vertical-align:middle; display: block; width: 100%; height: 50px; margin-top: -30px; margin-bottom: -10px;" class="dropdown-toggle text-dark" id="tableAppointmentStatus-' + appointment_id + '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">';
-        statusHtml += '<span data-toggle="tooltip" title="<?php echo _l('ticket_single_change_status'); ?>"><i class="fa fa-caret-down" aria-hidden="true" style="opacity: 0;"></i></span>';
-        statusHtml += '</a>';
+        statusHtml += '<div id="status-menu-' + appointment_id + '" class="status-dropdown" style="display: none; position: absolute; top: 0; right: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 120px;">';
         
-        statusHtml += '<ul id="appointment-status-' + appointment_id + '" class="dropdown-menu dropdown-menu-right" aria-labelledby="tableAppointmentStatus-' + appointment_id + '">';
-        
-        // Available statuses with capital letters
         var availableStatuses = [
             {value: 'scheduled', label: '<?php echo strtoupper(_l('scheduled')); ?>'},
             {value: 'complete', label: '<?php echo strtoupper(_l('complete')); ?>'},
             {value: 'cancelled', label: '<?php echo strtoupper(_l('cancelled')); ?>'}
         ];
         
-        // Add dropdown options for other statuses
         for (var i = 0; i < availableStatuses.length; i++) {
             var statusOption = availableStatuses[i];
             if (status !== statusOption.value) {
-                statusHtml += '<li>';
-                statusHtml += '<a href="#" onclick="appointment_mark_as(\'' + statusOption.value + '\', ' + appointment_id + '); return false;">';
+                statusHtml += '<div class="status-option" onclick="appointment_mark_as(\'' + statusOption.value + '\', ' + appointment_id + '); return false;" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;">';
                 statusHtml += statusOption.label;
-                statusHtml += '</a>';
-                statusHtml += '</li>';
+                statusHtml += '</div>';
             }
         }
         
-        statusHtml += '</ul>';
         statusHtml += '</div>';
     }
     
-    statusHtml += '</span>';
+    statusHtml += '</div>';
     
     return statusHtml;
 }
+
+// Add click handler for status button
+$(document).on('click', '.status-button', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    var appointmentId = $(this).attr('id').replace('status-btn-', '');
+    var $statusMenu = $('#status-menu-' + appointmentId);
+    
+    // Hide all other status menus first
+    $('.status-dropdown').not($statusMenu).hide();
+    
+    // Toggle current status menu
+    if ($statusMenu.is(':visible')) {
+        $statusMenu.hide();
+    } else {
+        $statusMenu.show();
+    }
+});
+
+// Hide status menus when clicking outside
+$(document).on('click', function(e) {
+    if (!$(e.target).closest('.status-wrapper').length) {
+        $('.status-dropdown').hide();
+    }
+});
 
 // ========================================
 // APPOINTMENT STATUS DROPDOWN FUNCTIONALITY END

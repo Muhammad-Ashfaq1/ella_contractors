@@ -237,19 +237,16 @@ try {
                 $status_label = strtoupper($status);
         }
         
-        // Create status dropdown similar to leads
-        $outputStatus = '<span class="toggle-status-area label ' . $status_class . '" style="display: block; padding-top: 15px;">' . $status_label;
+        // Create status display with simple dropdown approach
+        $outputStatus = '<div class="status-wrapper" style="position: relative; display: inline-block;">';
+        $outputStatus .= '<span class="status-button label ' . $status_class . '" id="status-btn-' . $aRow['id'] . '" style="display: inline-block; padding: 6px 12px; cursor: pointer;">';
+        $outputStatus .= $status_label;
+        $outputStatus .= '</span>';
         
-        // Only show dropdown if user has edit permission
+        // Dropdown menu positioned on the left side
         if ($has_permission_edit) {
-            $outputStatus .= '<div class="appointment-status-dropdown dropdown mleft5 table-export-exclude" style="display: block;">';
-            $outputStatus .= '<a href="#" style="font-size:14px;vertical-align:middle; display: block; width: 100%; height: 50px; margin-top: -30px; margin-bottom: -10px;" class="dropdown-toggle text-dark" id="tableAppointmentStatus-' . $aRow['id'] . '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">';
-            $outputStatus .= '<span data-toggle="tooltip" title="' . _l('ticket_single_change_status') . '"><i class="fa fa-caret-down" aria-hidden="true" style="opacity: 0;"></i></span>';
-            $outputStatus .= '</a>';
+            $outputStatus .= '<div id="status-menu-' . $aRow['id'] . '" class="status-dropdown" style="display: none; position: absolute; top: 0; right: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 120px;">';
             
-            $outputStatus .= '<ul id="appointment-status-' . $aRow['id'] . '" class="dropdown-menu dropdown-menu-right" aria-labelledby="tableAppointmentStatus-' . $aRow['id'] . '">';
-            
-            // Available statuses
             $available_statuses = [
                 ['value' => 'scheduled', 'label' => strtoupper(_l('scheduled'))],
                 ['value' => 'complete', 'label' => strtoupper(_l('complete'))],
@@ -258,19 +255,16 @@ try {
             
             foreach ($available_statuses as $status_option) {
                 if ($status !== $status_option['value']) {
-                    $outputStatus .= '<li>';
-                    $outputStatus .= '<a href="#" onclick="appointment_mark_as(\'' . $status_option['value'] . '\', ' . $aRow['id'] . '); return false;">';
+                    $outputStatus .= '<div class="status-option" onclick="appointment_mark_as(\'' . $status_option['value'] . '\', ' . $aRow['id'] . '); return false;" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;">';
                     $outputStatus .= $status_option['label'];
-                    $outputStatus .= '</a>';
-                    $outputStatus .= '</li>';
+                    $outputStatus .= '</div>';
                 }
             }
             
-            $outputStatus .= '</ul>';
             $outputStatus .= '</div>';
         }
         
-        $outputStatus .= '</span>';
+        $outputStatus .= '</div>';
         $row[] = '<div class="text-center">' . $outputStatus . '</div>';
         
         // Display measurement count with clickable badge
