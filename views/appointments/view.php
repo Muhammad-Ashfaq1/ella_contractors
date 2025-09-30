@@ -333,7 +333,20 @@ button.delete-btn {
                                             
                                             // Add time underneath
                                             if (!empty($appointment['start_hour'])) {
-                                                echo '<br><small class="text-muted">' . htmlspecialchars($appointment['start_hour']) . '</small>';
+                                                // Format time in 12-hour format with AM/PM
+                                                $time_obj = DateTime::createFromFormat('H:i:s', $appointment['start_hour']);
+                                                if (!$time_obj) {
+                                                    $time_obj = DateTime::createFromFormat('H:i', $appointment['start_hour']);
+                                                }
+                                                
+                                                if ($time_obj) {
+                                                    $time_formatted = strtolower($time_obj->format('g:ia'));
+                                                } else {
+                                                    // Fallback if parsing fails
+                                                    $time_formatted = htmlspecialchars($appointment['start_hour']);
+                                                }
+                                                
+                                                echo '<br><small>' . $time_formatted . '</small>';
                                             }
                                             ?>
                                         </td>
@@ -356,7 +369,20 @@ button.delete-btn {
                                             
                                             // Add time underneath
                                             if (!empty($end_time)) {
-                                                echo '<br><small class="text-muted">' . htmlspecialchars($end_time) . '</small>';
+                                                // Format time in 12-hour format with AM/PM
+                                                $end_time_obj = DateTime::createFromFormat('H:i:s', $end_time);
+                                                if (!$end_time_obj) {
+                                                    $end_time_obj = DateTime::createFromFormat('H:i', $end_time);
+                                                }
+                                                
+                                                if ($end_time_obj) {
+                                                    $end_time_formatted = strtolower($end_time_obj->format('g:ia'));
+                                                } else {
+                                                    // Fallback if parsing fails
+                                                    $end_time_formatted = htmlspecialchars($end_time);
+                                                }
+                                                
+                                                echo '<br><small>' . $end_time_formatted . '</small>';
                                             }
                                             ?>
                                         </td>
