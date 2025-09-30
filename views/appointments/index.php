@@ -1101,9 +1101,13 @@ function appointment_mark_as(status, appointment_id) {
             // Show success message
             alert_float(result.class, result.message);
             
-            // Hide the status dropdown modal
-            $('#appointment-status-' + appointment_id).removeClass('open');
+            // Hide the status dropdown modal immediately
+            $('#appointment-status-' + appointment_id).removeClass('open').hide();
             $('#tableAppointmentStatus-' + appointment_id).attr('aria-expanded', 'false');
+            
+            // Close any Bootstrap dropdowns that might be open
+            $('.dropdown.open').removeClass('open');
+            $('[data-toggle="dropdown"][aria-expanded="true"]').attr('aria-expanded', 'false');
             
             // Update the status cell in place instead of reloading entire table
             updateAppointmentStatusInPlace(appointment_id, status);
