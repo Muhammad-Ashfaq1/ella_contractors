@@ -378,12 +378,7 @@ button.delete-btn {
                                             <?php endif; ?>
                                         </td>
                                     </tr>
-                                    <?php if($appointment['name']): ?>
-                                    <tr>
-                                        <td><strong><?php echo _l('contact_name'); ?>:</strong></td>
-                                        <td><?php echo $appointment['name']; ?></td>
-                                    </tr>
-                                    <?php endif; ?>
+                                    
                                     <?php if($appointment['email']): ?>
                                     <tr>
                                         <td><strong><?php echo _l('email'); ?>:</strong></td>
