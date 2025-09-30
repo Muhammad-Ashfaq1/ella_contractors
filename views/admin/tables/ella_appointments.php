@@ -222,15 +222,15 @@ try {
         switch ($status) {
             case 'cancelled':
                 $status_class = 'label-danger';
-                $status_label = _l('cancelled');
+                $status_label = strtoupper(_l('cancelled'));
                 break;
             case 'complete':
                 $status_class = 'label-success';
-                $status_label = _l('complete');
+                $status_label = strtoupper(_l('complete'));
                 break;
             case 'scheduled':
                 $status_class = 'label-info';
-                $status_label = _l('scheduled');
+                $status_label = strtoupper(_l('scheduled'));
                 break;
             default:
                 $status_class = 'label-warning';
@@ -251,9 +251,9 @@ try {
             
             // Available statuses
             $available_statuses = [
-                ['value' => 'scheduled', 'label' => _l('scheduled')],
-                ['value' => 'complete', 'label' => _l('complete')],
-                ['value' => 'cancelled', 'label' => _l('cancelled')]
+                ['value' => 'scheduled', 'label' => strtoupper(_l('scheduled'))],
+                ['value' => 'complete', 'label' => strtoupper(_l('complete'))],
+                ['value' => 'cancelled', 'label' => strtoupper(_l('cancelled'))]
             ];
             
             foreach ($available_statuses as $status_option) {

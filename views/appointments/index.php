@@ -25,9 +25,9 @@
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-right">
                                                 <li><a href="#" data-filter="all">All Appointments</a></li>
-                                                <li><a href="#" data-filter="scheduled"><?php echo _l('scheduled'); ?></a></li>
-                                                <li><a href="#" data-filter="complete"><?php echo _l('complete'); ?></a></li>
-                                                <li><a href="#" data-filter="cancelled"><?php echo _l('cancelled'); ?></a></li>
+                                                <li><a href="#" data-filter="scheduled"><?php echo strtoupper(_l('scheduled')); ?></a></li>
+                                                <li><a href="#" data-filter="complete"><?php echo strtoupper(_l('complete')); ?></a></li>
+                                                <li><a href="#" data-filter="cancelled"><?php echo strtoupper(_l('cancelled')); ?></a></li>
                                                 <li role="separator" class="divider"></li>
                                                 <li><a href="#" data-filter="today">Today</a></li>
                                                 <li><a href="#" data-filter="this_week">This Week</a></li>
