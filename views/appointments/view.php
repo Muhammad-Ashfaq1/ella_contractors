@@ -2489,8 +2489,8 @@ $(document).ready(function() {
         loadAttachments();
     });
 
-    // Load attachments function
-    function loadAttachments() {
+    // Load attachments function (moved to global scope)
+    window.loadAttachments = function() {
         $.ajax({
             url: admin_url + 'ella_contractors/appointments/get_appointment_attachments/' + <?php echo $appointment['id']; ?>,
             type: 'GET',
@@ -2507,10 +2507,10 @@ $(document).ready(function() {
                 $('#attachments-container').html('<div class="text-center text-danger"><p>Error loading attachments</p></div>');
             }
         });
-    }
+    };
 
-    // Display attachments
-    function displayAttachments(attachments) {
+    // Display attachments (moved to global scope)
+    window.displayAttachments = function(attachments) {
         var html = '';
         
         if (attachments.length === 0) {
@@ -2544,10 +2544,10 @@ $(document).ready(function() {
         }
         
         $('#attachments-container').html(html);
-    }
+    };
 
-    // Get file icon based on file type
-    function getFileIcon(fileType) {
+    // Get file icon based on file type (moved to global scope)
+    window.getFileIcon = function(fileType) {
         var iconMap = {
             'application/pdf': 'fa-file-pdf-o',
             'application/msword': 'fa-file-word-o',
@@ -2566,56 +2566,57 @@ $(document).ready(function() {
         };
         
         return iconMap[fileType] || 'fa-file-o';
-    }
+    };
 
-    // Format file size
-    function formatFileSize(bytes) {
+    // Format file size (moved to global scope)
+    window.formatFileSize = function(bytes) {
         if (bytes === 0) return '0 Bytes';
         var k = 1024;
         var sizes = ['Bytes', 'KB', 'MB', 'GB'];
         var i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
+    };
 
-    // Update attachments count
-    function updateAttachmentsCount(count) {
+    // Update attachments count (moved to global scope)
+    window.updateAttachmentsCount = function(count) {
         if (count > 0) {
             $('#attachments-count').text(count).show();
         } else {
             $('#attachments-count').hide();
         }
-    }
+    };
 
-    // Refresh attachments
-    function refreshAttachments() {
+    // Refresh attachments (moved to global scope)
+    window.refreshAttachments = function() {
         loadAttachments();
-    }
+    };
 
-    // Delete attachment
-    function deleteAttachment(attachmentId) {
-        if (confirm('Are you sure you want to delete this attachment?')) {
-            $.ajax({
-                url: admin_url + 'ella_contractors/appointments/delete_appointment_attachment/' + attachmentId,
-                type: 'POST',
-                data: {
-                    [csrf_token_name]: csrf_hash
-                },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        alert_float('success', response.message);
-                        loadAttachments(); // Reload attachments
-                    } else {
-                        alert_float('danger', response.message);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert_float('danger', 'Error deleting attachment');
-                }
-            });
-        }
-    }
 });
+
+// Global function for deleting attachments (accessible from onclick)
+function deleteAttachment(attachmentId) {
+    if (confirm('Are you sure you want to delete this attachment?')) {
+        $.ajax({
+            url: admin_url + 'ella_contractors/appointments/delete_appointment_attachment/' + attachmentId,
+            type: 'POST',
+            data: {
+                [csrf_token_name]: csrf_hash
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    loadAttachments(); // Reload attachments
+                } else {
+                    alert_float('danger', response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                alert_float('danger', 'Error deleting attachment');
+            }
+        });
+    }
+}
 </script>
 
 <?php $this->load->view('appointments/sms_js.php'); ?>
