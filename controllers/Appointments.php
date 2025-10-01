@@ -512,8 +512,6 @@ class Appointments extends AdminController
             'source' => 'ella_contractor',
             'send_reminder' => $this->input->post('send_reminder') ? 1 : 0
         ];
-    
-        dd($this->input->post());
         
         $appointment_id = $this->input->post('appointment_id');
         
