@@ -491,8 +491,6 @@ class Appointments extends AdminController
         
         $status_value = $this->input->post('status');
         
-        
-        
         // Process contact_id - handle client_/lead_ prefixes
         $contact_id = $this->input->post('contact_id');
         if ($contact_id) {
