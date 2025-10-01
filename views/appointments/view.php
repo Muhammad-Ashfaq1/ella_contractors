@@ -471,7 +471,6 @@ button.delete-btn {
                             <li role="presentation">
                                 <a href="#attachments-tab" aria-controls="attachments-tab" role="tab" data-toggle="tab">
                                     <i class="fa fa-paperclip"></i> Attachments
-                                    <span class="label label-info" style="display: none;" id="attachments-count">0</span>
                                 </a>
                             </li>
                         </ul>
@@ -579,12 +578,6 @@ button.delete-btn {
                             <div role="tabpanel" class="tab-pane" id="attachments-tab">
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <div class="pull-right mbot15">
-                                            <button type="button" class="btn btn-info btn-sm" onclick="refreshAttachments()">
-                                                <i class="fa fa-refresh"></i> Refresh
-                                            </button>
-                                        </div>
-                                        <div class="clearfix"></div>
                                         <hr class="hr-panel-heading" />
                                         
                                         <div id="attachments-container">
@@ -2498,7 +2491,6 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     displayAttachments(response.attachments);
-                    updateAttachmentsCount(response.attachments.length);
                 } else {
                     $('#attachments-container').html('<div class="text-center text-muted"><p>No attachments found</p></div>');
                 }
@@ -2577,19 +2569,7 @@ $(document).ready(function() {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    // Update attachments count (moved to global scope)
-    window.updateAttachmentsCount = function(count) {
-        if (count > 0) {
-            $('#attachments-count').text(count).show();
-        } else {
-            $('#attachments-count').hide();
-        }
-    };
 
-    // Refresh attachments (moved to global scope)
-    window.refreshAttachments = function() {
-        loadAttachments();
-    };
 
 });
 
