@@ -111,7 +111,6 @@ class Appointments extends AdminController
         $status_value = $this->input->post('status');
             
             // Ensure send_reminder column exists
-            $this->ensure_send_reminder_column();
             
             // Process contact_id - handle client_/lead_ prefixes
             $contact_id = $this->input->post('contact_id');
@@ -487,13 +486,12 @@ class Appointments extends AdminController
             ]);
             return;
         }
+        
+    
+        
         $status_value = $this->input->post('status');
         
-        // Ensure appointment_status column exists
-        $this->ensure_appointment_status_column();
         
-        // Ensure send_reminder column exists
-        $this->ensure_send_reminder_column();
         
         // Process contact_id - handle client_/lead_ prefixes
         $contact_id = $this->input->post('contact_id');

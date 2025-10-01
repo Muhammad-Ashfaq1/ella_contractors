@@ -812,6 +812,7 @@ $('#saveAppointment').on('click', function() {
         data: formData + '&' + csrf_token_name + '=' + csrf_hash,
         dataType: 'json',
                success: function(response) {
+                console.log('response', response);
                    if (response.success) {
                        alert_float('success', response.message);
                        $('#appointmentModal').modal('hide');

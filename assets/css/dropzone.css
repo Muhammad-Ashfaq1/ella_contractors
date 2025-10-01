@@ -1,0 +1,171 @@
+/* Dropzone Styling for Ella Contractors */
+.dropzone {
+    border: 2px dashed #0087F7;
+    border-radius: 5px;
+    background: white;
+    min-height: 150px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.dropzone:hover {
+    border-color: #0056b3;
+    background-color: #f8f9fa;
+}
+
+.dropzone.dz-drag-hover {
+    border-color: #28a745;
+    background-color: #d4edda;
+}
+
+.dropzone .dz-message {
+    margin: 2em 0;
+    color: #666;
+}
+
+.dropzone .dz-message i {
+    color: #0087F7;
+    margin-bottom: 10px;
+}
+
+.dropzone .dz-message h4 {
+    margin: 10px 0;
+    color: #333;
+}
+
+.dropzone .dz-preview {
+    display: inline-block;
+    margin: 10px;
+    vertical-align: top;
+}
+
+.dropzone .dz-preview .dz-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.dropzone .dz-preview .dz-details {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 5px;
+}
+
+.dropzone .dz-preview .dz-filename {
+    font-size: 12px;
+    word-break: break-all;
+    margin-bottom: 5px;
+}
+
+.dropzone .dz-preview .dz-size {
+    font-size: 11px;
+    color: #666;
+}
+
+.dropzone .dz-preview .dz-progress {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.dropzone .dz-preview .dz-progress .dz-upload {
+    background: #0087F7;
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.dropzone .dz-preview .dz-error-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #dc3545;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 11px;
+    z-index: 1000;
+}
+
+.dropzone .dz-preview .dz-remove {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+.dropzone .dz-preview .dz-remove:hover {
+    background: #c82333;
+}
+
+/* File Preview Styling */
+.file-preview-container {
+    margin-top: 15px;
+}
+
+.file-preview-item {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.file-preview-item .file-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.file-preview-item .remove-file-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 12px;
+}
+
+.file-preview-item .remove-file-btn:hover {
+    background: #c82333;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dropzone {
+        min-height: 120px;
+        padding: 15px;
+    }
+    
+    .dropzone .dz-message {
+        margin: 1em 0;
+    }
+    
+    .dropzone .dz-message i {
+        font-size: 2em;
+    }
+    
+    .dropzone .dz-message h4 {
+        font-size: 16px;
+    }
+    
+    .dropzone .dz-message p {
+        font-size: 12px;
+    }
+}
