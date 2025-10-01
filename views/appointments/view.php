@@ -865,31 +865,6 @@ function printAppointment(appointmentId) {
     window.open(admin_url + 'ella_contractors/appointments/print/' + appointmentId, '_blank');
 }
 
-function duplicateAppointment(appointmentId) {
-    if (confirm('<?php echo _l('confirm_duplicate_appointment'); ?>')) {
-        $.ajax({
-            url: admin_url + 'ella_contractors/appointments/duplicate_ajax',
-            type: 'POST',
-            data: {
-                id: appointmentId,
-                [csrf_token_name]: csrf_hash
-            },
-            dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    alert_float('success', response.message);
-                    window.location.href = admin_url + 'ella_contractors/appointments/edit/' + response.data.id;
-                } else {
-                    alert_float('danger', response.message);
-                }
-            },
-            error: function() {
-                alert_float('danger', '<?php echo _l('error_duplicating_appointment'); ?>');
-            }
-        });
-    }
-}
-
 // Measurements Functions
 function loadMeasurements() {
     $.ajax({

@@ -49,19 +49,16 @@ $route[$module_name . '/estimates/(:any)'] = 'Estimates/$1';
 
 // Appointments routes
 $route[$module_name . '/appointments'] = 'Appointments/index';
-$route[$module_name . '/appointments/create'] = 'Appointments/create';
 $route[$module_name . '/appointments/edit/(:num)'] = 'Appointments/edit/$1';
 $route[$module_name . '/appointments/view/(:num)'] = 'Appointments/view/$1';
 $route[$module_name . '/appointments/save'] = 'Appointments/save';
 $route[$module_name . '/appointments/delete/(:num)'] = 'Appointments/delete/$1';
 $route[$module_name . '/appointments/table'] = 'Appointments/table';
-$route[$module_name . '/appointments/upcoming'] = 'Appointments/upcoming';
 
 // AJAX routes for modal operations
 $route[$module_name . '/appointments/get_appointment_data'] = 'Appointments/get_appointment_data';
 $route[$module_name . '/appointments/save_ajax'] = 'Appointments/save_ajax';
 $route[$module_name . '/appointments/delete_ajax'] = 'Appointments/delete_ajax';
-$route[$module_name . '/appointments/upload_files'] = 'Appointments/upload_files';
 $route[$module_name . '/appointments/download_attachment/(:num)'] = 'Appointments/download_attachment/$1';
 $route[$module_name . '/appointments/get_appointment_attachments/(:num)'] = 'Appointments/get_appointment_attachments/$1';
 

@@ -30,17 +30,6 @@ class Appointments extends AdminController
         $this->load->view('appointments/index', $data);
     }
 
-    /**
-     * Create appointment page (redirects to index with modal)
-     */
-    public function create()
-    {
-        if (!has_permission('ella_contractors', '', 'create')) {
-            access_denied('ella_contractors');
-        }
-
-        redirect(admin_url('ella_contractors/appointments'));
-    }
 
     /**
      * Edit appointment page
@@ -87,98 +76,6 @@ class Appointments extends AdminController
         
         $this->load->view('appointments/view', $data);
     }
-
-    /**
-     * Save appointment (create/update)
-     */
-    public function save()
-    {
-        if (!has_permission('ella_contractors', '', 'create') && !has_permission('ella_contractors', '', 'edit')) {
-            access_denied('ella_contractors');
-        }
-
-        $this->load->library('form_validation');
-        $this->form_validation->set_rules('subject', 'Subject', 'required');
-        $this->form_validation->set_rules('start_date', 'Start Date', 'required');
-        $this->form_validation->set_rules('start_time', 'Start Time', 'required');
-        $this->form_validation->set_rules('end_date', 'End Date', 'required');
-        $this->form_validation->set_rules('end_time', 'End Time', 'required');
-
-
-        if ($this->form_validation->run() == FALSE) {
-            set_alert('warning', validation_errors());
-        } else {
-        $status_value = $this->input->post('status');
-            
-            // Ensure send_reminder column exists
-            
-            // Process contact_id - handle client_/lead_ prefixes
-            $contact_id = $this->input->post('contact_id');
-            if ($contact_id) {
-                if (strpos($contact_id, 'client_') === 0) {
-                    $contact_id = str_replace('client_', '', $contact_id);
-                } elseif (strpos($contact_id, 'lead_') === 0) {
-                    $contact_id = str_replace('lead_', '', $contact_id);
-                }
-            }
-            
-            $data = [
-                'subject' => $this->input->post('subject'),
-                'date' => $this->input->post('start_date'),
-                'start_hour' => $this->input->post('start_time'),
-                'end_date' => $this->input->post('end_date'),
-                'end_time' => $this->input->post('end_time'),
-                'contact_id' => $contact_id ?: null,
-                'name' => $this->input->post('name'),
-                'email' => $this->input->post('email'),
-                'phone' => $this->input->post('phone'),
-                'address' => $this->input->post('address'),
-                'notes' => $this->input->post('notes'),
-                'type_id' => $this->input->post('type_id') ?: 0,
-                'appointment_status' => $status_value ?: 'scheduled',
-                'source' => 'ella_contractor',
-                'send_reminder' => $this->input->post('send_reminder') ? 1 : 0
-            ];
-            
-
-            $appointment_id = $this->input->post('appointment_id');
-            
-            if ($appointment_id) {
-                // Update existing appointment
-                if ($this->appointments_model->update_appointment($appointment_id, $data)) {
-                    set_alert('success', 'Appointment updated successfully');
-                } else {
-                    set_alert('warning', 'Failed to update appointment');
-                }
-            } else {
-                // Create new appointment
-                $appointment_id = $this->appointments_model->create_appointment($data);
-                if ($appointment_id) {
-                    set_alert('success', 'Appointment created successfully');
-                } else {
-                    set_alert('warning', 'Failed to create appointment');
-                }
-            }
-
-            // Handle attendees
-            if ($appointment_id) {
-                $attendees = $this->input->post('attendees');
-                if ($attendees && is_array($attendees)) {
-                    // Remove existing attendees
-                    $this->db->where('appointment_id', $appointment_id);
-                    $this->db->delete(db_prefix() . 'appointly_attendees');
-                    
-                    // Add new attendees
-                    foreach ($attendees as $staff_id) {
-                        $this->appointments_model->add_attendee($appointment_id, $staff_id);
-                    }
-                }
-            }
-        }
-
-        redirect(admin_url('ella_contractors/appointments'));
-    }
-
     /**
      * Delete appointment
      */
@@ -394,21 +291,6 @@ class Appointments extends AdminController
     }
 
     /**
-     * Get upcoming appointments
-     */
-    public function upcoming()
-    {
-        if (!has_permission('ella_contractors', '', 'view')) {
-            access_denied('ella_contractors');
-        }
-
-        $data['title'] = 'Upcoming Appointments';
-        $data['appointments'] = $this->appointments_model->get_upcoming_appointments();
-        $this->load->view('appointments/upcoming', $data);
-    }
-
-
-    /**
      * Get appointment data for modal (AJAX)
      */
     public function get_appointment_data()
@@ -530,8 +412,8 @@ class Appointments extends AdminController
                         ];
                         $this->misc_model->add_note($note_data, 'appointment', $appointment_id);
                     }
-                    // Handle attachments for update
-                    $this->handle_appointment_attachments($appointment_id);
+                    // Handle file uploads for update
+                    $this->handle_appointment_file_uploads($appointment_id);
                     echo json_encode([
                         'success' => true,
                         'message' => 'Appointment updated successfully'
@@ -557,8 +439,8 @@ class Appointments extends AdminController
                         ];
                         $this->misc_model->add_note($note_data, 'appointment', $appointment_id);
                     }
-                    // Handle attachments for creation
-                    $this->handle_appointment_attachments($appointment_id);
+                    // Handle file uploads for creation
+                    $this->handle_appointment_file_uploads($appointment_id);
                     echo json_encode([
                         'success' => true,
                         'message' => 'Appointment created successfully',
@@ -1361,57 +1243,6 @@ class Appointments extends AdminController
     }
 
     /**
-     * Duplicate appointment via AJAX
-     */
-    public function duplicate_ajax()
-    {
-        $appointment_id = $this->input->post('id');
-        
-        if (!$appointment_id) {
-            echo json_encode(['success' => false, 'message' => 'Invalid appointment ID']);
-            return;
-        }
-
-        // Get original appointment data
-        $original = $this->appointments_model->get($appointment_id);
-        
-        if (!$original) {
-            echo json_encode(['success' => false, 'message' => 'Appointment not found']);
-            return;
-        }
-
-        // Prepare data for new appointment
-        $data = [
-            'subject' => $original['subject'] . ' (Copy)',
-            'date' => $original['date'],
-            'start_hour' => $original['start_hour'],
-            'end_hour' => $original['end_hour'] ?? $original['start_hour'],
-            'name' => $original['name'],
-            'email' => $original['email'],
-            'phone' => $original['phone'],
-            'address' => $original['address'],
-            'description' => $original['description'],
-            'notes' => $original['notes'],
-            'type_id' => $original['type_id'],
-            'source' => 'ella_contractor',
-            'created_by' => get_staff_user_id(),
-            'approved' => 0,
-            'cancelled' => 0,
-            'finished' => 0,
-            'send_reminder' => $original['send_reminder'] ?? 0
-        ];
-
-        // Insert new appointment
-        $new_id = $this->appointments_model->add($data);
-        
-        if ($new_id) {
-            echo json_encode(['success' => true, 'message' => 'Appointment duplicated successfully', 'data' => ['id' => $new_id]]);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Failed to duplicate appointment']);
-        }
-    }
-
-    /**
      * Send reminder to client via AJAX
      */
     public function send_reminder_ajax()
@@ -1617,65 +1448,6 @@ class Appointments extends AdminController
         }
     }
 
-    /**
-     * Handle appointment attachments
-     * @param int $appointment_id
-     */
-    private function handle_appointment_attachments($appointment_id)
-    {
-        $attachments = $this->input->post('attachments');
-        
-        if (!empty($attachments)) {
-            // Decode the attachments string (comma-separated file paths)
-            $file_paths = explode(',', $attachments);
-            
-            // Load the ella media model
-            $this->load->model('ella_media_model');
-            
-            foreach ($file_paths as $file_path) {
-                $file_path = trim($file_path);
-                if (!empty($file_path)) {
-                    // Get file info - file_path should already be relative to FCPATH
-                    $full_path = FCPATH . ltrim($file_path, '/');
-                    if (file_exists($full_path)) {
-                        $file_info = pathinfo($full_path);
-                        
-                        // Get original filename from the uploaded file
-                        $original_name = $file_info['filename'] . '.' . $file_info['extension'];
-                        
-                        // Prepare data for database
-                        $media_data = [
-                            'rel_type' => 'appointment',
-                            'rel_id' => $appointment_id,
-                            'org_id' => null,
-                            'folder_id' => null,
-                            'lead_id' => null,
-                            'file_name' => $file_info['basename'],
-                            'original_name' => $original_name,
-                            'file_type' => mime_content_type($full_path),
-                            'file_size' => filesize($full_path),
-                            'description' => 'Appointment attachment',
-                            'is_default' => 0,
-                            'active' => 1,
-                            'date_uploaded' => date('Y-m-d H:i:s')
-                        ];
-                        
-                        // Insert into database
-                        $media_id = $this->ella_media_model->add_media($media_data);
-                        
-                        // Log for debugging
-                        if ($media_id) {
-                            log_message('debug', 'Appointment attachment saved: ID ' . $media_id . ' for appointment ' . $appointment_id);
-                        } else {
-                            log_message('error', 'Failed to save appointment attachment for appointment ' . $appointment_id);
-                        }
-                    } else {
-                        log_message('error', 'Appointment attachment file not found: ' . $full_path);
-                    }
-                }
-            }
-        }
-    }
 
     /**
      * Get appointment attachments for AJAX
@@ -1758,41 +1530,14 @@ class Appointments extends AdminController
     }
 
     /**
-     * Upload files for appointment
+     * Handle appointment file uploads (called from save_ajax)
      * @param int $appointment_id
      */
-    public function upload_files()
+    private function handle_appointment_file_uploads($appointment_id)
     {
-        if (!has_permission('ella_contractors', '', 'create') && !has_permission('ella_contractors', '', 'edit')) {
-            ajax_access_denied();
-        }
-
-        $appointment_id = $this->input->post('appointment_id');
-        
-        if (!$appointment_id) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Appointment ID is required'
-            ]);
-            return;
-        }
-
-        // Verify appointment exists
-        $appointment = $this->appointments_model->get_appointment($appointment_id);
-        if (!$appointment) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Appointment not found'
-            ]);
-            return;
-        }
-
-        $this->load->model('ella_media_model');
-        $uploaded_count = 0;
-        $errors = [];
-
         // Check if files were uploaded
         if (isset($_FILES['appointment_files']) && !empty($_FILES['appointment_files']['name'][0])) {
+            $this->load->model('ella_media_model');
             $files = $_FILES['appointment_files'];
             $file_count = count($files['name']);
 
@@ -1806,32 +1551,12 @@ class Appointments extends AdminController
                         'size' => $files['size'][$i]
                     ];
 
-                    $upload_result = $this->handle_appointment_file_upload($file_data, $appointment_id);
-                    
-                    if ($upload_result['success']) {
-                        $uploaded_count++;
-                    } else {
-                        $errors[] = $upload_result['message'];
-                    }
+                    $this->handle_appointment_file_upload($file_data, $appointment_id);
                 }
             }
         }
-
-        if ($uploaded_count > 0) {
-            echo json_encode([
-                'success' => true,
-                'message' => $uploaded_count . ' file(s) uploaded successfully',
-                'uploaded_count' => $uploaded_count,
-                'errors' => $errors
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'No files were uploaded. ' . implode(', ', $errors)
-            ]);
-        }
     }
-
+    
     /**
      * Handle individual file upload for appointment
      * @param array $file_data

@@ -798,31 +798,33 @@ $('#saveAppointment').on('click', function() {
         $('#end_time').val(endParts[1]);
     }
     
-    // Get form data
-    var formData = $('#appointmentForm').serialize();
+    // Get form data using FormData to handle file uploads
+    var formData = new FormData($('#appointmentForm')[0]);
+    
+    // Add appointment files to FormData
+    if (appointmentFiles.length > 0) {
+        appointmentFiles.forEach(function(file, index) {
+            formData.append('appointment_files[]', file);
+        });
+    }
     
     // Add CSRF token
+    formData.append(csrf_token_name, csrf_hash);
+    
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/save_ajax',
         type: 'POST',
-        data: formData + '&' + csrf_token_name + '=' + csrf_hash,
+        data: formData,
+        processData: false,
+        contentType: false,
         dataType: 'json',
         success: function(response) {
             console.log('response', response);
             if (response.success) {
-                // Store appointment ID for file uploads
-                appointmentId = response.appointment_id || response.data?.id;
-                
-                // Upload files if any are selected
-                if (appointmentFiles.length > 0 && appointmentId) {
-                    uploadAppointmentFiles(appointmentId);
-                } else {
-                    // No files to upload, show success message
-                    alert_float('success', response.message);
-                    $('#appointmentModal').modal('hide');
-                    resetAppointmentModal();
-                    $('.table-ella_appointments').DataTable().ajax.reload();
-                }
+                alert_float('success', response.message);
+                $('#appointmentModal').modal('hide');
+                resetAppointmentModal();
+                $('.table-ella_appointments').DataTable().ajax.reload();
             } else {
                 alert_float('danger', response.message);
             }
@@ -841,46 +843,6 @@ $('#saveAppointment').on('click', function() {
 var appointmentFiles = [];
 var appointmentId = null;
 
-// Function to upload appointment files
-function uploadAppointmentFiles(appointmentId) {
-    if (appointmentFiles.length === 0) {
-        return;
-    }
-    
-    var formData = new FormData();
-    formData.append('appointment_id', appointmentId);
-    formData.append(csrf_token_name, csrf_hash);
-    
-    // Add each file to FormData
-    appointmentFiles.forEach(function(file, index) {
-        formData.append('appointment_files[]', file);
-    });
-    
-    $.ajax({
-        url: admin_url + 'ella_contractors/appointments/upload_files',
-        type: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                alert_float('success', response.message);
-            } else {
-                alert_float('warning', 'Appointment saved but files upload failed: ' + response.message);
-            }
-            $('#appointmentModal').modal('hide');
-            resetAppointmentModal();
-            $('.table-ella_appointments').DataTable().ajax.reload();
-        },
-        error: function(xhr, status, error) {
-            alert_float('warning', 'Appointment saved but files upload failed: ' + error);
-            $('#appointmentModal').modal('hide');
-            resetAppointmentModal();
-            $('.table-ella_appointments').DataTable().ajax.reload();
-        }
-    });
-}
 
 function getFileIdentifier(file) {
     return file.name + '-' + file.size + '-' + file.lastModified;

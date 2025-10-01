@@ -34,9 +34,6 @@ function ella_contractors_init_menu() {
             'icon' => 'modules/ella_contractors/assets/images/ella-con1.png',
             'position' => 30,
             'collapse' => true,
-            'li_attributes' => [
-                'data-menu-patterns' => 'ella_contractors/appointments,ella_contractors/appointments/view,ella_contractors/appointments/edit,ella_contractors/appointments/create,ella_contractors/presentations,ella_contractors/line_items'
-            ]
         ]);
 
         // Submenu items with icons
@@ -47,9 +44,6 @@ function ella_contractors_init_menu() {
                 'href' => admin_url('ella_contractors/appointments'),
                 'icon' => 'fa fa-calendar-check-o',
                 'position' => 10,
-                'li_attributes' => [
-                    'data-menu-patterns' => 'ella_contractors/appointments,ella_contractors/appointments/view,ella_contractors/appointments/edit,ella_contractors/appointments/create'
-                ]
             ],
             // [
             //     'slug' => 'ella_contractors_measurements',
