@@ -615,6 +615,17 @@ function ella_contractors_activate_module() {
                 log_message('error', 'Ella Appointments - Error creating end_time column: ' . $e->getMessage());
             }
         }
+        
+        // Add send_reminder column to appointly_appointments table if it doesn't exist
+        if (!$CI->db->field_exists('send_reminder', db_prefix() . 'appointly_appointments')) {
+            try {
+                // Add send_reminder column
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `send_reminder` TINYINT(1) DEFAULT 0 AFTER `appointment_status`');
+                log_message('info', 'Ella Appointments - Created send_reminder column');
+            } catch (Exception $e) {
+                log_message('error', 'Ella Appointments - Error creating send_reminder column: ' . $e->getMessage());
+            }
+        }
     
     // Set module version
     update_option('ella_contractors_version', '1.0.0');

@@ -13,44 +13,6 @@ class Appointments extends AdminController
         $this->load->model('misc_model');
     }
     
-    /**
-     * Ensure appointment_status column exists in the database
-     */
-    private function ensure_appointment_status_column()
-    {
-        if (!$this->db->field_exists('appointment_status', db_prefix() . 'appointly_appointments')) {
-            try {
-                // Add the column
-                $this->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `appointment_status` ENUM(\'scheduled\',\'cancelled\',\'complete\') NULL DEFAULT \'scheduled\' AFTER `cancelled`');
-                
-                // Update existing records
-                $this->db->query('UPDATE `' . db_prefix() . 'appointly_appointments` SET `appointment_status` = "cancelled" WHERE `cancelled` = 1');
-                $this->db->query('UPDATE `' . db_prefix() . 'appointly_appointments` SET `appointment_status` = "complete" WHERE `finished` = 1 OR `approved` = 1');
-                $this->db->query('UPDATE `' . db_prefix() . 'appointly_appointments` SET `appointment_status` = "scheduled" WHERE `appointment_status` IS NULL');
-                
-                error_log('Ella Appointments - Created appointment_status column and updated existing records');
-            } catch (Exception $e) {
-                error_log('Ella Appointments - Error creating appointment_status column: ' . $e->getMessage());
-            }
-        }
-    }
-    
-    /**
-     * Ensure send_reminder column exists in the database
-     */
-    private function ensure_send_reminder_column()
-    {
-        if (!$this->db->field_exists('send_reminder', db_prefix() . 'appointly_appointments')) {
-            try {
-                // Add the column
-                $this->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `send_reminder` TINYINT(1) DEFAULT 0 AFTER `appointment_status`');
-                
-                error_log('Ella Appointments - Created send_reminder column');
-            } catch (Exception $e) {
-                error_log('Ella Appointments - Error creating send_reminder column: ' . $e->getMessage());
-            }
-        }
-    }
     
 
     /**
@@ -147,9 +109,6 @@ class Appointments extends AdminController
             set_alert('warning', validation_errors());
         } else {
         $status_value = $this->input->post('status');
-            
-            // Ensure appointment_status column exists
-            $this->ensure_appointment_status_column();
             
             // Ensure send_reminder column exists
             $this->ensure_send_reminder_column();
@@ -513,6 +472,7 @@ class Appointments extends AdminController
         if (!has_permission('ella_contractors', '', 'create') && !has_permission('ella_contractors', '', 'edit')) {
             ajax_access_denied();
         }
+
         $this->load->library('form_validation');
         $this->form_validation->set_rules('subject', 'Subject', 'required');
         $this->form_validation->set_rules('start_date', 'Start Date', 'required');
