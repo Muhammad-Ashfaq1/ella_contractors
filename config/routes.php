@@ -61,6 +61,9 @@ $route[$module_name . '/appointments/upcoming'] = 'Appointments/upcoming';
 $route[$module_name . '/appointments/get_appointment_data'] = 'Appointments/get_appointment_data';
 $route[$module_name . '/appointments/save_ajax'] = 'Appointments/save_ajax';
 $route[$module_name . '/appointments/delete_ajax'] = 'Appointments/delete_ajax';
+$route[$module_name . '/appointments/upload_files'] = 'Appointments/upload_files';
+$route[$module_name . '/appointments/download_attachment/(:num)'] = 'Appointments/download_attachment/$1';
+$route[$module_name . '/appointments/get_appointment_attachments/(:num)'] = 'Appointments/get_appointment_attachments/$1';
 
 // Appointment Measurements routes
 $route[$module_name . '/appointments/get_measurements/(:num)'] = 'Appointments/get_measurements/$1';

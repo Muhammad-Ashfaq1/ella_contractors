@@ -561,7 +561,8 @@ class Appointments extends AdminController
                     $this->handle_appointment_attachments($appointment_id);
                     echo json_encode([
                         'success' => true,
-                        'message' => 'Appointment created successfully'
+                        'message' => 'Appointment created successfully',
+                        'appointment_id' => $appointment_id
                     ]);
                 } else {
                     echo json_encode([
@@ -1689,6 +1690,12 @@ class Appointments extends AdminController
         $this->load->model('ella_media_model');
         $attachments = $this->ella_media_model->get_appointment_attachments($appointment_id);
         
+        // Add full file paths to each attachment
+        foreach ($attachments as &$attachment) {
+            $attachment['file_path'] = 'uploads/ella_appointments/' . $appointment_id . '/' . $attachment['file_name'];
+            $attachment['download_url'] = admin_url('ella_contractors/appointments/download_attachment/' . $attachment['id']);
+        }
+        
         echo json_encode([
             'success' => true,
             'attachments' => $attachments
@@ -1738,8 +1745,8 @@ class Appointments extends AdminController
             show_404();
         }
 
-        // Get file path
-        $file_path = FCPATH . 'uploads/appointments/' . $attachment->file_name;
+        // Get file path - construct from appointment ID and file name
+        $file_path = FCPATH . 'uploads/ella_appointments/' . $attachment->rel_id . '/' . $attachment->file_name;
         
         if (!file_exists($file_path)) {
             show_404();
@@ -1748,6 +1755,171 @@ class Appointments extends AdminController
         // Force download
         $this->load->helper('download');
         force_download($attachment->original_name, file_get_contents($file_path));
+    }
+
+    /**
+     * Upload files for appointment
+     * @param int $appointment_id
+     */
+    public function upload_files()
+    {
+        if (!has_permission('ella_contractors', '', 'create') && !has_permission('ella_contractors', '', 'edit')) {
+            ajax_access_denied();
+        }
+
+        $appointment_id = $this->input->post('appointment_id');
+        
+        if (!$appointment_id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Appointment ID is required'
+            ]);
+            return;
+        }
+
+        // Verify appointment exists
+        $appointment = $this->appointments_model->get_appointment($appointment_id);
+        if (!$appointment) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Appointment not found'
+            ]);
+            return;
+        }
+
+        $this->load->model('ella_media_model');
+        $uploaded_count = 0;
+        $errors = [];
+
+        // Check if files were uploaded
+        if (isset($_FILES['appointment_files']) && !empty($_FILES['appointment_files']['name'][0])) {
+            $files = $_FILES['appointment_files'];
+            $file_count = count($files['name']);
+
+            for ($i = 0; $i < $file_count; $i++) {
+                if ($files['error'][$i] === UPLOAD_ERR_OK) {
+                    $file_data = [
+                        'name' => $files['name'][$i],
+                        'type' => $files['type'][$i],
+                        'tmp_name' => $files['tmp_name'][$i],
+                        'error' => $files['error'][$i],
+                        'size' => $files['size'][$i]
+                    ];
+
+                    $upload_result = $this->handle_appointment_file_upload($file_data, $appointment_id);
+                    
+                    if ($upload_result['success']) {
+                        $uploaded_count++;
+                    } else {
+                        $errors[] = $upload_result['message'];
+                    }
+                }
+            }
+        }
+
+        if ($uploaded_count > 0) {
+            echo json_encode([
+                'success' => true,
+                'message' => $uploaded_count . ' file(s) uploaded successfully',
+                'uploaded_count' => $uploaded_count,
+                'errors' => $errors
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'No files were uploaded. ' . implode(', ', $errors)
+            ]);
+        }
+    }
+
+    /**
+     * Handle individual file upload for appointment
+     * @param array $file_data
+     * @param int $appointment_id
+     * @return array
+     */
+    private function handle_appointment_file_upload($file_data, $appointment_id)
+    {
+        // Validate file type
+        $allowed_types = [
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        ];
+
+        if (!in_array($file_data['type'], $allowed_types)) {
+            return [
+                'success' => false,
+                'message' => 'Invalid file type: ' . $file_data['name']
+            ];
+        }
+
+        // Validate file size (max 50MB)
+        $max_size = 50 * 1024 * 1024; // 50MB
+        if ($file_data['size'] > $max_size) {
+            return [
+                'success' => false,
+                'message' => 'File too large: ' . $file_data['name']
+            ];
+        }
+
+        // Create upload directory
+        $upload_path = FCPATH . 'uploads/ella_appointments/' . $appointment_id . '/';
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0755, true);
+        }
+
+        // Generate unique filename
+        $file_extension = pathinfo($file_data['name'], PATHINFO_EXTENSION);
+        $unique_filename = uniqid() . '_' . time() . '.' . $file_extension;
+        $file_path = $upload_path . $unique_filename;
+
+        // Move uploaded file
+        if (move_uploaded_file($file_data['tmp_name'], $file_path)) {
+            // Save to database
+            $media_data = [
+                'rel_type' => 'appointment',
+                'rel_id' => $appointment_id,
+                'org_id' => null,
+                'folder_id' => null,
+                'lead_id' => null,
+                'file_name' => $unique_filename,
+                'original_name' => $file_data['name'],
+                'file_type' => $file_data['type'],
+                'file_size' => $file_data['size'],
+                'description' => 'Appointment attachment',
+                'is_default' => 0,
+                'active' => 1,
+                'date_uploaded' => date('Y-m-d H:i:s')
+            ];
+
+            $media_id = $this->ella_media_model->add_media($media_data);
+
+            if ($media_id) {
+                return [
+                    'success' => true,
+                    'message' => 'File uploaded successfully',
+                    'media_id' => $media_id
+                ];
+            } else {
+                // Remove file if database insert failed
+                unlink($file_path);
+                return [
+                    'success' => false,
+                    'message' => 'Database error for file: ' . $file_data['name']
+                ];
+            }
+        } else {
+            return [
+                'success' => false,
+                'message' => 'Failed to move file: ' . $file_data['name']
+            ];
+        }
     }
 
 }

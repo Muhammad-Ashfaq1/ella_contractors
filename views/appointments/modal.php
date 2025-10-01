@@ -7,24 +7,28 @@
   min-height: 150px;
   height: auto;
   padding: 25px;
-  display: inline-flex;
-  width: 98%;
+  display: flex;
+  width: 100%;
   align-items: center;
   justify-content: center;
   text-align: center;
   font-family: "Quicksand", sans-serif;
   font-weight: 500;
-  font-size: 20px;
+  font-size: 16px;
   cursor: pointer;
-  color: #cccccc;
-  border: 4px dashed #009578;
+  color: #666;
+  border: 2px dashed #009578;
   border-radius: 10px;
   margin-top: 10px;
-  margin-left: 0px;
-  float: left;
   position: relative;
   flex-wrap: wrap;
   margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.drop-zone:hover {
+  border-color: #007a5c;
+  background-color: #f8f9fa;
 }
 
 .drop-zone--over {
@@ -80,6 +84,22 @@ button.delete-btn {
   background: rgba(0, 0, 0, 0.75);
   font-size: 14px;
   text-align: center;
+}
+
+.drop-zone__thumbnails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+  width: 100%;
+}
+
+.drop-zone__prompt {
+  display: block;
+  width: 100%;
+  text-align: center;
+  color: #666;
+  font-size: 16px;
 }
 
 .upload-message {
@@ -242,19 +262,16 @@ button.delete-btn {
                         <div class="col-md-12">
                             <hr class="hr-panel-heading" />
                             <h5><?php echo _l('appointment_attachments'); ?></h5>
-                            <p class="text-muted"><?php echo _l('appointment_attachments_help_text'); ?></p>
+                            <p class="text-muted">Upload files after creating the appointment. Files will be attached to the appointment once saved.</p>
                             
-                            <?php echo form_open_multipart('upload_image/appointment_upload', array('class' => 'staff-form', 'id' => 'appointmentFileUploadForm', 'autocomplete' => 'off')); ?>
-                            <label style="float: left; width: 100%;" for="appointment_media_image" class="profile-imagess" id="AppointmentImageBrowse">
-                                <?php echo _l('attach_files'); ?> (.pdf, .jpg, .jpeg, .png, .gif, .doc, .docx, .xls, .xlsx, .ppt, .pptx)
-                            </label>
-                            <div class="drop-zone">
-                                <span class="drop-zone__prompt">Drop or Click Here to Upload</span>
-                                <input type="file" name="appointment_media_image" class="form-control drop-zone__input" id="appointment_media_image" multiple>
-                                <input type="hidden" class="appointment_imagesresponse" id="appointment_media_url" name="appointment_media_url" value=""/>
-                                <input type="hidden" name="campaign_type" class="campaign_type" value="appointment" />
+                            <div class="drop-zone" id="appointmentDropzone">
+                                <span class="drop-zone__prompt">Drop files here or click to select</span>
+                                <input type="file" name="appointment_files[]" class="drop-zone__input" id="appointment_files" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+                                <div class="drop-zone__thumbnails" id="appointmentThumbnails"></div>
                             </div>
-                            <?php echo form_close(); ?>
+                            
+                            <!-- Hidden field to store uploaded file paths -->
+                            <input type="hidden" id="appointment_uploaded_files" name="appointment_uploaded_files" value="">
                         </div>
                     </div>
                 </form>

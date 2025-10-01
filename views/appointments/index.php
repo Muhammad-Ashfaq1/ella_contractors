@@ -724,10 +724,12 @@ function resetAppointmentModal() {
     $('.selectpicker').selectpicker('refresh');
     
     // Clear uploaded files
-    $('#appointment_media_url').val('');
     appointmentFiles = [];
+    appointmentId = null;
+    $('#appointment_uploaded_files').val('');
     
     // Clear thumbnails
+    $('#appointmentThumbnails').empty();
     $('.drop-zone__thumb').remove();
     $('.drop-zone__prompt').show();
 }
@@ -799,29 +801,32 @@ $('#saveAppointment').on('click', function() {
     // Get form data
     var formData = $('#appointmentForm').serialize();
     
-    // Add uploaded files data
-    var uploadedFiles = $('#appointment_media_url').val();
-    if (uploadedFiles) {
-        formData += '&attachments=' + encodeURIComponent(uploadedFiles);
-    }
-    
     // Add CSRF token
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/save_ajax',
         type: 'POST',
         data: formData + '&' + csrf_token_name + '=' + csrf_hash,
         dataType: 'json',
-               success: function(response) {
-                console.log('response', response);
-                   if (response.success) {
-                       alert_float('success', response.message);
-                       $('#appointmentModal').modal('hide');
-                       resetAppointmentModal();
-                       $('.table-ella_appointments').DataTable().ajax.reload();
-                   } else {
-                       alert_float('danger', response.message);
-                   }
-               },
+        success: function(response) {
+            console.log('response', response);
+            if (response.success) {
+                // Store appointment ID for file uploads
+                appointmentId = response.appointment_id || response.data?.id;
+                
+                // Upload files if any are selected
+                if (appointmentFiles.length > 0 && appointmentId) {
+                    uploadAppointmentFiles(appointmentId);
+                } else {
+                    // No files to upload, show success message
+                    alert_float('success', response.message);
+                    $('#appointmentModal').modal('hide');
+                    resetAppointmentModal();
+                    $('.table-ella_appointments').DataTable().ajax.reload();
+                }
+            } else {
+                alert_float('danger', response.message);
+            }
+        },
         error: function(xhr, status, error) {
             alert_float('danger', 'Error saving appointment: ' + error);
         }
@@ -833,7 +838,49 @@ $('#saveAppointment').on('click', function() {
 // ========================================
 
 // Global variables for file management
-var appointmentFiles = appointmentFiles || [];
+var appointmentFiles = [];
+var appointmentId = null;
+
+// Function to upload appointment files
+function uploadAppointmentFiles(appointmentId) {
+    if (appointmentFiles.length === 0) {
+        return;
+    }
+    
+    var formData = new FormData();
+    formData.append('appointment_id', appointmentId);
+    formData.append(csrf_token_name, csrf_hash);
+    
+    // Add each file to FormData
+    appointmentFiles.forEach(function(file, index) {
+        formData.append('appointment_files[]', file);
+    });
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/upload_files',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                alert_float('success', response.message);
+            } else {
+                alert_float('warning', 'Appointment saved but files upload failed: ' + response.message);
+            }
+            $('#appointmentModal').modal('hide');
+            resetAppointmentModal();
+            $('.table-ella_appointments').DataTable().ajax.reload();
+        },
+        error: function(xhr, status, error) {
+            alert_float('warning', 'Appointment saved but files upload failed: ' + error);
+            $('#appointmentModal').modal('hide');
+            resetAppointmentModal();
+            $('.table-ella_appointments').DataTable().ajax.reload();
+        }
+    });
+}
 
 function getFileIdentifier(file) {
     return file.name + '-' + file.size + '-' + file.lastModified;
@@ -847,7 +894,6 @@ function updateInputFiles(inputElement) {
         });
     }
     inputElement.files = dt.files;
-    inputElement.required = appointmentFiles.length === 0;
 }
 
 function addNewFiles(newFiles, inputElement, dropZoneElement) {
@@ -869,13 +915,13 @@ function addNewFiles(newFiles, inputElement, dropZoneElement) {
         return;
     }
     
-    // Check total file size (max 10MB for appointments)
-    const maxSize = 10 * 1024 * 1024; // 10 MB in bytes
+    // Check total file size (max 50MB for appointments)
+    const maxSize = 50 * 1024 * 1024; // 50 MB in bytes
     const totalSize = appointmentFiles.reduce((acc, file) => acc + file.size, 0) +
         newFiles.reduce((acc, file) => acc + file.size, 0);
     
     if (totalSize > maxSize) {
-        showMessage('Total file size exceeds the maximum limit of 10 MB.', dropZoneElement);
+        showMessage('Total file size exceeds the maximum limit of 50 MB.', dropZoneElement);
         return;
     }
     
@@ -885,6 +931,9 @@ function addNewFiles(newFiles, inputElement, dropZoneElement) {
     newFiles.forEach(file => {
         updateThumbnail(dropZoneElement, file, inputElement);
     });
+    
+    // Update the hidden field with file count
+    $('#appointment_uploaded_files').val(appointmentFiles.length);
 }
 
 function showMessage(message, dropZoneElement) {
@@ -954,8 +1003,15 @@ function updateThumbnail(dropZoneElement, file, inputElement) {
     
     addDeleteButton(thumbnailElement, file, dropZoneElement, inputElement);
     
-    const uploadPrompt = dropZoneElement.querySelector(".drop-zone__prompt");
-    dropZoneElement.insertBefore(thumbnailElement, uploadPrompt);
+    // Add to thumbnails container
+    const thumbnailsContainer = dropZoneElement.querySelector("#appointmentThumbnails");
+    if (thumbnailsContainer) {
+        thumbnailsContainer.appendChild(thumbnailElement);
+    } else {
+        // Fallback to old method
+        const uploadPrompt = dropZoneElement.querySelector(".drop-zone__prompt");
+        dropZoneElement.insertBefore(thumbnailElement, uploadPrompt);
+    }
 }
 
 function addDeleteButton(thumbnailElement, file, dropZoneElement, inputElement) {
@@ -976,8 +1032,12 @@ function addDeleteButton(thumbnailElement, file, dropZoneElement, inputElement) 
         updateInputFiles(inputElement);
         thumbnailElement.remove();
         
+        // Update the hidden field with file count
+        $('#appointment_uploaded_files').val(appointmentFiles.length);
+        
         // Show prompt if no more thumbnails
-        if (!dropZoneElement.querySelector(".drop-zone__thumb")) {
+        const thumbnailsContainer = dropZoneElement.querySelector("#appointmentThumbnails");
+        if (thumbnailsContainer && thumbnailsContainer.children.length === 0) {
             const prompt = dropZoneElement.querySelector(".drop-zone__prompt");
             if (prompt) {
                 prompt.style.display = 'block';
@@ -987,7 +1047,7 @@ function addDeleteButton(thumbnailElement, file, dropZoneElement, inputElement) 
 }
 
 function applyAppointmentEventListeners() {
-    document.querySelectorAll("#appointment_media_image").forEach((inputElement) => {
+    document.querySelectorAll("#appointment_files").forEach((inputElement) => {
         const dropZoneElement = inputElement.closest(".drop-zone");
         
         // Click event to trigger file select
