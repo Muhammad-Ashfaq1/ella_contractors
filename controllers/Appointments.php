@@ -485,12 +485,7 @@ class Appointments extends AdminController
                 'message' => validation_errors()
             ]);
             return;
-        }
-        
-    
-        
-        $status_value = $this->input->post('status');
-        
+        }        
         // Process contact_id - handle client_/lead_ prefixes
         $contact_id = $this->input->post('contact_id');
         if ($contact_id) {
@@ -513,10 +508,12 @@ class Appointments extends AdminController
             'address' => $this->input->post('address'),
             'notes' => $this->input->post('notes'),
             'type_id' => $this->input->post('type_id') ?: 0,
-            'appointment_status' => $status_value ?: 'scheduled',
+            'appointment_status' => $this->input->post('status') ?: 'scheduled',
             'source' => 'ella_contractor',
             'send_reminder' => $this->input->post('send_reminder') ? 1 : 0
         ];
+    
+        dd($this->input->post());
         
         $appointment_id = $this->input->post('appointment_id');
         
