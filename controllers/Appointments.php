@@ -64,7 +64,7 @@ class Appointments extends AdminController
         }
 
         $data['title'] = 'View Appointment';
-        $data['appointment'] = (array) $appointment; // Convert object to array
+        $data['appointment'] = $appointment; // Keep as object for easier access
         $data['attendees'] = $this->appointments_model->get_appointment_attendees($id);
         
         // Load measurements for this appointment
@@ -73,6 +73,8 @@ class Appointments extends AdminController
         // Load clients and leads for estimate modal
         $data['clients'] = $this->clients_model->get();
         $data['leads'] = $this->leads_model->get();
+        
+        // Timeline activities will be loaded via AJAX when tab is clicked
         
         $this->load->view('appointments/view', $data);
     }
@@ -1263,15 +1265,15 @@ class Appointments extends AdminController
         }
 
         // Check if appointment has email
-        if (!$appointment['email']) {
+        if (!$appointment->email) {
             echo json_encode(['success' => false, 'message' => 'No email address available for this appointment']);
             return;
         }
 
         // Prepare email data
         $email_data = [
-            'to' => $appointment['email'],
-            'subject' => 'Appointment Reminder: ' . $appointment['subject'],
+            'to' => $appointment->email,
+            'subject' => 'Appointment Reminder: ' . $appointment->subject,
             'message' => $this->build_reminder_message($appointment),
             'from_name' => get_option('companyname'),
             'from_email' => get_option('company_email')
@@ -1286,7 +1288,7 @@ class Appointments extends AdminController
         $this->email->message($email_data['message']);
 
         if ($this->email->send()) {
-            echo json_encode(['success' => true, 'message' => 'Reminder sent successfully to ' . $appointment['email']]);
+            echo json_encode(['success' => true, 'message' => 'Reminder sent successfully to ' . $appointment->email]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to send reminder: ' . $this->email->print_debugger()]);
         }
@@ -1297,18 +1299,18 @@ class Appointments extends AdminController
      */
     private function build_reminder_message($appointment)
     {
-        $message = "Dear " . $appointment['name'] . ",\n\n";
+        $message = "Dear " . $appointment->name . ",\n\n";
         $message .= "This is a reminder about your upcoming appointment:\n\n";
-        $message .= "Subject: " . $appointment['subject'] . "\n";
-        $message .= "Date: " . _d($appointment['date']) . "\n";
-        $message .= "Time: " . date("H:i A", strtotime($appointment['start_hour'])) . "\n";
+        $message .= "Subject: " . $appointment->subject . "\n";
+        $message .= "Date: " . _d($appointment->date) . "\n";
+        $message .= "Time: " . date("H:i A", strtotime($appointment->start_hour)) . "\n";
         
-        if ($appointment['address']) {
-            $message .= "Address: " . $appointment['address'] . "\n";
+        if ($appointment->address) {
+            $message .= "Address: " . $appointment->address . "\n";
         }
         
-        if ($appointment['description']) {
-            $message .= "\nDescription: " . $appointment['description'] . "\n";
+        if ($appointment->description) {
+            $message .= "\nDescription: " . $appointment->description . "\n";
         }
         
         $message .= "\nPlease contact us if you need to reschedule or have any questions.\n\n";
@@ -1646,5 +1648,175 @@ class Appointments extends AdminController
             ];
         }
     }
+    
+    /**
+     * Get timeline for appointment (AJAX)
+     */
+    public function get_timeline($id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+        
+        // Get appointment data
+        $appointment = $this->appointments_model->get_appointment($id);
+        if (!$appointment) {
+            echo '<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Appointment not found.</p></div>';
+            return;
+        }
+        
+        // Get timeline activities
+        $timeline_activities = $this->appointments_model->get_appointment_timeline($id);
+        
+        // Load language file for timeline
+        $this->lang->load('ella_contractors/ella_contractors', 'english');
+        
+        // Load the timeline view
+        $this->load->view('admin/appointments/timeline', [
+            'appointment' => $appointment,
+            'timeline_activities' => $timeline_activities
+        ]);
+    }
+    
+    /**
+     * Add note to appointment timeline (AJAX)
+     */
+    public function add_timeline_note($id)
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            ajax_access_denied();
+        }
+        
+        $note_content = $this->input->post('timeline_note_content');
+        
+        if (empty($note_content)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Note content is required'
+            ]);
+            return;
+        }
+        
+        $result = $this->appointments_model->add_appointment_note($id, $note_content);
+        
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Note added successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to add note'
+            ]);
+        }
+    }
+    
+    /**
+     * Log measurement addition (AJAX)
+     */
+    public function log_measurement_added()
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            ajax_access_denied();
+        }
+        
+        $appointment_id = $this->input->post('appointment_id');
+        $measurement = $this->input->post('measurement');
+        
+        if (!$appointment_id || !$measurement) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Appointment ID and measurement are required'
+            ]);
+            return;
+        }
+        
+        $result = $this->appointments_model->log_measurement_added($appointment_id, $measurement);
+        
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Measurement logged successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to log measurement'
+            ]);
+        }
+    }
+    
+    /**
+     * Log measurement removal (AJAX)
+     */
+    public function log_measurement_removed()
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            ajax_access_denied();
+        }
+        
+        $appointment_id = $this->input->post('appointment_id');
+        $measurement = $this->input->post('measurement');
+        
+        if (!$appointment_id || !$measurement) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Appointment ID and measurement are required'
+            ]);
+            return;
+        }
+        
+        $result = $this->appointments_model->log_measurement_removed($appointment_id, $measurement);
+        
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Measurement removal logged successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to log measurement removal'
+            ]);
+        }
+    }
+    
+    /**
+     * Log scheduled process (AJAX)
+     */
+    public function log_scheduled_process()
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            ajax_access_denied();
+        }
+        
+        $appointment_id = $this->input->post('appointment_id');
+        $process = $this->input->post('process');
+        $status = $this->input->post('status', true) ?: 'completed';
+        
+        if (!$appointment_id || !$process) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Appointment ID and process are required'
+            ]);
+            return;
+        }
+        
+        $result = $this->appointments_model->log_scheduled_process($appointment_id, $process, $status);
+        
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Process logged successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to log process'
+            ]);
+        }
+    }
+    
 
 }

@@ -16,7 +16,7 @@ $(document).ready(function() {
 // Global function for loading attachments
 window.loadAttachments = function() {
     $.ajax({
-        url: admin_url + 'ella_contractors/appointments/get_appointment_attachments/' + <?php echo $appointment['id']; ?>,
+        url: admin_url + 'ella_contractors/appointments/get_appointment_attachments/' + <?php echo $appointment->id; ?>,
         type: 'GET',
         dataType: 'json',
         success: function(response) {

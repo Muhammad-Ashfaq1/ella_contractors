@@ -15,7 +15,7 @@
             </div>
             <?php echo form_open('admin/ella_contractors/appointments/save_estimate', array('id' => 'estimate_form')); ?>
             <?php echo form_hidden('estimate_id'); ?>
-            <?php echo form_hidden('appointment_id', $appointment['id']); ?>
+            <?php echo form_hidden('appointment_id', $appointment->id); ?>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-12">

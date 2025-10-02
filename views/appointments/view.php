@@ -239,10 +239,10 @@ button.delete-btn {
                             <a href="<?php echo admin_url('ella_contractors/appointments'); ?>" class="btn btn-default">
                                 <i class="fa fa-arrow-left"></i> <?php echo _l('back_to_appointments'); ?>
                             </a>
-                            <a href="javascript:void(0)" class="btn btn-info" onclick="editAppointment(<?php echo $appointment['id']; ?>)">
+                            <a href="javascript:void(0)" class="btn btn-info" onclick="editAppointment(<?php echo $appointment->id; ?>)">
                                 <i class="fa fa-edit"></i> <?php echo _l('edit'); ?>
                             </a>
-                            <a href="javascript:void(0)" class="btn btn-danger" onclick="deleteAppointment(<?php echo $appointment['id']; ?>)">
+                            <a href="javascript:void(0)" class="btn btn-danger" onclick="deleteAppointment(<?php echo $appointment->id; ?>)">
                                 <i class="fa fa-trash"></i> <?php echo _l('delete'); ?>
                             </a>
                         </div>
@@ -251,14 +251,14 @@ button.delete-btn {
                         
                         <div class="row">
                             <div class="col-md-8">
-                                <h3 class="no-margin appointment-subject" title="<?php echo htmlspecialchars($appointment['subject']); ?>"><?php echo $appointment['subject']; ?></h3>
+                                <h3 class="no-margin appointment-subject" title="<?php echo htmlspecialchars($appointment->subject); ?>"><?php echo $appointment->subject; ?></h3>
                                 <p class="text-muted"><?php echo _l('appointment_details'); ?></p>
                             </div>
                             <div class="col-md-4 text-right">
                                 <!-- Status Display -->
                                 <div class="status-display">
                                     <?php 
-                                    $status = isset($appointment['appointment_status']) ? $appointment['appointment_status'] : 'scheduled';
+                                    $status = isset($appointment->appointment_status) ? $appointment->appointment_status : 'scheduled';
                                     $status_class = '';
                                     $status_label = '';
                                     
@@ -291,15 +291,15 @@ button.delete-btn {
                                 <div class="action-buttons-container">
                                     <div class="btn-group connected-buttons" role="group">
 
-                                        <?php if (!empty($appointment['contact_id']) && !empty($appointment['phone'])): ?>
-                                            <a href="javascript:void(0)" class="btn btn-success" onclick="openSMSModal(<?php echo $appointment['contact_id']; ?>, '<?php echo $appointment['phone']; ?>')">
+                                        <?php if (!empty($appointment->contact_id) && !empty($appointment->phone)): ?>
+                                            <a href="javascript:void(0)" class="btn btn-success" onclick="openSMSModal(<?php echo $appointment->contact_id; ?>, '<?php echo $appointment->phone; ?>')">
                                                 <i class="fa fa-comment"></i> Send SMS
                                             </a>
                                          <?php endif; ?>
-                                        <a href="mailto:<?php echo $appointment['email']; ?>" class="btn btn-primary btn-sm connected-btn-middle" title="<?php echo _l('email_client'); ?>" target="_blank">
+                                        <a href="mailto:<?php echo $appointment->email; ?>" class="btn btn-primary btn-sm connected-btn-middle" title="<?php echo _l('email_client'); ?>" target="_blank">
                                             <i class="fa fa-envelope"></i> <?php echo _l('email_client'); ?>
                                         </a>
-                                        <a href="javascript:void(0)" onclick="sendReminderClient(<?php echo $appointment['id']; ?>)" class="btn btn-warning btn-sm connected-btn-right" title="<?php echo _l('send_reminder'); ?>">
+                                        <a href="javascript:void(0)" onclick="sendReminderClient(<?php echo $appointment->id; ?>)" class="btn btn-warning btn-sm connected-btn-right" title="<?php echo _l('send_reminder'); ?>">
                                             <i class="fa fa-bell"></i> <?php echo _l('send_reminder'); ?>
                                         </a>
                                     </div>
@@ -313,37 +313,37 @@ button.delete-btn {
                                 <table class="table table-condensed">
                                     <tr>
                                         <td><strong><?php echo _l('id'); ?>:</strong></td>
-                                        <td><?php echo $appointment['id']; ?></td>
+                                        <td><?php echo $appointment->id; ?></td>
                                     </tr>
                                     <tr>
                                         <td><strong><?php echo _l('appointment_subject'); ?>:</strong></td>
-                                        <td><?php echo $appointment['subject']; ?></td>
+                                        <td><?php echo $appointment->subject; ?></td>
                                     </tr>
                                     <tr>
                                         <td><strong><?php echo _l('appointment_start_datetime'); ?>:</strong></td>
                                         <td>
                                             <?php 
                                             // Format date as "July 5th, 2025" to match listing format
-                                            $date_obj = DateTime::createFromFormat('Y-m-d', $appointment['date']);
+                                            $date_obj = DateTime::createFromFormat('Y-m-d', $appointment->date);
                                             if ($date_obj) {
                                                 echo $date_obj->format('F jS, Y');
                                             } else {
-                                                echo _d($appointment['date']);
+                                                echo _d($appointment->date);
                                             }
                                             
                                             // Add time underneath
-                                            if (!empty($appointment['start_hour'])) {
+                                            if (!empty($appointment->start_hour)) {
                                                 // Format time in 12-hour format with AM/PM
-                                                $time_obj = DateTime::createFromFormat('H:i:s', $appointment['start_hour']);
+                                                $time_obj = DateTime::createFromFormat('H:i:s', $appointment->start_hour);
                                                 if (!$time_obj) {
-                                                    $time_obj = DateTime::createFromFormat('H:i', $appointment['start_hour']);
+                                                    $time_obj = DateTime::createFromFormat('H:i', $appointment->start_hour);
                                                 }
                                                 
                                                 if ($time_obj) {
                                                     $time_formatted = strtolower($time_obj->format('g:ia'));
                                                 } else {
                                                     // Fallback if parsing fails
-                                                    $time_formatted = htmlspecialchars($appointment['start_hour']);
+                                                    $time_formatted = htmlspecialchars($appointment->start_hour);
                                                 }
                                                 
                                                 echo '<br><small>' . $time_formatted . '</small>';
@@ -356,8 +356,8 @@ button.delete-btn {
                                         <td>
                                             <?php 
                                             // Use end_date if available, otherwise use start date
-                                            $end_date = $appointment['end_date'] ?? $appointment['date'];
-                                            $end_time = $appointment['end_hour'] ?? $appointment['start_hour'];
+                                            $end_date = $appointment->end_date ?? $appointment->date;
+                                            $end_time = $appointment->end_hour ?? $appointment->start_hour;
                                             
                                             // Format date as "July 5th, 2025" to match listing format
                                             $end_date_obj = DateTime::createFromFormat('Y-m-d', $end_date);
@@ -397,30 +397,30 @@ button.delete-btn {
                                         <td><strong><?php echo _l('client'); ?>:</strong></td>
                                         <td>
                                            
-                                            <?php if($appointment['lead_name']): ?>
-                                                <?php echo $appointment['lead_name']; ?>
+                                            <?php if($appointment->lead_name): ?>
+                                                <?php echo $appointment->lead_name; ?>
                                             <?php else: ?>
-                                                <?php echo $appointment['name']; ?>
+                                                <?php echo $appointment->name; ?>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
                                     
-                                    <?php if($appointment['email']): ?>
+                                    <?php if($appointment->email): ?>
                                     <tr>
                                         <td><strong><?php echo _l('email'); ?>:</strong></td>
-                                        <td><?php echo $appointment['email']; ?></td>
+                                        <td><?php echo $appointment->email; ?></td>
                                     </tr>
                                     <?php endif; ?>
-                                    <?php if($appointment['phone']): ?>
+                                    <?php if($appointment->phone): ?>
                                     <tr>
                                         <td><strong><?php echo _l('phone'); ?>:</strong></td>
-                                        <td><?php echo $appointment['phone']; ?></td>
+                                        <td><?php echo $appointment->phone; ?></td>
                                     </tr>
                                     <?php endif; ?>
-                                    <?php if($appointment['address']): ?>
+                                    <?php if($appointment->address): ?>
                                     <tr>
                                         <td><strong><?php echo _l('address'); ?>:</strong></td>
-                                        <td><?php echo $appointment['address']; ?></td>
+                                        <td><?php echo $appointment->address; ?></td>
                                     </tr>
                                     <?php endif; ?>
                                 </table>
@@ -471,6 +471,11 @@ button.delete-btn {
                             <li role="presentation">
                                 <a href="#attachments-tab" aria-controls="attachments-tab" role="tab" data-toggle="tab">
                                     <i class="fa fa-paperclip"></i> Attachments
+                                </a>
+                            </li>
+                            <li role="presentation">
+                                <a href="#timeline-tab" aria-controls="timeline-tab" role="tab" data-toggle="tab">
+                                    <i class="fa fa-history"></i> Timeline
                                 </a>
                             </li>
                         </ul>
@@ -537,7 +542,7 @@ button.delete-btn {
                                         
                                         <!-- Add Note Form (Initially Hidden) -->
                                         <div id="note-form" class="hide mbot15">
-                                            <?php echo form_open(admin_url('ella_contractors/appointments/add_note/' . $appointment['id']), array('id' => 'appointment-notes')); ?>
+                                            <?php echo form_open(admin_url('ella_contractors/appointments/add_note/' . $appointment->id), array('id' => 'appointment-notes')); ?>
                                             <div class="form-group" id="appointmentnote">
                                                 <div class="lead emoji-picker-container leadnotes">
                                                     <textarea id="appointment_note_description" name="appointment_note_description" class="form-control" rows="3" data-emojiable="true" placeholder="Add a note about this appointment..."></textarea>
@@ -590,6 +595,46 @@ button.delete-btn {
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Timeline Tab -->
+                            <div role="tabpanel" class="tab-pane" id="timeline-tab">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="pull-right mbot15">
+                                            <button type="button" class="btn btn-info btn-sm" onclick="toggleTimelineNoteForm()" id="timeline-note-btn">
+                                                <i class="fa fa-plus"></i> Add Timeline
+                                            </button>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                        
+                                        <!-- Add Timeline Note Form (Initially Hidden) -->
+                                        <div id="timeline-note-form-container" class="hide mbot15">
+                                            <?php echo form_open(admin_url('ella_contractors/appointments/add_timeline_note/' . $appointment->id), array('id' => 'timeline-note-form')); ?>
+                                            <div class="form-group" id="timeline-note-group">
+                                                <div class="lead emoji-picker-container timeline-notes">
+                                                    <textarea id="timeline_note_content" name="timeline_note_content" class="form-control" rows="3" data-emojiable="true" placeholder="Add a timeline entry about this appointment..."></textarea>
+                                                </div>
+                                            </div>
+                                            <?php echo get_typos_by_category('timeline_notes'); ?>
+                                            <div class="text-right">
+                                                <button type="button" class="btn btn-default btn-sm" onclick="toggleTimelineNoteForm()">Cancel</button>
+                                                <button type="submit" class="btn btn-info btn-sm">Add Timeline</button>
+                                            </div>
+                                            <?php echo form_close(); ?>
+                                        </div>
+                                        
+                                        <hr class="hr-panel-heading" />
+                                        
+                                        <div id="timeline-container">
+                                            <!-- Timeline will be loaded here via AJAX -->
+                                            <div class="text-center">
+                                                <i class="fa fa-spinner fa-spin fa-2x"></i>
+                                                <p>Loading timeline...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -612,7 +657,7 @@ button.delete-btn {
                 <div class="modal-body">
                     <input type="hidden" id="measurement_id" name="id" value="">
                     <input type="hidden" name="rel_type" value="appointment">
-                    <input type="hidden" name="rel_id" value="<?php echo $appointment['id']; ?>">
+                    <input type="hidden" name="rel_id" value="<?php echo $appointment->id; ?>">
                     
                     <!-- Tab Navigation -->
                     <ul class="nav nav-tabs mb-3" id="category-tabs">
@@ -673,10 +718,13 @@ $this->load->view('appointments/estimate_modal', $data);
 
 <?php init_tail(); ?>
 
+<!-- Timeline CSS -->
+<link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/timeline.css'); ?>">
+
 <script>
 var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
 var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
-var appointmentId = <?php echo $appointment['id']; ?>;
+var appointmentId = <?php echo $appointment->id; ?>;
 
 $(document).ready(function() {
     // Load measurements when page loads
@@ -731,6 +779,22 @@ $(document).ready(function() {
     $('a[href="#notes-tab"]').on('click', function() {
         loadNotes();
     });
+    
+    // Reload timeline when timeline tab is shown
+    $('a[href="#timeline-tab"]').on('click', function() {
+        loadTimeline();
+    });
+    
+    // Timeline note form toggle
+    window.toggleTimelineNoteForm = function() {
+        $('#timeline-note-form-container').toggleClass('hide');
+        var btn = $('#timeline-note-btn');
+        if ($('#timeline-note-form-container').hasClass('hide')) {
+            btn.html('<i class="fa fa-plus"></i> Add Timeline');
+        } else {
+            btn.html('<i class="fa fa-minus"></i> Cancel');
+        }
+    };
     
     // Submit notes on appointment modal do ajax not the regular request
     $("body").on('submit', '#appointment-notes', function () {
@@ -920,6 +984,24 @@ function loadNotes() {
         },
         error: function() {
             $('#appointment-notes-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading notes.</p></div>');
+        }
+    });
+}
+
+// Timeline Functions
+function loadTimeline() {
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_timeline/' + appointmentId,
+        type: 'GET',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'html',
+        success: function(response) {
+            $('#timeline-container').html(response);
+        },
+        error: function() {
+            $('#timeline-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading timeline.</p></div>');
         }
     });
 }

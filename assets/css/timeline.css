@@ -1,0 +1,203 @@
+/* Timeline Styles for EllaContractors Module - Matching Perfex CRM Design */
+
+/* Timeline container - matches panel_s styling */
+.timeline-container {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+/* Timeline feed items - matches feed-item styling from notes */
+.timeline-feed-item {
+    position: relative;
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.timeline-feed-item:last-child {
+    border-bottom: none;
+}
+
+/* Timeline date - matches existing date styling */
+.timeline-date {
+    font-size: 11px;
+    color: #98a6ad;
+    margin-bottom: 8px;
+}
+
+.timeline-date .text-has-action {
+    cursor: pointer;
+}
+
+.timeline-date .text-has-action:hover {
+    color: #007bff;
+}
+
+/* Timeline content - matches text styling from notes */
+.timeline-text {
+    position: relative;
+    padding-left: 40px;
+}
+
+.timeline-text .staff-profile-xs-image {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+/* Timeline activity description */
+.timeline-description {
+    margin: 0;
+    line-height: 1.4;
+    color: #495057;
+}
+
+/* Timeline activity type indicator */
+.timeline-activity-type {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-right: 8px;
+}
+
+.timeline-activity-type.created {
+    background: #d4edda;
+    color: #155724;
+}
+
+.timeline-activity-type.updated {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.timeline-activity-type.status {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.timeline-activity-type.note {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+.timeline-activity-type.measurement {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.timeline-activity-type.process {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+/* Timeline activity details - for showing changes */
+.timeline-activity-details {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #007bff;
+}
+
+.timeline-activity-details h6 {
+    margin: 0 0 8px 0;
+    color: #495057;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.timeline-activity-details ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.timeline-activity-details li {
+    margin-bottom: 5px;
+    font-size: 12px;
+}
+
+/* Change indicators - old vs new values */
+.change-item {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    margin: 0 2px;
+}
+
+.change-old {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.change-new {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* Timeline action buttons - matches existing button styling */
+.timeline-actions {
+    margin-top: 8px;
+    text-align: right;
+}
+
+.timeline-actions .btn-xs {
+    padding: 2px 6px;
+    font-size: 11px;
+}
+
+/* Empty state - matches existing empty state styling */
+.timeline-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #98a6ad;
+}
+
+.timeline-empty i {
+    font-size: 48px;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.timeline-empty p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Timeline form styling - matches existing form styling */
+.timeline-form-container {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .timeline-text {
+        padding-left: 35px;
+    }
+    
+    .timeline-text .staff-profile-xs-image {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .timeline-activity-details {
+        padding: 8px;
+    }
+    
+    .timeline-actions {
+        text-align: left;
+        margin-top: 10px;
+    }
+}

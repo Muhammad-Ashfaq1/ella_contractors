@@ -18,6 +18,9 @@ hooks()->add_action('admin_init', 'ella_contractors_init_menu');
 // Register module assets
 hooks()->add_action('admin_init', 'ella_contractors_init_assets');
 
+// Load timeline helper
+hooks()->add_action('init', 'ella_contractors_load_helpers');
+
 // Register activation and deactivation hooks
 register_activation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_activate_module');
 register_deactivation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_deactivate_module');
@@ -82,6 +85,16 @@ function ella_contractors_init_assets() {
     
     // CSS files are now loaded individually in views where needed
     // to avoid 404 errors and improve performance
+}
+
+/**
+ * Load module helpers
+ */
+function ella_contractors_load_helpers() {
+    $CI = &get_instance();
+    
+    // Load timeline helper
+    $CI->load->helper('ella_contractors/ella_timeline_helper');
 }
 
 function ella_contractors_activate_module() {
@@ -620,6 +633,31 @@ function ella_contractors_activate_module() {
                 log_message('error', 'Ella Appointments - Error creating send_reminder column: ' . $e->getMessage());
             }
         }
+    
+    // Create ella_appointment_activity_log table for timeline tracking
+    if (!$CI->db->table_exists(db_prefix() . 'ella_appointment_activity_log')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_appointment_activity_log` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `rel_type` varchar(50) NOT NULL DEFAULT "appointment",
+            `rel_id` int(11) NOT NULL,
+            `org_id` int(11) DEFAULT NULL,
+            `staff_id` int(11) NOT NULL,
+            `description` varchar(500) NOT NULL,
+            `description_key` varchar(100) NOT NULL,
+            `additional_data` text,
+            `date` datetime NOT NULL,
+            `full_name` varchar(255) NOT NULL,
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `idx_rel_type_id` (`rel_type`, `rel_id`),
+            KEY `idx_org_id` (`org_id`),
+            KEY `idx_staff_id` (`staff_id`),
+            KEY `idx_date` (`date`),
+            KEY `idx_rel_id` (`rel_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+        
+        log_message('info', 'Ella Appointments - Created ella_appointment_activity_log table');
+    }
     
     // Set module version
     update_option('ella_contractors_version', '1.0.0');

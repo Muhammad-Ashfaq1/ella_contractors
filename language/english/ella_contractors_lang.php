@@ -1,105 +1,49 @@
-<?php
+<?php defined('BASEPATH') or exit('No direct script access allowed');
 
-defined('BASEPATH') or exit('No direct script access allowed');
+/**
+ * EllaContractors Language File
+ * Contains translations for appointment activity logging
+ */
 
-$lang['new_line_item'] = 'New Service Item';
-$lang['edit_line_item'] = 'Edit Service Item';
-$lang['add_line_item'] = 'Add Service Item';
-$lang['line_item_name'] = 'Service Item Name';
-$lang['line_item_description'] = 'Service Item Description';
-$lang['cost'] = 'Cost';
-$lang['quantity'] = 'Quantity';
-$lang['unit_type'] = 'Unit Type';
-$lang['select_unit_type'] = 'Select Unit Type';
-$lang['image'] = 'Image';
-$lang['active'] = 'Active';
-$lang['item_group'] = 'Item Group';
-$lang['item_groups'] = 'Item Groups';
-$lang['item_group_name'] = 'Item Group Name';
-$lang['new_item_group'] = 'New Item Group';
-$lang['line_item'] = 'Service Item';
-$lang['total_items_deleted'] = 'Total Items Deleted';
-$lang['mass_delete'] = 'Mass Delete';
-$lang['bulk_actions'] = 'Bulk Actions';
-$lang['confirm'] = 'Confirm';
-$lang['close'] = 'Close';
-$lang['submit'] = 'Submit';
-$lang['edit'] = 'Edit';
-$lang['delete'] = 'Delete';
-$lang['id'] = 'ID';
-$lang['added_successfully'] = 'Added Successfully';
-$lang['updated_successfully'] = 'Updated Successfully';
-$lang['deleted'] = 'Deleted';
-$lang['access_denied'] = 'Access Denied';
-$lang['changing_items_affect_warning'] = 'Changing items may affect existing invoices, estimates, and proposals.';
+$lang['appointment_activity_created'] = 'Appointment created';
+$lang['appointment_activity_updated'] = 'Appointment updated';
+$lang['appointment_activity_status_changed'] = 'Appointment status changed';
+$lang['appointment_activity_note_added'] = 'Note added to appointment';
+$lang['appointment_activity_measurement_added'] = 'Measurement added to appointment';
+$lang['appointment_activity_measurement_removed'] = 'Measurement removed from appointment';
+$lang['appointment_activity_process'] = 'Scheduled event process';
+$lang['appointment_activity_deleted'] = 'Appointment deleted';
 
-// Estimates Language Strings
-$lang['estimates'] = 'Estimates';
-$lang['new_estimate'] = 'New Estimate';
-$lang['edit_estimate'] = 'Edit Estimate';
-$lang['estimate_name'] = 'Estimate Name';
-$lang['estimate_description'] = 'Description';
-$lang['client'] = 'Client';
-$lang['lead'] = 'Lead';
-$lang['status'] = 'Status';
-$lang['total_amount'] = 'Total Amount';
-$lang['total_quantity'] = 'Total Quantity';
-$lang['line_items_count'] = 'Service Items Count';
-$lang['created_by'] = 'Created By';
-$lang['created_date'] = 'Created Date';
-$lang['last_updated'] = 'Last Updated';
-$lang['add_line_item'] = 'Add Service Item';
-$lang['remove_line_item'] = 'Remove Service Item';
-$lang['quantity'] = 'Quantity';
-$lang['unit_price'] = 'Unit Price';
-$lang['total_price'] = 'Total Price';
-$lang['select_line_item'] = 'Select Service Item';
+// Timeline specific
+$lang['timeline_tab_title'] = 'Timeline';
+$lang['timeline_activity_feed'] = 'Activity Feed';
+$lang['timeline_no_activities'] = 'No activities found for this appointment';
+$lang['timeline_add_note'] = 'Add Note';
+$lang['timeline_note_placeholder'] = 'Enter your note here...';
+$lang['timeline_submit_note'] = 'Submit Note';
+$lang['timeline_loading'] = 'Loading timeline...';
 
-// Appointments Language Strings
-$lang['back_to_appointments'] = 'Back to Appointments';
-$lang['appointment_details'] = 'Appointment Details';
-$lang['approved'] = 'Approved';
-$lang['basic_information'] = 'Basic Information';
-$lang['appointment_time'] = 'Appointment Time';
-$lang['contact_information'] = 'Contact Information';
-$lang['contact_name'] = 'Contact Name';
-$lang['phone'] = 'Phone';
-$lang['description'] = 'Description';
-$lang['notes'] = 'Notes';
-$lang['attendees'] = 'Attendees';
-$lang['confirm_delete_appointment'] = 'Are you sure you want to delete this appointment?';
-$lang['error_deleting_appointment'] = 'Error deleting appointment';
-$lang['cancelled'] = 'CANCELLED';
-$lang['finished'] = 'FINISHED';
-$lang['pending'] = 'PENDING';
-$lang['scheduled'] = 'SCHEDULED';
-$lang['complete'] = 'COMPLETE';
-$lang['appointment_subject'] = 'Appointment';
-$lang['appointment_meeting_date'] = 'Meeting Date';
-$lang['appointment_status'] = 'Status';
-$lang['email'] = 'Email';
-$lang['address'] = 'Address';
-$lang['no_line_items'] = 'No service items added to this estimate';
-$lang['estimate_line_items'] = 'Estimate Service Items';
-$lang['draft'] = 'Draft';
-$lang['sent'] = 'Sent';
-$lang['accepted'] = 'Accepted';
-$lang['rejected'] = 'Rejected';
-$lang['expired'] = 'Expired';
+// Activity descriptions with placeholders
+$lang['appointment_created_with_details'] = 'Appointment "%s" was created for %s at %s';
+$lang['appointment_updated_with_details'] = 'Appointment "%s" was updated';
+$lang['appointment_status_changed_from_to'] = 'Status changed from "%s" to "%s"';
+$lang['note_added_to_appointment'] = 'Note added: %s';
+$lang['measurement_added_to_appointment'] = 'Measurement added: %s';
+$lang['measurement_removed_from_appointment'] = 'Measurement removed: %s';
+$lang['scheduled_process_completed'] = 'Scheduled process "%s" completed';
+$lang['scheduled_process_failed'] = 'Scheduled process "%s" failed';
+$lang['appointment_deleted_with_subject'] = 'Appointment "%s" was deleted';
 
-// Appointment Reminder Language Strings
-$lang['appointment_send_reminder_followup'] = 'Send reminder & follow up to customer';
+// Status translations
+$lang['appointment_status_scheduled'] = 'Scheduled';
+$lang['appointment_status_cancelled'] = 'Cancelled';
+$lang['appointment_status_complete'] = 'Complete';
 
-// Appointment View Language Strings
-$lang['appointment_start_datetime'] = 'Start Date & Time';
-$lang['appointment_end_datetime'] = 'End Date & Time';
-$lang['email_client'] = 'Email Client';
-$lang['print_appointment'] = 'Print Appointment';
-$lang['duplicate_appointment'] = 'Duplicate Appointment';
-$lang['no_email_available'] = 'No email address available for this appointment';
-$lang['error_loading_appointment_data'] = 'Error loading appointment data';
-$lang['confirm_duplicate_appointment'] = 'Are you sure you want to duplicate this appointment?';
-$lang['error_duplicating_appointment'] = 'Error duplicating appointment';
-$lang['send_reminder'] = 'Send Reminder';
-$lang['confirm_send_reminder'] = 'Are you sure you want to send a reminder to the client?';
-$lang['error_sending_reminder'] = 'Error sending reminder';
+// Time formatting
+$lang['time_ago_just_now'] = 'Just now';
+$lang['time_ago_minutes'] = '%d minutes ago';
+$lang['time_ago_hours'] = '%d hours ago';
+$lang['time_ago_days'] = '%d days ago';
+$lang['time_ago_weeks'] = '%d weeks ago';
+$lang['time_ago_months'] = '%d months ago';
+$lang['time_ago_years'] = '%d years ago';
