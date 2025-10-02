@@ -1313,6 +1313,7 @@ $(document).on('click', function(e) {
 // APPOINTMENT STATUS DROPDOWN FUNCTIONALITY END
 // ========================================
 
+console.log('this is our test page');
 </script>
 
 <!-- Include global appointment.js for lead modal functionality -->
