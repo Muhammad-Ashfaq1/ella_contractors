@@ -22,7 +22,17 @@
                             <?php endif; ?>
                             
                             <span class="timeline-activity-type <?php echo $activity['description_key']; ?>">
-                                <?php echo ucfirst(str_replace('_', ' ', $activity['description_key'])); ?>
+                                <?php 
+                                // Convert description_key to proper display format
+                                $activity_parts = explode('_', $activity['description_key']);
+                                if (count($activity_parts) >= 2) {
+                                    $entity = ucfirst($activity_parts[0]);
+                                    $action = ucfirst($activity_parts[1]);
+                                    echo "{$entity} {$action}";
+                                } else {
+                                    echo ucfirst(str_replace('_', ' ', $activity['description_key']));
+                                }
+                                ?>
                             </span>
                             
                             <b><?php echo $activity['full_name']; ?></b> - 

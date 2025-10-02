@@ -672,9 +672,18 @@ class Appointments extends AdminController
 
         if ($id > 0) {
             $ok = $this->measurements_model->update($id, $post);
+            if ($ok) {
+                // Log measurement update activity
+                $this->appointments_model->log_activity($appointment_id, 'updated', 'measurement', $post['name'], ['measurement_id' => $id, 'category' => $post['category'] ?? 'general']);
+            }
             $msg = $ok ? 'Measurement updated successfully' : 'Nothing changed';
         } else {
-            $ok = (bool) $this->measurements_model->create($post);
+            $measurement_id = $this->measurements_model->create($post);
+            $ok = (bool) $measurement_id;
+            if ($ok) {
+                // Log measurement creation activity
+                $this->appointments_model->log_activity($appointment_id, 'created', 'measurement', $post['name'], ['measurement_id' => $measurement_id, 'category' => $post['category'] ?? 'general']);
+            }
             $msg = $ok ? 'Measurement created successfully' : 'Failed to create measurement';
         }
 
@@ -752,6 +761,9 @@ class Appointments extends AdminController
             if ($estimate_id) {
                 // Update existing estimate
                 if ($this->estimates_model->update_estimate($estimate_id, $data)) {
+                    // Log estimate update activity
+                    $this->appointments_model->log_activity($data['appointment_id'], 'updated', 'estimate', $data['estimate_name'], ['estimate_id' => $estimate_id]);
+                    
                     // Handle line items
                     $this->handle_estimate_line_items($estimate_id);
                     echo json_encode([
@@ -768,6 +780,9 @@ class Appointments extends AdminController
                 // Create new estimate
                 $estimate_id = $this->estimates_model->create_estimate($data);
                 if ($estimate_id) {
+                    // Log estimate creation activity
+                    $this->appointments_model->log_activity($data['appointment_id'], 'created', 'estimate', $data['estimate_name'], ['estimate_id' => $estimate_id]);
+                    
                     // Handle line items
                     $this->handle_estimate_line_items($estimate_id);
                     echo json_encode([
@@ -1035,6 +1050,12 @@ class Appointments extends AdminController
                 log_staff_status_activity('Added SMS Activity from Appointment Lead# [' . $lead_id . ']');
                 // Mark all SMS as read
                 $this->leads_model->updated_sms_log_status($lead_id, 'lead_id', '0');
+                
+                // Log SMS sent activity for appointment timeline
+                $appointment_id = $this->input->post('appointment_id');
+                if ($appointment_id) {
+                    $this->appointments_model->log_activity($appointment_id, 'sent', 'sms', '', ['phone_number' => $number, 'sms_content' => $sms_body, 'lead_id' => $lead_id]);
+                }
             }
         } else {
             $response['message'] = 'Something went wrong!';
@@ -1288,12 +1309,49 @@ class Appointments extends AdminController
         $this->email->message($email_data['message']);
 
         if ($this->email->send()) {
+            // Log email sent activity
+            $this->appointments_model->log_activity($appointment_id, 'sent', 'email', '', ['email_address' => $appointment->email, 'subject' => $email_data['subject'], 'email_type' => 'reminder']);
             echo json_encode(['success' => true, 'message' => 'Reminder sent successfully to ' . $appointment->email]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to send reminder: ' . $this->email->print_debugger()]);
         }
     }
 
+    /**
+     * Log email button click (AJAX)
+     */
+    public function log_email_click()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+        
+        $appointment_id = $this->input->post('appointment_id');
+        $email_address = $this->input->post('email_address');
+        
+        if (!$appointment_id || !$email_address) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Appointment ID and email address are required'
+            ]);
+            return;
+        }
+        
+        $result = $this->appointments_model->log_activity($appointment_id, 'clicked', 'email', '', ['email_address' => $email_address]);
+        
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Email click logged successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to log email click'
+            ]);
+        }
+    }
+    
     /**
      * Build reminder message
      */
@@ -1362,6 +1420,8 @@ class Appointments extends AdminController
                 $success = $this->misc_model->edit_note($update_data, $note_id);
                 
                 if ($success) {
+                    // Log note update activity
+                    $this->appointments_model->log_activity($rel_id, 'updated', 'note', '', ['note_id' => $note_id, 'changes' => ['content' => ['old' => $note->description, 'new' => $data['description']]]]);
                     echo json_encode(['success' => true, 'message' => 'Note updated successfully']);
                 } else {
                     echo json_encode(['success' => false, 'message' => 'Failed to update note']);
@@ -1371,6 +1431,8 @@ class Appointments extends AdminController
                 $note_id = $this->misc_model->add_note($data, 'appointment', $rel_id);
                 
                 if ($note_id) {
+                    // Log note addition activity
+                    $this->appointments_model->log_activity($rel_id, 'added', 'note', '', ['note_id' => $note_id, 'note_content' => $data['description']]);
                     echo json_encode(['success' => true, 'message' => 'Note added successfully']);
                 } else {
                     echo json_encode(['success' => false, 'message' => 'Failed to add note']);

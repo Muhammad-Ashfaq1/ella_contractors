@@ -296,7 +296,7 @@ button.delete-btn {
                                                 <i class="fa fa-comment"></i> Send SMS
                                             </a>
                                          <?php endif; ?>
-                                        <a href="mailto:<?php echo $appointment->email; ?>" class="btn btn-primary btn-sm connected-btn-middle" title="<?php echo _l('email_client'); ?>" target="_blank">
+                                        <a href="mailto:<?php echo $appointment->email; ?>" class="btn btn-primary btn-sm connected-btn-middle" title="<?php echo _l('email_client'); ?>" target="_blank" onclick="logEmailClick(<?php echo $appointment->id; ?>, '<?php echo $appointment->email; ?>')">
                                             <i class="fa fa-envelope"></i> <?php echo _l('email_client'); ?>
                                         </a>
                                         <a href="javascript:void(0)" onclick="sendReminderClient(<?php echo $appointment->id; ?>)" class="btn btn-warning btn-sm connected-btn-right" title="<?php echo _l('send_reminder'); ?>">
@@ -794,6 +794,20 @@ $(document).ready(function() {
         } else {
             btn.html('<i class="fa fa-minus"></i> Cancel');
         }
+    };
+    
+    // Log email button click
+    window.logEmailClick = function(appointmentId, emailAddress) {
+        $.ajax({
+            url: admin_url + 'ella_contractors/appointments/log_email_click',
+            type: 'POST',
+            data: {
+                appointment_id: appointmentId,
+                email_address: emailAddress,
+                [csrf_token_name]: csrf_hash
+            },
+            dataType: 'json'
+        });
     };
     
     // Submit notes on appointment modal do ajax not the regular request

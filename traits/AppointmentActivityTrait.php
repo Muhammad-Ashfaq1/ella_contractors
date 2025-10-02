@@ -274,4 +274,130 @@ trait AppointmentActivityTrait
             $additional_data
         );
     }
+    
+    /**
+     * Generic activity logger - handles all activity types dynamically
+     * 
+     * @param int    $appointment_id Appointment ID
+     * @param string $activity_type Activity type (created, updated, deleted, sent, etc.)
+     * @param string $entity_type   Entity type (estimate, measurement, note, email, sms, file)
+     * @param string $entity_name   Name/title of the entity
+     * @param array  $data          Additional data to store
+     * @param string $description   Custom description (optional)
+     * @return int|false            Log ID on success, false on failure
+     */
+    public function log_activity($appointment_id, $activity_type, $entity_type, $entity_name = '', $data = [], $description = '')
+    {
+        // Build description if not provided
+        if (empty($description)) {
+            $description = $this->build_activity_description($activity_type, $entity_type, $entity_name, $data);
+        }
+        
+        // Build description key
+        $description_key = $entity_type . '_' . $activity_type;
+        
+        // Prepare additional data
+        $additional_data = serialize(array_merge($data, [
+            'entity_type' => $entity_type,
+            'entity_name' => $entity_name,
+            'activity_type' => $activity_type
+        ]));
+        
+        return $this->log_appointment_activity($appointment_id, $description_key, $description, $additional_data);
+    }
+    
+    /**
+     * Build activity description dynamically
+     * 
+     * @param string $activity_type Activity type
+     * @param string $entity_type   Entity type
+     * @param string $entity_name   Entity name
+     * @param array  $data          Additional data
+     * @return string               Generated description
+     */
+    private function build_activity_description($activity_type, $entity_type, $entity_name, $data)
+    {
+        // Proper entity display names
+        $entity_display = $this->get_proper_entity_name($entity_type);
+        $activity_display = $this->get_proper_activity_name($activity_type);
+        
+        switch ($activity_type) {
+            case 'created':
+                if ($entity_name) {
+                    return "{$entity_display} '{$entity_name}' Created";
+                }
+                return "{$entity_display} Created";
+            case 'updated':
+                if ($entity_name) {
+                    return "{$entity_display} '{$entity_name}' Updated";
+                }
+                return "{$entity_display} Updated";
+            case 'deleted':
+                if ($entity_name) {
+                    return "{$entity_display} '{$entity_name}' Deleted";
+                }
+                return "{$entity_display} Deleted";
+            case 'sent':
+                if ($entity_type === 'sms') {
+                    $phone = $data['phone_number'] ?? 'unknown';
+                    return "SMS Sent to {$phone}";
+                } elseif ($entity_type === 'email') {
+                    $email = $data['email_address'] ?? 'unknown';
+                    $subject = $data['subject'] ?? '';
+                    return "Email Sent to {$email}" . ($subject ? ": {$subject}" : '');
+                }
+                return "{$entity_display} Sent";
+            case 'clicked':
+                if ($entity_type === 'email') {
+                    $email = $data['email_address'] ?? 'unknown';
+                    return "Email Button Clicked for {$email}";
+                }
+                return "{$entity_display} Clicked";
+            case 'added':
+                return "{$entity_display} Added to Appointment";
+            default:
+                return "{$entity_display} {$activity_display}";
+        }
+    }
+    
+    /**
+     * Get proper entity display name
+     * 
+     * @param string $entity_type Entity type
+     * @return string             Proper display name
+     */
+    private function get_proper_entity_name($entity_type)
+    {
+        $names = [
+            'appointment' => 'Appointment',
+            'estimate' => 'Estimate',
+            'measurement' => 'Measurement',
+            'note' => 'Note',
+            'email' => 'Email',
+            'sms' => 'SMS',
+            'file' => 'File'
+        ];
+        
+        return $names[$entity_type] ?? ucfirst($entity_type);
+    }
+    
+    /**
+     * Get proper activity display name
+     * 
+     * @param string $activity_type Activity type
+     * @return string               Proper display name
+     */
+    private function get_proper_activity_name($activity_type)
+    {
+        $names = [
+            'created' => 'Created',
+            'updated' => 'Updated',
+            'deleted' => 'Deleted',
+            'sent' => 'Sent',
+            'clicked' => 'Clicked',
+            'added' => 'Added'
+        ];
+        
+        return $names[$activity_type] ?? ucfirst($activity_type);
+    }
 }

@@ -399,7 +399,21 @@ class Ella_appointments_model extends App_Model
             'appointment_activity_measurement_added' => 'fa fa-plus-square',
             'appointment_activity_measurement_removed' => 'fa fa-minus-square',
             'appointment_activity_process' => 'fa fa-cogs',
-            'appointment_activity_deleted' => 'fa fa-trash'
+            'appointment_activity_deleted' => 'fa fa-trash',
+            'estimate_created' => 'fa fa-file-invoice',
+            'estimate_updated' => 'fa fa-file-invoice-dollar',
+            'estimate_deleted' => 'fa fa-file-invoice-dollar',
+            'measurement_created' => 'fa fa-ruler-combined',
+            'measurement_updated' => 'fa fa-ruler',
+            'measurement_deleted' => 'fa fa-ruler-horizontal',
+            'sms_sent' => 'fa fa-comment',
+            'email_sent' => 'fa fa-envelope',
+            'email_clicked' => 'fa fa-envelope-open',
+            'note_added' => 'fa fa-sticky-note',
+            'note_updated' => 'fa fa-edit',
+            'note_deleted' => 'fa fa-trash',
+            'file_attached' => 'fa fa-paperclip',
+            'file_deleted' => 'fa fa-times-circle'
         ];
         
         return $icons[$description_key] ?? 'fa fa-info-circle';
@@ -421,7 +435,21 @@ class Ella_appointments_model extends App_Model
             'appointment_activity_measurement_added' => 'success',
             'appointment_activity_measurement_removed' => 'danger',
             'appointment_activity_process' => 'secondary',
-            'appointment_activity_deleted' => 'danger'
+            'appointment_activity_deleted' => 'danger',
+            'estimate_created' => 'success',
+            'estimate_updated' => 'info',
+            'estimate_deleted' => 'danger',
+            'measurement_created' => 'primary',
+            'measurement_updated' => 'info',
+            'measurement_deleted' => 'danger',
+            'sms_sent' => 'success',
+            'email_sent' => 'primary',
+            'email_clicked' => 'warning',
+            'note_added' => 'secondary',
+            'note_updated' => 'info',
+            'note_deleted' => 'danger',
+            'file_attached' => 'success',
+            'file_deleted' => 'danger'
         ];
         
         return $colors[$description_key] ?? 'default';
