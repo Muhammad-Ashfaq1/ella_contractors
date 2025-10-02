@@ -1194,52 +1194,68 @@ function displayEstimates(estimates) {
         return;
     }
 
-    var html = '<div class="table-responsive"><table class="table table-striped table-hover">';
-    html += '<thead><tr>';
-    html += '<th>Estimate Name</th>';
-    html += '<th>Status</th>';
-    html += '<th>Line Items</th>';
-    html += '<th>Total Amount</th>';
-    html += '<th>Created By</th>';
-    html += '<th>Created Date</th>';
-    html += '<th width="120px">Actions</th>';
-    html += '</tr></thead><tbody>';
+    var html = '<div class="table-responsive"><table class="table table-hover" style="margin-bottom: 0;">';
+    html += '<thead style="background-color: #2c3e50; color: white;">';
+    html += '<tr>';
+    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Estimate Name</th>';
+    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Status</th>';
+    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Line Items</th>';
+    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Total Amount</th>';
+    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Created By</th>';
+    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Created Date</th>';
+    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600; width: 120px;">Actions</th>';
+    html += '</tr>';
+    html += '</thead>';
+    html += '<tbody>';
 
-    estimates.forEach(function(estimate) {
+    estimates.forEach(function(estimate, idx) {
         var statusClass = '';
         var statusText = estimate.status;
+        var statusColor = '';
         
         switch(estimate.status) {
             case 'draft':
                 statusClass = 'label-warning';
+                statusColor = '#f39c12';
                 break;
             case 'sent':
                 statusClass = 'label-info';
+                statusColor = '#3498db';
                 break;
             case 'accepted':
                 statusClass = 'label-success';
+                statusColor = '#27ae60';
                 break;
             case 'rejected':
                 statusClass = 'label-danger';
+                statusColor = '#e74c3c';
                 break;
             case 'expired':
                 statusClass = 'label-default';
+                statusColor = '#95a5a6';
                 break;
         }
         
         var totalAmount = estimate.total_amount ? parseFloat(estimate.total_amount).toFixed(2) : '0.00';
         var createdDate = estimate.created_at ? new Date(estimate.created_at).toLocaleDateString() : '-';
 
-        html += '<tr>';
-        html += '<td><strong>' + estimate.estimate_name + '</strong></td>';
-        html += '<td><span class="label ' + statusClass + '">' + statusText.toUpperCase() + '</span></td>';
-        html += '<td>' + (estimate.line_items_count || 0) + '</td>';
-        html += '<td>$' + totalAmount + '</td>';
-        html += '<td>' + (estimate.created_by_name || '-') + '</td>';
-        html += '<td>' + createdDate + '</td>';
-        html += '<td>';
-        html += '<button class="btn btn-default btn-xs" onclick="openEstimateModal(' + estimate.id + ')" title="Edit"><i class="fa fa-edit"></i></button> ';
-        html += '<button class="btn btn-danger btn-xs" onclick="deleteEstimate(' + estimate.id + ')" title="Delete"><i class="fa fa-trash"></i></button>';
+        // Alternate row colors
+        var rowClass = (idx % 2 === 0) ? 'style="background-color: #f8f9fa;"' : 'style="background-color: white;"';
+
+        html += '<tr ' + rowClass + '>';
+        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + estimate.estimate_name + '</strong></td>';
+        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;">';
+        html += '<span style="background-color: ' + statusColor + '; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">' + statusText.toUpperCase() + '</span>';
+        html += '</td>';
+        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + (estimate.line_items_count || 0) + '</strong></td>';
+        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>$' + totalAmount + '</strong></td>';
+        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + (estimate.created_by_name || '-') + '</strong></td>';
+        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + createdDate + '</strong></td>';
+        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;">';
+        html += '<div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">';
+        html += '<button class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="openEstimateModal(' + estimate.id + ')" title="Edit Estimate"><i class="fa fa-edit"></i></button>';
+        html += '<button class="btn btn-sm" style="background-color: #dc3545; border: 1px solid #dc3545; color: white; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="deleteEstimate(' + estimate.id + ')" title="Delete Estimate"><i class="fa fa-trash"></i></button>';
+        html += '</div>';
         html += '</td>';
         html += '</tr>';
     });
@@ -1278,15 +1294,18 @@ function displayMeasurements(measurements) {
         return;
     }
 
-    var html = '<div class="table-responsive"><table class="table table-striped table-hover">';
-    html += '<thead><tr>';
-    html += '<th>Record</th>';
-    html += '<th>Windows</th>';
-    html += '<th>Doors</th>';
-    html += '<th>Siding Area (sqft)</th>';
-    html += '<th>Roofing Area (sqft)</th>';
-    html += '<th width="140px">Actions</th>';
-    html += '</tr></thead><tbody>';
+    var html = '<div class="table-responsive"><table class="table table-hover" style="margin-bottom: 0;">';
+    html += '<thead style="background-color: #2c3e50; color: white;">';
+    html += '<tr>';
+    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Record</th>';
+    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Windows</th>';
+    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Doors</th>';
+    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Siding Area (sqft)</th>';
+    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Roofing Area (sqft)</th>';
+    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600; width: 140px;">Actions</th>';
+    html += '</tr>';
+    html += '</thead>';
+    html += '<tbody>';
 
     measurements.forEach(function(measurement, idx) {
         var attrs = {};
@@ -1304,15 +1323,23 @@ function displayMeasurements(measurements) {
             else if (attrs.roofing.roof_sloped_area) roofingArea = parseFloat(attrs.roofing.roof_sloped_area) || 0;
         }
 
-        html += '<tr>';
-        html += '<td><span class="label label-info">' + (measurement.category || 'combined').toUpperCase() + '</span> #' + measurement.id + '</td>';
-        html += '<td>' + windowsCount + '</td>';
-        html += '<td>' + doorsCount + '</td>';
-        html += '<td>' + sidingArea.toFixed(2) + '</td>';
-        html += '<td>' + roofingArea.toFixed(2) + '</td>';
-        html += '<td>';
-        html += '<button class="btn btn-default btn-xs" onclick="editMeasurement(' + measurement.id + ')" title="Edit"><i class="fa fa-edit"></i></button> ';
-        html += '<button class="btn btn-danger btn-xs" onclick="deleteMeasurement(' + measurement.id + ')" title="Delete"><i class="fa fa-trash"></i></button>';
+        // Alternate row colors
+        var rowClass = (idx % 2 === 0) ? 'style="background-color: #f8f9fa;"' : 'style="background-color: white;"';
+        
+        html += '<tr ' + rowClass + '>';
+        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;">';
+        html += '<span style="background-color: #3498db; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">' + (measurement.category || 'combined').toUpperCase() + '</span>';
+        html += ' <strong>#' + measurement.id + '</strong>';
+        html += '</td>';
+        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + windowsCount + '</strong></td>';
+        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + doorsCount + '</strong></td>';
+        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + sidingArea.toFixed(2) + '</strong></td>';
+        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + roofingArea.toFixed(2) + '</strong></td>';
+        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;">';
+        html += '<div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">';
+        html += '<button class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="editMeasurement(' + measurement.id + ')" title="Edit Measurement"><i class="fa fa-edit"></i></button>';
+        html += '<button class="btn btn-sm" style="background-color: #dc3545; border: 1px solid #dc3545; color: white; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="deleteMeasurement(' + measurement.id + ')" title="Delete Measurement"><i class="fa fa-trash"></i></button>';
+        html += '</div>';
         html += '</td>';
         html += '</tr>';
     });
