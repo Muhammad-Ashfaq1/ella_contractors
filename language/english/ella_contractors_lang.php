@@ -14,6 +14,8 @@ $lang['appointment_activity_measurement_removed'] = 'Measurement removed from ap
 $lang['appointment_activity_process'] = 'Scheduled event process';
 $lang['appointment_activity_deleted'] = 'Appointment deleted';
 $lang['appointment_details'] = 'Appointment Details';
+$lang['email_client'] = 'Email Client';
+$lang['send_reminder'] = 'Send Reminder';
 
 // Timeline specific
 $lang['timeline_tab_title'] = 'Timeline';
