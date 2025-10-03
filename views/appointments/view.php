@@ -1535,10 +1535,15 @@ function displayMeasurements(measurements) {
 }
 
 function openMeasurementModal(measurementId = null) {
+    // Set measurement ID first before resetting form
+    $('#measurement_id').val(measurementId || '');
+    
     // Reset form
     $('#measurementForm')[0].reset();
-    $('#measurement_id').val('');
-    $('#measurementModalLabel').text('Add Measurement');
+    
+    // Restore measurement ID after reset
+    $('#measurement_id').val(measurementId || '');
+    $('#measurementModalLabel').text(measurementId ? 'Edit Measurement' : 'Add Measurement');
     $('#selected-category').val('siding');
     
     // Reset tabs to siding
@@ -2172,6 +2177,9 @@ $('#saveMeasurement').on('click', function() {
         data[field.name] = field.value;
     });
     
+    // Debug: Log measurement ID
+    console.log('Main Save - Measurement ID from form:', data.id);
+    
     // Collect data from siding and roofing estimate rows
     var sidingMeasurements = [];
     var roofingMeasurements = [];
@@ -2244,20 +2252,20 @@ $('#saveMeasurement').on('click', function() {
         data: data,
         dataType: 'json',
         success: function(response) {
-            // Reset button
-            submitBtn.prop('disabled', false).text(originalText);
-            
+        // Reset button
+        submitBtn.prop('disabled', false).text(originalText);
+        
             if (response.success) {
-                alert_float('success', 'Measurement saved successfully!');
-                $('#measurementModal').modal('hide');
-                // Use global refresh function to reload data and switch to measurements tab
-                if (typeof refreshAppointmentData === 'function') {
-                    refreshAppointmentData('measurements-tab');
-                } else {
-                    loadMeasurements(); // Fallback to old method
-                }
+            alert_float('success', 'Measurement saved successfully!');
+            $('#measurementModal').modal('hide');
+            // Use global refresh function to reload data and switch to measurements tab
+            if (typeof refreshAppointmentData === 'function') {
+                refreshAppointmentData('measurements-tab');
             } else {
-                alert_float('danger', 'Error saving measurement: ' + (response.message || 'Unknown error'));
+                loadMeasurements(); // Fallback to old method
+            }
+        } else {
+            alert_float('danger', 'Error saving measurement: ' + (response.message || 'Unknown error'));
             }
         },
         error: function() {
@@ -2303,22 +2311,48 @@ $(document).on('click', '#js-save-windows, #js-save-doors', function() {
         if (item.name) { bulk[category].push(item); }
     });
 
-    var payload = { bulk: bulk };
+    var payload = { 
+        bulk: bulk,
+        appointment_id: appointmentId,
+        category: 'combined'
+    };
+    
+    // Include measurement ID if editing existing measurement
+    var measurementId = $('#measurement_id').val();
+    console.log('Windows/Doors Save - Measurement ID:', measurementId);
+    if (measurementId) {
+        payload.id = measurementId;
+    }
+    
     payload[csrf_token_name] = csrf_hash;
 
     $.ajax({
-        url: admin_url + 'ella_contractors/appointments/save_measurement/' + appointmentId,
+        url: admin_url + 'ella_contractors/measurements/save',
         type: 'POST',
         data: payload,
         dataType: 'json',
         success: function(resp) {
             if (resp && resp.success) {
                 alert_float('success', (which === 'windows' ? 'Windows' : 'Doors') + ' saved');
-                // Update DOM rows with saved data retaining rows as inline editable
-                var savedList = (resp.data && resp.data.attributes && resp.data.attributes[which]) ? resp.data.attributes[which] : [];
+                
+                // Parse the attributes_json from the response
+                var savedList = [];
+                if (resp.data && resp.data.attributes_json) {
+                    try {
+                        var attributes = JSON.parse(resp.data.attributes_json);
+                        savedList = attributes[which] || [];
+                    } catch (e) {
+                        console.error('Error parsing attributes_json:', e);
+                    }
+                }
+                
+                // Update the table with saved data
                 var tbody = $('#' + which + '-tbody');
                 tbody.html('');
-                savedList.forEach(function(item) { appendInlineRow(which, item); });
+                savedList.forEach(function(item) { 
+                    appendInlineRow(which, item); 
+                });
+                
                 // Also refresh the main measurements list
                 if (typeof refreshAppointmentData === 'function') {
                     refreshAppointmentData('measurements-tab');
@@ -2347,7 +2381,7 @@ function saveMeasurementAjax(formData, callback) {
     console.log('Sending AJAX request with data:', formData);
     
     $.ajax({
-        url: admin_url + 'ella_contractors/appointments/save_measurement/' + appointmentId,
+        url: admin_url + 'ella_contractors/measurements/save',
         type: 'POST',
         data: formData,
         dataType: 'json',

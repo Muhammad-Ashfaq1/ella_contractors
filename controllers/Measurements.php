@@ -6,23 +6,9 @@ class Measurements extends AdminController
     {
         parent::__construct();
         $this->load->model('ella_contractors/Measurements_model', 'measurements_model');
+        $this->load->model('ella_contractors/Ella_appointments_model', 'appointments_model');
     }
 
-    public function index()
-    {
-        if (!has_permission('ella_contractors', '', 'view')) {
-            access_denied('ella_contractors');
-        }
-
-        if ($this->input->is_ajax_request()) {
-            echo json_encode($this->measurements_model->list_all($this->input->get()));
-            return;
-        }
-
-        $data['title'] = 'All Measurements';
-        $data['measurements_model'] = $this->measurements_model;
-        $this->load->view('ella_contractors/measurements/list', $data);
-    }
 
     public function save()
     {
@@ -95,9 +81,22 @@ class Measurements extends AdminController
         if ($id > 0) {
             $ok  = $this->measurements_model->update($id, $post);
             $msg = $ok ? 'Updated successfully' : 'Nothing changed';
+            
+            // Log measurement update if successful and it's for an appointment
+            if ($ok && isset($post['appointment_id']) && $post['appointment_id']) {
+                $measurement_name = $post['name'] ?? 'Measurement';
+                $this->appointments_model->log_activity($post['appointment_id'], 'updated', 'measurement', $measurement_name, ['measurement_id' => $id, 'category' => $post['category'] ?? 'general']);
+            }
         } else {
-            $ok  = (bool) $this->measurements_model->create($post);
+            $measurement_id = $this->measurements_model->create($post);
+            $ok = (bool) $measurement_id;
             $msg = $ok ? 'Created successfully' : 'Failed to create';
+            
+            // Log measurement creation if successful and it's for an appointment
+            if ($ok && isset($post['appointment_id']) && $post['appointment_id']) {
+                $measurement_name = $post['name'] ?? 'Measurement';
+                $this->appointments_model->log_activity($post['appointment_id'], 'created', 'measurement', $measurement_name, ['measurement_id' => $measurement_id, 'category' => $post['category'] ?? 'general']);
+            }
         }
 
         // Handle AJAX requests
@@ -116,53 +115,6 @@ class Measurements extends AdminController
         redirect(admin_url('ella_contractors/measurements/' . $redirectCategory));
     }
 
-    public function create()
-    {
-        if (!has_permission('ella_contractors', '', 'create')) {
-            access_denied('ella_contractors');
-        }
-        
-        // Get leads and clients for dropdowns
-        $this->load->model('leads_model');
-        $this->load->model('clients_model');
-        
-        $data['title'] = 'Add Measurements';
-        $data['category'] = 'siding';
-        $data['row'] = null;
-        $data['all_measurements'] = [];
-        $data['leads'] = $this->leads_model->get();
-        $data['clients'] = $this->clients_model->get();
-        
-        $this->load->view('ella_contractors/measurements/form', $data);
-    }
-
-    public function edit($id)
-    {
-        if (!has_permission('ella_contractors', '', 'edit')) {
-            access_denied('ella_contractors');
-        }
-
-        $row = $this->measurements_model->find($id);
-        if (!$row) {
-            show_404();
-        }
-
-        // Get all measurements for the same lead/client
-        $all_measurements = $this->measurements_model->get_related_measurements($row['rel_type'], $row['rel_id']);
-        
-        // Get leads and clients for dropdowns
-        $this->load->model('leads_model');
-        $this->load->model('clients_model');
-        
-        $data['title'] = 'Edit Measurements';
-        $data['category'] = $row['category'] ?? 'siding';
-        $data['row'] = $row;
-        $data['all_measurements'] = $all_measurements;
-        $data['leads'] = $this->leads_model->get();
-        $data['clients'] = $this->clients_model->get();
-        
-        $this->load->view('ella_contractors/measurements/form', $data);
-    }
 
     public function delete($id)
     {
@@ -174,7 +126,16 @@ class Measurements extends AdminController
             }
         }
 
+        // Get measurement details before deleting for logging
+        $measurement = $this->measurements_model->find($id);
+        
         $ok = $this->measurements_model->delete($id);
+        
+        // Log measurement deletion if successful and it's for an appointment
+        if ($ok && $measurement && isset($measurement['appointment_id']) && $measurement['appointment_id']) {
+            $measurement_name = $measurement['name'] ?? 'Measurement';
+            $this->appointments_model->log_activity($measurement['appointment_id'], 'deleted', 'measurement', $measurement_name, ['measurement_id' => $id, 'category' => $measurement['category'] ?? 'general']);
+        }
         
         if ($this->input->is_ajax_request()) {
             header('Content-Type: application/json');
@@ -189,47 +150,6 @@ class Measurements extends AdminController
         redirect($_SERVER['HTTP_REFERER'] ?? admin_url('ella_contractors/measurements'));
     }
 
-    /**
-     * Get measurements by category for AJAX
-     */
-    public function get_measurements_by_category($category)
-    {
-        if (!has_permission('ella_contractors', '', 'view')) {
-            ajax_access_denied();
-        }
-
-        $params = [];
-        if ($this->input->get('rel_type') && $this->input->get('rel_id')) {
-            $params['rel_type'] = $this->input->get('rel_type');
-            $params['rel_id'] = $this->input->get('rel_id');
-        }
-
-        $result = $this->measurements_model->list($category, $params);
-        
-        header('Content-Type: application/json');
-        echo json_encode($result);
-    }
-
-    /**
-     * Get all measurements for AJAX
-     */
-    public function get_all_measurements()
-    {
-        if (!has_permission('ella_contractors', '', 'view')) {
-            ajax_access_denied();
-        }
-
-        $params = [];
-        if ($this->input->get('rel_type') && $this->input->get('rel_id')) {
-            $params['rel_type'] = $this->input->get('rel_type');
-            $params['rel_id'] = $this->input->get('rel_id');
-        }
-
-        $result = $this->measurements_model->list_all($params);
-        
-        header('Content-Type: application/json');
-        echo json_encode($result);
-    }
 
     /**
      * Get single measurement for AJAX

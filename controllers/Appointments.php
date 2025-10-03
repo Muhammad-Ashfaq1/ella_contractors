@@ -6,7 +6,6 @@ class Appointments extends AdminController
     {
         parent::__construct();
         $this->load->model('ella_contractors/Ella_appointments_model', 'appointments_model');
-        $this->load->model('ella_contractors/Measurements_model', 'measurements_model');
         $this->load->model('staff_model');
         $this->load->model('clients_model');
         $this->load->model('leads_model');
@@ -67,8 +66,7 @@ class Appointments extends AdminController
         $data['appointment'] = $appointment; // Keep as object for easier access
         $data['attendees'] = $this->appointments_model->get_appointment_attendees($id);
         
-        // Load measurements for this appointment
-        $data['measurements'] = $this->measurements_model->get_related_measurements('appointment', $id);
+        // Measurements are loaded via AJAX in the view
         
         // Load clients and leads for estimate modal
         $data['clients'] = $this->clients_model->get();
@@ -1585,75 +1583,6 @@ class Appointments extends AdminController
         }
     }
     
-    /**
-     * Log measurement addition (AJAX)
-     */
-    public function log_measurement_added()
-    {
-        if (!has_permission('ella_contractors', '', 'edit')) {
-            ajax_access_denied();
-        }
-        
-        $appointment_id = $this->input->post('appointment_id');
-        $measurement = $this->input->post('measurement');
-        
-        if (!$appointment_id || !$measurement) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Appointment ID and measurement are required'
-            ]);
-            return;
-        }
-        
-        $result = $this->appointments_model->log_measurement_added($appointment_id, $measurement);
-        
-        if ($result) {
-            echo json_encode([
-                'success' => true,
-                'message' => 'Measurement logged successfully'
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Failed to log measurement'
-            ]);
-        }
-    }
-    
-    /**
-     * Log measurement removal (AJAX)
-     */
-    public function log_measurement_removed()
-    {
-        if (!has_permission('ella_contractors', '', 'edit')) {
-            ajax_access_denied();
-        }
-        
-        $appointment_id = $this->input->post('appointment_id');
-        $measurement = $this->input->post('measurement');
-        
-        if (!$appointment_id || !$measurement) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Appointment ID and measurement are required'
-            ]);
-            return;
-        }
-        
-        $result = $this->appointments_model->log_measurement_removed($appointment_id, $measurement);
-        
-        if ($result) {
-            echo json_encode([
-                'success' => true,
-                'message' => 'Measurement removal logged successfully'
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Failed to log measurement removal'
-            ]);
-        }
-    }
     
     /**
      * Log scheduled process (AJAX)

@@ -294,29 +294,6 @@ class Ella_appointments_model extends App_Model
         return false;
     }
     
-    /**
-     * Log measurement addition
-     * 
-     * @param int    $appointment_id Appointment ID
-     * @param string $measurement   Measurement details
-     * @return int|false            Log ID on success, false on failure
-     */
-    public function log_measurement_added($appointment_id, $measurement)
-    {
-        return $this->log_appointment_measurement_added($appointment_id, $measurement);
-    }
-    
-    /**
-     * Log measurement removal
-     * 
-     * @param int    $appointment_id Appointment ID
-     * @param string $measurement   Measurement details
-     * @return int|false            Log ID on success, false on failure
-     */
-    public function log_measurement_removed($appointment_id, $measurement)
-    {
-        return $this->log_appointment_measurement_removed($appointment_id, $measurement);
-    }
     
     /**
      * Log scheduled event process
