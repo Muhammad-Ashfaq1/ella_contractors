@@ -171,7 +171,7 @@ function initMeasurementFormHandlers() {
 // Load measurements for the appointment
 function loadMeasurements() {
     $.ajax({
-        url: admin_url + 'ella_contractors/appointments/get_measurements/' + appointmentId,
+        url: admin_url + 'ella_contractors/measurements/get_appointment_measurements/' + appointmentId,
         type: 'GET',
         dataType: 'json',
         success: function(response) {
@@ -205,7 +205,9 @@ function displayMeasurements(measurements) {
     html += '<table class="table table-striped table-hover">';
     html += '<thead class="thead-dark">';
     html += '<tr>';
-    html += '<th>Record</th>';
+    html += '<th>ID</th>';
+    html += '<th>Category</th>';
+    html += '<th>Name</th>';
     html += '<th>Windows</th>';
     html += '<th>Doors</th>';
     html += '<th>Siding Measurements</th>';
@@ -216,9 +218,9 @@ function displayMeasurements(measurements) {
     html += '<tbody>';
     
     measurements.forEach(function(measurement, idx) {
-        var category = measurement.category || 'general';
+        var category = measurement.category || 'other';
         var name = measurement.name || 'Unnamed Measurement';
-        var recordId = 'COMBINED #' + measurement.id;
+        var recordId = measurement.id;
         
         // Initialize counts
         var windowsCount = 0;
@@ -236,7 +238,7 @@ function displayMeasurements(measurements) {
                 doorsCount = (attributes.doors || []).length;
                 
                 // Count siding and roofing measurements
-                sidingCount = (attributes.siding || []).length;
+                sidingCount = (attributes.siding_measurements || []).length;
                 roofingCount = (attributes.roofing || []).length;
             } catch (e) {
                 console.error('Error parsing attributes_json:', e);
@@ -245,10 +247,12 @@ function displayMeasurements(measurements) {
         
         html += '<tr data-id="' + measurement.id + '">';
         html += '<td><span class="badge badge-primary">' + recordId + '</span></td>';
-        html += '<td>' + windowsCount + '</td>';
-        html += '<td>' + doorsCount + '</td>';
-        html += '<td>' + sidingCount + ' items</td>';
-        html += '<td>' + roofingCount + ' items</td>';
+        html += '<td><span class="badge badge-info">' + category.toUpperCase() + '</span></td>';
+        html += '<td>' + name + '</td>';
+        html += '<td><span class="badge badge-secondary">' + windowsCount + '</span></td>';
+        html += '<td><span class="badge badge-secondary">' + doorsCount + '</span></td>';
+        html += '<td><span class="badge badge-success">' + sidingCount + ' items</span></td>';
+        html += '<td><span class="badge badge-warning">' + roofingCount + ' items</span></td>';
         html += '<td>';
         html += '<button class="btn btn-sm btn-info" onclick="editMeasurement(' + measurement.id + ')" title="Edit">';
         html += '<i class="fa fa-edit"></i>';
@@ -530,55 +534,7 @@ function deleteMeasurement(measurementId) {
     }
 }
 
-// Add estimate row
-function addEstimateRow(category, data = null) {
-    var container = $('#' + category + '-tab');
-    if (!container.length) {
-        console.error('Container not found for category:', category);
-        return;
-    }
-    
-    measurementRowCounter++;
-    var rowId = category + '_row_' + measurementRowCounter;
-    
-    var html = '<div class="estimate-row" id="' + rowId + '">';
-    html += '<div class="row">';
-    html += '<div class="col-md-4">';
-    html += '<div class="form-group">';
-    html += '<label>Measurement Name</label>';
-    html += '<input type="text" class="form-control measurement-name" name="measurement_name[]" value="' + (data ? (data.measurement_name || '') : '') + '" required>';
-    html += '</div>';
-    html += '</div>';
-    html += '<div class="col-md-3">';
-    html += '<div class="form-group">';
-    html += '<label>Measurement Value</label>';
-    html += '<input type="number" step="0.01" class="form-control measurement-value" name="measurement_value[]" value="' + (data ? (data.measurement_value || '') : '') + '" required>';
-    html += '</div>';
-    html += '</div>';
-    html += '<div class="col-md-3">';
-    html += '<div class="form-group">';
-    html += '<label>Unit</label>';
-    html += '<select class="form-control measurement-unit" name="measurement_unit[]" required>';
-    html += '<option value="ft"' + (data && data.measurement_unit === 'ft' ? ' selected' : '') + '>Feet (ft)</option>';
-    html += '<option value="in"' + (data && data.measurement_unit === 'in' ? ' selected' : '') + '>Inches (in)</option>';
-    html += '<option value="m"' + (data && data.measurement_unit === 'm' ? ' selected' : '') + '>Meters (m)</option>';
-    html += '<option value="cm"' + (data && data.measurement_unit === 'cm' ? ' selected' : '') + '>Centimeters (cm)</option>';
-    html += '</select>';
-    html += '</div>';
-    html += '</div>';
-    html += '<div class="col-md-2">';
-    html += '<div class="form-group">';
-    html += '<label>&nbsp;</label>';
-    html += '<button type="button" class="btn btn-danger btn-block remove-estimate-row" data-row="' + rowId + '">';
-    html += '<i class="fa fa-trash"></i>';
-    html += '</button>';
-    html += '</div>';
-    html += '</div>';
-    html += '</div>';
-    html += '</div>';
-    
-    container.append(html);
-}
+// addEstimateRow function moved to the correct location below
 
 // Collect measurement form data
 function collectMeasurementFormData() {
@@ -809,7 +765,546 @@ function removeEstimateRow(button) {
     }
 }
 
-// Initialize when document is ready
-$(document).ready(function() {
-    initMeasurements();
+// Additional measurement functions that were in the original view.php
+
+// Load measurements by category for windows and doors
+function loadMeasurementsByCategory(category) {
+    $.ajax({
+        url: admin_url + 'ella_contractors/measurements/get_appointment_measurements/' + appointmentId,
+        type: 'GET',
+        data: {
+            [csrf_token_name]: csrf_hash,
+            category: category
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response && response.success && response.data) {
+                populateMeasurementsTable(category, response.data);
+            } else {
+                // Clear the table if no data
+                $('#' + category + '-tbody').html('');
+            }
+        },
+        error: function() {
+            console.error('Error loading ' + category + ' measurements');
+        }
+    });
+}
+
+// Populate measurements table for windows and doors
+function populateMeasurementsTable(category, measurements) {
+    var tbody = $('#' + category + '-tbody');
+    tbody.html('');
+    
+    measurements.forEach(function(measurement) {
+        if (measurement.category === category) {
+            var rowId = category + '_row_' + measurement.id;
+            var row = '<tr id="' + rowId + '" data-measurement-id="' + measurement.id + '">';
+            row += '<td>' + (measurement.designator || '') + '</td>';
+            row += '<td>' + (measurement.name || '') + '</td>';
+            row += '<td>' + (measurement.location_label || '') + '</td>';
+            row += '<td>' + (measurement.level_label || '') + '</td>';
+            row += '<td>' + (measurement.width_val || '') + '</td>';
+            row += '<td>' + (measurement.height_val || '') + '</td>';
+            row += '<td>' + (measurement.united_inches_val || '') + '</td>';
+            row += '<td>' + (measurement.area_val || '') + '</td>';
+            row += '<td>';
+            row += '<button class="btn btn-default btn-xs" onclick="editTableRow(\'' + rowId + '\', \'' + category + '\')" title="Edit"><i class="fa fa-edit"></i></button> ';
+            row += '<button class="btn btn-danger btn-xs" onclick="deleteMeasurement(' + measurement.id + ')" title="Delete"><i class="fa fa-trash"></i></button>';
+            row += '</td>';
+            row += '</tr>';
+            tbody.append(row);
+        }
+    });
+}
+
+// Auto-calculate UI and Area when width/height change
+function calculateMeasurements() {
+    var width = parseFloat($('input[name="width_val"]').val()) || 0;
+    var height = parseFloat($('input[name="height_val"]').val()) || 0;
+    var lengthUnit = $('input[name="length_unit"]').val() || 'in';
+    var areaUnit = $('input[name="area_unit"]').val() || 'sqft';
+
+    if (width > 0 && height > 0) {
+        // Calculate United Inches (width + height)
+        $('input[name="united_inches_val"]').val((width + height).toFixed(2));
+
+        // Calculate Area (convert to sqft if inches)
+        if (lengthUnit === 'in' && areaUnit === 'sqft') {
+            var area = (width * height) / 144.0;
+            $('input[name="area_val"]').val(area.toFixed(4));
+        }
+    }
+}
+
+// Collect all tabs data function (from original measurements form)
+function collectAllTabsData() {
+    var allData = {};
+    
+    // Collect data from each category tab
+    ['siding', 'roofing', 'windows', 'doors'].forEach(function(category) {
+        var categoryData = {};
+        
+        if (category === 'windows' || category === 'doors') {
+            // Handle windows and doors from tables
+            var tableData = collectTableData(category);
+            if (Object.keys(tableData).length > 0) {
+                allData[category] = tableData;
+            }
+        } else {
+            // Get all inputs for this category (siding, roofing)
+            $('input[name^="' + category + '["]').each(function() {
+                var name = $(this).attr('name');
+                var value = $(this).val();
+                if (value !== '' && value !== null && value !== undefined) {
+                    // Extract field name from name attribute like "siding[siding_total_area]"
+                    var fieldName = name.match(/\[([^\]]+)\]/)[1];
+                    categoryData[fieldName] = value;
+                }
+            });
+            
+            if (Object.keys(categoryData).length > 0) {
+                allData[category] = categoryData;
+            }
+        }
+    });
+    
+    return allData;
+}
+
+// Collect data from windows and doors tables
+function collectTableData(category) {
+    var tableData = [];
+    var tbody = $('#' + category + '-tbody');
+    if (tbody.length === 0) { return tableData; }
+    
+    tbody.find('tr').each(function() {
+        var row = $(this);
+        var isInline = row.hasClass('inline-measure-row');
+        var data = {};
+
+        if (isInline) {
+            data.designator = row.find('.cell-designator').val() || '';
+            data.name = row.find('.cell-name').val() || '';
+            data.location_label = row.find('.cell-location').val() || '';
+            data.level_label = row.find('.cell-level').val() || '';
+            data.width_val = row.find('.cell-width').val() || '';
+            data.height_val = row.find('.cell-height').val() || '';
+            data.united_inches_val = row.find('.cell-ui-text').text() || '';
+            data.area_val = row.find('.cell-area-text').text() || '';
+        } else {
+            var cells = row.find('td');
+            data.designator = cells.eq(0).text().trim();
+            data.name = cells.eq(1).text().trim();
+            data.location_label = cells.eq(2).text().trim();
+            data.level_label = cells.eq(3).text().trim();
+            data.width_val = cells.eq(4).text().trim();
+            data.height_val = cells.eq(5).text().trim();
+            data.united_inches_val = cells.eq(6).text().trim();
+            data.area_val = cells.eq(7).text().trim();
+        }
+
+        if (data.name) { tableData.push(data); }
+    });
+    
+    return tableData;
+}
+
+// Add window to windows table
+function addToWindowsTable(data, isExisting = false) {
+    var tbody = $('#windows-tbody');
+    var rowId = isExisting ? (data.rowId || 'window_' + Date.now()) : 'window_' + Date.now();
+    
+    var row = '<tr id="' + rowId + '">';
+    row += '<td>' + (data.designator || '') + '</td>';
+    row += '<td>' + (data.name || '') + '</td>';
+    row += '<td>' + (data.location_label || '') + '</td>';
+    row += '<td>' + (data.level_label || '') + '</td>';
+    row += '<td>' + (data.width_val || '') + '</td>';
+    row += '<td>' + (data.height_val || '') + '</td>';
+    row += '<td>' + (data.united_inches_val || '') + '</td>';
+    row += '<td>' + (data.area_val || '') + '</td>';
+    row += '<td>';
+    row += '<button class="btn btn-default btn-xs" onclick="editTableRow(\'' + rowId + '\', \'windows\')" title="Edit"><i class="fa fa-edit"></i></button> ';
+    row += '<button class="btn btn-danger btn-xs" onclick="removeTableRow(\'' + rowId + '\')" title="Remove"><i class="fa fa-trash"></i></button>';
+    row += '</td>';
+    row += '</tr>';
+    
+    tbody.append(row);
+}
+
+// Add door to doors table
+function addToDoorsTable(data, isExisting = false) {
+    var tbody = $('#doors-tbody');
+    var rowId = isExisting ? (data.rowId || 'door_' + Date.now()) : 'door_' + Date.now();
+    
+    var row = '<tr id="' + rowId + '">';
+    row += '<td>' + (data.designator || '') + '</td>';
+    row += '<td>' + (data.name || '') + '</td>';
+    row += '<td>' + (data.location_label || '') + '</td>';
+    row += '<td>' + (data.level_label || '') + '</td>';
+    row += '<td>' + (data.width_val || '') + '</td>';
+    row += '<td>' + (data.height_val || '') + '</td>';
+    row += '<td>' + (data.united_inches_val || '') + '</td>';
+    row += '<td>' + (data.area_val || '') + '</td>';
+    row += '<td>';
+    row += '<button class="btn btn-default btn-xs" onclick="editTableRow(\'' + rowId + '\', \'doors\')" title="Edit"><i class="fa fa-edit"></i></button> ';
+    row += '<button class="btn btn-danger btn-xs" onclick="removeTableRow(\'' + rowId + '\')" title="Remove"><i class="fa fa-trash"></i></button>';
+    row += '</td>';
+    row += '</tr>';
+    
+    tbody.append(row);
+}
+
+// Edit table row
+function editTableRow(rowId, category) {
+    var row = $('#' + rowId);
+    var cells = row.find('td');
+    
+    // Extract data from row
+    var data = {
+        designator: cells.eq(0).text(),
+        name: cells.eq(1).text(),
+        location_label: cells.eq(2).text(),
+        level_label: cells.eq(3).text(),
+        width_val: cells.eq(4).text(),
+        height_val: cells.eq(5).text(),
+        united_inches_val: cells.eq(6).text(),
+        area_val: cells.eq(7).text()
+    };
+    
+    // Open appropriate modal with data
+    if (category === 'windows') {
+        openWindowModal(data);
+    } else if (category === 'doors') {
+        openDoorModal(data);
+    }
+    
+    // Mark row for deletion when new data is saved
+    row.attr('data-to-delete', 'true');
+}
+
+// Open window modal with data
+function openWindowModal(data) {
+    $('#window-form')[0].reset();
+    $('#windowModal .modal-title').text('Edit Window');
+    
+    // Populate form with data
+    if (data) {
+        $('input[name="designator"]').val(data.designator || '');
+        $('input[name="name"]').val(data.name || '');
+        $('select[name="location_label"]').val(data.location_label || '');
+        $('select[name="level_label"]').val(data.level_label || '');
+        $('input[name="width_val"]').val(data.width_val || '');
+        $('input[name="height_val"]').val(data.height_val || '');
+        $('input[name="united_inches_val"]').val(data.united_inches_val || '');
+        $('input[name="area_val"]').val(data.area_val || '');
+    }
+    
+    $('#windowModal').modal('show');
+}
+
+// Open door modal with data
+function openDoorModal(data) {
+    $('#door-form')[0].reset();
+    $('#doorModal .modal-title').text('Edit Door');
+    
+    // Populate form with data
+    if (data) {
+        $('input[name="designator"]').val(data.designator || '');
+        $('input[name="name"]').val(data.name || '');
+        $('select[name="location_label"]').val(data.location_label || '');
+        $('select[name="level_label"]').val(data.level_label || '');
+        $('input[name="width_val"]').val(data.width_val || '');
+        $('input[name="height_val"]').val(data.height_val || '');
+        $('input[name="united_inches_val"]').val(data.united_inches_val || '');
+        $('input[name="area_val"]').val(data.area_val || '');
+    }
+    
+    $('#doorModal').modal('show');
+}
+
+// Update windows table row
+function updateWindowsTableRow(row, data) {
+    var cells = row.find('td');
+    cells.eq(0).text(data.designator || '');
+    cells.eq(1).text(data.name || '');
+    cells.eq(2).text(data.location_label || '');
+    cells.eq(3).text(data.level_label || '');
+    cells.eq(4).text(data.width_val || '');
+    cells.eq(5).text(data.height_val || '');
+    cells.eq(6).text(data.united_inches_val || '');
+    cells.eq(7).text(data.area_val || '');
+}
+
+// Update doors table row
+function updateDoorsTableRow(row, data) {
+    var cells = row.find('td');
+    cells.eq(0).text(data.designator || '');
+    cells.eq(1).text(data.name || '');
+    cells.eq(2).text(data.location_label || '');
+    cells.eq(3).text(data.level_label || '');
+    cells.eq(4).text(data.width_val || '');
+    cells.eq(5).text(data.height_val || '');
+    cells.eq(6).text(data.united_inches_val || '');
+    cells.eq(7).text(data.area_val || '');
+}
+
+// Populate windows and doors tables with data
+function populateWindowsDoorsTables(category, data) {
+    var tbody = $('#' + category + '-tbody');
+    tbody.html(''); // Clear existing data
+    
+    if (Array.isArray(data)) {
+        data.forEach(function(item) {
+            if (category === 'windows') {
+                addToWindowsTable(item);
+            } else if (category === 'doors') {
+                addToDoorsTable(item);
+            }
+        });
+    }
+}
+
+// Remove table row function
+function removeTableRow(rowId) {
+    $('#' + rowId).remove();
+}
+
+// Tab handling for measurement modal
+$('#category-tabs a[data-toggle="tab"]').on('click', function(e) {
+    e.preventDefault();
+    var category = $(this).data('category');
+    $('#selected-category').val(category);
+    
+    // Load measurements for this category if it's windows or doors
+    if (category === 'windows' || category === 'doors') {
+        loadMeasurementsByCategory(category);
+    }
 });
+
+// Auto-calc UI & Area inside inline rows
+$(document).on('input change', '.inline-measure-row .cell-width, .inline-measure-row .cell-height', function() {
+    var row = $(this).closest('tr');
+    var width = parseFloat(row.find('.cell-width').val()) || 0;
+    var height = parseFloat(row.find('.cell-height').val()) || 0;
+    if (width > 0 && height > 0) {
+        var ui = width + height;
+        var area = (width * height) / 144.0;
+        row.find('.cell-ui-text').text(ui.toFixed(2));
+        row.find('.cell-area-text').text(area.toFixed(2));
+    } else {
+        row.find('.cell-ui-text').text('');
+        row.find('.cell-area-text').text('');
+    }
+});
+
+// Bind calculation to width/height inputs
+$(document).on('input change', 'input[name="width_val"], input[name="height_val"], input[name="length_unit"], input[name="area_unit"]', calculateMeasurements);
+
+// Save only current category's inline rows (called by per-tab Save buttons)
+$(document).on('click', '#js-save-windows, #js-save-doors', function() {
+    var which = $(this).attr('id') === 'js-save-windows' ? 'windows' : 'doors';
+    var bulk = { windows: [], doors: [] };
+    var category = which;
+    var tbody = $('#' + category + '-tbody');
+    tbody.find('tr').each(function() {
+        var row = $(this);
+        var isInline = row.hasClass('inline-measure-row');
+        var item = { category: category, rel_type: 'appointment', rel_id: appointmentId, appointment_id: appointmentId, length_unit: 'in', area_unit: 'sqft', ui_unit: 'in' };
+        if (isInline) {
+            item.designator = row.find('.cell-designator').val() || '';
+            item.name = row.find('.cell-name').val() || '';
+            item.location_label = row.find('.cell-location').val() || '';
+            item.level_label = row.find('.cell-level').val() || '';
+            item.quantity = 1;
+            item.width_val = row.find('.cell-width').val() || '';
+            item.height_val = row.find('.cell-height').val() || '';
+            item.united_inches_val = row.find('.cell-ui-text').text() || '';
+            item.area_val = row.find('.cell-area-text').text() || '';
+        } else {
+            var cells = row.find('td');
+            item.designator = cells.eq(0).text().trim();
+            item.name = cells.eq(1).text().trim();
+            item.location_label = cells.eq(2).text().trim();
+            item.level_label = cells.eq(3).text().trim();
+            item.width_val = cells.eq(4).text().trim();
+            item.height_val = cells.eq(5).text().trim();
+            item.united_inches_val = cells.eq(6).text().trim();
+            item.area_val = cells.eq(7).text().trim();
+        }
+        if (row.data('measurement-id')) { item.id = row.data('measurement-id'); }
+        if (item.name) { 
+            console.log('Collected item for', category, ':', item);
+            bulk[category].push(item); 
+        }
+    });
+
+    var payload = { 
+        bulk: bulk,
+        appointment_id: appointmentId,
+        category: 'combined'
+    };
+    
+    // Include measurement ID if editing existing measurement
+    var measurementId = $('#measurement_id').val();
+    console.log('Windows/Doors Save - Measurement ID:', measurementId);
+    if (measurementId) {
+        payload.id = measurementId;
+    }
+    
+    payload[csrf_token_name] = csrf_hash;
+    
+    console.log('Sending payload for', which, ':', payload);
+
+    $.ajax({
+        url: admin_url + 'ella_contractors/measurements/save',
+        type: 'POST',
+        data: payload,
+        dataType: 'json',
+        success: function(resp) {
+            if (resp && resp.success) {
+                alert_float('success', (which === 'windows' ? 'Windows' : 'Doors') + ' saved');
+                
+                // Parse the attributes from the response
+                var savedList = [];
+                console.log('Response data:', resp.data);
+                if (resp.data && resp.data.attributes) {
+                    // New response format with attributes directly
+                    savedList = resp.data.attributes[which] || [];
+                    console.log('Saved list for', which, ':', savedList);
+                } else if (resp.data && resp.data.attributes_json) {
+                    // Fallback to old format
+                    try {
+                        var attributes = JSON.parse(resp.data.attributes_json);
+                        console.log('Parsed attributes:', attributes);
+                        savedList = attributes[which] || [];
+                        console.log('Saved list for', which, ':', savedList);
+                    } catch (e) {
+                        console.error('Error parsing attributes_json:', e);
+                    }
+                }
+                
+                // Update the table with saved data
+                var tbody = $('#' + which + '-tbody');
+                tbody.html('');
+                console.log('Updating table for', which, 'with', savedList.length, 'items');
+                savedList.forEach(function(item) { 
+                    console.log('Adding item to table:', item);
+                    appendInlineRow(which, item); 
+                });
+                
+                // Also refresh the main measurements list
+                if (typeof refreshAppointmentData === 'function') {
+                    refreshAppointmentData('measurements-tab');
+                } else {
+                    loadMeasurements(); // Fallback to old method
+                }
+            } else {
+                alert_float('danger', (resp && resp.message) ? resp.message : 'Failed to save');
+            }
+        },
+        error: function(xhr) {
+            alert_float('danger', 'Error saving: ' + (xhr.statusText || 'Unknown'));
+        }
+    });
+});
+
+// Inline add row handlers for Windows and Doors
+$(document).on('click', '#js-add-window-row', function(e) {
+    e.preventDefault();
+    appendInlineRow('windows');
+});
+
+$(document).on('click', '#js-add-door-row', function(e) {
+    e.preventDefault();
+    appendInlineRow('doors');
+});
+
+// Window and Door Modal Event Handlers
+$(document).on('click', '#saveWindow', function() {
+    var formData = {
+        designator: $('input[name="designator"]').val(),
+        name: $('input[name="name"]').val(),
+        location_label: $('select[name="location_label"]').val(),
+        level_label: $('select[name="level_label"]').val(),
+        width_val: $('input[name="width_val"]').val(),
+        height_val: $('input[name="height_val"]').val(),
+        united_inches_val: $('input[name="united_inches_val"]').val(),
+        area_val: $('input[name="area_val"]').val(),
+        quantity: $('input[name="quantity"]').val() || 1,
+        category: 'windows',
+        rel_type: 'appointment',
+        rel_id: appointmentId,
+        appointment_id: appointmentId
+    };
+    
+    // Add to windows table
+    addToWindowsTable(formData);
+    
+    // Close modal
+    $('#windowModal').modal('hide');
+    
+    // Clear form
+    $('#window-form')[0].reset();
+});
+
+$(document).on('click', '#saveDoor', function() {
+    var formData = {
+        designator: $('input[name="designator"]').val(),
+        name: $('input[name="name"]').val(),
+        location_label: $('select[name="location_label"]').val(),
+        level_label: $('select[name="level_label"]').val(),
+        width_val: $('input[name="width_val"]').val(),
+        height_val: $('input[name="height_val"]').val(),
+        united_inches_val: $('input[name="united_inches_val"]').val(),
+        area_val: $('input[name="area_val"]').val(),
+        quantity: $('input[name="quantity"]').val() || 1,
+        category: 'doors',
+        rel_type: 'appointment',
+        rel_id: appointmentId,
+        appointment_id: appointmentId
+    };
+    
+    // Add to doors table
+    addToDoorsTable(formData);
+    
+    // Close modal
+    $('#doorModal').modal('hide');
+    
+    // Clear form
+    $('#door-form')[0].reset();
+});
+
+// Auto-calculate UI and Area for window/door modals
+$(document).on('input change', '#windowModal input[name="width_val"], #windowModal input[name="height_val"]', function() {
+    var width = parseFloat($('#windowModal input[name="width_val"]').val()) || 0;
+    var height = parseFloat($('#windowModal input[name="height_val"]').val()) || 0;
+    
+    if (width > 0 && height > 0) {
+        var ui = width + height;
+        var area = (width * height) / 144.0;
+        $('#windowModal input[name="united_inches_val"]').val(ui.toFixed(2));
+        $('#windowModal input[name="area_val"]').val(area.toFixed(4));
+    } else {
+        $('#windowModal input[name="united_inches_val"]').val('');
+        $('#windowModal input[name="area_val"]').val('');
+    }
+});
+
+$(document).on('input change', '#doorModal input[name="width_val"], #doorModal input[name="height_val"]', function() {
+    var width = parseFloat($('#doorModal input[name="width_val"]').val()) || 0;
+    var height = parseFloat($('#doorModal input[name="height_val"]').val()) || 0;
+    
+    if (width > 0 && height > 0) {
+        var ui = width + height;
+        var area = (width * height) / 144.0;
+        $('#doorModal input[name="united_inches_val"]').val(ui.toFixed(2));
+        $('#doorModal input[name="area_val"]').val(area.toFixed(4));
+    } else {
+        $('#doorModal input[name="united_inches_val"]').val('');
+        $('#doorModal input[name="area_val"]').val('');
+    }
+});
+
+// initMeasurements() is called from the main view file
