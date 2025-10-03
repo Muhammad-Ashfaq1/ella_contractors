@@ -1855,12 +1855,7 @@ function deleteMeasurement(measurementId) {
             success: function(response) {
                 if (response.success) {
                     alert_float('success', response.message);
-                    // Use global refresh function to reload data and switch to measurements tab
-                    if (typeof refreshAppointmentData === 'function') {
-                        refreshAppointmentData('measurements-tab');
-                    } else {
-                        loadMeasurements(); // Fallback to old method
-                    }
+                    loadMeasurements(); // Reload measurements after deletion
                 } else {
                     alert_float('danger', response.message);
                 }
