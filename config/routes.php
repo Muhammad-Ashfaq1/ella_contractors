@@ -23,9 +23,10 @@ $route[$module_name . '/create_folder'] = $module_name . '/create_folder';
 $route[$module_name . '/upload_presentation'] = $module_name . '/upload_presentation';
 
 // Measurement routes (for appointment view only)
-$route[$module_name . '/measurements/save'] = 'measurements/save';
-$route[$module_name . '/measurements/delete/(:num)'] = 'measurements/delete/$1';
-$route[$module_name . '/measurements/get_measurement/(:num)'] = 'measurements/get_measurement/$1';
+$route[$module_name . '/measurements/save'] = 'Measurements/save';
+$route[$module_name . '/measurements/delete/(:num)'] = 'Measurements/delete/$1';
+$route[$module_name . '/measurements/get_measurement/(:num)'] = 'Measurements/get_measurement/$1';
+$route[$module_name . '/measurements/get_appointment_measurements/(:num)'] = 'Measurements/get_appointment_measurements/$1';
 
 // Estimates routes
 $route[$module_name . '/estimates'] = 'Estimates/index';
@@ -59,8 +60,7 @@ $route[$module_name . '/appointments/download_attachment/(:num)'] = 'Appointment
 $route[$module_name . '/appointments/get_appointment_attachments/(:num)'] = 'Appointments/get_appointment_attachments/$1';
 $route[$module_name . '/appointments/delete_appointment_attachment/(:num)'] = 'Appointments/delete_appointment_attachment/$1';
 
-// Appointment Measurements routes (using measurements controller)
-$route[$module_name . '/appointments/get_measurements/(:num)'] = 'Appointments/get_measurements/$1';
+// Appointment Measurements routes (using measurements controller) - moved to measurements controller
 
 // Appointment Notes routes
 $route[$module_name . '/appointments/get_notes/(:num)'] = 'Appointments/get_notes/$1';

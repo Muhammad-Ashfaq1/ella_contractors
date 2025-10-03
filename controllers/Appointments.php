@@ -64,10 +64,7 @@ class Appointments extends AdminController
 
         $data['title'] = 'View Appointment';
         $data['appointment'] = $appointment; // Keep as object for easier access
-        $data['attendees'] = $this->appointments_model->get_appointment_attendees($id);
-        
-        // Measurements are loaded via AJAX in the view
-        
+        $data['attendees'] = $this->appointments_model->get_appointment_attendees($id);        
         // Load clients and leads for estimate modal
         $data['clients'] = $this->clients_model->get();
         $data['leads'] = $this->leads_model->get();
@@ -503,29 +500,6 @@ class Appointments extends AdminController
         }
     }
 
-    /**
-     * Get measurements for appointment (AJAX) - Return original structure for listing
-     */
-    public function get_measurements($appointment_id)
-    {
-        log_message('debug', 'Getting measurements for appointment: ' . $appointment_id);
-        if (!has_permission('ella_contractors', '', 'view')) {
-            ajax_access_denied();
-        }
-
-        // Get measurements using the existing table structure (keep original functionality)
-        $this->db->select('id, name, category, rel_type, rel_id, appointment_id, attributes_json, dtmCreated as dateadded');
-        $this->db->from(db_prefix() . 'ella_contractors_measurements');
-        $this->db->where('appointment_id', $appointment_id);
-        $this->db->order_by('dtmCreated', 'DESC');
-        
-        $measurements = $this->db->get()->result_array();
-        
-        echo json_encode([
-            'success' => true,
-            'data' => $measurements
-        ]);
-    }
 
 
 
