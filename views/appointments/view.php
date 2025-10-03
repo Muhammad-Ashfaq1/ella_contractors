@@ -2602,6 +2602,12 @@ $(document).ready(function() {
 
 });
 
+// Activate sidebar menu for appointments view page
+$(function () {
+  $('.menu-item-ella_contractors').addClass('active').find('ul').addClass('in');
+  $('.sub-menu-item-ella_contractors_appointments').addClass('active');
+});
+
 </script>
 
 <?php $this->load->view('appointments/attachments_js.php'); ?>
