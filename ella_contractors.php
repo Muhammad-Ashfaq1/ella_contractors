@@ -456,7 +456,30 @@ function ella_contractors_activate_module() {
         }
     }
 
-    // Create ella_contractors_measurements table
+    // Create ella_appointment_measurements table - Simple structure for measurements
+    if (!$CI->db->table_exists(db_prefix() . 'ella_appointment_measurements')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_appointment_measurements` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `appointment_id` int(11) NOT NULL,
+            `category` enum(\'siding\',\'roofing\',\'windows\',\'doors\') NOT NULL DEFAULT \'siding\',
+            `measurement_name` varchar(255) NOT NULL,
+            `measurement_value` decimal(12,4) NOT NULL DEFAULT 0.0000,
+            `measurement_unit` varchar(50) NOT NULL,
+            `created_by` int(11) NOT NULL,
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `appointment_id` (`appointment_id`),
+            KEY `category` (`category`),
+            KEY `created_by` (`created_by`),
+            KEY `created_at` (`created_at`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+        
+        log_message('info', 'Ella Appointments - Created ella_appointment_measurements table');
+    }
+    
+    // Keep the old table for backward compatibility but don't use it for new measurements
+    // The old table will be used for Windows/Doors complex measurements
     if (!$CI->db->table_exists(db_prefix() . 'ella_contractors_measurements')) {
         $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractors_measurements` (
             `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

@@ -515,11 +515,63 @@ class Appointments extends AdminController
             ajax_access_denied();
         }
 
-        $measurements = $this->measurements_model->get_related_measurements('appointment', $appointment_id);
+        // Get measurements using the existing table structure (keep original functionality)
+        $this->db->select('id, name, category, rel_type, rel_id, appointment_id, attributes_json, dtmCreated as dateadded');
+        $this->db->from(db_prefix() . 'ella_contractors_measurements');
+        $this->db->where('appointment_id', $appointment_id);
+        $this->db->order_by('dtmCreated', 'DESC');
+        
+        $measurements = $this->db->get()->result_array();
+        
+        // Process measurements to extract the new structure from attributes_json for siding/roofing
+        $processed_measurements = [];
+        foreach ($measurements as $measurement) {
+            $attributes = json_decode($measurement['attributes_json'] ?? '{}', true);
+            
+            // Extract siding measurements
+            if (isset($attributes['siding_measurements']) && is_array($attributes['siding_measurements'])) {
+                foreach ($attributes['siding_measurements'] as $siding_measurement) {
+                    $processed_measurements[] = [
+                        'id' => $measurement['id'],
+                        'measurement_name' => $siding_measurement['name'] ?? 'N/A',
+                        'measurement_value' => $siding_measurement['value'] ?? '0.0000',
+                        'measurement_unit' => $siding_measurement['unit'] ?? 'N/A',
+                        'category' => 'siding',
+                        'dateadded' => $measurement['dateadded']
+                    ];
+                }
+            }
+            
+            // Extract roofing measurements
+            if (isset($attributes['roofing_measurements']) && is_array($attributes['roofing_measurements'])) {
+                foreach ($attributes['roofing_measurements'] as $roofing_measurement) {
+                    $processed_measurements[] = [
+                        'id' => $measurement['id'],
+                        'measurement_name' => $roofing_measurement['name'] ?? 'N/A',
+                        'measurement_value' => $roofing_measurement['value'] ?? '0.0000',
+                        'measurement_unit' => $roofing_measurement['unit'] ?? 'N/A',
+                        'category' => 'roofing',
+                        'dateadded' => $measurement['dateadded']
+                    ];
+                }
+            }
+            
+            // For existing measurements (windows, doors, etc.), use the original structure
+            if (empty($attributes['siding_measurements']) && empty($attributes['roofing_measurements'])) {
+                $processed_measurements[] = [
+                    'id' => $measurement['id'],
+                    'measurement_name' => $measurement['name'] ?? 'N/A',
+                    'measurement_value' => '0.0000',
+                    'measurement_unit' => 'N/A',
+                    'category' => $measurement['category'] ?? 'other',
+                    'dateadded' => $measurement['dateadded']
+                ];
+            }
+        }
         
         echo json_encode([
             'success' => true,
-            'data' => $measurements
+            'data' => $processed_measurements
         ]);
     }
 
@@ -550,7 +602,7 @@ class Appointments extends AdminController
     }
 
     /**
-     * Save measurement for appointment (AJAX) - Using original measurements system
+     * Save measurement for appointment (AJAX) - Updated structure with new siding/roofing
      */
     public function save_measurement($appointment_id)
     {
@@ -631,6 +683,16 @@ class Appointments extends AdminController
                 $categorySpecificData[$category] = $post[$category];
                 unset($post[$category]);
             }
+        }
+
+        // Handle new siding and roofing measurements
+        if (isset($post['siding_measurements']) && is_array($post['siding_measurements'])) {
+            $categorySpecificData['siding_measurements'] = $post['siding_measurements'];
+            unset($post['siding_measurements']);
+        }
+        if (isset($post['roofing_measurements']) && is_array($post['roofing_measurements'])) {
+            $categorySpecificData['roofing_measurements'] = $post['roofing_measurements'];
+            unset($post['roofing_measurements']);
         }
 
         // Merge with existing attributes_json if editing

@@ -678,14 +678,112 @@ button.delete-btn {
                     <input type="hidden" name="category" id="selected-category" value="siding">
                     
                     <div class="tab-content">
-                        <!-- Siding Tab -->
+                        <!-- Siding Tab - New Estimate Structure -->
                         <div class="tab-pane active" id="siding-tab">
-                            <?php $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'siding', 'row' => null]); ?>
+                            <div id="estimate-rows-container">
+                                <div class="row estimate-row" data-row="0">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="measurement_name_0">Measurement Name</label>
+                                            <input type="text" class="form-control" name="measurements[0][name]" id="measurement_name_0" placeholder="Enter measurement name">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="measurement_value_0">Measurement Value</label>
+                                            <input type="number" step="0.0001" class="form-control" name="measurements[0][value]" id="measurement_value_0" placeholder="0.0000">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="measurement_unit_0">Unit</label>
+                                            <select class="form-control" name="measurements[0][unit]" id="measurement_unit_0">
+                                                <option value="">Select Unit</option>
+                                                <option value="sqft">Square Feet (sqft)</option>
+                                                <option value="lf">Linear Feet (lf)</option>
+                                                <option value="ea">Each (ea)</option>
+                                                <option value="in">Inches (in)</option>
+                                                <option value="ft">Feet (ft)</option>
+                                                <option value="yd">Yards (yd)</option>
+                                                <option value="m">Meters (m)</option>
+                                                <option value="cm">Centimeters (cm)</option>
+                                                <option value="mm">Millimeters (mm)</option>
+                                                <option value="gal">Gallons (gal)</option>
+                                                <option value="lb">Pounds (lb)</option>
+                                                <option value="kg">Kilograms (kg)</option>
+                                                <option value="ton">Tons (ton)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>&nbsp;</label>
+                                            <div>
+                                                <button type="button" class="btn btn-success btn-sm" onclick="addEstimateRow()" title="Add Estimate">
+                                                    <i class="fa fa-plus"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="removeEstimateRow(this)" title="Remove Row" style="display: none;">
+                                                    <i class="fa fa-minus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Roofing Tab -->
+                        <!-- Roofing Tab - New Estimate Structure -->
                         <div class="tab-pane" id="roofing-tab">
-                            <?php $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'roofing', 'row' => null]); ?>
+                            <div id="estimate-rows-container-roofing">
+                                <div class="row estimate-row" data-row="0">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="measurement_name_roofing_0">Measurement Name</label>
+                                            <input type="text" class="form-control" name="measurements_roofing[0][name]" id="measurement_name_roofing_0" placeholder="Enter measurement name">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="measurement_value_roofing_0">Measurement Value</label>
+                                            <input type="number" step="0.0001" class="form-control" name="measurements_roofing[0][value]" id="measurement_value_roofing_0" placeholder="0.0000">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="measurement_unit_roofing_0">Unit</label>
+                                            <select class="form-control" name="measurements_roofing[0][unit]" id="measurement_unit_roofing_0">
+                                                <option value="">Select Unit</option>
+                                                <option value="sqft">Square Feet (sqft)</option>
+                                                <option value="lf">Linear Feet (lf)</option>
+                                                <option value="ea">Each (ea)</option>
+                                                <option value="in">Inches (in)</option>
+                                                <option value="ft">Feet (ft)</option>
+                                                <option value="yd">Yards (yd)</option>
+                                                <option value="m">Meters (m)</option>
+                                                <option value="cm">Centimeters (cm)</option>
+                                                <option value="mm">Millimeters (mm)</option>
+                                                <option value="gal">Gallons (gal)</option>
+                                                <option value="lb">Pounds (lb)</option>
+                                                <option value="kg">Kilograms (kg)</option>
+                                                <option value="ton">Tons (ton)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>&nbsp;</label>
+                                            <div>
+                                                <button type="button" class="btn btn-success btn-sm" onclick="addEstimateRow('roofing')" title="Add Estimate">
+                                                    <i class="fa fa-plus"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="removeEstimateRow(this)" title="Remove Row" style="display: none;">
+                                                    <i class="fa fa-minus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Windows Tab -->
@@ -854,6 +952,92 @@ function refreshAppointmentData(activeTab = null) {
     // Switch to specified tab or stay on current tab
     if (activeTab) {
         $('a[href="#' + activeTab + '"]').tab('show');
+    }
+}
+
+// Estimate Row Management Functions
+var estimateRowCounter = 0;
+var estimateRowCounterRoofing = 0;
+
+function addEstimateRow(category = 'siding') {
+    var containerId = category === 'roofing' ? '#estimate-rows-container-roofing' : '#estimate-rows-container';
+    var prefix = category === 'roofing' ? 'roofing_' : '';
+    var namePrefix = category === 'roofing' ? 'measurements_roofing' : 'measurements';
+    
+    if (category === 'roofing') {
+        estimateRowCounterRoofing++;
+        var counter = estimateRowCounterRoofing;
+    } else {
+        estimateRowCounter++;
+        var counter = estimateRowCounter;
+    }
+    
+    var rowHtml = '<div class="row estimate-row" data-row="' + counter + '">' +
+        '<div class="col-md-4">' +
+            '<div class="form-group">' +
+                '<label for="measurement_name_' + prefix + counter + '">Measurement Name</label>' +
+                '<input type="text" class="form-control" name="' + namePrefix + '[' + counter + '][name]" id="measurement_name_' + prefix + counter + '" placeholder="Enter measurement name">' +
+            '</div>' +
+        '</div>' +
+        '<div class="col-md-3">' +
+            '<div class="form-group">' +
+                '<label for="measurement_value_' + prefix + counter + '">Measurement Value</label>' +
+                '<input type="number" step="0.0001" class="form-control" name="' + namePrefix + '[' + counter + '][value]" id="measurement_value_' + prefix + counter + '" placeholder="0.0000">' +
+            '</div>' +
+        '</div>' +
+        '<div class="col-md-3">' +
+            '<div class="form-group">' +
+                '<label for="measurement_unit_' + prefix + counter + '">Unit</label>' +
+                '<select class="form-control" name="' + namePrefix + '[' + counter + '][unit]" id="measurement_unit_' + prefix + counter + '">' +
+                    '<option value="">Select Unit</option>' +
+                    '<option value="sqft">Square Feet (sqft)</option>' +
+                    '<option value="lf">Linear Feet (lf)</option>' +
+                    '<option value="ea">Each (ea)</option>' +
+                    '<option value="in">Inches (in)</option>' +
+                    '<option value="ft">Feet (ft)</option>' +
+                    '<option value="yd">Yards (yd)</option>' +
+                    '<option value="m">Meters (m)</option>' +
+                    '<option value="cm">Centimeters (cm)</option>' +
+                    '<option value="mm">Millimeters (mm)</option>' +
+                    '<option value="gal">Gallons (gal)</option>' +
+                    '<option value="lb">Pounds (lb)</option>' +
+                    '<option value="kg">Kilograms (kg)</option>' +
+                    '<option value="ton">Tons (ton)</option>' +
+                '</select>' +
+            '</div>' +
+        '</div>' +
+        '<div class="col-md-2">' +
+            '<div class="form-group">' +
+                '<label>&nbsp;</label>' +
+                '<div>' +
+                    '<button type="button" class="btn btn-success btn-sm" onclick="addEstimateRow(\'' + category + '\')" title="Add Estimate">' +
+                        '<i class="fa fa-plus"></i>' +
+                    '</button>' +
+                    '<button type="button" class="btn btn-danger btn-sm" onclick="removeEstimateRow(this)" title="Remove Row">' +
+                        '<i class="fa fa-minus"></i>' +
+                    '</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+    '</div>';
+    
+    $(containerId).append(rowHtml);
+    
+    // Show remove buttons for all rows in this category if there's more than one
+    var rowCount = $(containerId + ' .estimate-row').length;
+    if (rowCount > 1) {
+        $(containerId + ' .estimate-row .btn-danger').show();
+    }
+}
+
+function removeEstimateRow(button) {
+    $(button).closest('.estimate-row').remove();
+    
+    // Hide remove buttons if only one row left in the container
+    var container = $(button).closest('[id^="estimate-rows-container"]');
+    var rowCount = container.find('.estimate-row').length;
+    if (rowCount <= 1) {
+        container.find('.estimate-row .btn-danger').hide();
     }
 }
 
@@ -1300,8 +1484,8 @@ function displayMeasurements(measurements) {
     html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Record</th>';
     html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Windows</th>';
     html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Doors</th>';
-    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Siding Area (sqft)</th>';
-    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Roofing Area (sqft)</th>';
+    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Siding Measurements</th>';
+    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Roofing Measurements</th>';
     html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600; width: 140px;">Actions</th>';
     html += '</tr>';
     html += '</thead>';
@@ -1312,15 +1496,17 @@ function displayMeasurements(measurements) {
         try { attrs = JSON.parse(measurement.attributes_json || '{}'); } catch(e) {}
         var windowsCount = (attrs.windows && Array.isArray(attrs.windows)) ? attrs.windows.length : 0;
         var doorsCount = (attrs.doors && Array.isArray(attrs.doors)) ? attrs.doors.length : 0;
-        var sidingArea = 0.0;
-        if (attrs.siding) {
-            if (attrs.siding.siding_total_area) sidingArea = parseFloat(attrs.siding.siding_total_area) || 0;
-            else if (attrs.siding.siding_soffit_total) sidingArea = parseFloat(attrs.siding.siding_soffit_total) || 0;
+        
+        // Count siding measurements
+        var sidingCount = 0;
+        if (attrs.siding_measurements && Array.isArray(attrs.siding_measurements)) {
+            sidingCount = attrs.siding_measurements.length;
         }
-        var roofingArea = 0.0;
-        if (attrs.roofing) {
-            if (attrs.roofing.roof_total_area) roofingArea = parseFloat(attrs.roofing.roof_total_area) || 0;
-            else if (attrs.roofing.roof_sloped_area) roofingArea = parseFloat(attrs.roofing.roof_sloped_area) || 0;
+        
+        // Count roofing measurements
+        var roofingCount = 0;
+        if (attrs.roofing_measurements && Array.isArray(attrs.roofing_measurements)) {
+            roofingCount = attrs.roofing_measurements.length;
         }
 
         // Alternate row colors
@@ -1333,8 +1519,8 @@ function displayMeasurements(measurements) {
         html += '</td>';
         html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + windowsCount + '</strong></td>';
         html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + doorsCount + '</strong></td>';
-        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + sidingArea.toFixed(2) + '</strong></td>';
-        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + roofingArea.toFixed(2) + '</strong></td>';
+        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + sidingCount + ' items</strong></td>';
+        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + roofingCount + ' items</strong></td>';
         html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;">';
         html += '<div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">';
         html += '<button class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="editMeasurement(' + measurement.id + ')" title="Edit Measurement"><i class="fa fa-edit"></i></button>';
@@ -1354,6 +1540,116 @@ function openMeasurementModal(measurementId = null) {
     $('#measurement_id').val('');
     $('#measurementModalLabel').text('Add Measurement');
     $('#selected-category').val('siding');
+    
+    // Reset tabs to siding
+    $('#category-tabs li').removeClass('active');
+    $('#category-tabs li:first').addClass('active');
+    $('.tab-pane').removeClass('active');
+    $('#siding-tab').addClass('active');
+    
+    // Reset estimate rows for siding tab
+    $('#estimate-rows-container').html('<div class="row estimate-row" data-row="0">' +
+        '<div class="col-md-4">' +
+            '<div class="form-group">' +
+                '<label for="measurement_name_0">Measurement Name</label>' +
+                '<input type="text" class="form-control" name="measurements[0][name]" id="measurement_name_0" placeholder="Enter measurement name">' +
+            '</div>' +
+        '</div>' +
+        '<div class="col-md-3">' +
+            '<div class="form-group">' +
+                '<label for="measurement_value_0">Measurement Value</label>' +
+                '<input type="number" step="0.0001" class="form-control" name="measurements[0][value]" id="measurement_value_0" placeholder="0.0000">' +
+            '</div>' +
+        '</div>' +
+        '<div class="col-md-3">' +
+            '<div class="form-group">' +
+                '<label for="measurement_unit_0">Unit</label>' +
+                '<select class="form-control" name="measurements[0][unit]" id="measurement_unit_0">' +
+                    '<option value="">Select Unit</option>' +
+                    '<option value="sqft">Square Feet (sqft)</option>' +
+                    '<option value="lf">Linear Feet (lf)</option>' +
+                    '<option value="ea">Each (ea)</option>' +
+                    '<option value="in">Inches (in)</option>' +
+                    '<option value="ft">Feet (ft)</option>' +
+                    '<option value="yd">Yards (yd)</option>' +
+                    '<option value="m">Meters (m)</option>' +
+                    '<option value="cm">Centimeters (cm)</option>' +
+                    '<option value="mm">Millimeters (mm)</option>' +
+                    '<option value="gal">Gallons (gal)</option>' +
+                    '<option value="lb">Pounds (lb)</option>' +
+                    '<option value="kg">Kilograms (kg)</option>' +
+                    '<option value="ton">Tons (ton)</option>' +
+                '</select>' +
+            '</div>' +
+        '</div>' +
+        '<div class="col-md-2">' +
+            '<div class="form-group">' +
+                '<label>&nbsp;</label>' +
+                '<div>' +
+                    '<button type="button" class="btn btn-success btn-sm" onclick="addEstimateRow()" title="Add Estimate">' +
+                        '<i class="fa fa-plus"></i>' +
+                    '</button>' +
+                    '<button type="button" class="btn btn-danger btn-sm" onclick="removeEstimateRow(this)" title="Remove Row" style="display: none;">' +
+                        '<i class="fa fa-minus"></i>' +
+                    '</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+    '</div>');
+    
+    // Reset estimate rows for roofing tab
+    $('#estimate-rows-container-roofing').html('<div class="row estimate-row" data-row="0">' +
+        '<div class="col-md-4">' +
+            '<div class="form-group">' +
+                '<label for="measurement_name_roofing_0">Measurement Name</label>' +
+                '<input type="text" class="form-control" name="measurements_roofing[0][name]" id="measurement_name_roofing_0" placeholder="Enter measurement name">' +
+            '</div>' +
+        '</div>' +
+        '<div class="col-md-3">' +
+            '<div class="form-group">' +
+                '<label for="measurement_value_roofing_0">Measurement Value</label>' +
+                '<input type="number" step="0.0001" class="form-control" name="measurements_roofing[0][value]" id="measurement_value_roofing_0" placeholder="0.0000">' +
+            '</div>' +
+        '</div>' +
+        '<div class="col-md-3">' +
+            '<div class="form-group">' +
+                '<label for="measurement_unit_roofing_0">Unit</label>' +
+                '<select class="form-control" name="measurements_roofing[0][unit]" id="measurement_unit_roofing_0">' +
+                    '<option value="">Select Unit</option>' +
+                    '<option value="sqft">Square Feet (sqft)</option>' +
+                    '<option value="lf">Linear Feet (lf)</option>' +
+                    '<option value="ea">Each (ea)</option>' +
+                    '<option value="in">Inches (in)</option>' +
+                    '<option value="ft">Feet (ft)</option>' +
+                    '<option value="yd">Yards (yd)</option>' +
+                    '<option value="m">Meters (m)</option>' +
+                    '<option value="cm">Centimeters (cm)</option>' +
+                    '<option value="mm">Millimeters (mm)</option>' +
+                    '<option value="gal">Gallons (gal)</option>' +
+                    '<option value="lb">Pounds (lb)</option>' +
+                    '<option value="kg">Kilograms (kg)</option>' +
+                    '<option value="ton">Tons (ton)</option>' +
+                '</select>' +
+            '</div>' +
+        '</div>' +
+        '<div class="col-md-2">' +
+            '<div class="form-group">' +
+                '<label>&nbsp;</label>' +
+                '<div>' +
+                    '<button type="button" class="btn btn-success btn-sm" onclick="addEstimateRow(\'roofing\')" title="Add Estimate">' +
+                        '<i class="fa fa-plus"></i>' +
+                    '</button>' +
+                    '<button type="button" class="btn btn-danger btn-sm" onclick="removeEstimateRow(this)" title="Remove Row" style="display: none;">' +
+                        '<i class="fa fa-minus"></i>' +
+                    '</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+    '</div>');
+    
+    // Reset counters
+    estimateRowCounter = 0;
+    estimateRowCounterRoofing = 0;
     
     // Clear windows and doors tables for new measurements
     if (!measurementId) {
@@ -1425,9 +1721,51 @@ function populateMeasurementForm(data) {
             // Display windows and doors data in their respective tables
             displayExistingWindowsDoorsData(attributes);
             
-            // Handle siding and roofing data
+            // Handle new siding measurements
+            if (attributes.siding_measurements && Array.isArray(attributes.siding_measurements)) {
+                // Clear existing rows
+                $('#estimate-rows-container').html('');
+                estimateRowCounter = 0;
+                
+                // Add rows for each siding measurement
+                attributes.siding_measurements.forEach(function(measurement, index) {
+                    addEstimateRow('siding');
+                    var rowIndex = estimateRowCounter;
+                    $('#measurement_name_' + rowIndex).val(measurement.name || '');
+                    $('#measurement_value_' + rowIndex).val(measurement.value || '');
+                    $('#measurement_unit_' + rowIndex).val(measurement.unit || '');
+                });
+                
+                // Show remove buttons if more than one row
+                if (attributes.siding_measurements.length > 1) {
+                    $('#estimate-rows-container .estimate-row .btn-danger').show();
+                }
+            }
+            
+            // Handle new roofing measurements
+            if (attributes.roofing_measurements && Array.isArray(attributes.roofing_measurements)) {
+                // Clear existing rows
+                $('#estimate-rows-container-roofing').html('');
+                estimateRowCounterRoofing = 0;
+                
+                // Add rows for each roofing measurement
+                attributes.roofing_measurements.forEach(function(measurement, index) {
+                    addEstimateRow('roofing');
+                    var rowIndex = estimateRowCounterRoofing;
+                    $('#measurement_name_roofing_' + rowIndex).val(measurement.name || '');
+                    $('#measurement_value_roofing_' + rowIndex).val(measurement.value || '');
+                    $('#measurement_unit_roofing_' + rowIndex).val(measurement.unit || '');
+                });
+                
+                // Show remove buttons if more than one row
+                if (attributes.roofing_measurements.length > 1) {
+                    $('#estimate-rows-container-roofing .estimate-row .btn-danger').show();
+                }
+            }
+            
+            // Handle other category data (legacy)
             Object.keys(attributes).forEach(function(category) {
-                if (category !== 'windows' && category !== 'doors') {
+                if (category !== 'windows' && category !== 'doors' && category !== 'siding_measurements' && category !== 'roofing_measurements') {
                     Object.keys(attributes[category]).forEach(function(field) {
                         $('input[name="' + category + '[' + field + ']"]').val(attributes[category][field]);
                     });
@@ -1824,7 +2162,7 @@ function calculateMeasurements() {
 // Bind calculation to width/height inputs
 $(document).on('input change', 'input[name="width_val"], input[name="height_val"], input[name="length_unit"], input[name="area_unit"]', calculateMeasurements);
 
-// Save measurement using original measurements system
+// Save measurement using new simplified structure
 $('#saveMeasurement').on('click', function() {
     var formData = $('#measurementForm').serializeArray();
     var data = {};
@@ -1834,8 +2172,53 @@ $('#saveMeasurement').on('click', function() {
         data[field.name] = field.value;
     });
     
-    // Collect data from all tabs (roofing, siding, windows, doors)
+    // Collect data from siding and roofing estimate rows
+    var sidingMeasurements = [];
+    var roofingMeasurements = [];
+    var hasValidMeasurement = false;
+    
+    // Collect siding measurements
+    $('#estimate-rows-container .estimate-row').each(function() {
+        var name = $(this).find('input[name*="[name]"]').val().trim();
+        var value = $(this).find('input[name*="[value]"]').val().trim();
+        var unit = $(this).find('select[name*="[unit]"]').val();
+        
+        if (name && value && unit) {
+            sidingMeasurements.push({
+                name: name,
+                value: parseFloat(value),
+                unit: unit
+            });
+            hasValidMeasurement = true;
+        }
+    });
+    
+    // Collect roofing measurements
+    $('#estimate-rows-container-roofing .estimate-row').each(function() {
+        var name = $(this).find('input[name*="[name]"]').val().trim();
+        var value = $(this).find('input[name*="[value]"]').val().trim();
+        var unit = $(this).find('select[name*="[unit]"]').val();
+        
+        if (name && value && unit) {
+            roofingMeasurements.push({
+                name: name,
+                value: parseFloat(value),
+                unit: unit
+            });
+            hasValidMeasurement = true;
+        }
+    });
+    
+    // Collect data from all tabs (windows, doors) - keep existing functionality
     var allTabsData = collectAllTabsData();
+    
+    // Add new measurements to the data
+    if (sidingMeasurements.length > 0) {
+        allTabsData.siding_measurements = sidingMeasurements;
+    }
+    if (roofingMeasurements.length > 0) {
+        allTabsData.roofing_measurements = roofingMeasurements;
+    }
     
     // Merge all data
     $.extend(data, allTabsData);
@@ -1844,7 +2227,7 @@ $('#saveMeasurement').on('click', function() {
     data.category = 'combined';
     
     // Validation
-    if (Object.keys(allTabsData).length === 0) {
+    if (Object.keys(allTabsData).length === 0 && !hasValidMeasurement) {
         alert('Please enter at least one measurement in any category before saving.');
         return false;
     }
