@@ -2308,7 +2308,10 @@ $(document).on('click', '#js-save-windows, #js-save-doors', function() {
             item.area_val = cells.eq(7).text().trim();
         }
         if (row.data('measurement-id')) { item.id = row.data('measurement-id'); }
-        if (item.name) { bulk[category].push(item); }
+        if (item.name) { 
+            console.log('Collected item for', category, ':', item);
+            bulk[category].push(item); 
+        }
     });
 
     var payload = { 
@@ -2325,6 +2328,8 @@ $(document).on('click', '#js-save-windows, #js-save-doors', function() {
     }
     
     payload[csrf_token_name] = csrf_hash;
+    
+    console.log('Sending payload for', which, ':', payload);
 
     $.ajax({
         url: admin_url + 'ella_contractors/measurements/save',
@@ -2335,12 +2340,20 @@ $(document).on('click', '#js-save-windows, #js-save-doors', function() {
             if (resp && resp.success) {
                 alert_float('success', (which === 'windows' ? 'Windows' : 'Doors') + ' saved');
                 
-                // Parse the attributes_json from the response
+                // Parse the attributes from the response
                 var savedList = [];
-                if (resp.data && resp.data.attributes_json) {
+                console.log('Response data:', resp.data);
+                if (resp.data && resp.data.attributes) {
+                    // New response format with attributes directly
+                    savedList = resp.data.attributes[which] || [];
+                    console.log('Saved list for', which, ':', savedList);
+                } else if (resp.data && resp.data.attributes_json) {
+                    // Fallback to old format
                     try {
                         var attributes = JSON.parse(resp.data.attributes_json);
+                        console.log('Parsed attributes:', attributes);
                         savedList = attributes[which] || [];
+                        console.log('Saved list for', which, ':', savedList);
                     } catch (e) {
                         console.error('Error parsing attributes_json:', e);
                     }
@@ -2349,7 +2362,9 @@ $(document).on('click', '#js-save-windows, #js-save-doors', function() {
                 // Update the table with saved data
                 var tbody = $('#' + which + '-tbody');
                 tbody.html('');
+                console.log('Updating table for', which, 'with', savedList.length, 'items');
                 savedList.forEach(function(item) { 
+                    console.log('Adding item to table:', item);
                     appendInlineRow(which, item); 
                 });
                 
@@ -2438,7 +2453,15 @@ function buildLevelOptions(selected) {
 }
 
 function appendInlineRow(category, existingData) {
+    console.log('appendInlineRow called with category:', category, 'data:', existingData);
     var tbody = $('#' + category + '-tbody');
+    console.log('Found tbody:', tbody.length, 'tbody element:', tbody[0]);
+    
+    if (tbody.length === 0) {
+        console.error('Could not find tbody for category:', category);
+        return;
+    }
+    
     var rowId = category + '_inline_' + Date.now();
     var d = existingData || {};
     var row = '<tr id="' + rowId + '" class="inline-measure-row" data-category="' + category + '"' + (d.id ? ' data-measurement-id="' + d.id + '"' : '') + '>';
@@ -2452,7 +2475,10 @@ function appendInlineRow(category, existingData) {
     row += '<td><span class="cell-area-text">' + (d.area_val || '') + '</span></td>';
     row += '<td><button class="btn btn-danger btn-xs" onclick="removeTableRow(\'' + rowId + '\')" title="Remove"><i class="fa fa-trash"></i></button></td>';
     row += '</tr>';
+    
+    console.log('Appending row:', row);
     tbody.append(row);
+    console.log('Row appended successfully. Tbody now has', tbody.find('tr').length, 'rows');
 }
 
 // Convert existing text row into inline editable inputs

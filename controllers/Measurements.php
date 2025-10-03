@@ -62,10 +62,18 @@ class Measurements extends AdminController
         $categorySpecificData = [];
         $categories = ['siding', 'roofing', 'windows', 'doors'];
         
-        foreach ($categories as $category) {
-            if (isset($post[$category]) && is_array($post[$category])) {
-                $categorySpecificData[$category] = $post[$category];
-                unset($post[$category]);
+        // Check for bulk data first (from Windows/Doors saves)
+        if (isset($post['bulk']) && is_array($post['bulk'])) {
+            log_message('debug', 'Bulk data received: ' . json_encode($post['bulk']));
+            $categorySpecificData = $post['bulk'];
+            unset($post['bulk']);
+        } else {
+            // Check for individual category data
+            foreach ($categories as $category) {
+                if (isset($post[$category]) && is_array($post[$category])) {
+                    $categorySpecificData[$category] = $post[$category];
+                    unset($post[$category]);
+                }
             }
         }
 
@@ -74,8 +82,10 @@ class Measurements extends AdminController
             $existing = $this->measurements_model->find($id);
             $existing_attributes = json_decode($existing['attributes_json'] ?? '{}', true);
             $post['attributes_json'] = json_encode(array_merge($existing_attributes, $categorySpecificData));
+            log_message('debug', 'Updated attributes_json: ' . $post['attributes_json']);
         } else {
             $post['attributes_json'] = json_encode($categorySpecificData);
+            log_message('debug', 'New attributes_json: ' . $post['attributes_json']);
         }
 
         if ($id > 0) {
@@ -102,11 +112,32 @@ class Measurements extends AdminController
         // Handle AJAX requests
         if ($this->input->is_ajax_request()) {
             header('Content-Type: application/json');
-            echo json_encode([
-                'success' => $ok,
-                'message' => $msg,
-                'data' => $ok ? $this->measurements_model->find($id ?: $this->db->insert_id()) : null
-            ]);
+            
+            if ($ok) {
+                $measurement = $this->measurements_model->find($id ?: $this->db->insert_id());
+                $response_data = $measurement;
+                
+                // If this is a bulk save (Windows/Doors), return the attributes in the expected format
+                if (isset($post['bulk']) && is_array($post['bulk'])) {
+                    $attributes = json_decode($measurement['attributes_json'] ?? '{}', true);
+                    $response_data = [
+                        'id' => $measurement['id'],
+                        'attributes' => $attributes
+                    ];
+                }
+                
+                echo json_encode([
+                    'success' => true,
+                    'message' => $msg,
+                    'data' => $response_data
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => $msg,
+                    'data' => null
+                ]);
+            }
             return;
         }
 

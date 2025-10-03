@@ -34,6 +34,26 @@ $lang['scheduled_process_completed'] = 'Scheduled process "%s" completed';
 $lang['scheduled_process_failed'] = 'Scheduled process "%s" failed';
 $lang['appointment_deleted_with_subject'] = 'Appointment "%s" was deleted';
 
+
+//
+$lang['appointment_start_datetime'] = 'Appointment Start Date & Time';
+$lang['appointment_end_datetime'] = 'Appointment End Date & Time';
+$lang['basic_information'] = 'Basic Information';
+$lang['contact_information'] = 'Contact Information';
+$lang['estimate_line_items'] = 'Estimate Line Items';
+$lang['select_line_item'] = 'Select Line Item';
+$lang['unit_price'] = 'Unit Price';
+$lang['total_price'] = 'Total Price';
+$lang['confirm_delete_appointment'] = 'Confirm Delete Appointment';
+$lang['email'] = 'Email';
+$lang['phone'] = 'Phone';
+$lang['attendees'] = 'Attendees';
+$lang['appointment_subject'] = 'Appointment Subject';
+$lang['appointment_description'] = 'Appointment Description';
+$lang['appointment_status'] = 'Appointment Status';
+$lang['appointment_created_by'] = 'Appointment Created By';
+$lang['back_to_appointments'] = 'Back to Appointments';
+
 // Status translations
 $lang['appointment_status_scheduled'] = 'Scheduled';
 $lang['appointment_status_cancelled'] = 'Cancelled';
