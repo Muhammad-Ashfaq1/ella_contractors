@@ -1680,6 +1680,14 @@ function openMeasurementModal(measurementId = null) {
     $('#measurementModal').modal('show');
 }
 
+// Add event listeners for modal close events
+$(document).ready(function() {
+    // Reload measurements when modal is closed (any way)
+    $('#measurementModal').on('hidden.bs.modal', function() {
+        loadMeasurements();
+    });
+});
+
 function loadMeasurementData(measurementId) {
     $.ajax({
         url: admin_url + 'ella_contractors/measurements/get_measurement/' + measurementId,
@@ -2278,12 +2286,7 @@ $('#saveMeasurement').on('click', function() {
             if (response.success) {
                 alert_float('success', 'Measurement saved successfully!');
                 $('#measurementModal').modal('hide');
-                // Use global refresh function to reload data and switch to measurements tab
-                if (typeof refreshAppointmentData === 'function') {
-                    refreshAppointmentData('measurements-tab');
-                } else {
-                    loadMeasurements(); // Fallback to old method
-                }
+                // Measurements will be reloaded automatically by the modal close event
             } else {
                 alert_float('danger', 'Error saving measurement: ' + (response.message || 'Unknown error'));
             }
