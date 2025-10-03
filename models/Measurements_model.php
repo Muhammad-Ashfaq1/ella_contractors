@@ -27,7 +27,20 @@ class Measurements_model extends App_Model
 			}
 		}
 		$insert['dtmCreated'] = date('Y-m-d H:i:s');
+		
+		// Debug: Log what we're inserting
+		log_message('debug', 'Model create - Insert data: ' . json_encode($insert));
+		log_message('debug', 'Model create - Table: ' . $this->table);
+		
 		$ok = $this->db->insert($this->table, $insert);
+		
+		// Debug: Log the result
+		log_message('debug', 'Model create - Insert result: ' . ($ok ? 'SUCCESS' : 'FAILED'));
+		if (!$ok) {
+			log_message('error', 'Model create - Database error: ' . $this->db->last_query());
+			log_message('error', 'Model create - Database error message: ' . $this->db->error()['message']);
+		}
+		
 		return $ok ? $this->db->insert_id() : false;
 	}
 

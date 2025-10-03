@@ -18,6 +18,10 @@ class Measurements extends AdminController
 
         $post = $this->input->post(null, true);
         $id   = isset($post['id']) ? (int) $post['id'] : 0;
+        
+        // Debug logging
+        log_message('debug', 'Measurements save called with data: ' . json_encode($post));
+        log_message('debug', 'Is AJAX request: ' . ($this->input->is_ajax_request() ? 'Yes' : 'No'));
 
         // Handle relationships (appointment, lead, or other)
         if (isset($post['appointment_id']) && !empty($post['appointment_id'])) {
@@ -27,8 +31,8 @@ class Measurements extends AdminController
             $post['rel_type'] = 'lead';
             $post['rel_id'] = (int) $post['lead_id'];
         } else {
-            $post['rel_type'] = 'other';
-            $post['rel_id'] = 0;
+            $post['rel_type'] = 'appointment'; // Default to appointment if no specific type
+            $post['rel_id'] = isset($post['appointment_id']) ? (int) $post['appointment_id'] : 0;
         }
 
         // Handle client name (store in notes or attributes if needed)
@@ -75,6 +79,41 @@ class Measurements extends AdminController
                     unset($post[$category]);
                 }
             }
+            
+            // Handle new siding and roofing measurements structure
+            if (isset($post['measurements']) && is_array($post['measurements'])) {
+                $sidingMeasurements = [];
+                foreach ($post['measurements'] as $measurement) {
+                    if (!empty($measurement['name']) && !empty($measurement['value']) && !empty($measurement['unit'])) {
+                        $sidingMeasurements[] = [
+                            'name' => $measurement['name'],
+                            'value' => (float) $measurement['value'],
+                            'unit' => $measurement['unit']
+                        ];
+                    }
+                }
+                if (!empty($sidingMeasurements)) {
+                    $categorySpecificData['siding_measurements'] = $sidingMeasurements;
+                }
+                unset($post['measurements']);
+            }
+            
+            if (isset($post['measurements_roofing']) && is_array($post['measurements_roofing'])) {
+                $roofingMeasurements = [];
+                foreach ($post['measurements_roofing'] as $measurement) {
+                    if (!empty($measurement['name']) && !empty($measurement['value']) && !empty($measurement['unit'])) {
+                        $roofingMeasurements[] = [
+                            'name' => $measurement['name'],
+                            'value' => (float) $measurement['value'],
+                            'unit' => $measurement['unit']
+                        ];
+                    }
+                }
+                if (!empty($roofingMeasurements)) {
+                    $categorySpecificData['roofing_measurements'] = $roofingMeasurements;
+                }
+                unset($post['measurements_roofing']);
+            }
         }
 
         // Merge with existing attributes_json if editing
@@ -87,6 +126,26 @@ class Measurements extends AdminController
             $post['attributes_json'] = json_encode($categorySpecificData);
             log_message('debug', 'New attributes_json: ' . $post['attributes_json']);
         }
+        
+        // Set required fields for the database
+        if (empty($post['name'])) {
+            $post['name'] = 'Combined Measurement';
+        }
+        if (empty($post['category'])) {
+            $post['category'] = 'other';
+        }
+        if (empty($post['status_code'])) {
+            $post['status_code'] = 1;
+        }
+        if (empty($post['sort_order'])) {
+            $post['sort_order'] = 0;
+        }
+        if (empty($post['intRecordStatusCode'])) {
+            $post['intRecordStatusCode'] = 1;
+        }
+        
+        // Debug: Log the final data being saved
+        log_message('debug', 'Final data being saved: ' . json_encode($post));
 
         if ($id > 0) {
             $ok  = $this->measurements_model->update($id, $post);
@@ -98,9 +157,37 @@ class Measurements extends AdminController
                 $this->appointments_model->log_activity($post['appointment_id'], 'updated', 'measurement', $measurement_name, ['measurement_id' => $id, 'category' => $post['category'] ?? 'general']);
             }
         } else {
-            $measurement_id = $this->measurements_model->create($post);
+            // Debug: Log what we're trying to insert
+            log_message('debug', 'Attempting to create measurement with data: ' . json_encode($post));
+            
+            // Try direct database insert first
+            $insert_data = [
+                'category' => $post['category'] ?? 'other',
+                'rel_type' => $post['rel_type'] ?? 'appointment',
+                'rel_id' => $post['rel_id'] ?? $post['appointment_id'] ?? 0,
+                'appointment_id' => $post['appointment_id'] ?? 0,
+                'name' => $post['name'] ?? 'Combined Measurement',
+                'attributes_json' => $post['attributes_json'] ?? '{}',
+                'status_code' => $post['status_code'] ?? 1,
+                'sort_order' => $post['sort_order'] ?? 0,
+                'intRecordStatusCode' => $post['intRecordStatusCode'] ?? 1,
+                'dtmCreated' => date('Y-m-d H:i:s')
+            ];
+            
+            log_message('debug', 'Direct insert data: ' . json_encode($insert_data));
+            
+            $this->db->insert(db_prefix() . 'ella_contractors_measurements', $insert_data);
+            $measurement_id = $this->db->insert_id();
             $ok = (bool) $measurement_id;
             $msg = $ok ? 'Created successfully' : 'Failed to create';
+            
+            // Debug: Log the result
+            log_message('debug', 'Direct insert result: ' . ($ok ? 'SUCCESS' : 'FAILED') . ', ID: ' . $measurement_id);
+            if (!$ok) {
+                log_message('error', 'Direct insert error: ' . $this->db->last_query());
+                log_message('error', 'Direct insert error message: ' . $this->db->error()['message']);
+                log_message('error', 'Full direct insert error: ' . json_encode($this->db->error()));
+            }
             
             // Log measurement creation if successful and it's for an appointment
             if ($ok && isset($post['appointment_id']) && $post['appointment_id']) {
@@ -199,6 +286,43 @@ class Measurements extends AdminController
             'data' => $measurement
         ]);
     }
+
+
+    /**
+     * Get measurements for appointment (AJAX) - Return original structure for listing
+     */
+    public function get_appointment_measurements($appointment_id)
+    {
+        log_message('debug', 'Getting measurements for appointment: ' . $appointment_id);
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        // Get measurements using the existing table structure
+        $this->db->select('id, name, category, rel_type, rel_id, appointment_id, attributes_json, dtmCreated as dateadded');
+        $this->db->from(db_prefix() . 'ella_contractors_measurements');
+        $this->db->where('(appointment_id = ' . (int) $appointment_id . ' OR (rel_type = "appointment" AND rel_id = ' . (int) $appointment_id . '))');
+        $this->db->order_by('dtmCreated', 'DESC');
+        
+        $measurements = $this->db->get()->result_array();
+        
+        // Process measurements to ensure proper structure
+        foreach ($measurements as &$measurement) {
+            // Ensure attributes_json is properly decoded
+            if (!empty($measurement['attributes_json'])) {
+                $measurement['attributes'] = json_decode($measurement['attributes_json'], true);
+            } else {
+                $measurement['attributes'] = [];
+            }
+        }
+        
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => true,
+            'data' => $measurements
+        ]);
+    }
+
 
     /**
      * Save measurement via AJAX (for modals)

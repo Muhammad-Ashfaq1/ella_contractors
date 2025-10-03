@@ -1120,10 +1120,12 @@ function printAppointment(appointmentId) {
     window.open(admin_url + 'ella_contractors/appointments/print/' + appointmentId, '_blank');
 }
 
+
+
 // Measurements Functions
 function loadMeasurements() {
     $.ajax({
-        url: admin_url + 'ella_contractors/appointments/get_measurements/' + appointmentId,
+        url: admin_url + 'ella_contractors/measurements/get_appointment_measurements/' + appointmentId,
         type: 'GET',
         data: {
             [csrf_token_name]: csrf_hash
@@ -1493,7 +1495,14 @@ function displayMeasurements(measurements) {
 
     measurements.forEach(function(measurement, idx) {
         var attrs = {};
-        try { attrs = JSON.parse(measurement.attributes_json || '{}'); } catch(e) {}
+        try { 
+            // Use the processed attributes if available, otherwise parse from JSON
+            attrs = measurement.attributes || JSON.parse(measurement.attributes_json || '{}'); 
+        } catch(e) {
+            console.error('Error parsing attributes:', e);
+            attrs = {};
+        }
+        
         var windowsCount = (attrs.windows && Array.isArray(attrs.windows)) ? attrs.windows.length : 0;
         var doorsCount = (attrs.doors && Array.isArray(attrs.doors)) ? attrs.doors.length : 0;
         
@@ -1514,7 +1523,8 @@ function displayMeasurements(measurements) {
         
         html += '<tr ' + rowClass + '>';
         html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;">';
-        html += '<span style="background-color: #3498db; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">' + (measurement.category || 'combined').toUpperCase() + '</span>';
+        var categoryDisplay = (measurement.category === 'other') ? 'COMBINED' : (measurement.category || 'COMBINED').toUpperCase();
+        html += '<span style="background-color: #3498db; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">' + categoryDisplay + '</span>';
         html += ' <strong>#' + measurement.id + '</strong>';
         html += '</td>';
         html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + windowsCount + '</strong></td>';
@@ -2217,6 +2227,7 @@ $('#saveMeasurement').on('click', function() {
         }
     });
     
+    
     // Collect data from all tabs (windows, doors) - keep existing functionality
     var allTabsData = collectAllTabsData();
     
@@ -2231,8 +2242,8 @@ $('#saveMeasurement').on('click', function() {
     // Merge all data
     $.extend(data, allTabsData);
     
-    // Set category to 'combined' since we're saving all tabs
-    data.category = 'combined';
+    // Set category to 'other' since we're saving all tabs (combined measurements)
+    data.category = 'other';
     
     // Validation
     if (Object.keys(allTabsData).length === 0 && !hasValidMeasurement) {
@@ -2245,6 +2256,12 @@ $('#saveMeasurement').on('click', function() {
     var originalText = submitBtn.text();
     submitBtn.prop('disabled', true).text('Saving...');
     
+    // Add CSRF token to data
+    data[csrf_token_name] = csrf_hash;
+    
+    // Debug: Log the data being sent
+    console.log('Sending measurement data:', data);
+    
     // Save via AJAX using measurements controller
     $.ajax({
         url: admin_url + 'ella_contractors/measurements/save',
@@ -2252,26 +2269,32 @@ $('#saveMeasurement').on('click', function() {
         data: data,
         dataType: 'json',
         success: function(response) {
-        // Reset button
-        submitBtn.prop('disabled', false).text(originalText);
-        
-            if (response.success) {
-            alert_float('success', 'Measurement saved successfully!');
-            $('#measurementModal').modal('hide');
-            // Use global refresh function to reload data and switch to measurements tab
-            if (typeof refreshAppointmentData === 'function') {
-                refreshAppointmentData('measurements-tab');
-            } else {
-                loadMeasurements(); // Fallback to old method
-            }
-        } else {
-            alert_float('danger', 'Error saving measurement: ' + (response.message || 'Unknown error'));
-            }
-        },
-        error: function() {
             // Reset button
             submitBtn.prop('disabled', false).text(originalText);
-            alert_float('danger', 'Error saving measurement');
+            
+            // Debug: Log the response
+            console.log('Save measurement response:', response);
+            
+            if (response.success) {
+                alert_float('success', 'Measurement saved successfully!');
+                $('#measurementModal').modal('hide');
+                // Use global refresh function to reload data and switch to measurements tab
+                if (typeof refreshAppointmentData === 'function') {
+                    refreshAppointmentData('measurements-tab');
+                } else {
+                    loadMeasurements(); // Fallback to old method
+                }
+            } else {
+                alert_float('danger', 'Error saving measurement: ' + (response.message || 'Unknown error'));
+            }
+        },
+        error: function(xhr, status, error) {
+            // Reset button
+            submitBtn.prop('disabled', false).text(originalText);
+            console.error('AJAX Error:', error);
+            console.error('Response:', xhr.responseText);
+            console.error('Status:', xhr.status);
+            alert_float('danger', 'Error saving measurement: ' + error + ' (Status: ' + xhr.status + ')');
         }
     });
 });
