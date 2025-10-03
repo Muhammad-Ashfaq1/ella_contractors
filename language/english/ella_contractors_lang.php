@@ -13,6 +13,7 @@ $lang['appointment_activity_measurement_added'] = 'Measurement added to appointm
 $lang['appointment_activity_measurement_removed'] = 'Measurement removed from appointment';
 $lang['appointment_activity_process'] = 'Scheduled event process';
 $lang['appointment_activity_deleted'] = 'Appointment deleted';
+$lang['appointment_details'] = 'Appointment Details';
 
 // Timeline specific
 $lang['timeline_tab_title'] = 'Timeline';
