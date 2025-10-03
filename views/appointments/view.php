@@ -1667,7 +1667,7 @@ function openMeasurementModal(measurementId = null) {
 
 function loadMeasurementData(measurementId) {
     $.ajax({
-        url: admin_url + 'ella_contractors/appointments/get_measurement/' + appointmentId + '/' + measurementId,
+        url: admin_url + 'ella_contractors/measurements/get_measurement/' + measurementId,
         type: 'GET',
         data: {
             [csrf_token_name]: csrf_hash
@@ -1823,7 +1823,7 @@ function editMeasurement(measurementId) {
 function deleteMeasurement(measurementId) {
     if (confirm('Are you sure you want to delete this measurement?')) {
         $.ajax({
-            url: admin_url + 'ella_contractors/appointments/delete_measurement/' + appointmentId + '/' + measurementId,
+            url: admin_url + 'ella_contractors/measurements/delete/' + measurementId,
             type: 'POST',
             data: {
                 [csrf_token_name]: csrf_hash
@@ -2237,22 +2237,33 @@ $('#saveMeasurement').on('click', function() {
     var originalText = submitBtn.text();
     submitBtn.prop('disabled', true).text('Saving...');
     
-    // Save via AJAX using appointments controller
-    saveMeasurementAjax(data, function(success, response) {
-        // Reset button
-        submitBtn.prop('disabled', false).text(originalText);
-        
-        if (success) {
-            alert_float('success', 'Measurement saved successfully!');
-            $('#measurementModal').modal('hide');
-            // Use global refresh function to reload data and switch to measurements tab
-            if (typeof refreshAppointmentData === 'function') {
-                refreshAppointmentData('measurements-tab');
+    // Save via AJAX using measurements controller
+    $.ajax({
+        url: admin_url + 'ella_contractors/measurements/save',
+        type: 'POST',
+        data: data,
+        dataType: 'json',
+        success: function(response) {
+            // Reset button
+            submitBtn.prop('disabled', false).text(originalText);
+            
+            if (response.success) {
+                alert_float('success', 'Measurement saved successfully!');
+                $('#measurementModal').modal('hide');
+                // Use global refresh function to reload data and switch to measurements tab
+                if (typeof refreshAppointmentData === 'function') {
+                    refreshAppointmentData('measurements-tab');
+                } else {
+                    loadMeasurements(); // Fallback to old method
+                }
             } else {
-                loadMeasurements(); // Fallback to old method
+                alert_float('danger', 'Error saving measurement: ' + (response.message || 'Unknown error'));
             }
-        } else {
-            alert_float('danger', 'Error saving measurement: ' + (response.message || 'Unknown error'));
+        },
+        error: function() {
+            // Reset button
+            submitBtn.prop('disabled', false).text(originalText);
+            alert_float('danger', 'Error saving measurement');
         }
     });
 });

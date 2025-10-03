@@ -33,8 +33,11 @@ class Measurements extends AdminController
         $post = $this->input->post(null, true);
         $id   = isset($post['id']) ? (int) $post['id'] : 0;
 
-        // Handle lead relationship
-        if (isset($post['lead_id']) && !empty($post['lead_id'])) {
+        // Handle relationships (appointment, lead, or other)
+        if (isset($post['appointment_id']) && !empty($post['appointment_id'])) {
+            $post['rel_type'] = 'appointment';
+            $post['rel_id'] = (int) $post['appointment_id'];
+        } elseif (isset($post['lead_id']) && !empty($post['lead_id'])) {
             $post['rel_type'] = 'lead';
             $post['rel_id'] = (int) $post['lead_id'];
         } else {
@@ -164,10 +167,24 @@ class Measurements extends AdminController
     public function delete($id)
     {
         if (!has_permission('ella_contractors', '', 'delete')) {
-            access_denied('ella_contractors');
+            if ($this->input->is_ajax_request()) {
+                ajax_access_denied();
+            } else {
+                access_denied('ella_contractors');
+            }
         }
 
         $ok = $this->measurements_model->delete($id);
+        
+        if ($this->input->is_ajax_request()) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => $ok,
+                'message' => $ok ? 'Measurement deleted successfully' : 'Measurement not found'
+            ]);
+            return;
+        }
+        
         set_alert($ok ? 'success' : 'danger', $ok ? 'Deleted' : 'Not found');
         redirect($_SERVER['HTTP_REFERER'] ?? admin_url('ella_contractors/measurements'));
     }
