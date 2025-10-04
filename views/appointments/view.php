@@ -658,6 +658,7 @@ button.delete-btn {
                     <input type="hidden" id="measurement_id" name="id" value="">
                     <input type="hidden" name="rel_type" value="appointment">
                     <input type="hidden" name="rel_id" value="<?php echo $appointment->id; ?>">
+                    <input type="hidden" name="appointment_id" value="<?php echo $appointment->id; ?>">
                     
                     <!-- Tab Navigation -->
                     <ul class="nav nav-tabs mb-3" id="category-tabs">
@@ -1545,14 +1546,23 @@ function displayMeasurements(measurements) {
 }
 
 function openMeasurementModal(measurementId = null) {
+    // Store appointment ID before resetting form
+    var appointmentId = $('input[name="appointment_id"]').val();
+    var relId = $('input[name="rel_id"]').val();
+    var relType = $('input[name="rel_type"]').val();
+    
     // Set measurement ID first before resetting form
     $('#measurement_id').val(measurementId || '');
     
     // Reset form
     $('#measurementForm')[0].reset();
     
-    // Restore measurement ID after reset
+    // Restore all important values after reset
     $('#measurement_id').val(measurementId || '');
+    $('input[name="appointment_id"]').val(appointmentId);
+    $('input[name="rel_id"]').val(relId);
+    $('input[name="rel_type"]').val(relType);
+    
     $('#measurementModalLabel').text(measurementId ? 'Edit Measurement' : 'Add Measurement');
     $('#selected-category').val('siding');
     
@@ -2100,6 +2110,16 @@ $('#category-tabs a[data-toggle="tab"]').on('click', function(e) {
     // Update active tab
     $('#category-tabs li').removeClass('active');
     $(this).parent().addClass('active');
+
+    // Preserve appointment ID when switching tabs
+    var appointmentId = $('input[name="appointment_id"]').val();
+    var relId = $('input[name="rel_id"]').val();
+    var relType = $('input[name="rel_type"]').val();
+    
+    // Ensure appointment ID is preserved in all hidden fields
+    $('input[name="appointment_id"]').val(appointmentId);
+    $('input[name="rel_id"]').val(relId);
+    $('input[name="rel_type"]').val(relType);
 
     // Only load dynamic data for windows and doors tabs if we're not editing an existing measurement
     if ((category === 'windows' || category === 'doors') && !$('#measurement_id').val()) {

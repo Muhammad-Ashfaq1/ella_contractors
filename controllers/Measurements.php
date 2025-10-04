@@ -19,10 +19,6 @@ class Measurements extends AdminController
         $post = $this->input->post(null, true);
         $id   = isset($post['id']) ? (int) $post['id'] : 0;
         
-        // Debug logging
-        log_message('debug', 'Measurements save called with data: ' . json_encode($post));
-        log_message('debug', 'Is AJAX request: ' . ($this->input->is_ajax_request() ? 'Yes' : 'No'));
-
         // Handle relationships (appointment, lead, or other)
         if (isset($post['appointment_id']) && !empty($post['appointment_id'])) {
             $post['rel_type'] = 'appointment';
