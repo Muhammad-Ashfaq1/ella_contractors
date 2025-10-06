@@ -266,33 +266,6 @@ class Ella_appointments_model extends App_Model
         return $this->get_appointments($where);
     }
     
-    /**
-     * Add note to appointment and log activity
-     * 
-     * @param int    $appointment_id Appointment ID
-     * @param string $note_content  Note content
-     * @return int|false            Note ID on success, false on failure
-     */
-    public function add_appointment_note($appointment_id, $note_content)
-    {
-        $CI = &get_instance();
-        
-        // Add note to the appointment's description/notes field
-        $appointment = $this->get_appointment($appointment_id);
-        if ($appointment) {
-            $current_notes = $appointment->description ?? '';
-            $new_notes = $current_notes . "\n\n" . date('Y-m-d H:i:s') . " - " . $note_content;
-            
-            $this->update_appointment($appointment_id, ['description' => $new_notes]);
-            
-            // Log the note addition
-            $this->log_appointment_note_added($appointment_id, $note_content);
-            
-            return true;
-        }
-        
-        return false;
-    }
     
     
     /**
@@ -372,7 +345,6 @@ class Ella_appointments_model extends App_Model
             'appointment_activity_created' => 'fa fa-calendar-plus',
             'appointment_activity_updated' => 'fa fa-edit',
             'appointment_activity_status_changed' => 'fa fa-exchange',
-            'appointment_activity_note_added' => 'fa fa-sticky-note',
             'appointment_activity_measurement_added' => 'fa fa-plus-square',
             'appointment_activity_measurement_removed' => 'fa fa-minus-square',
             'appointment_activity_process' => 'fa fa-cogs',
@@ -408,7 +380,6 @@ class Ella_appointments_model extends App_Model
             'appointment_activity_created' => 'success',
             'appointment_activity_updated' => 'info',
             'appointment_activity_status_changed' => 'warning',
-            'appointment_activity_note_added' => 'primary',
             'appointment_activity_measurement_added' => 'success',
             'appointment_activity_measurement_removed' => 'danger',
             'appointment_activity_process' => 'secondary',

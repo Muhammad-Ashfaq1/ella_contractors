@@ -1523,39 +1523,6 @@ class Appointments extends AdminController
         ]);
     }
     
-    /**
-     * Add note to appointment timeline (AJAX)
-     */
-    public function add_timeline_note($id)
-    {
-        if (!has_permission('ella_contractors', '', 'edit')) {
-            ajax_access_denied();
-        }
-        
-        $note_content = $this->input->post('timeline_note_content');
-        
-        if (empty($note_content)) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Note content is required'
-            ]);
-            return;
-        }
-        
-        $result = $this->appointments_model->add_appointment_note($id, $note_content);
-        
-        if ($result) {
-            echo json_encode([
-                'success' => true,
-                'message' => 'Note added successfully'
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Failed to add note'
-            ]);
-        }
-    }
     
     
     /**

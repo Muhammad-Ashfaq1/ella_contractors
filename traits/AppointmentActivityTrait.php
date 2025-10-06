@@ -168,26 +168,6 @@ trait AppointmentActivityTrait
         );
     }
     
-    /**
-     * Log appointment note added
-     * 
-     * @param int    $appointment_id Appointment ID
-     * @param string $note_content  Note content (truncated)
-     * @return int|false            Log ID on success, false on failure
-     */
-    public function log_appointment_note_added($appointment_id, $note_content)
-    {
-        $additional_data = serialize([
-            'note_preview' => substr($note_content, 0, 100) . (strlen($note_content) > 100 ? '...' : '')
-        ]);
-        
-        return $this->log_appointment_activity(
-            $appointment_id, 
-            'appointment_activity_note_added', 
-            false, 
-            $additional_data
-        );
-    }
     
     /**
      * Log appointment measurement added

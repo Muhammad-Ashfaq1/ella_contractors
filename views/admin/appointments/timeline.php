@@ -84,46 +84,5 @@
 
 <script>
 $(document).ready(function() {
-    // Handle timeline note form submission - make it more specific to avoid conflicts
-    $('#timeline-tab').on('submit', '#timeline-note-form', function(e) {
-        e.preventDefault();
-        
-        var form = $(this);
-        var submitBtn = form.find('button[type="submit"]');
-        var noteContent = $('#timeline_note_content').val().trim();
-        
-        if (!noteContent) {
-            alert_float('danger', 'Please enter a note');
-            return;
-        }
-        
-        // Disable submit button
-        submitBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Adding...');
-        
-        $.ajax({
-            url: form.attr('action'),
-            type: 'POST',
-            data: form.serialize(),
-            dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    alert_float('success', 'Note added successfully');
-                    $('#timeline_note_content').val('');
-                    
-                    // Reload timeline
-                    loadTimeline();
-                } else {
-                    alert_float('danger', response.message || 'Failed to add note');
-                }
-            },
-            error: function() {
-                alert_float('danger', 'An error occurred while adding the note');
-            },
-            complete: function() {
-                // Re-enable submit button
-                submitBtn.prop('disabled', false).html('<i class="fa fa-plus"></i> Add Timeline');
-            }
-        });
-    });
 });
 </script>

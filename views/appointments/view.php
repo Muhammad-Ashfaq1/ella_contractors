@@ -600,28 +600,6 @@ button.delete-btn {
                             <div role="tabpanel" class="tab-pane" id="timeline-tab">
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <div class="pull-right mbot15">
-                                            <button type="button" class="btn btn-info btn-sm" onclick="toggleTimelineNoteForm()" id="timeline-note-btn">
-                                                <i class="fa fa-plus"></i> Add Timeline
-                                            </button>
-                                        </div>
-                                        <div class="clearfix"></div>
-                                        
-                                        <!-- Add Timeline Note Form (Initially Hidden) -->
-                                        <div id="timeline-note-form-container" class="hide mbot15">
-                                            <?php echo form_open(admin_url('ella_contractors/appointments/add_timeline_note/' . $appointment->id), array('id' => 'timeline-note-form')); ?>
-                                            <div class="form-group" id="timeline-note-group">
-                                                <div class="lead emoji-picker-container timeline-notes">
-                                                    <textarea id="timeline_note_content" name="timeline_note_content" class="form-control" rows="3" data-emojiable="true" placeholder="Add a timeline entry about this appointment..."></textarea>
-                                                </div>
-                                            </div>
-                                            <?php echo get_typos_by_category('timeline_notes'); ?>
-                                            <div class="text-right">
-                                                <button type="button" class="btn btn-default btn-sm" onclick="toggleTimelineNoteForm()">Cancel</button>
-                                                <button type="submit" class="btn btn-info btn-sm">Add Timeline</button>
-                                            </div>
-                                            <?php echo form_close(); ?>
-                                        </div>
                                         
                                         <hr class="hr-panel-heading" />
                                         
@@ -885,16 +863,6 @@ $(document).ready(function() {
         loadTimeline();
     });
     
-    // Timeline note form toggle
-    window.toggleTimelineNoteForm = function() {
-        $('#timeline-note-form-container').toggleClass('hide');
-        var btn = $('#timeline-note-btn');
-        if ($('#timeline-note-form-container').hasClass('hide')) {
-            btn.html('<i class="fa fa-plus"></i> Add Timeline');
-        } else {
-            btn.html('<i class="fa fa-minus"></i> Cancel');
-        }
-    };
     
     // Log email button click
     window.logEmailClick = function(appointmentId, emailAddress) {

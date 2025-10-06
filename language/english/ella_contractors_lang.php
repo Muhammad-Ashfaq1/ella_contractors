@@ -8,7 +8,6 @@
 $lang['appointment_activity_created'] = 'Appointment created';
 $lang['appointment_activity_updated'] = 'Appointment updated';
 $lang['appointment_activity_status_changed'] = 'Appointment status changed';
-$lang['appointment_activity_note_added'] = 'Note added to appointment';
 $lang['appointment_activity_measurement_added'] = 'Measurement added to appointment';
 $lang['appointment_activity_measurement_removed'] = 'Measurement removed from appointment';
 $lang['appointment_activity_process'] = 'Scheduled event process';
@@ -21,9 +20,6 @@ $lang['send_reminder'] = 'Send Reminder';
 $lang['timeline_tab_title'] = 'Timeline';
 $lang['timeline_activity_feed'] = 'Activity Feed';
 $lang['timeline_no_activities'] = 'No activities found for this appointment';
-$lang['timeline_add_note'] = 'Add Note';
-$lang['timeline_note_placeholder'] = 'Enter your note here...';
-$lang['timeline_submit_note'] = 'Submit Note';
 $lang['timeline_loading'] = 'Loading timeline...';
 
 // Activity descriptions with placeholders

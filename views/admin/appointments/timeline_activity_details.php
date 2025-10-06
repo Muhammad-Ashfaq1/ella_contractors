@@ -50,14 +50,6 @@ switch ($activity['description_key']) {
         echo '</div>';
         break;
         
-    case 'appointment_activity_note_added':
-        echo '<div class="timeline-activity-details">';
-        echo '<h6><i class="fa fa-sticky-note"></i> Note Added</h6>';
-        if (isset($additional_data['note_preview'])) {
-            echo '<p>' . e($additional_data['note_preview']) . '</p>';
-        }
-        echo '</div>';
-        break;
         
     case 'appointment_activity_measurement_added':
         echo '<div class="timeline-activity-details">';
