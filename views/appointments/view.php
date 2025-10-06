@@ -821,6 +821,7 @@ $this->load->view('appointments/estimate_modal', $data);
 <link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/timeline.css'); ?>">
 
 <script>
+    console.log('latest code');
 var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
 var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
 var appointmentId = <?php echo $appointment->id; ?>;
