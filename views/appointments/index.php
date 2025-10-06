@@ -13,7 +13,7 @@
                         <div class="_buttons">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <button type="button" class="btn btn-info" onclick="openAppointmentModal(); $('#appointmentModal').modal('show');">
+                                    <button type="button" class="btn btn-info" id="new-appointment-btn">
                                         <i class="fa fa-plus" style="margin-right: 2% !important;"></i> New Appointment
                                     </button>
                                 </div>
@@ -279,6 +279,12 @@ $(document).ready(function() {
     
     // Initialize AJAX search for leads and clients
     init_combined_ajax_search('#contact_id.ajax-search');
+    
+    // New appointment button click handler
+    $('#new-appointment-btn').on('click', function() {
+        openAppointmentModal();
+        $('#appointmentModal').modal('show');
+    });
     
     // Check for edit parameter in URL
     var urlParams = new URLSearchParams(window.location.search);
@@ -1318,7 +1324,7 @@ $(document).ready(function() {
         // Wait a bit for the page to fully load, then trigger the modal
         setTimeout(function() {
             // Trigger the "New Appointment" button click to open the modal
-            $('button[onclick*="openAppointmentModal"]').click();
+            $('#new-appointment-btn').click();
         }, 500);
         
         // Clean up the URL parameter without reloading the page
