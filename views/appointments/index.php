@@ -79,6 +79,7 @@ $this->load->view('appointments/modal', $data);
 
 <?php init_tail(); ?>
 
+
 <style>
 /* Custom styling for appointment count badges */
 .table-ella_appointments .label {
