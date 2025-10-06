@@ -13,7 +13,7 @@
                         <div class="_buttons">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <button type="button" class="btn btn-info" onclick="console.log('Button clicked'); openAppointmentModal(); $('#appointmentModal').modal('show');">
+                                    <button type="button" class="btn btn-info" onclick="openAppointmentModal(); $('#appointmentModal').modal('show');">
                                         <i class="fa fa-plus" style="margin-right: 2% !important;"></i> New Appointment
                                     </button>
                                 </div>
@@ -820,7 +820,6 @@ $('#saveAppointment').on('click', function() {
         contentType: false,
         dataType: 'json',
         success: function(response) {
-            console.log('response', response);
             if (response.success) {
                 alert_float('success', response.message);
                 $('#appointmentModal').modal('hide');
@@ -1082,7 +1081,6 @@ $(document).ready(function() {
             contentType: false,
             processData: false,
             success: function(data) {
-                console.log('File upload success:', data);
                 var currentImagesResponse = $('.appointment_imagesresponse').val();
                 
                 if (currentImagesResponse) {
@@ -1094,7 +1092,6 @@ $(document).ready(function() {
                 $('.appointment_imagesresponse').val(currentImagesResponse);
             },
             error: function(data) {
-                console.log('File upload error:', data);
                 showMessage('Error uploading file. Please try again.', $('.drop-zone')[0]);
             }
         });
@@ -1314,7 +1311,21 @@ $(document).on('click', function(e) {
 // APPOINTMENT STATUS DROPDOWN FUNCTIONALITY END
 // ========================================
 
-console.log('this is our test page');
+$(document).ready(function() {
+    // Check if auto_open parameter is present in URL
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('auto_open') === '1') {
+        // Wait a bit for the page to fully load, then trigger the modal
+        setTimeout(function() {
+            // Trigger the "New Appointment" button click to open the modal
+            $('button[onclick*="openAppointmentModal"]').click();
+        }, 500);
+        
+        // Clean up the URL parameter without reloading the page
+        var newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+    }
+});
 </script>
 
 <!-- Include global appointment.js for lead modal functionality -->
