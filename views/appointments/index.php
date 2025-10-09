@@ -268,6 +268,8 @@ function init_combined_ajax_search(selector) {
 }
 
 $(document).ready(function() {
+
+console.log('test new server');
     // Initialize DataTable for appointments
     initDataTable('.table-ella_appointments', admin_url + 'ella_contractors/appointments/table', undefined, undefined, {}, [2, 'desc']);
     
