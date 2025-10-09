@@ -15,6 +15,17 @@ $lang['appointment_activity_deleted'] = 'Appointment deleted';
 $lang['appointment_details'] = 'Appointment Details';
 $lang['email_client'] = 'Email Client';
 $lang['send_reminder'] = 'Send Reminder';
+$lang['appointment_send_reminder_followup'] = 'Send Reminder & Followup to Customer';
+$lang['appointment_attachments'] = 'Attachments';
+
+// Basic status strings
+$lang['scheduled'] = 'Scheduled';
+$lang['cancelled'] = 'Cancelled';
+$lang['complete'] = 'Complete';
+
+// Basic action strings
+$lang['edit'] = 'Edit';
+$lang['delete'] = 'Delete';
 
 // Timeline specific
 $lang['timeline_tab_title'] = 'Timeline';
