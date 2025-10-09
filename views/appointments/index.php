@@ -1324,7 +1324,7 @@ $(document).ready(function() {
         // Wait a bit for the page to fully load, then trigger the modal
         setTimeout(function() {
             // Trigger the "New Appointment" button click to open the modal
-            $('#new-appointment-btnn').click();
+            $('#new-appointment').click();
         }, 500);
         
         // Clean up the URL parameter without reloading the page
