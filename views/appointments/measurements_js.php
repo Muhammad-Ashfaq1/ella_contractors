@@ -5,6 +5,9 @@
 var estimateRowCounter = 0;
 var estimateRowCounterRoofing = 0;
 
+// Flag to track if measurement was successfully saved
+var measurementSaved = false;
+
 function addEstimateRow(category = 'siding') {
     var containerId = category === 'roofing' ? '#estimate-rows-container-roofing' : '#estimate-rows-container';
     var prefix = category === 'roofing' ? 'roofing_' : '';
@@ -83,6 +86,11 @@ function removeEstimateRow(button) {
 
 // Measurements Functions
 function loadMeasurements() {
+    console.log('Loading measurements for appointment:', appointmentId);
+    
+    // Show loading indicator
+    $('#measurements-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading measurements...</p></div>');
+    
     $.ajax({
         url: admin_url + 'ella_contractors/measurements/get_appointment_measurements/' + appointmentId,
         type: 'GET',
@@ -91,14 +99,17 @@ function loadMeasurements() {
         },
         dataType: 'json',
         success: function(response) {
-            if (response.success) {
+            console.log('Measurements response:', response);
+            if (response && response.success) {
                 displayMeasurements(response.data);
             } else {
+                console.log('No measurements found or response failed');
                 $('#measurements-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No measurements found for this appointment.</p></div>');
             }
         },
-        error: function() {
-            $('#measurements-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading measurements.</p></div>');
+        error: function(xhr, status, error) {
+            console.error('Error loading measurements:', error, xhr.responseText);
+            $('#measurements-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading measurements. Please try again.</p></div>');
         }
     });
 }
@@ -162,6 +173,9 @@ function displayMeasurements(measurements) {
 }
 
 function openMeasurementModal(measurementId = null) {
+    // Reset the saved flag when opening modal
+    measurementSaved = false;
+    
     // Store appointment ID before resetting form
     var appointmentId = $('input[name="appointment_id"]').val();
     var relId = $('input[name="rel_id"]').val();
@@ -294,11 +308,22 @@ function openMeasurementModal(measurementId = null) {
     $('#measurementModal').modal('show');
 }
 
-// Add event listeners for modal close events
+// Smart modal close handler - only reload if measurement was actually saved
 $(document).ready(function() {
-    // Reload measurements when modal is closed (any way)
     $('#measurementModal').on('hidden.bs.modal', function() {
-        loadMeasurements();
+        console.log('Modal closed. Measurement saved:', measurementSaved);
+        if (measurementSaved) {
+            // Only reload if measurement was actually saved
+            console.log('Measurement was saved, reloading...');
+            if (typeof refreshAppointmentData === 'function') {
+                refreshAppointmentData();
+            } else {
+                loadMeasurements();
+            }
+            measurementSaved = false; // Reset flag
+        } else {
+            console.log('Modal was cancelled/closed without saving, not reloading');
+        }
     });
 });
 
@@ -903,9 +928,15 @@ $('#saveMeasurement').on('click', function() {
             console.log('Save measurement response:', response);
             
             if (response.success) {
+                measurementSaved = true; // Set flag to indicate successful save
                 alert_float('success', 'Measurement saved successfully!');
                 $('#measurementModal').modal('hide');
-                // Measurements will be reloaded automatically by the modal close event
+                // Use global refresh function to maintain current tab
+                if (typeof refreshAppointmentData === 'function') {
+                    refreshAppointmentData();
+                } else {
+                    loadMeasurements();
+                }
             } else {
                 alert_float('danger', 'Error saving measurement: ' + (response.message || 'Unknown error'));
             }
@@ -1015,7 +1046,7 @@ $(document).on('click', '#js-save-windows, #js-save-doors', function() {
                 
                 // Also refresh the main measurements list
                 if (typeof refreshAppointmentData === 'function') {
-                    refreshAppointmentData('measurements-tab');
+                    refreshAppointmentData(); // Don't force tab switch, maintain current tab
                 } else {
                     loadMeasurements(); // Fallback to old method
                 }

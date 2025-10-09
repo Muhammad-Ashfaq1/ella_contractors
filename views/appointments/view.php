@@ -627,37 +627,78 @@ var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
 var appointmentId = <?php echo $appointment->id; ?>;
 
 $(document).ready(function() {
-    // Load measurements when page loads
+    // Load default tab data when page loads (measurements is default)
     loadMeasurements();
     
-    // Load estimates when page loads
-    loadEstimates();
+    // Enhanced tab management system
+    var currentActiveTab = 'measurements'; // Default tab
     
-    // Load notes when page loads
-    loadNotes();
+    // Function to switch tabs and update URL
+    function switchToTab(tabName, updateUrl = true) {
+        var tabSelector = 'a[href="#' + tabName + '-tab"]';
+        $(tabSelector).tab('show');
+        currentActiveTab = tabName;
+        
+        if (updateUrl) {
+            // Update URL without page reload
+            var url = new URL(window.location);
+            url.searchParams.set('tab', tabName);
+            window.history.replaceState({}, '', url);
+        }
+    }
     
     // Check for tab parameter in URL and switch to appropriate tab
     var urlParams = new URLSearchParams(window.location.search);
     var tabParam = urlParams.get('tab');
     if (tabParam) {
+        currentActiveTab = tabParam;
         // Small delay to ensure data is loaded before switching tabs
         setTimeout(function() {
-            if (tabParam === 'measurements') {
-                $('a[href="#measurements-tab"]').tab('show');
-            } else if (tabParam === 'estimates') {
-                $('a[href="#estimates-tab"]').tab('show');
+            switchToTab(tabParam, false); // Don't update URL since we're setting it from URL
+            // Ensure data is loaded for the specific tab after switching
+            switch(tabParam) {
+                case 'measurements':
+                    loadMeasurements();
+                    break;
+                case 'estimates':
+                    loadEstimates();
+                    break;
+                case 'notes':
+                    loadNotes();
+                    break;
+                case 'timeline':
+                    loadTimeline();
+                    break;
             }
         }, 500);
     }
     
-    // Reload measurements when measurement modal is closed
-    $('#measurementModal').on('hidden.bs.modal', function() {
-        // Small delay to ensure any pending operations complete
-        setTimeout(function() {
-            loadMeasurements();
-            // Switch to measurements tab to show updated data
-            $('a[href="#measurements-tab"]').tab('show');
-        }, 100);
+    // Track tab changes and update URL
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        var target = $(e.target).attr('href');
+        var tabName = target.replace('#', '').replace('-tab', '');
+        currentActiveTab = tabName;
+        
+        // Update URL without page reload
+        var url = new URL(window.location);
+        url.searchParams.set('tab', tabName);
+        window.history.replaceState({}, '', url);
+        
+        // Load data for the specific tab when it becomes active
+        switch(tabName) {
+            case 'measurements':
+                loadMeasurements();
+                break;
+            case 'estimates':
+                loadEstimates();
+                break;
+            case 'notes':
+                loadNotes();
+                break;
+            case 'timeline':
+                loadTimeline();
+                break;
+        }
     });
     
     // Reload estimates when estimate modal is closed
@@ -737,6 +778,11 @@ function editAppointment(appointmentId) {
 
 // Estimates Functions
 function loadEstimates() {
+    console.log('Loading estimates for appointment:', appointmentId);
+    
+    // Show loading indicator
+    $('#estimates-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading estimates...</p></div>');
+    
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/get_estimates/' + appointmentId,
         type: 'GET',
@@ -745,20 +791,28 @@ function loadEstimates() {
         },
         dataType: 'json',
         success: function(response) {
-            if (response.success) {
+            console.log('Estimates response:', response);
+            if (response && response.success) {
                 displayEstimates(response.data);
             } else {
+                console.log('No estimates found or response failed');
                 $('#estimates-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No estimates found for this appointment.</p></div>');
             }
         },
-        error: function() {
-            $('#estimates-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading estimates.</p></div>');
+        error: function(xhr, status, error) {
+            console.error('Error loading estimates:', error, xhr.responseText);
+            $('#estimates-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading estimates. Please try again.</p></div>');
         }
     });
 }
 
 // Notes Functions
 function loadNotes() {
+    console.log('Loading notes for appointment:', appointmentId);
+    
+    // Show loading indicator
+    $('#appointment-notes-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading notes...</p></div>');
+    
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/get_notes/' + appointmentId,
         type: 'GET',
@@ -767,20 +821,28 @@ function loadNotes() {
         },
         dataType: 'json',
         success: function(response) {
-            if (response.success) {
+            console.log('Notes response:', response);
+            if (response && response.success) {
                 displayNotes(response.data);
             } else {
+                console.log('No notes found or response failed');
                 $('#appointment-notes-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No notes found for this appointment.</p></div>');
             }
         },
-        error: function() {
-            $('#appointment-notes-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading notes.</p></div>');
+        error: function(xhr, status, error) {
+            console.error('Error loading notes:', error, xhr.responseText);
+            $('#appointment-notes-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading notes. Please try again.</p></div>');
         }
     });
 }
 
 // Timeline Functions
 function loadTimeline() {
+    console.log('Loading timeline for appointment:', appointmentId);
+    
+    // Show loading indicator
+    $('#timeline-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading timeline...</p></div>');
+    
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/get_timeline/' + appointmentId,
         type: 'GET',
@@ -789,10 +851,12 @@ function loadTimeline() {
         },
         dataType: 'html',
         success: function(response) {
+            console.log('Timeline loaded successfully, response length:', response.length);
             $('#timeline-container').html(response);
         },
-        error: function() {
-            $('#timeline-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading timeline.</p></div>');
+        error: function(xhr, status, error) {
+            console.error('Error loading timeline:', error, xhr.responseText);
+            $('#timeline-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading timeline. Please try again.</p></div>');
         }
     });
 }
@@ -1065,15 +1129,43 @@ function deleteEstimate(estimateId) {
     }
 }
 
-// Global function to refresh all data and switch to appropriate tab
+// Global function to refresh all data and maintain current tab
 function refreshAppointmentData(activeTab = null) {
-    // Reload both measurements and estimates
-    loadMeasurements();
-    loadEstimates();
-    
     // Switch to specified tab or stay on current tab
     if (activeTab) {
-        $('a[href="#' + activeTab + '"]').tab('show');
+        switchToTab(activeTab);
+        // Load data for the specified tab
+        switch(activeTab) {
+            case 'measurements':
+                loadMeasurements();
+                break;
+            case 'estimates':
+                loadEstimates();
+                break;
+            case 'notes':
+                loadNotes();
+                break;
+            case 'timeline':
+                loadTimeline();
+                break;
+        }
+    } else {
+        // Maintain current tab - just reload data without switching
+        var currentTab = currentActiveTab || 'measurements';
+        switch(currentTab) {
+            case 'measurements':
+                loadMeasurements();
+                break;
+            case 'estimates':
+                loadEstimates();
+                break;
+            case 'notes':
+                loadNotes();
+                break;
+            case 'timeline':
+                loadTimeline();
+                break;
+        }
     }
 }
 
