@@ -7,6 +7,27 @@ var estimateRowCounterRoofing = 0;
 
 // Flag to track if measurement was successfully saved
 var measurementSaved = false;
+var modalJustClosed = false;
+var modalIsOpening = false;
+var lastMeasurementsContent = '';
+var forceReload = false;
+
+// Monitor measurements container changes
+function monitorMeasurementsContainer() {
+    var container = $('#measurements-container');
+    var lastContent = container.html();
+    
+    setInterval(function() {
+        var currentContent = container.html();
+        if (currentContent !== lastContent) {
+            console.log('🚨 MEASUREMENTS CONTAINER CHANGED!');
+            console.log('Previous length:', lastContent.length);
+            console.log('New length:', currentContent.length);
+            console.log('Call stack:', new Error().stack);
+            lastContent = currentContent;
+        }
+    }, 100);
+}
 
 function addEstimateRow(category = 'siding') {
     var containerId = category === 'roofing' ? '#estimate-rows-container-roofing' : '#estimate-rows-container';
@@ -86,9 +107,28 @@ function removeEstimateRow(button) {
 
 // Measurements Functions
 function loadMeasurements() {
-    console.log('Loading measurements for appointment:', appointmentId);
+    console.log('=== LOAD MEASUREMENTS CALLED ===');
+    console.log('Appointment ID:', appointmentId);
+    console.log('Modal just closed:', modalJustClosed);
+    console.log('Modal is opening:', modalIsOpening);
+    console.log('Measurement saved:', measurementSaved);
+    console.log('Force reload:', forceReload);
+    console.log('Current measurements container content length:', $('#measurements-container').html().length);
+    
+    // Reset flags
+    if (forceReload) {
+        console.log('🚀 Force reload requested, proceeding with normal load');
+        forceReload = false;
+    }
+    if (modalIsOpening) {
+        console.log('✅ Modal is opening, resetting flag');
+        modalIsOpening = false;
+    }
+    
+    console.log('✅ Loading measurements for appointment:', appointmentId);
     
     // Show loading indicator
+    console.log('🔄 Setting loading indicator in measurements container');
     $('#measurements-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading measurements...</p></div>');
     
     $.ajax({
@@ -104,7 +144,10 @@ function loadMeasurements() {
                 displayMeasurements(response.data);
             } else {
                 console.log('No measurements found or response failed');
-                $('#measurements-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No measurements found for this appointment.</p></div>');
+                var emptyHtml = '<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No measurements found for this appointment.</p></div>';
+                $('#measurements-container').html(emptyHtml);
+                // Store empty state as well
+                lastMeasurementsContent = emptyHtml;
             }
         },
         error: function(xhr, status, error) {
@@ -115,7 +158,12 @@ function loadMeasurements() {
 }
 
 function displayMeasurements(measurements) {
+    console.log('=== DISPLAY MEASUREMENTS CALLED ===');
+    console.log('Measurements count:', measurements.length);
+    console.log('Call stack:', new Error().stack);
+    
     if (measurements.length === 0) {
+        console.log('📝 No measurements found, showing empty state');
         $('#measurements-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No measurements found for this appointment.</p></div>');
         return;
     }
@@ -169,12 +217,29 @@ function displayMeasurements(measurements) {
     });
 
     html += '</tbody></table></div>';
+    console.log('📝 Displaying measurements HTML, length:', html.length);
+    
+    // Store the content before displaying it
+    lastMeasurementsContent = html;
+    console.log('💾 Stored measurements content for potential restoration');
+    
     $('#measurements-container').html(html);
+    console.log('✅ Measurements container updated with data');
 }
 
 function openMeasurementModal(measurementId = null) {
-    // Reset the saved flag when opening modal
+    console.log('=== OPENING MEASUREMENT MODAL ===');
+    console.log('Measurement ID:', measurementId);
+    
+    // Set flag to indicate modal is opening
+    modalIsOpening = true;
+    
+    // Reset the flags when opening modal
     measurementSaved = false;
+    modalJustClosed = false;
+    console.log('Reset measurementSaved flag to:', measurementSaved);
+    console.log('Reset modalJustClosed flag to:', modalJustClosed);
+    console.log('Set modalIsOpening flag to:', modalIsOpening);
     
     // Store appointment ID before resetting form
     var appointmentId = $('input[name="appointment_id"]').val();
@@ -306,24 +371,113 @@ function openMeasurementModal(measurementId = null) {
     }
     
     $('#measurementModal').modal('show');
+    
+    // Reset modal opening flag after a short delay in case modal doesn't open
+    setTimeout(function() {
+        if (modalIsOpening) {
+            console.log('⚠️ Modal opening flag still true after timeout, resetting');
+            modalIsOpening = false;
+        }
+    }, 2000);
 }
 
 // Smart modal close handler - only reload if measurement was actually saved
 $(document).ready(function() {
+    // Start monitoring measurements container changes
+    monitorMeasurementsContainer();
+    
+    // Remove any existing handlers to prevent duplicates
+    $('#measurementModal').off('hidden.bs.modal').off('show.bs.modal');
+    
+    // Handle modal show event - capture current state
+    $('#measurementModal').on('show.bs.modal', function() {
+        console.log('=== MEASUREMENT MODAL SHOWING ===');
+        
+        // Store current measurements content before opening modal
+        var currentContent = $('#measurements-container').html();
+        if (currentContent && currentContent.length > 0 && 
+            !currentContent.includes('Loading measurements') &&
+            !currentContent.includes('fa-spinner')) {
+            lastMeasurementsContent = currentContent;
+            console.log('💾 Stored current measurements content (length:', currentContent.length, ')');
+        }
+        
+        // Ensure measurements tab is visible
+        if (!$('#measurements-tab').hasClass('active')) {
+            console.log('⚠️ Measurements tab not active, activating it');
+            $('a[href="#measurements-tab"]').tab('show');
+        }
+    });
+    
     $('#measurementModal').on('hidden.bs.modal', function() {
-        console.log('Modal closed. Measurement saved:', measurementSaved);
+        console.log('=== MEASUREMENT MODAL CLOSED ===');
+        console.log('Measurement saved flag:', measurementSaved);
+        console.log('Modal is opening flag:', modalIsOpening);
+        console.log('Current active tab:', typeof currentActiveTab !== 'undefined' ? currentActiveTab : 'undefined');
+        
+        // Reset modal opening flag
+        modalIsOpening = false;
+        
+        // Set flag to indicate modal just closed
+        modalJustClosed = true;
+        
         if (measurementSaved) {
             // Only reload if measurement was actually saved
-            console.log('Measurement was saved, reloading...');
-            if (typeof refreshAppointmentData === 'function') {
-                refreshAppointmentData();
-            } else {
-                loadMeasurements();
-            }
+            console.log('✅ Measurement was saved, reloading...');
+            
+            // Ensure measurements tab is shown
+            setTimeout(function() {
+                // Force show measurements tab
+                $('a[href="#measurements-tab"]').tab('show');
+                
+                // Reload measurements data
+                if (typeof refreshAppointmentData === 'function') {
+                    console.log('Using refreshAppointmentData()');
+                    refreshAppointmentData('measurements');
+                } else {
+                    console.log('Using loadMeasurements()');
+                    forceReload = true;
+                    loadMeasurements();
+                }
+            }, 150);
+            
             measurementSaved = false; // Reset flag
         } else {
-            console.log('Modal was cancelled/closed without saving, not reloading');
+            console.log('❌ Modal was cancelled/closed without saving');
+            console.log('🔄 Ensuring measurements tab is visible and data is restored');
+            
+            // Force show measurements tab and restore data
+            setTimeout(function() {
+                console.log('🔄 Activating measurements tab after modal cancel');
+                
+                // Ensure the measurements tab is active and visible
+                $('ul.nav-tabs li').removeClass('active');
+                $('ul.nav-tabs li:first').addClass('active');
+                $('.tab-pane').removeClass('active');
+                $('#measurements-tab').addClass('active').show();
+                
+                // Make sure container is visible
+                $('#measurements-container').show();
+                
+                // Restore previous content if available, otherwise reload
+                if (lastMeasurementsContent && lastMeasurementsContent.length > 0 && 
+                    !lastMeasurementsContent.includes('Loading measurements')) {
+                    console.log('✅ Restoring previous measurements content');
+                    $('#measurements-container').html(lastMeasurementsContent);
+                } else {
+                    console.log('🔄 No valid content to restore, reloading measurements');
+                    forceReload = true;
+                    loadMeasurements();
+                }
+            }, 150);
         }
+        
+        // Reset modal flag after a short delay
+        setTimeout(function() {
+            modalJustClosed = false;
+        }, 1000);
+        
+        console.log('=== END MODAL CLOSE ===');
     });
 });
 
@@ -928,13 +1082,18 @@ $('#saveMeasurement').on('click', function() {
             console.log('Save measurement response:', response);
             
             if (response.success) {
+                console.log('=== MEASUREMENT SAVE SUCCESS ===');
+                console.log('Setting measurementSaved flag to true');
                 measurementSaved = true; // Set flag to indicate successful save
+                console.log('measurementSaved flag is now:', measurementSaved);
                 alert_float('success', 'Measurement saved successfully!');
                 $('#measurementModal').modal('hide');
                 // Use global refresh function to maintain current tab
                 if (typeof refreshAppointmentData === 'function') {
+                    console.log('Using refreshAppointmentData() for save success');
                     refreshAppointmentData();
                 } else {
+                    console.log('Using loadMeasurements() for save success');
                     loadMeasurements();
                 }
             } else {

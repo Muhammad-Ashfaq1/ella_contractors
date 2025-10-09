@@ -621,12 +621,15 @@ $this->load->view('appointments/estimate_modal', $data);
 <?php $this->load->view('appointments/measurements_js'); ?>
 
 <script>
-    console.log('latest code');
 var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
 var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
 var appointmentId = <?php echo $appointment->id; ?>;
 
 $(document).ready(function() {
+    // Ensure measurements tab is visible on page load
+    $('#measurements-tab').show();
+    $('#measurements-container').show();
+    
     // Load default tab data when page loads (measurements is default)
     loadMeasurements();
     
@@ -687,7 +690,7 @@ $(document).ready(function() {
         // Load data for the specific tab when it becomes active
         switch(tabName) {
             case 'measurements':
-                loadMeasurements();
+            loadMeasurements();
                 break;
             case 'estimates':
                 loadEstimates();
@@ -778,7 +781,6 @@ function editAppointment(appointmentId) {
 
 // Estimates Functions
 function loadEstimates() {
-    console.log('Loading estimates for appointment:', appointmentId);
     
     // Show loading indicator
     $('#estimates-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading estimates...</p></div>');
@@ -791,11 +793,9 @@ function loadEstimates() {
         },
         dataType: 'json',
         success: function(response) {
-            console.log('Estimates response:', response);
             if (response && response.success) {
                 displayEstimates(response.data);
             } else {
-                console.log('No estimates found or response failed');
                 $('#estimates-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No estimates found for this appointment.</p></div>');
             }
         },
@@ -808,8 +808,6 @@ function loadEstimates() {
 
 // Notes Functions
 function loadNotes() {
-    console.log('Loading notes for appointment:', appointmentId);
-    
     // Show loading indicator
     $('#appointment-notes-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading notes...</p></div>');
     
@@ -821,11 +819,9 @@ function loadNotes() {
         },
         dataType: 'json',
         success: function(response) {
-            console.log('Notes response:', response);
             if (response && response.success) {
                 displayNotes(response.data);
             } else {
-                console.log('No notes found or response failed');
                 $('#appointment-notes-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No notes found for this appointment.</p></div>');
             }
         },
@@ -838,8 +834,6 @@ function loadNotes() {
 
 // Timeline Functions
 function loadTimeline() {
-    console.log('Loading timeline for appointment:', appointmentId);
-    
     // Show loading indicator
     $('#timeline-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading timeline...</p></div>');
     
@@ -851,7 +845,6 @@ function loadTimeline() {
         },
         dataType: 'html',
         success: function(response) {
-            console.log('Timeline loaded successfully, response length:', response.length);
             $('#timeline-container').html(response);
         },
         error: function(xhr, status, error) {
@@ -1137,7 +1130,7 @@ function refreshAppointmentData(activeTab = null) {
         // Load data for the specified tab
         switch(activeTab) {
             case 'measurements':
-                loadMeasurements();
+        loadMeasurements();
                 break;
             case 'estimates':
                 loadEstimates();
@@ -1149,7 +1142,7 @@ function refreshAppointmentData(activeTab = null) {
                 loadTimeline();
                 break;
         }
-    } else {
+                } else {
         // Maintain current tab - just reload data without switching
         var currentTab = currentActiveTab || 'measurements';
         switch(currentTab) {
