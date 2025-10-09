@@ -27,7 +27,9 @@ $lang['timeline_format_icon_name_action'] = '%s %s - %s';
 
 // Activity action labels for timeline
 $lang['timeline_action_created'] = 'CREATED';
+$lang['timeline_action_appointment_created'] = 'APPOINTMENT CREATED';
 $lang['timeline_action_updated'] = 'UPDATED';
+$lang['timeline_action_appointment_updated'] = 'APPOINTMENT UPDATED';
 $lang['timeline_action_status_changed'] = 'STATUS CHANGED';
 $lang['timeline_action_measurement_added'] = 'MEASUREMENT ADDED';
 $lang['timeline_action_measurement_removed'] = 'MEASUREMENT REMOVED';
@@ -35,6 +37,7 @@ $lang['timeline_action_note_added'] = 'NOTE ADDED';
 $lang['timeline_action_process_completed'] = 'PROCESS COMPLETED';
 $lang['timeline_action_process_failed'] = 'PROCESS FAILED';
 $lang['timeline_action_deleted'] = 'DELETED';
+$lang['timeline_action_appointment_deleted'] = 'APPOINTMENT DELETED';
 
 // Legacy activity descriptions (kept for backward compatibility)
 $lang['appointment_created_with_details'] = 'Appointment "%s" was created for %s at %s';

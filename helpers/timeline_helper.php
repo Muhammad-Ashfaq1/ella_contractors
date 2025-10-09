@@ -21,8 +21,8 @@ if (!function_exists('get_timeline_action_label')) {
         $CI->lang->load('ella_contractors/ella_contractors', 'english');
         
         $action_map = [
-            'appointment_created' => _l('timeline_action_created'),
-            'appointment_updated' => _l('timeline_action_updated'),
+            'appointment_created' => _l('timeline_action_appointment_created'),
+            'appointment_updated' => _l('timeline_action_appointment_updated'),
             'appointment_status_changed' => _l('timeline_action_status_changed'),
             'measurement_created' => _l('timeline_action_measurement_added'),
             'measurement_updated' => _l('timeline_action_measurement_added'),
@@ -31,7 +31,7 @@ if (!function_exists('get_timeline_action_label')) {
             'note_updated' => _l('timeline_action_note_added'),
             'process_completed' => _l('timeline_action_process_completed'),
             'process_failed' => _l('timeline_action_process_failed'),
-            'appointment_deleted' => _l('timeline_action_deleted')
+            'appointment_deleted' => _l('timeline_action_appointment_deleted')
         ];
         
         // Return mapped action or fallback to formatted description key
