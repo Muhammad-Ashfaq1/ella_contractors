@@ -6,13 +6,16 @@
         <div id="timeline-activities-container">
             <?php if (!empty($timeline_activities)): ?>
                 <?php foreach ($timeline_activities as $activity): ?>
-                    <div class="timeline-feed-item">
-                        <div class="date">
-                            <span class="text-has-action" data-toggle="tooltip" data-title="<?php echo $activity['date']; ?>" data-original-title="" title="">
-                                <?php echo time_ago($activity['date']); ?>
-                            </span>
+                    <div class="timeline-record-wrapper">
+                        <div class="timeline-date-section">
+                            <div class="date">
+                                <span class="text-has-action" data-toggle="tooltip" data-title="<?php echo $activity['date']; ?>" data-original-title="" title="">
+                                    <?php echo time_ago($activity['date']); ?>
+                                </span>
+                            </div>
                         </div>
-                        <div class="text">
+                        <div class="timeline-content-section">
+                            <div class="text">
                             <?php if ($activity['staff_id'] > 0): ?>
                                 <a href="<?php echo admin_url('admin/profile/' . $activity['staff_id']); ?>">
                                     <?php echo staff_profile_image($activity['staff_id'], ['staff-profile-xs-image', 'pull-left', 'mright5']); ?>
@@ -69,6 +72,7 @@
                                 echo $activity['description'];
                             }
                             ?>
+                            </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
