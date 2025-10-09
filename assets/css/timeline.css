@@ -17,7 +17,7 @@
 
 .timeline-content-section {
     margin-top: 10px;
-    padding-left: 40px;
+    padding-left: 10px; /* Reduced from 40px to bring content closer */
 }
 
 /* Timeline container - matches panel_s styling */
