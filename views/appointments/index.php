@@ -13,7 +13,7 @@
                         <div class="_buttons">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <button type="button" class="btn btn-info" id="new-appointment-btn">
+                                    <button type="button" class="btn btn-info" id="new-appointment">
                                         <i class="fa fa-plus" style="margin-right: 2% !important;"></i> New Appointment
                                     </button>
                                 </div>
@@ -268,8 +268,6 @@ function init_combined_ajax_search(selector) {
 }
 
 $(document).ready(function() {
-
-console.log('test new server');
     // Initialize DataTable for appointments
     initDataTable('.table-ella_appointments', admin_url + 'ella_contractors/appointments/table', undefined, undefined, {}, [2, 'desc']);
     
@@ -283,8 +281,8 @@ console.log('test new server');
     init_combined_ajax_search('#contact_id.ajax-search');
     
     // New appointment button click handler
-    $('#new-appointment-btn').on('click', function() {
-        openAppointmentModal();
+    $('#new-appointment').on('click', function() {
+        openNewAppointmentModal();
         $('#appointmentModal').modal('show');
     });
     
@@ -293,7 +291,7 @@ console.log('test new server');
     var editId = urlParams.get('edit');
     if (editId) {
         // Open modal for editing
-        openAppointmentModal(editId);
+        openNewAppointmentModal(editId);
         // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -389,7 +387,7 @@ console.log('test new server');
 });
 
 // Global functions for modal operations
-function openAppointmentModal(appointmentId = null) {
+function openNewAppointmentModal(appointmentId = null) {
     if ($('#appointmentForm').length === 0) {
         return;
     }
@@ -1326,7 +1324,7 @@ $(document).ready(function() {
         // Wait a bit for the page to fully load, then trigger the modal
         setTimeout(function() {
             // Trigger the "New Appointment" button click to open the modal
-            $('#new-appointment-btn').click();
+            $('#new-appointment-btnn').click();
         }, 500);
         
         // Clean up the URL parameter without reloading the page
