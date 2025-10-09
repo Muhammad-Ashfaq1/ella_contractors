@@ -80,6 +80,18 @@
     color: #495057;
 }
 
+/* New timeline formatted entry styling */
+.timeline-formatted-entry {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.timeline-formatted-entry strong {
+    color: #495057;
+    font-weight: 600;
+    margin-right: 8px;
+}
+
 /* Timeline activity type indicator with improved spacing */
 .timeline-activity-type {
     display: inline-block;
@@ -88,7 +100,7 @@
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
-    margin-right: 12px; /* Increased spacing after activity type */
+    margin-left: 8px; /* Spacing before activity type */
     margin-bottom: 4px; /* Small spacing below activity type */
 }
 

@@ -16,39 +16,62 @@
                         </div>
                         <div class="timeline-content-section">
                             <div class="text">
-                            <?php if ($activity['staff_id'] > 0): ?>
-                                <a href="<?php echo admin_url('admin/profile/' . $activity['staff_id']); ?>">
-                                    <?php echo staff_profile_image($activity['staff_id'], ['staff-profile-xs-image', 'pull-left', 'mright5']); ?>
-                                </a>
-                            <?php else: ?>
-                                <img class="staff-profile-xs-image pull-left mright5" src="<?php echo admin_url('assets/images/user-placeholder.jpg'); ?>" alt="<?php echo $activity['full_name']; ?>">
-                            <?php endif; ?>
-                            
-                            <span class="timeline-activity-type <?php echo $activity['description_key']; ?>">
-                                <?php 
-                                // Convert description_key to proper display format
-                                $activity_parts = explode('_', $activity['description_key']);
-                                if (count($activity_parts) >= 2) {
-                                    $entity = ucfirst($activity_parts[0]);
-                                    $action = ucfirst($activity_parts[1]);
-                                    echo "{$entity} {$action}";
+                                <?php
+                                // Format: ICON Fname Linitial - ACTIONITEM
+                                $staff_icon = '';
+                                $formatted_name = '';
+                                $action_item = '';
+                                
+                                // Get staff icon
+                                if ($activity['staff_id'] > 0) {
+                                    $staff_icon = staff_profile_image($activity['staff_id'], ['staff-profile-xs-image', 'pull-left', 'mright5']);
                                 } else {
-                                    echo ucfirst(str_replace('_', ' ', $activity['description_key']));
+                                    $staff_icon = '<img class="staff-profile-xs-image pull-left mright5" src="' . admin_url('assets/images/user-placeholder.jpg') . '" alt="' . htmlspecialchars($activity['full_name']) . '">';
                                 }
-                                ?>
-                            </span>
-                            
-                            <b><?php echo $activity['full_name']; ?></b> - 
-                            
-                            <?php 
-                            // Handle additional data display
-                            if (!empty($activity['additional_data'])) {
-                                $additional_data = @unserialize($activity['additional_data']);
-                                if ($additional_data !== false && is_array($additional_data)) {
-                                    echo $activity['description'];
-                                    
-                                    // Show detailed changes if available
-                                    if (isset($additional_data['changes']) && !empty($additional_data['changes'])) {
+                                
+                                // Format name: First Name + Last Initial
+                                $name_parts = explode(' ', trim($activity['full_name']));
+                                if (count($name_parts) >= 2) {
+                                    $first_name = $name_parts[0];
+                                    $last_initial = substr($name_parts[count($name_parts) - 1], 0, 1) . '.';
+                                    $formatted_name = $first_name . ' ' . $last_initial;
+                                } else {
+                                    $formatted_name = $activity['full_name'];
+                                }
+                                
+                                // Get action item based on description_key (with fallback for existing records)
+                                $action_item = get_timeline_action_label($activity['description_key']);
+                                
+                                // Fallback for existing records that might not have proper description_key
+                                if (empty($action_item) || $action_item === $activity['description_key']) {
+                                    // Try to extract action from description if description_key is not available
+                                    $description = $activity['description'] ?? '';
+                                    if (strpos($description, 'created') !== false) {
+                                        $action_item = _l('timeline_action_created');
+                                    } elseif (strpos($description, 'updated') !== false) {
+                                        $action_item = _l('timeline_action_updated');
+                                    } elseif (strpos($description, 'added') !== false) {
+                                        $action_item = _l('timeline_action_measurement_added');
+                                    } elseif (strpos($description, 'removed') !== false || strpos($description, 'deleted') !== false) {
+                                        $action_item = _l('timeline_action_measurement_removed');
+                                    } else {
+                                        // Last resort: use first word from description as action
+                                        $words = explode(' ', trim($description));
+                                        $action_item = !empty($words[0]) ? strtoupper($words[0]) : 'ACTION';
+                                    }
+                                }
+                                
+                                // Display in new format: ICON Fname Linitial - ACTIONITEM
+                                echo $staff_icon;
+                                echo '<span class="timeline-formatted-entry">';
+                                echo '<strong>' . htmlspecialchars($formatted_name) . '</strong> - ';
+                                echo '<span class="timeline-activity-type ' . $activity['description_key'] . '">' . $action_item . '</span>';
+                                echo '</span>';
+                                
+                                // Show detailed changes if available (keep existing functionality)
+                                if (!empty($activity['additional_data'])) {
+                                    $additional_data = @unserialize($activity['additional_data']);
+                                    if ($additional_data !== false && is_array($additional_data) && isset($additional_data['changes']) && !empty($additional_data['changes'])) {
                                         echo '<div class="timeline-activity-details">';
                                         echo '<h6>Changes:</h6>';
                                         echo '<ul>';
@@ -65,13 +88,8 @@
                                         echo '</ul>';
                                         echo '</div>';
                                     }
-                                } else {
-                                    echo $activity['description'];
                                 }
-                            } else {
-                                echo $activity['description'];
-                            }
-                            ?>
+                                ?>
                             </div>
                         </div>
                     </div>

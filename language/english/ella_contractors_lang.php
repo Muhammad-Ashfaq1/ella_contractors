@@ -22,7 +22,21 @@ $lang['timeline_activity_feed'] = 'Activity Feed';
 $lang['timeline_no_activities'] = 'No activities found for this appointment';
 $lang['timeline_loading'] = 'Loading timeline...';
 
-// Activity descriptions with placeholders
+// New timeline format strings
+$lang['timeline_format_icon_name_action'] = '%s %s - %s';
+
+// Activity action labels for timeline
+$lang['timeline_action_created'] = 'CREATED';
+$lang['timeline_action_updated'] = 'UPDATED';
+$lang['timeline_action_status_changed'] = 'STATUS CHANGED';
+$lang['timeline_action_measurement_added'] = 'MEASUREMENT ADDED';
+$lang['timeline_action_measurement_removed'] = 'MEASUREMENT REMOVED';
+$lang['timeline_action_note_added'] = 'NOTE ADDED';
+$lang['timeline_action_process_completed'] = 'PROCESS COMPLETED';
+$lang['timeline_action_process_failed'] = 'PROCESS FAILED';
+$lang['timeline_action_deleted'] = 'DELETED';
+
+// Legacy activity descriptions (kept for backward compatibility)
 $lang['appointment_created_with_details'] = 'Appointment "%s" was created for %s at %s';
 $lang['appointment_updated_with_details'] = 'Appointment "%s" was updated';
 $lang['appointment_status_changed_from_to'] = 'Status changed from "%s" to "%s"';
