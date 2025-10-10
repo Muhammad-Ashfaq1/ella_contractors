@@ -1306,7 +1306,7 @@ class Appointments extends AdminController
             ajax_access_denied();
         }
 
-        $this->load->model('ella_media_model');
+        $this->load->model('ella_contractors/ella_media_model');
         $attachments = $this->ella_media_model->get_appointment_attachments($appointment_id);
         
         // Add full file paths to each attachment
@@ -1322,6 +1322,90 @@ class Appointments extends AdminController
     }
 
     /**
+     * Upload attachment via Dropzone (AJAX endpoint)
+     * @param int $appointment_id
+     */
+    public function upload_attachment($appointment_id)
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            ajax_access_denied();
+        }
+
+        // Validate appointment exists
+        $appointment = $this->appointments_model->get_appointment($appointment_id);
+        if (!$appointment) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Appointment not found'
+            ]);
+            return;
+        }
+
+        // Load models
+        $this->load->model('ella_contractors/ella_media_model');
+        
+        // Handle multiple file uploads from Dropzone
+        if (isset($_FILES['file']) && !empty($_FILES['file']['name'])) {
+            // Check if it's a single file or multiple files
+            if (!is_array($_FILES['file']['name'])) {
+                // Single file - convert to array format for uniform processing
+                $_FILES['file']['name'] = [$_FILES['file']['name']];
+                $_FILES['file']['type'] = [$_FILES['file']['type']];
+                $_FILES['file']['tmp_name'] = [$_FILES['file']['tmp_name']];
+                $_FILES['file']['error'] = [$_FILES['file']['error']];
+                $_FILES['file']['size'] = [$_FILES['file']['size']];
+            }
+
+            $uploaded_files = [];
+            $errors = [];
+
+            // Process each file
+            for ($i = 0; $i < count($_FILES['file']['name']); $i++) {
+                // Skip if no file or error uploading
+                if (empty($_FILES['file']['tmp_name'][$i]) || $_FILES['file']['error'][$i] !== UPLOAD_ERR_OK) {
+                    continue;
+                }
+
+                $file_data = [
+                    'name' => $_FILES['file']['name'][$i],
+                    'type' => $_FILES['file']['type'][$i],
+                    'tmp_name' => $_FILES['file']['tmp_name'][$i],
+                    'error' => $_FILES['file']['error'][$i],
+                    'size' => $_FILES['file']['size'][$i]
+                ];
+
+                // Use existing handle_appointment_file_upload method
+                $result = $this->handle_appointment_file_upload($file_data, $appointment_id);
+                
+                if ($result['success']) {
+                    $uploaded_files[] = $result;
+                } else {
+                    $errors[] = $result['message'];
+                }
+            }
+
+            // Return response
+            if (count($uploaded_files) > 0) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => count($uploaded_files) . ' file(s) uploaded successfully',
+                    'uploaded' => $uploaded_files
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'No files uploaded. Errors: ' . implode(', ', $errors)
+                ]);
+            }
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'No files received'
+            ]);
+        }
+    }
+
+    /**
      * Delete appointment attachment
      * @param int $attachment_id
      */
@@ -1331,10 +1415,29 @@ class Appointments extends AdminController
             ajax_access_denied();
         }
 
-        $this->load->model('ella_media_model');
+        $this->load->model('ella_contractors/ella_media_model');
+        
+        // Get attachment info before deleting
+        $attachment = $this->ella_media_model->get_file($attachment_id);
+        
+        if (!$attachment || $attachment->rel_type !== 'appointment') {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Attachment not found'
+            ]);
+            return;
+        }
+        
+        // Delete from database
         $success = $this->ella_media_model->delete_appointment_attachment($attachment_id);
         
         if ($success) {
+            // Delete physical file
+            $file_path = FCPATH . 'uploads/ella_appointments/' . $attachment->rel_id . '/' . $attachment->file_name;
+            if (file_exists($file_path)) {
+                @unlink($file_path);
+            }
+            
             echo json_encode([
                 'success' => true,
                 'message' => 'Attachment deleted successfully'
@@ -1357,7 +1460,7 @@ class Appointments extends AdminController
             access_denied('ella_contractors');
         }
 
-        $this->load->model('ella_media_model');
+        $this->load->model('ella_contractors/ella_media_model');
         $attachment = $this->ella_media_model->get_file($attachment_id);
         
         if (!$attachment || $attachment->rel_type !== 'appointment') {
@@ -1384,7 +1487,7 @@ class Appointments extends AdminController
     {
         // Check if files were uploaded
         if (isset($_FILES['appointment_files']) && !empty($_FILES['appointment_files']['name'][0])) {
-            $this->load->model('ella_media_model');
+            $this->load->model('ella_contractors/ella_media_model');
             $files = $_FILES['appointment_files'];
             $file_count = count($files['name']);
 

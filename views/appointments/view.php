@@ -567,6 +567,14 @@ button.delete-btn {
                                     <div class="col-md-12">
                                         <hr class="hr-panel-heading" />
                                         
+                                        <?php if (has_permission('ella_contractors', '', 'edit')) { ?>
+                                        <div class="clearfix mbot15">
+                                            <button type="button" class="btn btn-info pull-right" data-toggle="modal" data-target="#attachmentUploadModal">
+                                                <i class="fa fa-upload"></i> <?php echo _l('upload_files'); ?>
+                                            </button>
+                                        </div>
+                                        <?php } ?>
+                                        
                                         <div id="attachments-container">
                                             <!-- Attachments will be loaded here via AJAX -->
                                             <div class="text-center">
@@ -611,6 +619,9 @@ button.delete-btn {
 $data['appointment'] = $appointment;
 $this->load->view('appointments/estimate_modal', $data);
 ?>
+
+<!-- Include Attachment Upload Modal -->
+<?php $this->load->view('appointments/attachments_upload_modal'); ?>
 
 <?php init_tail(); ?>
 

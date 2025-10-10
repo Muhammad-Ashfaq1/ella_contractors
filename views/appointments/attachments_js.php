@@ -11,6 +11,9 @@ $(document).ready(function() {
     $('a[href="#attachments-tab"]').on('click', function() {
         loadAttachments();
     });
+    
+    // Initialize Dropzone for attachment uploads
+    initializeAttachmentDropzone();
 });
 
 // Global function for loading attachments
@@ -122,6 +125,63 @@ function deleteAttachment(attachmentId) {
                 alert_float('danger', 'Error deleting attachment');
             }
         });
+    }
+}
+
+/**
+ * Initialize Dropzone for attachment uploads
+ * Following the CRM pattern from projects and other modules
+ */
+function initializeAttachmentDropzone() {
+    if ($('#appointment-attachment-upload').length > 0) {
+        new Dropzone('#appointment-attachment-upload', appCreateDropzoneOptions({
+            paramName: "file",
+            uploadMultiple: true,
+            parallelUploads: 10,
+            maxFiles: 20,
+            accept: function(file, done) {
+                // Additional client-side validation if needed
+                var allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp',
+                                    'application/pdf',
+                                    'application/msword',
+                                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                    'application/vnd.ms-excel',
+                                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                    'application/vnd.ms-powerpoint',
+                                    'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
+                
+                if (allowedTypes.indexOf(file.type) === -1) {
+                    done('File type not allowed: ' + file.type);
+                } else {
+                    done();
+                }
+            },
+            init: function() {
+                this.on("queuecomplete", function() {
+                    // Reload attachments list after all uploads complete
+                    if (this.getUploadingFiles().length === 0 && this.getQueuedFiles().length === 0) {
+                        setTimeout(function() {
+                            loadAttachments();
+                            $('#attachmentUploadModal').modal('hide');
+                            alert_float('success', 'Files uploaded successfully');
+                        }, 500);
+                    }
+                });
+                
+                this.on("error", function(file, errorMessage) {
+                    alert_float('danger', 'Upload failed: ' + errorMessage);
+                });
+                
+                this.on("success", function(file, response) {
+                    // Handle individual file success
+                    console.log('File uploaded:', file.name);
+                });
+            },
+            sending: function(file, xhr, formData) {
+                // Add CSRF token to each upload request
+                formData.append(csrf_token_name, csrf_hash);
+            }
+        }));
     }
 }
 </script>

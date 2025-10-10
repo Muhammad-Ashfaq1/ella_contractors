@@ -17,6 +17,14 @@ $lang['email_client'] = 'Email Client';
 $lang['send_reminder'] = 'Send Reminder';
 $lang['appointment_send_reminder_followup'] = 'Send Reminder & Followup to Customer';
 $lang['appointment_attachments'] = 'Attachments';
+$lang['upload_attachments'] = 'Upload Attachments';
+$lang['upload_files'] = 'Upload Files';
+$lang['attachment_upload_instructions'] = 'Drag and drop files here or click to browse. You can upload multiple files at once.';
+$lang['allowed_file_types'] = 'Allowed file types';
+$lang['max_file_size'] = 'Maximum file size';
+$lang['drop_files_here_to_upload'] = 'Drop files here to upload';
+$lang['or_click_to_browse'] = 'or click to browse';
+$lang['close'] = 'Close';
 
 // Basic status strings
 $lang['scheduled'] = 'Scheduled';
