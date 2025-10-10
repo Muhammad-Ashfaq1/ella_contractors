@@ -2,11 +2,11 @@
 
 /* Custom icon styling for sidebar menu */
 .menu-icon[src*="ella-con1.png"] {
-    width: 16px !important;
-    height: 16px !important;
+    width: 18px !important;
+    height: 18px !important;
     object-fit: contain;
     vertical-align: middle;
-    margin-right: 8px;
+    margin-right: 14px;
     /* Make icon darker to match other sidebar icons */
     filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
     opacity: 0.8;
@@ -21,7 +21,7 @@
 /* Active state styling */
 .menu-item-ella_contractors.active .menu-icon[src*="ella-con1.png"],
 .menu-item-ella_contractors.current .menu-icon[src*="ella-con1.png"] {
-    filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
+    filter: brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%) hue-rotate(186deg) brightness(118%) contrast(119%);
     opacity: 1;
 }
 
@@ -29,6 +29,47 @@
 .menu-item-ella_contractors .menu-icon {
     display: inline-block;
     vertical-align: middle;
+}
+
+/* Ensure consistent spacing across all states */
+.menu-item-ella_contractors .menu-icon[src*="ella-con1.png"],
+.menu-item-ella_contractors.active .menu-icon[src*="ella-con1.png"],
+.menu-item-ella_contractors.current .menu-icon[src*="ella-con1.png"],
+.menu-item-ella_contractors:hover .menu-icon[src*="ella-con1.png"] {
+    margin-right: 14px !important;
+    width: 18px !important;
+    height: 18px !important;
+}
+
+/* Fix collapsed sidebar state */
+body.hide-sidebar .menu-item-ella_contractors .menu-icon[src*="ella-con1.png"],
+body.page-small .menu-item-ella_contractors .menu-icon[src*="ella-con1.png"] {
+    margin-right: 0 !important;
+    width: 18px !important;
+    height: 18px !important;
+}
+
+/* Ensure spacing consistency when other modules are active */
+#side-menu li:not(.menu-item-ella_contractors) .menu-icon[src*="ella-con1.png"] {
+    margin-right: 14px !important;
+    width: 18px !important;
+    height: 18px !important;
+}
+
+/* Additional specificity for different menu states */
+#side-menu .menu-item-ella_contractors a .menu-icon[src*="ella-con1.png"],
+#side-menu .menu-item-ella_contractors.active a .menu-icon[src*="ella-con1.png"],
+#side-menu .menu-item-ella_contractors.current a .menu-icon[src*="ella-con1.png"] {
+    margin-right: 14px !important;
+    width: 18px !important;
+    height: 18px !important;
+}
+
+/* Fix for when EllaContractor is not active but visible */
+#side-menu li.menu-item-ella_contractors:not(.active):not(.current) .menu-icon[src*="ella-con1.png"] {
+    margin-right: 14px !important;
+    width: 18px !important;
+    height: 18px !important;
 }
 
 /* Module-specific styles */
