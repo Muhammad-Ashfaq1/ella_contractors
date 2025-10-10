@@ -9,19 +9,30 @@
 $(document).ready(function() {
     // Load attachments when attachments tab is clicked
     $('a[href="#attachments-tab"]').on('click', function() {
-        loadAttachments();
+        loadAttachments(true); // Force refresh when tab is clicked
     });
     
     // Initialize Dropzone for attachment uploads
     initializeAttachmentDropzone();
+    
+    // Also refresh when switching to attachments tab via URL hash
+    if (window.location.hash === '#attachments-tab') {
+        loadAttachments(true);
+    }
 });
 
 // Global function for loading attachments
-window.loadAttachments = function() {
+window.loadAttachments = function(forceRefresh = false) {
+    // Show loading indicator
+    if (forceRefresh) {
+        $('#attachments-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><br><br><p>Loading attachments...</p></div>');
+    }
+    
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/get_appointment_attachments/' + <?php echo $appointment->id; ?>,
         type: 'GET',
         dataType: 'json',
+        cache: false, // Prevent caching to ensure fresh data
         success: function(response) {
             if (response.success) {
                 displayAttachments(response.attachments);
@@ -30,6 +41,7 @@ window.loadAttachments = function() {
             }
         },
         error: function(xhr, status, error) {
+            console.error('Error loading attachments:', error);
             $('#attachments-container').html('<div class="text-center text-danger"><p>Error loading attachments</p></div>');
         }
     });
@@ -52,39 +64,29 @@ window.displayAttachments = function(attachments) {
             var canPreview = ['pdf', 'ppt', 'pptx'].indexOf(fileExt.toLowerCase()) !== -1;
             
             html += '<div class="col-md-4 col-sm-6 col-xs-12 mbot15">';
-            html += '<div class="panel panel-default">';
+            html += '<div class="panel panel-default attachment-card">';
             html += '<div class="panel-body text-center">';
             html += '<i class="fa ' + fileIcon + ' fa-3x text-muted mbot10"></i>';
             html += '<h5 class="text-ellipsis" title="' + attachment.original_name + '">' + attachment.original_name + '</h5>';
             html += '<p class="text-muted small">' + fileSize + ' • ' + uploadDate + '</p>';
             
-            // Button container with consistent layout
+            // Button container with consistent layout - ALL buttons in single row
             html += '<div class="attachment-buttons" style="margin-top: 10px;">';
+            html += '<div class="btn-row">';
             
+            // Always show Download and Delete buttons
+            html += '<a href="' + admin_url + 'ella_contractors/appointments/download_attachment/' + attachment.id + '" class="btn btn-info btn-sm attachment-btn" target="_blank" title="Download File">';
+            html += '<i class="fa fa-download"></i></a>';
+            html += '<button class="btn btn-danger btn-sm attachment-btn" onclick="deleteAttachment(' + attachment.id + ')" title="Delete File">';
+            html += '<i class="fa fa-trash"></i></button>';
+            
+            // Add Preview button for previewable files (PDF, PPT, PPTX)
             if (canPreview) {
-                // First row: Preview and Download
-                html += '<div class="btn-row" style="margin-bottom: 5px;">';
                 html += '<button class="btn btn-info btn-sm attachment-btn" onclick="previewAttachment(' + attachment.id + ', \'' + escapeHtml(attachment.original_name) + '\', \'' + fileExt.toLowerCase() + '\')" title="Preview File">';
                 html += '<i class="fa fa-eye"></i></button>';
-                html += '<a href="' + admin_url + 'ella_contractors/appointments/download_attachment/' + attachment.id + '" class="btn btn-info btn-sm attachment-btn" target="_blank" title="Download File">';
-                html += '<i class="fa fa-download"></i></a>';
-                html += '</div>';
-                
-                // Second row: Delete
-                html += '<div class="btn-row">';
-                html += '<button class="btn btn-danger btn-sm attachment-btn attachment-btn-full" onclick="deleteAttachment(' + attachment.id + ')" title="Delete File">';
-                html += '<i class="fa fa-trash"></i></button>';
-                html += '</div>';
-            } else {
-                // For non-previewable files: Download and Delete on same row
-                html += '<div class="btn-row">';
-                html += '<a href="' + admin_url + 'ella_contractors/appointments/download_attachment/' + attachment.id + '" class="btn btn-info btn-sm attachment-btn" target="_blank" title="Download File">';
-                html += '<i class="fa fa-download"></i></a>';
-                html += '<button class="btn btn-danger btn-sm attachment-btn" onclick="deleteAttachment(' + attachment.id + ')" title="Delete File">';
-                html += '<i class="fa fa-trash"></i></button>';
-                html += '</div>';
             }
             
+            html += '</div>'; // Close btn-row
             html += '</div>'; // Close attachment-buttons
             html += '</div>'; // Close panel-body
             html += '</div>'; // Close panel
@@ -158,7 +160,7 @@ function deleteAttachment(attachmentId) {
             success: function(response) {
                 if (response.success) {
                     alert_float('success', response.message);
-                    loadAttachments(); // Reload attachments
+                    loadAttachments(true); // Force reload attachments
                 } else {
                     alert_float('danger', response.message);
                 }
@@ -203,10 +205,11 @@ function initializeAttachmentDropzone() {
                     // Reload attachments list after all uploads complete
                     if (this.getUploadingFiles().length === 0 && this.getQueuedFiles().length === 0) {
                         setTimeout(function() {
-                            loadAttachments();
+                            // Force reload attachments
+                            loadAttachments(true);
                             $('#attachmentUploadModal').modal('hide');
                             alert_float('success', 'Files uploaded successfully');
-                        }, 500);
+                        }, 300);
                     }
                 });
                 
@@ -273,11 +276,28 @@ function previewAttachment(attachmentId, fileName, fileExt) {
     setTimeout(function() {
         $('#attachmentPreviewContent').html(previewContent);
     }, 300);
+    
+    // Refresh attachments when preview modal is closed (in case files were added externally)
+    $('#attachmentPreviewModal').off('hidden.bs.modal.attachments').on('hidden.bs.modal.attachments', function() {
+        setTimeout(function() {
+            loadAttachments(true);
+        }, 100);
+    });
 }
 
 // Handle modal close events
 $('#attachmentPreviewModal').on('hidden.bs.modal', function () {
     $('#attachmentPreviewContent').html('');
+});
+
+// Handle upload modal close - ensure attachments refresh
+$('#attachmentUploadModal').on('hidden.bs.modal', function () {
+    // Small delay to ensure any pending uploads are processed
+    setTimeout(function() {
+        if (typeof loadAttachments === 'function') {
+            loadAttachments(true);
+        }
+    }, 200);
 });
 
 // Handle iframe load errors
@@ -312,7 +332,7 @@ $(document).on('error', 'iframe', function() {
 }
 
 .attachment-btn {
-    width: 40px !important;
+    width: 38px !important;
     height: 35px !important;
     padding: 0 !important;
     display: flex !important;
@@ -323,6 +343,7 @@ $(document).on('error', 'iframe', function() {
     border: none !important;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12) !important;
     transition: all 0.2s ease !important;
+    margin: 0 2px !important;
 }
 
 .attachment-btn:hover {
@@ -330,9 +351,7 @@ $(document).on('error', 'iframe', function() {
     box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
 }
 
-.attachment-btn-full {
-    width: 85px !important; /* Full width for delete button when alone */
-}
+/* Removed .attachment-btn-full since all buttons are now in single row */
 
 /* Preview button - Blue like download */
 .attachment-btn.btn-info {
@@ -358,5 +377,24 @@ $(document).on('error', 'iframe', function() {
 .attachment-btn i {
     margin: 0 !important;
     font-size: 14px !important;
+}
+
+/* Consistent card sizing */
+.attachment-card {
+    min-height: 200px !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.attachment-card .panel-body {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    padding: 15px !important;
+}
+
+.attachment-card .attachment-buttons {
+    margin-top: auto !important;
 }
 </style>
