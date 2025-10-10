@@ -349,6 +349,9 @@ class Ella_appointments_model extends App_Model
             'appointment_activity_measurement_removed' => 'fa fa-minus-square',
             'appointment_activity_process' => 'fa fa-cogs',
             'appointment_activity_deleted' => 'fa fa-trash',
+            // Dynamic attachment activities
+            'appointment_activity_attachment_uploaded' => 'fa fa-upload',
+            'appointment_activity_attachment_deleted' => 'fa fa-trash',
             'estimate_created' => 'fa fa-file-invoice',
             'estimate_updated' => 'fa fa-file-invoice-dollar',
             'estimate_deleted' => 'fa fa-file-invoice-dollar',
@@ -384,6 +387,9 @@ class Ella_appointments_model extends App_Model
             'appointment_activity_measurement_removed' => 'danger',
             'appointment_activity_process' => 'secondary',
             'appointment_activity_deleted' => 'danger',
+            // Dynamic attachment activities
+            'appointment_activity_attachment_uploaded' => 'success',
+            'appointment_activity_attachment_deleted' => 'danger',
             'estimate_created' => 'success',
             'estimate_updated' => 'info',
             'estimate_deleted' => 'danger',

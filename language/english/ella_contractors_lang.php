@@ -26,6 +26,10 @@ $lang['drop_files_here_to_upload'] = 'Drop files here to upload';
 $lang['or_click_to_browse'] = 'or click to browse';
 $lang['close'] = 'Close';
 
+// Timeline activity labels for attachments (dynamic)
+$lang['appointment_activity_attachment_uploaded'] = 'Attachment uploaded';
+$lang['appointment_activity_attachment_deleted'] = 'Attachment deleted';
+
 // Basic status strings
 $lang['scheduled'] = 'Scheduled';
 $lang['cancelled'] = 'Cancelled';

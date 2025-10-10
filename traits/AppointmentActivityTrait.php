@@ -256,6 +256,36 @@ trait AppointmentActivityTrait
     }
     
     /**
+     * Log appointment attachment activity (generic method)
+     * 
+     * @param int    $appointment_id Appointment ID
+     * @param string $action        Action type (uploaded, deleted, etc.)
+     * @param string $filename      File name
+     * @param array  $additional_data Additional data (file_size, file_type, etc.)
+     * @return int|false            Log ID on success, false on failure
+     */
+    public function log_appointment_attachment_activity($appointment_id, $action, $filename, $additional_data = [])
+    {
+        // Build description key dynamically
+        $description_key = 'appointment_activity_attachment_' . $action;
+        
+        // Merge filename with additional data
+        $data = array_merge([
+            'filename' => $filename
+        ], $additional_data);
+        
+        $serialized_data = serialize($data);
+        
+        return $this->log_appointment_activity(
+            $appointment_id, 
+            $description_key, 
+            false, 
+            $serialized_data
+        );
+    }
+    
+    
+    /**
      * Generic activity logger - handles all activity types dynamically
      * 
      * @param int    $appointment_id Appointment ID
@@ -355,7 +385,8 @@ trait AppointmentActivityTrait
             'note' => 'Note',
             'email' => 'Email',
             'sms' => 'SMS',
-            'file' => 'File'
+            'file' => 'File',
+            'attachment' => 'Attachment'
         ];
         
         return $names[$entity_type] ?? ucfirst($entity_type);

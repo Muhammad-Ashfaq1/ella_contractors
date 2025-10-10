@@ -1379,6 +1379,17 @@ class Appointments extends AdminController
                 
                 if ($result['success']) {
                     $uploaded_files[] = $result;
+                    
+                    // Log attachment upload activity using generic method
+                    $this->appointments_model->log_appointment_attachment_activity(
+                        $appointment_id,
+                        'uploaded',
+                        $file_data['name'],
+                        [
+                            'file_size' => $this->format_bytes($file_data['size']),
+                            'file_type' => strtolower(pathinfo($file_data['name'], PATHINFO_EXTENSION))
+                        ]
+                    );
                 } else {
                     $errors[] = $result['message'];
                 }
@@ -1437,6 +1448,13 @@ class Appointments extends AdminController
             if (file_exists($file_path)) {
                 @unlink($file_path);
             }
+            
+            // Log attachment deletion activity using generic method
+            $this->appointments_model->log_appointment_attachment_activity(
+                $attachment->rel_id,
+                'deleted',
+                $attachment->original_name
+            );
             
             echo json_encode([
                 'success' => true,
