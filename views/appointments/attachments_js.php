@@ -48,6 +48,8 @@ window.displayAttachments = function(attachments) {
             var fileIcon = getFileIcon(attachment.file_type);
             var fileSize = formatFileSize(attachment.file_size);
             var uploadDate = new Date(attachment.date_uploaded).toLocaleDateString();
+            var fileExt = getFileExtension(attachment.original_name);
+            var canPreview = ['pdf', 'ppt', 'pptx'].indexOf(fileExt.toLowerCase()) !== -1;
             
             html += '<div class="col-md-4 col-sm-6 col-xs-12 mbot15">';
             html += '<div class="panel panel-default">';
@@ -55,7 +57,14 @@ window.displayAttachments = function(attachments) {
             html += '<i class="fa ' + fileIcon + ' fa-3x text-muted mbot10"></i>';
             html += '<h5 class="text-ellipsis" title="' + attachment.original_name + '">' + attachment.original_name + '</h5>';
             html += '<p class="text-muted small">' + fileSize + ' • ' + uploadDate + '</p>';
-            html += '<div class="btn-group btn-group-sm">';
+            html += '<div class="btn-group btn-group-sm" style="margin-bottom: 5px;">';
+            
+            // Add preview button for PDF and PPT files
+            if (canPreview) {
+                html += '<button class="btn btn-success btn-sm" onclick="previewAttachment(' + attachment.id + ', \'' + escapeHtml(attachment.original_name) + '\', \'' + fileExt.toLowerCase() + '\')">';
+                html += '<i class="fa fa-eye"></i> Preview</button>';
+            }
+            
             html += '<a href="' + admin_url + 'ella_contractors/appointments/download_attachment/' + attachment.id + '" class="btn btn-info btn-sm" target="_blank">';
             html += '<i class="fa fa-download"></i> Download</a>';
             html += '<button class="btn btn-danger btn-sm" onclick="deleteAttachment(' + attachment.id + ')">';
@@ -101,6 +110,23 @@ window.formatFileSize = function(bytes) {
     var sizes = ['Bytes', 'KB', 'MB', 'GB'];
     var i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+// Helper function to get file extension
+window.getFileExtension = function(filename) {
+    return filename.split('.').pop();
+};
+
+// Helper function to escape HTML for safe display
+window.escapeHtml = function(text) {
+    var map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 };
 
 // Global function for deleting attachments (accessible from onclick)
@@ -184,4 +210,73 @@ function initializeAttachmentDropzone() {
         }));
     }
 }
+
+/**
+ * Preview attachment file (PDF, PPT, PPTX)
+ * Similar to presentations module preview functionality
+ */
+function previewAttachment(attachmentId, fileName, fileExt) {
+    // Set modal title
+    $('#attachmentPreviewModalLabel').text('Preview: ' + fileName);
+    
+    // Clear previous content
+    $('#attachmentPreviewContent').html('');
+    
+    // Show loading
+    $('#attachmentPreviewContent').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-3x"></i><br><br><p>Loading preview...</p></div>');
+    
+    // Show modal
+    $('#attachmentPreviewModal').modal({show: true, backdrop: 'static', keyboard: false});
+    
+    // Set download link
+    var downloadUrl = admin_url + 'ella_contractors/appointments/download_attachment/' + attachmentId;
+    $('#downloadAttachmentBtn').attr('href', downloadUrl);
+    
+    // Generate preview content based on file type
+    var previewContent = '';
+    
+    if (fileExt === 'pdf') {
+        // Direct PDF preview
+        var pdfUrl = admin_url + 'ella_contractors/appointments/preview_attachment/' + attachmentId;
+        previewContent = '<iframe src="' + pdfUrl + '" width="100%" height="600px" frameborder="0" style="border: none;"></iframe>';
+    } else if (fileExt === 'ppt' || fileExt === 'pptx') {
+        // PPT/PPTX preview - use get_preview_pdf endpoint
+        var pptPreviewUrl = admin_url + 'ella_contractors/appointments/preview_attachment/' + attachmentId;
+        previewContent = '<iframe src="' + pptPreviewUrl + '" width="100%" height="600px" frameborder="0" style="border: none;"></iframe>';
+    } else {
+        previewContent = '<div class="alert alert-info text-center">' +
+            '<h5><i class="fa fa-info-circle"></i> Preview Not Available</h5>' +
+            '<p>Preview is not available for this file type (' + fileExt.toUpperCase() + ').</p>' +
+            '<p><strong>File:</strong> ' + fileName + '</p>' +
+            '<a href="' + downloadUrl + '" class="btn btn-primary" target="_blank">' +
+            '<i class="fa fa-external-link"></i> Open in New Tab</a>' +
+            '</div>';
+    }
+    
+    // Set preview content after a short delay to show loading
+    setTimeout(function() {
+        $('#attachmentPreviewContent').html(previewContent);
+    }, 300);
+}
+
+// Handle modal close events
+$('#attachmentPreviewModal').on('hidden.bs.modal', function () {
+    $('#attachmentPreviewContent').html('');
+});
+
+// Handle iframe load errors
+$(document).on('error', 'iframe', function() {
+    var iframe = $(this);
+    iframe.parent().html('<div class="alert alert-warning text-center">' +
+        '<h5><i class="fa fa-exclamation-triangle"></i> Preview Error</h5>' +
+        '<p>Unable to load preview. This may be due to:</p>' +
+        '<ul class="text-left" style="display: inline-block; text-align: left;">' +
+        '<li>File format compatibility issues</li>' +
+        '<li>Large file size</li>' +
+        '<li>Browser security restrictions</li>' +
+        '</ul><br>' +
+        '<a href="' + $('#downloadAttachmentBtn').attr('href') + '" class="btn btn-primary" target="_blank">' +
+        '<i class="fa fa-download"></i> Download File</a>' +
+        '</div>');
+});
 </script>

@@ -623,6 +623,31 @@ $this->load->view('appointments/estimate_modal', $data);
 <!-- Include Attachment Upload Modal -->
 <?php $this->load->view('appointments/attachments_upload_modal'); ?>
 
+<!-- File Preview Modal -->
+<div class="modal fade" id="attachmentPreviewModal" tabindex="-1" role="dialog" aria-labelledby="attachmentPreviewModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="attachmentPreviewModalLabel">File Preview</h4>
+            </div>
+            <div class="modal-body">
+                <div id="attachmentPreviewContent" style="min-height: 400px;">
+                    <!-- Preview content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <a href="#" id="downloadAttachmentBtn" class="btn btn-primary" target="_blank">
+                    <i class="fa fa-download"></i> Download
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php init_tail(); ?>
 
 <!-- Timeline CSS -->

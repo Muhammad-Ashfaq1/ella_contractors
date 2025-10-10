@@ -1451,6 +1451,315 @@ class Appointments extends AdminController
     }
 
     /**
+     * Preview appointment attachment (PDF/PPT/PPTX)
+     * Same logic as presentations module - converts PPT/PPTX to PDF
+     * @param int $attachment_id
+     */
+    public function preview_attachment($attachment_id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            access_denied('ella_contractors');
+        }
+
+        $this->load->model('ella_contractors/ella_media_model');
+        $attachment = $this->ella_media_model->get_file($attachment_id);
+        
+        if (!$attachment || $attachment->rel_type !== 'appointment') {
+            show_404();
+        }
+
+        // Get file path - construct from appointment ID and file name
+        $file_path = FCPATH . 'uploads/ella_appointments/' . $attachment->rel_id . '/' . $attachment->file_name;
+        
+        if (!file_exists($file_path)) {
+            show_404();
+        }
+
+        $ext = strtolower(pathinfo($attachment->file_name, PATHINFO_EXTENSION));
+        
+        // If it's a PDF, serve it directly for inline viewing
+        if ($ext === 'pdf') {
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: inline; filename="' . $attachment->original_name . '"');
+            header('Content-Length: ' . filesize($file_path));
+            readfile($file_path);
+            exit;
+        }
+        
+        // For PPT/PPTX files, convert to PDF for preview (same as presentations module)
+        if (in_array($ext, ['ppt', 'pptx'])) {
+            $this->convert_appointment_ppt_to_pdf($attachment, $file_path);
+        } else {
+            show_404();
+        }
+    }
+    
+    /**
+     * Convert PPT/PPTX to PDF for preview
+     * Reuses the same logic as presentations module (Ella_contractors.php)
+     */
+    private function convert_appointment_ppt_to_pdf($attachment, $original_path)
+    {
+        $ext = strtolower(pathinfo($attachment->file_name, PATHINFO_EXTENSION));
+        
+        // Create a cache directory for converted PDFs
+        $cache_dir = FCPATH . 'uploads/ella_appointments/cache/';
+        if (!is_dir($cache_dir)) {
+            mkdir($cache_dir, 0755, true);
+        }
+        
+        // Generate cache filename
+        $cache_filename = 'preview_' . $attachment->id . '_' . md5($attachment->file_name . $attachment->date_uploaded) . '.pdf';
+        $cache_path = $cache_dir . $cache_filename;
+        
+        // Check if cached PDF exists and is newer than original file
+        if (file_exists($cache_path) && filemtime($cache_path) > filemtime($original_path)) {
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: inline; filename="' . pathinfo($attachment->original_name, PATHINFO_FILENAME) . '.pdf"');
+            readfile($cache_path);
+            exit;
+        }
+        
+        // Try to convert using LibreOffice (if available)
+        if ($this->convert_with_libreoffice($original_path, $cache_path)) {
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: inline; filename="' . pathinfo($attachment->original_name, PATHINFO_FILENAME) . '.pdf"');
+            readfile($cache_path);
+            exit;
+        }
+        
+        // Try alternative conversion methods (creates fallback PDF)
+        if ($this->convert_with_alternative_method($original_path, $cache_path, $ext, $attachment)) {
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: inline; filename="' . pathinfo($attachment->original_name, PATHINFO_FILENAME) . '.pdf"');
+            readfile($cache_path);
+            exit;
+        }
+        
+        // Fallback: Show error message
+        $this->show_appointment_conversion_error($attachment);
+    }
+
+    /**
+     * Convert file using LibreOffice (same as presentations module)
+     */
+    private function convert_with_libreoffice($input_path, $output_path)
+    {
+        // Check if LibreOffice is available
+        $libreoffice_path = $this->find_libreoffice();
+        if (!$libreoffice_path) {
+            return false;
+        }
+        
+        // Create output directory
+        $output_dir = dirname($output_path);
+        if (!is_dir($output_dir)) {
+            mkdir($output_dir, 0755, true);
+        }
+        
+        // Convert using LibreOffice
+        $command = escapeshellarg($libreoffice_path) . 
+                  ' --headless --convert-to pdf --outdir ' . escapeshellarg($output_dir) . 
+                  ' ' . escapeshellarg($input_path) . ' 2>&1';
+        
+        $output = [];
+        $return_code = 0;
+        exec($command, $output, $return_code);
+        
+        // Check if conversion was successful
+        if ($return_code === 0 && file_exists($output_path)) {
+            return true;
+        }
+        
+        log_message('error', 'LibreOffice conversion failed for appointment attachment: ' . implode("\n", $output));
+        return false;
+    }
+
+    /**
+     * Find LibreOffice executable (same as presentations module)
+     */
+    private function find_libreoffice()
+    {
+        $possible_paths = [
+            '/usr/bin/libreoffice',
+            '/usr/local/bin/libreoffice',
+            '/opt/libreoffice/program/soffice',
+            '/Applications/LibreOffice.app/Contents/MacOS/soffice',
+            'libreoffice', // Try PATH
+        ];
+        
+        foreach ($possible_paths as $path) {
+            if (is_executable($path)) {
+                return $path;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Alternative conversion method - creates fallback PDF (same as presentations module)
+     */
+    private function convert_with_alternative_method($input_path, $output_path, $ext, $attachment)
+    {
+        // Create a simple fallback PDF with file information
+        $this->create_fallback_pdf($input_path, $output_path, $ext, $attachment);
+        return true;
+    }
+
+    /**
+     * Create fallback PDF when LibreOffice is not available (same as presentations module)
+     */
+    private function create_fallback_pdf($input_path, $output_path, $ext, $attachment)
+    {
+        $filename = pathinfo($input_path, PATHINFO_FILENAME);
+        $file_size = file_exists($input_path) ? filesize($input_path) : 0;
+        $file_size_formatted = $this->format_bytes($file_size);
+        
+        // Create a simple text-based PDF
+        $pdf_content = "%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
+>>
+endobj
+
+4 0 obj
+<<
+/Length 350
+>>
+stream
+BT
+/F1 16 Tf
+72 720 Td
+(PowerPoint Preview: " . $filename . ") Tj
+0 -30 Td
+/F1 12 Tf
+(File Type: " . strtoupper($ext) . ") Tj
+0 -20 Td
+(File Size: " . $file_size_formatted . ") Tj
+0 -20 Td
+(Uploaded: " . date('M d, Y', strtotime($attachment->date_uploaded)) . ") Tj
+0 -40 Td
+(This is a preview. LibreOffice conversion not available.) Tj
+0 -20 Td
+(Download the original file from the CRM) Tj
+0 -20 Td
+(to view the full presentation with animations.) Tj
+ET
+endstream
+endobj
+
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000274 00000 n 
+0000000675 00000 n 
+trailer
+<<
+/Size 6
+/Root 1 0 R
+>>
+startxref
+775
+%%EOF";
+
+        file_put_contents($output_path, $pdf_content);
+    }
+
+    /**
+     * Format bytes to human readable format (same as presentations module)
+     */
+    private function format_bytes($bytes, $decimals = 2)
+    {
+        if ($bytes === 0) return '0 Bytes';
+        $k = 1024;
+        $dm = $decimals < 0 ? 0 : $decimals;
+        $sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+        $i = floor(log($bytes) / log($k));
+        return round($bytes / pow($k, $i), $dm) . ' ' . $sizes[$i];
+    }
+
+    /**
+     * Show conversion error (same as presentations module)
+     */
+    private function show_appointment_conversion_error($attachment)
+    {
+        $ext = strtolower(pathinfo($attachment->file_name, PATHINFO_EXTENSION));
+        $download_url = admin_url('ella_contractors/appointments/download_attachment/' . $attachment->id);
+        
+        echo '<!DOCTYPE html>
+<html>
+<head>
+    <title>Preview Error</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .error-container { text-align: center; max-width: 500px; margin: 0 auto; }
+        .error-icon { font-size: 48px; color: #e74c3c; margin-bottom: 20px; }
+        .error-title { font-size: 24px; color: #2c3e50; margin-bottom: 15px; }
+        .error-message { color: #7f8c8d; margin-bottom: 20px; }
+        .download-btn { 
+            background: #3498db; 
+            color: white; 
+            padding: 10px 20px; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">⚠️</div>
+        <div class="error-title">Preview Not Available</div>
+        <div class="error-message">
+            Unable to convert ' . strtoupper($ext) . ' file to PDF for preview.<br>
+            This may be due to server configuration or missing conversion tools.
+        </div>
+        <a href="' . $download_url . '" class="download-btn">
+            📥 Download Original File
+        </a>
+    </div>
+</body>
+</html>';
+        exit;
+    }
+
+    /**
      * Download appointment attachment
      * @param int $attachment_id
      */
