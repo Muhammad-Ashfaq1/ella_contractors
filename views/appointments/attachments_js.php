@@ -57,22 +57,38 @@ window.displayAttachments = function(attachments) {
             html += '<i class="fa ' + fileIcon + ' fa-3x text-muted mbot10"></i>';
             html += '<h5 class="text-ellipsis" title="' + attachment.original_name + '">' + attachment.original_name + '</h5>';
             html += '<p class="text-muted small">' + fileSize + ' • ' + uploadDate + '</p>';
-            html += '<div class="btn-group btn-group-sm" style="margin-bottom: 5px;">';
             
-            // Add preview button for PDF and PPT files
+            // Button container with consistent layout
+            html += '<div class="attachment-buttons" style="margin-top: 10px;">';
+            
             if (canPreview) {
-                html += '<button class="btn btn-success btn-sm" onclick="previewAttachment(' + attachment.id + ', \'' + escapeHtml(attachment.original_name) + '\', \'' + fileExt.toLowerCase() + '\')">';
-                html += '<i class="fa fa-eye"></i> Preview</button>';
+                // First row: Preview and Download
+                html += '<div class="btn-row" style="margin-bottom: 5px;">';
+                html += '<button class="btn btn-info btn-sm attachment-btn" onclick="previewAttachment(' + attachment.id + ', \'' + escapeHtml(attachment.original_name) + '\', \'' + fileExt.toLowerCase() + '\')" title="Preview File">';
+                html += '<i class="fa fa-eye"></i></button>';
+                html += '<a href="' + admin_url + 'ella_contractors/appointments/download_attachment/' + attachment.id + '" class="btn btn-info btn-sm attachment-btn" target="_blank" title="Download File">';
+                html += '<i class="fa fa-download"></i></a>';
+                html += '</div>';
+                
+                // Second row: Delete
+                html += '<div class="btn-row">';
+                html += '<button class="btn btn-danger btn-sm attachment-btn attachment-btn-full" onclick="deleteAttachment(' + attachment.id + ')" title="Delete File">';
+                html += '<i class="fa fa-trash"></i></button>';
+                html += '</div>';
+            } else {
+                // For non-previewable files: Download and Delete on same row
+                html += '<div class="btn-row">';
+                html += '<a href="' + admin_url + 'ella_contractors/appointments/download_attachment/' + attachment.id + '" class="btn btn-info btn-sm attachment-btn" target="_blank" title="Download File">';
+                html += '<i class="fa fa-download"></i></a>';
+                html += '<button class="btn btn-danger btn-sm attachment-btn" onclick="deleteAttachment(' + attachment.id + ')" title="Delete File">';
+                html += '<i class="fa fa-trash"></i></button>';
+                html += '</div>';
             }
             
-            html += '<a href="' + admin_url + 'ella_contractors/appointments/download_attachment/' + attachment.id + '" class="btn btn-info btn-sm" target="_blank">';
-            html += '<i class="fa fa-download"></i> Download</a>';
-            html += '<button class="btn btn-danger btn-sm" onclick="deleteAttachment(' + attachment.id + ')">';
-            html += '<i class="fa fa-trash"></i> Delete</button>';
-            html += '</div>';
-            html += '</div>';
-            html += '</div>';
-            html += '</div>';
+            html += '</div>'; // Close attachment-buttons
+            html += '</div>'; // Close panel-body
+            html += '</div>'; // Close panel
+            html += '</div>'; // Close col
         });
         
         html += '</div>';
@@ -280,3 +296,67 @@ $(document).on('error', 'iframe', function() {
         '</div>');
 });
 </script>
+
+<style>
+/* Attachment Button Styles - Consistent with CRM UI */
+.attachment-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.btn-row {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+}
+
+.attachment-btn {
+    width: 40px !important;
+    height: 35px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 4px !important;
+    font-size: 14px !important;
+    border: none !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12) !important;
+    transition: all 0.2s ease !important;
+}
+
+.attachment-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+}
+
+.attachment-btn-full {
+    width: 85px !important; /* Full width for delete button when alone */
+}
+
+/* Preview button - Blue like download */
+.attachment-btn.btn-info {
+    background-color: #3498db !important;
+    color: white !important;
+}
+
+.attachment-btn.btn-info:hover {
+    background-color: #2980b9 !important;
+}
+
+/* Delete button - Red like the reference image */
+.attachment-btn.btn-danger {
+    background-color: #e74c3c !important;
+    color: white !important;
+}
+
+.attachment-btn.btn-danger:hover {
+    background-color: #c0392b !important;
+}
+
+/* Icon styling */
+.attachment-btn i {
+    margin: 0 !important;
+    font-size: 14px !important;
+}
+</style>
