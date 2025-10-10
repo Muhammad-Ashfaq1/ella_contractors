@@ -353,7 +353,6 @@ $(document).ready(function() {
             url: url,
             type: 'GET',
             success: function(response) {
-                console.log('custom js response', response);
                 if (!response.success) {
                     console.error('Failed to fetch data:', response.message);
                     return;
@@ -391,7 +390,6 @@ $(document).ready(function() {
                             $target.selectpicker();
                         }
                     } catch(e) {
-                        console.log('Selectpicker initialization failed:', e);
                         // Fallback: just use regular select
                     }
                 }, 100);

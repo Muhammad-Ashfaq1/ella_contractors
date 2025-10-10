@@ -289,7 +289,6 @@ function initEstimatesModal() {
     function addLineItemRow(itemData = null) {
         lineItemIndex++;
 
-        console.log('lineItemIndex data', itemData);
         var lineItemHtml = `
             <div class="line-item-row" style="margin-bottom: 10px; border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
                 <div class="row">
@@ -401,10 +400,8 @@ function initEstimatesModal() {
             dataType: 'json'
         })
         .done(function(response) {
-            console.log('Line items response:', response);
             if (response && response.success && Array.isArray(response.data)) {
                 lineItemOptions = response.data;
-                console.log('Line items loaded:', lineItemOptions);
                 fillAllSelects();
                 calculateTotals();
             } else if (Array.isArray(response)) {
