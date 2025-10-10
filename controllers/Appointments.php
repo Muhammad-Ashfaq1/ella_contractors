@@ -1270,9 +1270,20 @@ class Appointments extends AdminController
         $notes = $this->misc_model->get_notes($appointment_id, 'appointment');
         
         if ($notes) {
-            // Add time_ago for each note
+            // Add time_ago and profile image for each note
             foreach ($notes as &$note) {
                 $note['time_ago'] = time_ago($note['dateadded']);
+                
+                // Add profile image path (same as timeline)
+                if (isset($note['staffid']) && $note['staffid'] > 0) {
+                    $note['profile_image'] = staff_profile_image($note['staffid'], ['staff-profile-xs-image']);
+                    // Extract just the src URL from the HTML
+                    if (preg_match('/src="([^"]+)"/', $note['profile_image'], $matches)) {
+                        $note['profile_image'] = $matches[1];
+                    }
+                } else {
+                    $note['profile_image'] = admin_url('assets/images/user-placeholder.jpg');
+                }
             }
             echo json_encode(['success' => true, 'data' => $notes]);
         } else {

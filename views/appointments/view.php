@@ -514,28 +514,21 @@ button.delete-btn {
                             <div role="tabpanel" class="tab-pane" id="notes-tab">
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <!-- Add Note Button -->
-                                        <div class="pull-right mbot15">
-                                            <button type="button" class="btn btn-info btn-sm" onclick="toggleNoteForm()" id="note-btn">
-                                                <i class="fa fa-plus"></i> Add Note
-                                            </button>
-                                        </div>
-                                        <div class="clearfix"></div>
-                                        
-                                        <!-- Add Note Form (Initially Hidden) -->
-                                        <div id="note-form" class="hide mbot15">
-                                            <?php echo form_open(admin_url('ella_contractors/appointments/add_note/' . $appointment->id), array('id' => 'appointment-notes')); ?>
-                                            <div class="form-group" id="appointmentnote">
-                                                <div class="lead emoji-picker-container leadnotes">
-                                                    <textarea id="appointment_note_description" name="appointment_note_description" class="form-control" rows="3" data-emojiable="true" placeholder="Add a note about this appointment..."></textarea>
+                                        <!-- Add Note Section -->
+                                        <div class="row mbot15">
+                                            <div class="col-md-8">
+                                                <div class="form-group" id="appointmentnote">
+                                                    <div class="lead emoji-picker-container leadnotes">
+                                                        <textarea id="appointment_note_description" name="appointment_note_description" class="form-control" rows="3" data-emojiable="true" placeholder="Add a note about this appointment..."></textarea>
+                                                    </div>
                                                 </div>
+                                                <?php echo get_typos_by_category('notes'); ?>
                                             </div>
-                                            <?php echo get_typos_by_category('notes'); ?>
-                                            <div class="text-right">
-                                                <button type="button" class="btn btn-default btn-sm" onclick="toggleNoteForm()">Cancel</button>
-                                                <button type="submit" class="btn btn-info btn-sm">Add Note</button>
+                                            <div class="col-md-4 text-right">
+                                                <button type="button" class="btn btn-info btn-sm" onclick="addNote()" id="note-btn">
+                                                    <i class="fa fa-plus"></i> Add Note
+                                                </button>
                                             </div>
-                                            <?php echo form_close(); ?>
                                         </div>
                                         
                                         <hr class="hr-panel-heading" />
@@ -991,19 +984,50 @@ function displayNotes(notes) {
         var staffName = note.firstname + ' ' + note.lastname;
         var staffProfileImage = note.profile_image && note.profile_image !== '' ? note.profile_image : admin_url + 'assets/images/user-placeholder.jpg';
         
-        html += '<div class="feed-item">';
+        // Use same layout structure as timeline
+        html += '<div class="timeline-record-wrapper">';
+        html += '<div class="timeline-date-section">';
         html += '<div class="date">';
         html += '<span class="text-has-action" data-toggle="tooltip" data-title="' + note.dateadded + '" data-original-title="" title="">' + timeAgo + '</span>';
         html += '</div>';
-        html += '<div class="text">';
-        html += '<a href="' + admin_url + 'admin/profile/' + note.addedfrom + '">';
-        html += '<img class="staff-profile-xs-image pull-left mright5" src="' + staffProfileImage + '" alt="' + staffName + '">';
-        html += '</a>';
-        html += '<b>' + staffName + '</b> - ' + note.description;
         html += '</div>';
+        html += '<div class="timeline-content-section">';
+        html += '<div class="text">';
+        
+        // Use exact same icon system as timeline
+        html += '<a href="' + admin_url + 'admin/profile/' + note.addedfrom + '">';
+        
+        // Use the profile_image from the server (same as timeline)
+        var profileImageUrl = note.profile_image || admin_url + 'assets/images/user-placeholder.jpg';
+        html += '<img class="staff-profile-xs-image pull-left mright5" src="' + profileImageUrl + '" alt="' + staffName + '">';
+        
+        html += '</a>';
+        
+        // Format name like timeline: First Name + Last Initial
+        var nameParts = staffName.split(' ');
+        var formattedName = '';
+        if (nameParts.length >= 2) {
+            var firstName = nameParts[0];
+            var lastInitial = nameParts[nameParts.length - 1].charAt(0) + '.';
+            formattedName = firstName + ' ' + lastInitial;
+        } else {
+            formattedName = staffName;
+        }
+        
+        // Display in timeline format: ICON Name - Note content
+        html += '<span class="timeline-formatted-entry">';
+        html += '<strong>' + formattedName + '</strong> - ';
+        html += '<span class="note-description">' + note.description + '</span>';
+        html += '</span>';
+        
+        html += '</div>';
+        
+        // Action buttons
         html += '<div class="text-right mtop5">';
         html += '<button class="btn btn-default btn-xs" onclick="editNote(' + note.id + ')" title="Edit Note"><i class="fa fa-edit"></i></button> ';
         html += '<button class="btn btn-danger btn-xs" onclick="deleteNote(' + note.id + ')" title="Delete Note"><i class="fa fa-trash"></i></button>';
+        html += '</div>';
+        
         html += '</div>';
         html += '</div>';
         
@@ -1045,12 +1069,47 @@ $(window).on('beforeunload', function() {
     }
 });
 
-// Toggle note form
-function toggleNoteForm() {
-    $('#note-form').toggleClass('hide');
-    if (!$('#note-form').hasClass('hide')) {
+// Add note function
+function addNote() {
+    var description = $('#appointment_note_description').val().trim();
+    
+    if (!description) {
+        alert_float('warning', 'Please enter a note description');
         $('#appointment_note_description').focus();
+        return;
     }
+    
+    // Show loading state
+    var originalBtn = $('#note-btn').html();
+    $('#note-btn').html('<i class="fa fa-spinner fa-spin"></i> Adding...').prop('disabled', true);
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/add_note/' + <?php echo $appointment->id; ?>,
+        type: 'POST',
+        data: {
+            description: description,
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                // Clear the textarea
+                $('#appointment_note_description').val('');
+                // Reload notes
+                loadNotes();
+                alert_float('success', response.message || 'Note added successfully');
+            } else {
+                alert_float('danger', response.message || 'Failed to add note');
+            }
+        },
+        error: function(xhr, status, error) {
+            alert_float('danger', 'Error adding note');
+        },
+        complete: function() {
+            // Restore button
+            $('#note-btn').html(originalBtn).prop('disabled', false);
+        }
+    });
 }
 
 function editNote(noteId) {
