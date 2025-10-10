@@ -1,16 +1,20 @@
 /* Ella Contractors Module Styles */
 
-/* Simple icon styling - just fix the icon size and spacing */
-.menu-icon[src*="ella-con1.png"] {
+/* Fix the EllaContractors icon - override any problematic styling */
+#side-menu li.menu-item-ella_contractors a img[src*="ella-con1.png"] {
     width: 18px !important;
     height: 18px !important;
-    object-fit: contain;
+    object-fit: contain !important;
     margin-right: 16px !important;
+    /* Remove any filters or background colors that might cause red appearance */
+    filter: none !important;
+    background: none !important;
+    background-color: transparent !important;
 }
 
 /* Fix collapsed sidebar state */
-body.hide-sidebar .menu-item-ella_contractors .menu-icon[src*="ella-con1.png"],
-body.page-small .menu-item-ella_contractors .menu-icon[src*="ella-con1.png"] {
+body.hide-sidebar #side-menu li.menu-item-ella_contractors a img[src*="ella-con1.png"],
+body.page-small #side-menu li.menu-item-ella_contractors a img[src*="ella-con1.png"] {
     margin-right: 0 !important;
     width: 18px !important;
     height: 18px !important;
