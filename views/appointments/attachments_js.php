@@ -15,16 +15,33 @@ $(document).ready(function() {
     // Initialize Dropzone for attachment uploads
     initializeAttachmentDropzone();
     
-    // Also refresh when switching to attachments tab via URL hash
-    if (window.location.hash === '#attachments-tab') {
-        loadAttachments(true);
-    }
+    // Check if we're on attachments tab on page load (integrate with main tab system)
+    setTimeout(function() {
+        var urlParams = new URLSearchParams(window.location.search);
+        var tabParam = urlParams.get('tab');
+        
+        // If attachments tab is active via URL parameter
+        if (tabParam === 'attachments') {
+            loadAttachments(true);
+        }
+        
+        // Also check if attachments tab is currently visible/active
+        if ($('#attachments-tab').hasClass('active') || $('#attachments-tab').is(':visible')) {
+            loadAttachments(true);
+        }
+        
+        // Check if attachments tab link is active
+        if ($('a[href="#attachments-tab"]').parent().hasClass('active')) {
+            loadAttachments(true);
+        }
+    }, 800); // Slightly longer delay to ensure main tab system is initialized
 });
 
 // Global function for loading attachments
 window.loadAttachments = function(forceRefresh = false) {
-    // Show loading indicator
-    if (forceRefresh) {
+    // Show loading indicator if not already showing content
+    var currentContent = $('#attachments-container').html();
+    if (forceRefresh || currentContent.includes('Loading attachments') || currentContent === '') {
         $('#attachments-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><br><br><p>Loading attachments...</p></div>');
     }
     

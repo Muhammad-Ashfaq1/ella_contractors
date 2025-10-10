@@ -705,6 +705,11 @@ $(document).ready(function() {
                 case 'notes':
                     loadNotes();
                     break;
+                case 'attachments':
+                    if (typeof loadAttachments === 'function') {
+                        loadAttachments(true);
+                    }
+                    break;
                 case 'timeline':
                     loadTimeline();
                     break;
@@ -733,6 +738,11 @@ $(document).ready(function() {
                 break;
             case 'notes':
                 loadNotes();
+                break;
+            case 'attachments':
+                if (typeof loadAttachments === 'function') {
+                    loadAttachments(true);
+                }
                 break;
             case 'timeline':
                 loadTimeline();
@@ -1174,6 +1184,11 @@ function refreshAppointmentData(activeTab = null) {
             case 'notes':
                 loadNotes();
                 break;
+            case 'attachments':
+                if (typeof loadAttachments === 'function') {
+                    loadAttachments(true);
+                }
+                break;
             case 'timeline':
                 loadTimeline();
                 break;
@@ -1190,6 +1205,11 @@ function refreshAppointmentData(activeTab = null) {
                 break;
             case 'notes':
                 loadNotes();
+                break;
+            case 'attachments':
+                if (typeof loadAttachments === 'function') {
+                    loadAttachments(true);
+                }
                 break;
             case 'timeline':
                 loadTimeline();
