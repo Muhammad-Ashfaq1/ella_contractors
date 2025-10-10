@@ -31,7 +31,10 @@ if (!function_exists('get_timeline_action_label')) {
             'note_updated' => _l('timeline_action_note_added'),
             'process_completed' => _l('timeline_action_process_completed'),
             'process_failed' => _l('timeline_action_process_failed'),
-            'appointment_deleted' => _l('timeline_action_appointment_deleted')
+            'appointment_deleted' => _l('timeline_action_appointment_deleted'),
+            // Attachment activities
+            'appointment_activity_attachment_uploaded' => _l('timeline_action_attachment_uploaded'),
+            'appointment_activity_attachment_deleted' => _l('timeline_action_attachment_deleted')
         ];
         
         // Return mapped action or fallback to formatted description key

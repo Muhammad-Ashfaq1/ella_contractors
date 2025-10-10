@@ -30,6 +30,10 @@ $lang['close'] = 'Close';
 $lang['appointment_activity_attachment_uploaded'] = 'Attachment uploaded';
 $lang['appointment_activity_attachment_deleted'] = 'Attachment deleted';
 
+// Timeline action labels (shorter versions for display)
+$lang['timeline_action_attachment_uploaded'] = 'ATTACHMENT UPLOADED';
+$lang['timeline_action_attachment_deleted'] = 'ATTACHMENT DELETED';
+
 // Basic status strings
 $lang['scheduled'] = 'Scheduled';
 $lang['cancelled'] = 'Cancelled';
