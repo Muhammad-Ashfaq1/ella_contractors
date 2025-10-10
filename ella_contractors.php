@@ -17,6 +17,7 @@ hooks()->add_action('admin_init', 'ella_contractors_init_menu');
 
 // Register module assets
 hooks()->add_action('admin_init', 'ella_contractors_init_assets');
+hooks()->add_action('app_admin_head', 'ella_contractors_load_global_css');
 
 // Load timeline helper
 hooks()->add_action('init', 'ella_contractors_load_helpers');
@@ -81,10 +82,15 @@ function ella_contractors_init_menu() {
  * Initialize module assets
  */
 function ella_contractors_init_assets() {
-    $CI = &get_instance();
-    
-    // CSS files are now loaded individually in views where needed
-    // to avoid 404 errors and improve performance
+    // CSS assets are loaded via hook to ensure proper timing
+    // The CSS file is loaded in individual views where needed
+}
+
+/**
+ * Load global CSS for sidebar styling consistency
+ */
+function ella_contractors_load_global_css() {
+    echo '<link href="' . module_dir_url(ELLA_CONTRACTORS_MODULE_NAME, 'assets/css/ella-contractors.css') . '" rel="stylesheet" type="text/css">';
 }
 
 /**
