@@ -20,10 +20,6 @@ function monitorMeasurementsContainer() {
     setInterval(function() {
         var currentContent = container.html();
         if (currentContent !== lastContent) {
-            console.log('🚨 MEASUREMENTS CONTAINER CHANGED!');
-            console.log('Previous length:', lastContent.length);
-            console.log('New length:', currentContent.length);
-            console.log('Call stack:', new Error().stack);
             lastContent = currentContent;
         }
     }, 100);
@@ -107,28 +103,15 @@ function removeEstimateRow(button) {
 
 // Measurements Functions
 function loadMeasurements() {
-    console.log('=== LOAD MEASUREMENTS CALLED ===');
-    console.log('Appointment ID:', appointmentId);
-    console.log('Modal just closed:', modalJustClosed);
-    console.log('Modal is opening:', modalIsOpening);
-    console.log('Measurement saved:', measurementSaved);
-    console.log('Force reload:', forceReload);
-    console.log('Current measurements container content length:', $('#measurements-container').html().length);
     
     // Reset flags
     if (forceReload) {
-        console.log('🚀 Force reload requested, proceeding with normal load');
         forceReload = false;
     }
     if (modalIsOpening) {
-        console.log('✅ Modal is opening, resetting flag');
         modalIsOpening = false;
     }
     
-    console.log('✅ Loading measurements for appointment:', appointmentId);
-    
-    // Show loading indicator
-    console.log('🔄 Setting loading indicator in measurements container');
     $('#measurements-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading measurements...</p></div>');
     
     $.ajax({
@@ -139,11 +122,9 @@ function loadMeasurements() {
         },
         dataType: 'json',
         success: function(response) {
-            console.log('Measurements response:', response);
             if (response && response.success) {
                 displayMeasurements(response.data);
             } else {
-                console.log('No measurements found or response failed');
                 var emptyHtml = '<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No measurements found for this appointment.</p></div>';
                 $('#measurements-container').html(emptyHtml);
                 // Store empty state as well
@@ -158,12 +139,9 @@ function loadMeasurements() {
 }
 
 function displayMeasurements(measurements) {
-    console.log('=== DISPLAY MEASUREMENTS CALLED ===');
-    console.log('Measurements count:', measurements.length);
-    console.log('Call stack:', new Error().stack);
+ 
     
     if (measurements.length === 0) {
-        console.log('📝 No measurements found, showing empty state');
         $('#measurements-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No measurements found for this appointment.</p></div>');
         return;
     }
@@ -208,7 +186,7 @@ function displayMeasurements(measurements) {
         html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + sidingCount + ' items</strong></td>';
         html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + roofingCount + ' items</strong></td>';
         html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;">';
-        html += '<div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">';
+        html += '<div style="display: flex; flex-direction: row; gap: 4px; align-items: center; justify-content: center;">';
         html += '<button class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="editMeasurement(' + measurement.id + ')" title="Edit Measurement"><i class="fa fa-edit"></i></button>';
         html += '<button class="btn btn-sm" style="background-color: #dc3545; border: 1px solid #dc3545; color: white; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="deleteMeasurement(' + measurement.id + ')" title="Delete Measurement"><i class="fa fa-trash"></i></button>';
         html += '</div>';
@@ -217,29 +195,20 @@ function displayMeasurements(measurements) {
     });
 
     html += '</tbody></table></div>';
-    console.log('📝 Displaying measurements HTML, length:', html.length);
     
     // Store the content before displaying it
     lastMeasurementsContent = html;
-    console.log('💾 Stored measurements content for potential restoration');
     
     $('#measurements-container').html(html);
-    console.log('✅ Measurements container updated with data');
 }
 
-function openMeasurementModal(measurementId = null) {
-    console.log('=== OPENING MEASUREMENT MODAL ===');
-    console.log('Measurement ID:', measurementId);
-    
+function openMeasurementModal(measurementId = null) {    
     // Set flag to indicate modal is opening
     modalIsOpening = true;
     
     // Reset the flags when opening modal
     measurementSaved = false;
     modalJustClosed = false;
-    console.log('Reset measurementSaved flag to:', measurementSaved);
-    console.log('Reset modalJustClosed flag to:', modalJustClosed);
-    console.log('Set modalIsOpening flag to:', modalIsOpening);
     
     // Store appointment ID before resetting form
     var appointmentId = $('input[name="appointment_id"]').val();
@@ -375,7 +344,6 @@ function openMeasurementModal(measurementId = null) {
     // Reset modal opening flag after a short delay in case modal doesn't open
     setTimeout(function() {
         if (modalIsOpening) {
-            console.log('⚠️ Modal opening flag still true after timeout, resetting');
             modalIsOpening = false;
         }
     }, 2000);
@@ -391,7 +359,6 @@ $(document).ready(function() {
     
     // Handle modal show event - capture current state
     $('#measurementModal').on('show.bs.modal', function() {
-        console.log('=== MEASUREMENT MODAL SHOWING ===');
         
         // Store current measurements content before opening modal
         var currentContent = $('#measurements-container').html();
@@ -399,23 +366,16 @@ $(document).ready(function() {
             !currentContent.includes('Loading measurements') &&
             !currentContent.includes('fa-spinner')) {
             lastMeasurementsContent = currentContent;
-            console.log('💾 Stored current measurements content (length:', currentContent.length, ')');
         }
         
         // Ensure measurements tab is visible
         if (!$('#measurements-tab').hasClass('active')) {
-            console.log('⚠️ Measurements tab not active, activating it');
             $('a[href="#measurements-tab"]').tab('show');
         }
     });
     
     $('#measurementModal').on('hidden.bs.modal', function() {
-        console.log('=== MEASUREMENT MODAL CLOSED ===');
-        console.log('Measurement saved flag:', measurementSaved);
-        console.log('Modal is opening flag:', modalIsOpening);
-        console.log('Current active tab:', typeof currentActiveTab !== 'undefined' ? currentActiveTab : 'undefined');
-        
-        // Reset modal opening flag
+      // Reset modal opening flag
         modalIsOpening = false;
         
         // Set flag to indicate modal just closed
@@ -423,7 +383,6 @@ $(document).ready(function() {
         
         if (measurementSaved) {
             // Only reload if measurement was actually saved
-            console.log('✅ Measurement was saved, reloading...');
             
             // Ensure measurements tab is shown
             setTimeout(function() {
@@ -432,10 +391,8 @@ $(document).ready(function() {
                 
                 // Reload measurements data
                 if (typeof refreshAppointmentData === 'function') {
-                    console.log('Using refreshAppointmentData()');
                     refreshAppointmentData('measurements');
                 } else {
-                    console.log('Using loadMeasurements()');
                     forceReload = true;
                     loadMeasurements();
                 }
@@ -443,13 +400,8 @@ $(document).ready(function() {
             
             measurementSaved = false; // Reset flag
         } else {
-            console.log('❌ Modal was cancelled/closed without saving');
-            console.log('🔄 Ensuring measurements tab is visible and data is restored');
-            
             // Force show measurements tab and restore data
             setTimeout(function() {
-                console.log('🔄 Activating measurements tab after modal cancel');
-                
                 // Ensure the measurements tab is active and visible
                 $('ul.nav-tabs li').removeClass('active');
                 $('ul.nav-tabs li:first').addClass('active');
@@ -462,10 +414,8 @@ $(document).ready(function() {
                 // Restore previous content if available, otherwise reload
                 if (lastMeasurementsContent && lastMeasurementsContent.length > 0 && 
                     !lastMeasurementsContent.includes('Loading measurements')) {
-                    console.log('✅ Restoring previous measurements content');
                     $('#measurements-container').html(lastMeasurementsContent);
                 } else {
-                    console.log('🔄 No valid content to restore, reloading measurements');
                     forceReload = true;
                     loadMeasurements();
                 }
@@ -476,8 +426,6 @@ $(document).ready(function() {
         setTimeout(function() {
             modalJustClosed = false;
         }, 1000);
-        
-        console.log('=== END MODAL CLOSE ===');
     });
 });
 
@@ -993,10 +941,7 @@ $('#saveMeasurement').on('click', function() {
         data[field.name] = field.value;
     });
     
-    // Debug: Log measurement ID
-    console.log('Main Save - Measurement ID from form:', data.id);
-    
-    // Collect data from siding and roofing estimate rows
+  // Collect data from siding and roofing estimate rows
     var sidingMeasurements = [];
     var roofingMeasurements = [];
     var hasValidMeasurement = false;
@@ -1065,9 +1010,6 @@ $('#saveMeasurement').on('click', function() {
     // Add CSRF token to data
     data[csrf_token_name] = csrf_hash;
     
-    // Debug: Log the data being sent
-    console.log('Sending measurement data:', data);
-    
     // Save via AJAX using measurements controller
     $.ajax({
         url: admin_url + 'ella_contractors/measurements/save',
@@ -1078,22 +1020,14 @@ $('#saveMeasurement').on('click', function() {
             // Reset button
             submitBtn.prop('disabled', false).text(originalText);
             
-            // Debug: Log the response
-            console.log('Save measurement response:', response);
-            
             if (response.success) {
-                console.log('=== MEASUREMENT SAVE SUCCESS ===');
-                console.log('Setting measurementSaved flag to true');
                 measurementSaved = true; // Set flag to indicate successful save
-                console.log('measurementSaved flag is now:', measurementSaved);
                 alert_float('success', 'Measurement saved successfully!');
                 $('#measurementModal').modal('hide');
                 // Use global refresh function to maintain current tab
                 if (typeof refreshAppointmentData === 'function') {
-                    console.log('Using refreshAppointmentData() for save success');
                     refreshAppointmentData();
                 } else {
-                    console.log('Using loadMeasurements() for save success');
                     loadMeasurements();
                 }
             } else {
@@ -1144,7 +1078,6 @@ $(document).on('click', '#js-save-windows, #js-save-doors', function() {
         }
         if (row.data('measurement-id')) { item.id = row.data('measurement-id'); }
         if (item.name) { 
-            console.log('Collected item for', category, ':', item);
             bulk[category].push(item); 
         }
     });
@@ -1157,14 +1090,12 @@ $(document).on('click', '#js-save-windows, #js-save-doors', function() {
     
     // Include measurement ID if editing existing measurement
     var measurementId = $('#measurement_id').val();
-    console.log('Windows/Doors Save - Measurement ID:', measurementId);
     if (measurementId) {
         payload.id = measurementId;
     }
     
     payload[csrf_token_name] = csrf_hash;
     
-    console.log('Sending payload for', which, ':', payload);
 
     $.ajax({
         url: admin_url + 'ella_contractors/measurements/save',
@@ -1177,18 +1108,14 @@ $(document).on('click', '#js-save-windows, #js-save-doors', function() {
                 
                 // Parse the attributes from the response
                 var savedList = [];
-                console.log('Response data:', resp.data);
                 if (resp.data && resp.data.attributes) {
                     // New response format with attributes directly
                     savedList = resp.data.attributes[which] || [];
-                    console.log('Saved list for', which, ':', savedList);
                 } else if (resp.data && resp.data.attributes_json) {
                     // Fallback to old format
                     try {
                         var attributes = JSON.parse(resp.data.attributes_json);
-                        console.log('Parsed attributes:', attributes);
                         savedList = attributes[which] || [];
-                        console.log('Saved list for', which, ':', savedList);
                     } catch (e) {
                         console.error('Error parsing attributes_json:', e);
                     }
@@ -1197,9 +1124,7 @@ $(document).on('click', '#js-save-windows, #js-save-doors', function() {
                 // Update the table with saved data
                 var tbody = $('#' + which + '-tbody');
                 tbody.html('');
-                console.log('Updating table for', which, 'with', savedList.length, 'items');
                 savedList.forEach(function(item) { 
-                    console.log('Adding item to table:', item);
                     appendInlineRow(which, item); 
                 });
                 
@@ -1228,7 +1153,6 @@ function saveMeasurementAjax(formData, callback) {
     formData[csrfData.token_name] = csrfData.hash;
     
     // Debug logging
-    console.log('Sending AJAX request with data:', formData);
     
     $.ajax({
         url: admin_url + 'ella_contractors/measurements/save',
@@ -1236,7 +1160,6 @@ function saveMeasurementAjax(formData, callback) {
         data: formData,
         dataType: 'json',
         success: function(response) {
-            console.log('AJAX Response:', response);
             if (response.success) {
                 if (typeof callback === 'function') {
                     callback(true, response);
@@ -1288,9 +1211,7 @@ function buildLevelOptions(selected) {
 }
 
 function appendInlineRow(category, existingData) {
-    console.log('appendInlineRow called with category:', category, 'data:', existingData);
     var tbody = $('#' + category + '-tbody');
-    console.log('Found tbody:', tbody.length, 'tbody element:', tbody[0]);
     
     if (tbody.length === 0) {
         console.error('Could not find tbody for category:', category);
@@ -1311,9 +1232,7 @@ function appendInlineRow(category, existingData) {
     row += '<td><button class="btn btn-danger btn-xs" onclick="removeTableRow(\'' + rowId + '\')" title="Remove"><i class="fa fa-trash"></i></button></td>';
     row += '</tr>';
     
-    console.log('Appending row:', row);
     tbody.append(row);
-    console.log('Row appended successfully. Tbody now has', tbody.find('tr').length, 'rows');
 }
 
 // Convert existing text row into inline editable inputs
