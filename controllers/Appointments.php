@@ -69,6 +69,9 @@ class Appointments extends AdminController
         $data['clients'] = $this->clients_model->get();
         $data['leads'] = $this->leads_model->get();
         
+        // Load language file for view
+        $this->lang->load('ella_contractors/ella_contractors', 'english');
+        
         // Timeline activities will be loaded via AJAX when tab is clicked
         
         $this->load->view('appointments/view', $data);
