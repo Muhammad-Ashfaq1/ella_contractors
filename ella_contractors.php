@@ -91,6 +91,58 @@ function ella_contractors_init_assets() {
  */
 function ella_contractors_load_global_css() {
     echo '<link href="' . module_dir_url(ELLA_CONTRACTORS_MODULE_NAME, 'assets/css/ella-contractors.css') . '" rel="stylesheet" type="text/css">';
+    
+    // Add JavaScript fix for EllaContractor icon red color issue
+    echo '<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Fix EllaContractor icon red color issue
+        function fixEllaContractorIcon() {
+            var ellaIcon = document.querySelector("#side-menu li.menu-item-ella_contractors a img[src*=\"ella-con1.png\"]");
+            if (ellaIcon) {
+                // Remove any problematic classes or inline styles
+                ellaIcon.style.filter = "none";
+                ellaIcon.style.webkitFilter = "none";
+                ellaIcon.style.mozFilter = "none";
+                ellaIcon.style.msFilter = "none";
+                ellaIcon.style.background = "none";
+                ellaIcon.style.backgroundColor = "transparent";
+                ellaIcon.style.color = "inherit";
+                ellaIcon.style.opacity = "1";
+                ellaIcon.style.mixBlendMode = "normal";
+                ellaIcon.style.webkitBackgroundClip = "unset";
+                ellaIcon.style.backgroundClip = "unset";
+                
+                // Ensure proper dimensions and spacing
+                ellaIcon.style.width = "18px";
+                ellaIcon.style.height = "18px";
+                ellaIcon.style.objectFit = "contain";
+                ellaIcon.style.marginRight = "16px";
+                ellaIcon.style.display = "block";
+                ellaIcon.style.float = "left";
+            }
+        }
+        
+        // Run immediately
+        fixEllaContractorIcon();
+        
+        // Run again after a short delay to catch dynamically loaded content
+        setTimeout(fixEllaContractorIcon, 100);
+        
+        // Run when menu items are updated
+        var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === "childList") {
+                    fixEllaContractorIcon();
+                }
+            });
+        });
+        
+        var menuContainer = document.querySelector("#side-menu");
+        if (menuContainer) {
+            observer.observe(menuContainer, { childList: true, subtree: true });
+        }
+    });
+    </script>';
 }
 
 /**

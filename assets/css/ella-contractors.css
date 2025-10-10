@@ -2,7 +2,9 @@
 
 /* Fix the EllaContractors icon - override any problematic styling */
 #side-menu li.menu-item-ella_contractors a img[src*="ella-con1.png"],
-#side-menu li.menu-item-ella_contractors a img.menu-icon[src*="ella-con1.png"] {
+#side-menu li.menu-item-ella_contractors a img.menu-icon[src*="ella-con1.png"],
+#side-menu li.menu-item-ella_contractors a img.menu-icon,
+#side-menu li.menu-item-ella_contractors a img {
     width: 18px !important;
     height: 18px !important;
     object-fit: contain !important;
@@ -13,22 +15,52 @@
     filter: none !important;
     background: none !important;
     background-color: transparent !important;
-    /* Override any color modifications */
+    /* Override any color modifications - this is key for fixing red color */
     color: inherit !important;
     opacity: 1 !important;
     /* Ensure no border or outline */
     border: none !important;
     outline: none !important;
+    /* Additional overrides to prevent color changes */
+    -webkit-filter: none !important;
+    -moz-filter: none !important;
+    -ms-filter: none !important;
+    /* Prevent any theme or CSS framework from changing the image */
+    mix-blend-mode: normal !important;
 }
 
 /* Additional override for any theme-specific styling */
 .menu-item-ella_contractors img[src*="ella-con1.png"],
-.menu-item-ella_contractors .menu-icon[src*="ella-con1.png"] {
+.menu-item-ella_contractors .menu-icon[src*="ella-con1.png"],
+.menu-item-ella_contractors .menu-icon,
+.menu-item-ella_contractors img {
     filter: none !important;
     background: none !important;
     background-color: transparent !important;
     color: inherit !important;
     opacity: 1 !important;
+    -webkit-filter: none !important;
+    -moz-filter: none !important;
+    -ms-filter: none !important;
+    mix-blend-mode: normal !important;
+}
+
+/* Maximum specificity override to ensure EllaContractor icon is not red */
+body #side-menu li.menu-item-ella_contractors a img.menu-icon[src*="ella-con1.png"],
+body.admin #side-menu li.menu-item-ella_contractors a img.menu-icon,
+body #side-menu li.menu-item-ella_contractors a img[src*="ella-con1.png"] {
+    filter: none !important;
+    -webkit-filter: none !important;
+    -moz-filter: none !important;
+    -ms-filter: none !important;
+    background: none !important;
+    background-color: transparent !important;
+    color: inherit !important;
+    opacity: 1 !important;
+    mix-blend-mode: normal !important;
+    /* Ensure original image colors are preserved */
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
 }
 
 /* Fix collapsed sidebar state */
