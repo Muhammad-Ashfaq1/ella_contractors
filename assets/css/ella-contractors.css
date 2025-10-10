@@ -1,15 +1,34 @@
 /* Ella Contractors Module Styles */
 
 /* Fix the EllaContractors icon - override any problematic styling */
-#side-menu li.menu-item-ella_contractors a img[src*="ella-con1.png"] {
+#side-menu li.menu-item-ella_contractors a img[src*="ella-con1.png"],
+#side-menu li.menu-item-ella_contractors a img.menu-icon[src*="ella-con1.png"] {
     width: 18px !important;
     height: 18px !important;
     object-fit: contain !important;
     margin-right: 16px !important;
+    display: block !important;
+    float: left !important;
     /* Remove any filters or background colors that might cause red appearance */
     filter: none !important;
     background: none !important;
     background-color: transparent !important;
+    /* Override any color modifications */
+    color: inherit !important;
+    opacity: 1 !important;
+    /* Ensure no border or outline */
+    border: none !important;
+    outline: none !important;
+}
+
+/* Additional override for any theme-specific styling */
+.menu-item-ella_contractors img[src*="ella-con1.png"],
+.menu-item-ella_contractors .menu-icon[src*="ella-con1.png"] {
+    filter: none !important;
+    background: none !important;
+    background-color: transparent !important;
+    color: inherit !important;
+    opacity: 1 !important;
 }
 
 /* Fix collapsed sidebar state */
