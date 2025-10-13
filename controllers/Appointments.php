@@ -389,7 +389,7 @@ class Appointments extends AdminController
             'phone' => $this->input->post('phone'),
             'address' => $this->input->post('address'),
             'notes' => $this->input->post('notes'),
-            'type_id' => $this->input->post('type_id') ?: 0,
+            'type_id' => $this->input->post('type_id') ?: null,
             'appointment_status' => $this->input->post('status') ?: 'scheduled',
             'source' => 'ella_contractor',
             'send_reminder' => $this->input->post('send_reminder') ? 1 : 0
@@ -419,9 +419,15 @@ class Appointments extends AdminController
                         'message' => 'Appointment updated successfully'
                     ]);
                 } else {
+                    $db_error = $this->db->error();
+                    $error_message = 'Failed to update appointment.';
+                    if (!empty($db_error['message'])) {
+                        $error_message .= ' Error: ' . $db_error['message'];
+                        log_message('error', 'Appointment Update Error - Query: ' . $this->db->last_query() . ' | Error: ' . $db_error['message']);
+                    }
                     echo json_encode([
                         'success' => false,
-                        'message' => 'Failed to update appointment. Database error: ' . $this->db->last_query()
+                        'message' => $error_message
                     ]);
                 }
             } else {
@@ -447,9 +453,15 @@ class Appointments extends AdminController
                         'appointment_id' => $appointment_id
                     ]);
                 } else {
+                    $db_error = $this->db->error();
+                    $error_message = 'Failed to create appointment.';
+                    if (!empty($db_error['message'])) {
+                        $error_message .= ' Error: ' . $db_error['message'];
+                        log_message('error', 'Appointment Creation Error - Query: ' . $this->db->last_query() . ' | Error: ' . $db_error['message']);
+                    }
                     echo json_encode([
                         'success' => false,
-                        'message' => 'Failed to create appointment. Database error: ' . $this->db->last_query()
+                        'message' => $error_message
                     ]);
                 }
             }
