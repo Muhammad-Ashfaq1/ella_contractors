@@ -71,7 +71,20 @@ class Ella_appointments_model extends App_Model
     {
         $data['created_by'] = get_staff_user_id();
         
+        // Ensure type_id is valid (NULL if empty/0, otherwise keep the value)
+        if (isset($data['type_id']) && (empty($data['type_id']) || $data['type_id'] == 0)) {
+            $data['type_id'] = null;
+        }
+        
         $this->db->insert(db_prefix() . 'appointly_appointments', $data);
+        
+        // Check for database errors
+        if ($this->db->error()['code'] != 0) {
+            $error = $this->db->error();
+            log_message('error', 'Appointment Creation Failed | Error: ' . $error['message']);
+            return false;
+        }
+        
         $appointment_id = $this->db->insert_id();
         
         if ($appointment_id) {
@@ -115,24 +128,38 @@ class Ella_appointments_model extends App_Model
                 ];
             }
         }
+
+        // Ensure type_id is valid (NULL if empty/0, otherwise keep the value)
+        if (isset($data['type_id']) && (empty($data['type_id']) || $data['type_id'] == 0)) {
+            $data['type_id'] = null;
+        }
         
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'appointly_appointments', $data);
         
-        if ($this->db->affected_rows() > 0) {
-            // Log general activity
-            log_activity('Appointment Updated [ID: ' . $id . ', Subject: ' . $data['subject'] . ']');
-            
-            // Log detailed appointment activity using trait
-            $this->log_appointment_updated($id, $data['subject'], $changes);
-            
-            // Check if status changed specifically
-            if (isset($changes['appointment_status'])) {
-                $this->log_appointment_status_changed(
-                    $id, 
-                    $changes['appointment_status']['old'], 
-                    $changes['appointment_status']['new']
-                );
+        // Check for database errors
+        if ($this->db->error()['code'] != 0) {
+            $error = $this->db->error();
+            log_message('error', 'Appointment Update Failed - ID: ' . $id . ' | Error: ' . $error['message']);
+            return false;
+        }
+        
+        if ($this->db->affected_rows() >= 0) {
+            // Log general activity (only if there were actual changes)
+            if (!empty($changes)) {
+                log_activity('Appointment Updated [ID: ' . $id . ', Subject: ' . $data['subject'] . ']');
+                
+                // Log detailed appointment activity using trait
+                $this->log_appointment_updated($id, $data['subject'], $changes);
+                
+                // Check if status changed specifically
+                if (isset($changes['appointment_status'])) {
+                    $this->log_appointment_status_changed(
+                        $id, 
+                        $changes['appointment_status']['old'], 
+                        $changes['appointment_status']['new']
+                    );
+                }
             }
             
             return true;

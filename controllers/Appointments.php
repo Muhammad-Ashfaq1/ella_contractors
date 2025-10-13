@@ -389,7 +389,7 @@ class Appointments extends AdminController
             'phone' => $this->input->post('phone'),
             'address' => $this->input->post('address'),
             'notes' => $this->input->post('notes'),
-            'type_id' => $this->input->post('type_id') ?: 0,
+            'type_id' => $this->input->post('type_id') ?: null,
             'appointment_status' => $this->input->post('status') ?: 'scheduled',
             'source' => 'ella_contractor',
             'send_reminder' => $this->input->post('send_reminder') ? 1 : 0
@@ -419,9 +419,15 @@ class Appointments extends AdminController
                         'message' => 'Appointment updated successfully'
                     ]);
                 } else {
+                    $db_error = $this->db->error();
+                    $error_message = 'Failed to update appointment.';
+                    if (!empty($db_error['message'])) {
+                        $error_message .= ' Error: ' . $db_error['message'];
+                        log_message('error', 'Appointment Update Error - Query: ' . $this->db->last_query() . ' | Error: ' . $db_error['message']);
+                    }
                     echo json_encode([
                         'success' => false,
-                        'message' => 'Failed to update appointment. Database error: ' . $this->db->last_query()
+                        'message' => $error_message
                     ]);
                 }
             } else {
@@ -447,9 +453,15 @@ class Appointments extends AdminController
                         'appointment_id' => $appointment_id
                     ]);
                 } else {
+                    $db_error = $this->db->error();
+                    $error_message = 'Failed to create appointment.';
+                    if (!empty($db_error['message'])) {
+                        $error_message .= ' Error: ' . $db_error['message'];
+                        log_message('error', 'Appointment Creation Error - Query: ' . $this->db->last_query() . ' | Error: ' . $db_error['message']);
+                    }
                     echo json_encode([
                         'success' => false,
-                        'message' => 'Failed to create appointment. Database error: ' . $this->db->last_query()
+                        'message' => $error_message
                     ]);
                 }
             }
@@ -1967,6 +1979,44 @@ startxref
         $this->load->view('admin/appointments/timeline', [
             'appointment' => $appointment,
             'timeline_activities' => $timeline_activities
+        ]);
+    }
+
+    /**
+     * Get attendees for appointment (AJAX) - for display refresh
+     */
+    public function get_attendees($appointment_id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $attendees = $this->appointments_model->get_appointment_attendees($appointment_id);
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $attendees
+        ]);
+    }
+
+    /**
+     * Get staff members for attendees dropdown (AJAX)
+     */
+    public function get_staff()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+        $this->db->select('staffid, firstname, lastname, email');
+        $this->db->from(db_prefix() . 'staff');
+        $this->db->where('active', 1);
+        $this->db->order_by('firstname', 'ASC');
+        
+        $staff = $this->db->get()->result_array();
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $staff
         ]);
     }
     
