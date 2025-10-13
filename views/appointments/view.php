@@ -251,8 +251,51 @@ button.delete-btn {
                         
                         <div class="row">
                             <div class="col-md-8">
-                                <h3 class="no-margin appointment-subject" title="<?php echo htmlspecialchars($appointment->subject); ?>"><?php echo $appointment->subject; ?></h3>
-                                <p class="text-muted"><?php echo _l('appointment_details'); ?></p>
+                                <h3 class="no-margin appointment-subject" title="<?php echo htmlspecialchars($appointment->subject); ?>">
+                                    (<?php echo $appointment->id; ?>) <?php echo $appointment->subject; ?>
+                                </h3>
+                                <p class="text-muted">
+                                    <?php 
+                                    // Format: Monday | September 15th, 2025 | 2hr 30m
+                                    $date_obj = DateTime::createFromFormat('Y-m-d', $appointment->date);
+                                    if ($date_obj) {
+                                        // Get day of week
+                                        echo $date_obj->format('l') . ' | ';
+                                        // Get formatted date
+                                        echo $date_obj->format('F jS, Y');
+                                    } else {
+                                        echo _d($appointment->date);
+                                    }
+                                    
+                                    // Calculate and display duration
+                                    if (!empty($appointment->start_hour) && !empty($appointment->end_time)) {
+                                        $start_time = DateTime::createFromFormat('H:i:s', $appointment->start_hour);
+                                        if (!$start_time) {
+                                            $start_time = DateTime::createFromFormat('H:i', $appointment->start_hour);
+                                        }
+                                        
+                                        $end_time = DateTime::createFromFormat('H:i:s', $appointment->end_time);
+                                        if (!$end_time) {
+                                            $end_time = DateTime::createFromFormat('H:i', $appointment->end_time);
+                                        }
+                                        
+                                        if ($start_time && $end_time) {
+                                            $interval = $start_time->diff($end_time);
+                                            $hours = $interval->h + ($interval->days * 24);
+                                            $minutes = $interval->i;
+                                            
+                                            echo ' | ';
+                                            if ($hours > 0) {
+                                                echo $hours . 'hr';
+                                            }
+                                            if ($minutes > 0) {
+                                                if ($hours > 0) echo ' ';
+                                                echo $minutes . 'm';
+                                            }
+                                        }
+                                    }
+                                    ?>
+                                </p>
                             </div>
                             <div class="col-md-4 text-right">
                                 <!-- Status Display -->
@@ -307,91 +350,10 @@ button.delete-btn {
                             </div>
                         </div>
                 
+                        <!-- Lead Information Section -->
                         <div class="row">
                             <div class="col-md-6">
-                                <h5><?php echo _l('basic_information'); ?></h5>
-                                <table class="table table-condensed">
-                                    <tr>
-                                        <td><strong><?php echo _l('id'); ?>:</strong></td>
-                                        <td><?php echo $appointment->id; ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong><?php echo _l('appointment_subject'); ?>:</strong></td>
-                                        <td><?php echo $appointment->subject; ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong><?php echo _l('appointment_start_datetime'); ?>:</strong></td>
-                                        <td>
-                                            <?php 
-                                            // Format date as "July 5th, 2025" to match listing format
-                                            $date_obj = DateTime::createFromFormat('Y-m-d', $appointment->date);
-                                            if ($date_obj) {
-                                                echo $date_obj->format('F jS, Y');
-                                            } else {
-                                                echo _d($appointment->date);
-                                            }
-                                            
-                                            // Add time underneath
-                                            if (!empty($appointment->start_hour)) {
-                                                // Format time in 12-hour format with AM/PM
-                                                $time_obj = DateTime::createFromFormat('H:i:s', $appointment->start_hour);
-                                                if (!$time_obj) {
-                                                    $time_obj = DateTime::createFromFormat('H:i', $appointment->start_hour);
-                                                }
-                                                
-                                                if ($time_obj) {
-                                                    $time_formatted = strtolower($time_obj->format('g:ia'));
-                                                } else {
-                                                    // Fallback if parsing fails
-                                                    $time_formatted = htmlspecialchars($appointment->start_hour);
-                                                }
-                                                
-                                                echo '<br><small>' . $time_formatted . '</small>';
-                                            }
-                                            ?>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong><?php echo _l('appointment_end_datetime'); ?>:</strong></td>
-                                        <td>
-                                            <?php 
-                                            // Use end_date if available, otherwise use start date
-                                            $end_date = $appointment->end_date ?? $appointment->date;
-                                            $end_time = $appointment->end_hour ?? $appointment->start_hour;
-                                            
-                                            // Format date as "July 5th, 2025" to match listing format
-                                            $end_date_obj = DateTime::createFromFormat('Y-m-d', $end_date);
-                                            if ($end_date_obj) {
-                                                echo $end_date_obj->format('F jS, Y');
-                                            } else {
-                                                echo _d($end_date);
-                                            }
-                                            
-                                            // Add time underneath
-                                            if (!empty($end_time)) {
-                                                // Format time in 12-hour format with AM/PM
-                                                $end_time_obj = DateTime::createFromFormat('H:i:s', $end_time);
-                                                if (!$end_time_obj) {
-                                                    $end_time_obj = DateTime::createFromFormat('H:i', $end_time);
-                                                }
-                                                
-                                                if ($end_time_obj) {
-                                                    $end_time_formatted = strtolower($end_time_obj->format('g:ia'));
-                                                } else {
-                                                    // Fallback if parsing fails
-                                                    $end_time_formatted = htmlspecialchars($end_time);
-                                                }
-                                                
-                                                echo '<br><small>' . $end_time_formatted . '</small>';
-                                            }
-                                            ?>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <h5><?php echo _l('contact_information'); ?></h5>
+                                <h5>Lead Information</h5>
                                 <table class="table table-condensed">
                                     <tr>
                                         <td><strong><?php echo _l('client'); ?>:</strong></td>
