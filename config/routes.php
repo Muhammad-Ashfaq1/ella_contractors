@@ -18,7 +18,9 @@ $route[$module_name . '/activate'] = $module_name . '/activate_module';
 
 // Public Contract View Routes removed
 
-// Presentation routes removed - functionality disabled
+$route[$module_name . '/presentations'] = $module_name . '/presentations';
+$route[$module_name . '/create_folder'] = $module_name . '/create_folder';
+$route[$module_name . '/upload_presentation'] = $module_name . '/upload_presentation';
 
 // Measurement routes (for appointment view only)
 $route[$module_name . '/measurements/save'] = 'Measurements/save';
@@ -54,7 +56,6 @@ $route[$module_name . '/appointments/table'] = 'Appointments/table';
 $route[$module_name . '/appointments/get_appointment_data'] = 'Appointments/get_appointment_data';
 $route[$module_name . '/appointments/save_ajax'] = 'Appointments/save_ajax';
 $route[$module_name . '/appointments/delete_ajax'] = 'Appointments/delete_ajax';
-$route[$module_name . '/appointments/upload_attachment/(:num)'] = 'Appointments/upload_attachment/$1';
 $route[$module_name . '/appointments/download_attachment/(:num)'] = 'Appointments/download_attachment/$1';
 $route[$module_name . '/appointments/get_appointment_attachments/(:num)'] = 'Appointments/get_appointment_attachments/$1';
 $route[$module_name . '/appointments/delete_appointment_attachment/(:num)'] = 'Appointments/delete_appointment_attachment/$1';

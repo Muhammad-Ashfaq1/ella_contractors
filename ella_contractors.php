@@ -49,7 +49,19 @@ function ella_contractors_init_menu() {
                 'icon' => 'fa fa-calendar-check-o',
                 'position' => 10,
             ],
-            // Presentations menu item removed - functionality disabled
+            // [
+            //     'slug' => 'ella_contractors_measurements',
+            //     'name' => 'Measurements',
+            //     'href' => admin_url('ella_contractors/measurements'),
+            //     'icon' => 'fa fa-square-o',
+            // ],
+            [
+                'slug' => 'ella_contractors_presentations',
+                'name' => 'Presentations',
+                'href' => admin_url('ella_contractors/presentations'),
+                'icon' => 'fa fa-file-powerpoint-o',
+                'position' => 20,
+            ],
             [
                 'slug' => 'ella_contractors_line_items',
                 'name' => 'Service Items',
