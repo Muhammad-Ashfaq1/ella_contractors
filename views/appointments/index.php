@@ -728,6 +728,11 @@ function resetAppointmentModal() {
     $('#appointmentModalLabel').text('Create Appointment');
     $('#contact_id').html('<option value="">Select Client/Lead</option>');
     $('#contact_id').selectpicker('val', '');
+    
+    // Reset attendees without losing options (just clear selection)
+    $('#attendees').selectpicker('val', []);
+    
+    // Refresh all selectpickers
     $('.selectpicker').selectpicker('refresh');
     
     // Clear uploaded files
