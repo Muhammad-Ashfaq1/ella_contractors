@@ -2,6 +2,21 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
+/**
+ * PRESENTATION FUNCTIONALITY DISABLED
+ * 
+ * The handle_ella_media_upload function has been commented out as presentations
+ * functionality has been removed from the ella_contractors module.
+ * 
+ * Appointment attachments use their own upload handler in the Appointments controller
+ * (handle_appointment_file_upload method), so this helper is no longer needed.
+ * 
+ * If you need to restore presentations functionality in the future, uncomment the
+ * function below and restore the related controller methods, views, and routes.
+ */
+
+/* 
+// COMMENTED OUT - PRESENTATION FUNCTIONALITY REMOVED
 if (!function_exists('handle_ella_media_upload')) {
     function handle_ella_media_upload($folder_id, $lead_id = null, $is_default = 0, $active = 1, $index_name = 'file') {
         $CI = &get_instance();
@@ -106,3 +121,5 @@ if (!function_exists('handle_ella_media_upload')) {
         return $uploaded_files;
     }
 }
+*/
+
