@@ -390,18 +390,27 @@ button.delete-btn {
                         </div>
                     
                         
-                        <?php if(!empty($attendees)): ?>
                         <div class="row">
                             <div class="col-md-12">
-                                <h5><?php echo _l('attendees'); ?></h5>
-                                <ul class="list-unstyled">
-                                    <?php foreach($attendees as $attendee): ?>
-                                        <li><i class="fa fa-user"></i> <?php echo $attendee['name']; ?></li>
-                                    <?php endforeach; ?>
-                                </ul>
+                                <h5>
+                                    <?php echo _l('attendees'); ?>
+                                    <button class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px;" onclick="editAppointment(<?php echo $appointment->id; ?>)" title="Edit Attendees">
+                                        <i class="fa fa-edit"></i>
+                                    </button>
+                                </h5>
+                                <div id="attendees-container">
+                                    <?php if(!empty($attendees)): ?>
+                                        <ul class="list-unstyled">
+                                            <?php foreach($attendees as $attendee): ?>
+                                                <li><i class="fa fa-user"></i> <?php echo $attendee['name']; ?></li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    <?php else: ?>
+                                        <p class="text-muted">No attendees assigned</p>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
-                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -1239,6 +1248,66 @@ function refreshAppointmentData(activeTab = null) {
     }
 }
 
+// Load staff members for attendees dropdown
+function loadStaffForAttendees() {
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_staff',
+        type: 'GET',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success && response.data) {
+                var options = '';
+                response.data.forEach(function(staff) {
+                    options += `<option value="${staff.staffid}">${staff.firstname} ${staff.lastname}</option>`;
+                });
+                $('#attendees').html(options);
+                $('#attendees').selectpicker('refresh');
+            } else {
+                $('#attendees').html('<option value="">Error loading staff members</option>');
+                $('#attendees').selectpicker('refresh');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading staff members:', error);
+            $('#attendees').html('<option value="">Error loading staff members</option>');
+            $('#attendees').selectpicker('refresh');
+        }
+    });
+}
+
+// Attendees Display Refresh Function
+function loadAttendeesDisplay(appointmentId) {
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_attendees/' + appointmentId,
+        type: 'GET',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                var attendeesHtml = '';
+                if (response.data && response.data.length > 0) {
+                    attendeesHtml = '<ul class="list-unstyled">';
+                    response.data.forEach(function(attendee) {
+                        attendeesHtml += `<li><i class="fa fa-user"></i> ${attendee.name}</li>`;
+                    });
+                    attendeesHtml += '</ul>';
+                } else {
+                    attendeesHtml = '<p class="text-muted">No attendees assigned</p>';
+                }
+                $('#attendees-container').html(attendeesHtml);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading attendees display:', error);
+        }
+    });
+}
+
 </script>
 
 <?php $this->load->view('appointments/modal'); ?>
@@ -1458,20 +1527,23 @@ function loadAppointmentData(appointmentId) {
                     }, 100);
                 }
                 
-                // Set attendees
-                var attendeeIds = [];
-                if (data.attendees) {
-                    $.each(data.attendees, function(index, attendee) {
-                        attendeeIds.push(attendee.staff_id);
-                    });
-                }
-                $('#attendees').val(attendeeIds);
+                // Reload staff dropdown and set attendees
+                loadStaffForAttendees();
+                
+                // Set attendees after staff is loaded
+                setTimeout(function() {
+                    var attendeeIds = [];
+                    if (data.attendees) {
+                        $.each(data.attendees, function(index, attendee) {
+                            attendeeIds.push(attendee.staffid);
+                        });
+                    }
+                    $('#attendees').val(attendeeIds);
+                    $('#attendees').selectpicker('refresh');
+                }, 500);
                 
                 // Update modal title
                 $('#appointmentModalLabel').text('Edit Appointment');
-                
-                // Refresh selectpicker
-                $('.selectpicker').selectpicker('refresh');
             } else {
                 alert_float('danger', response.message);
             }
@@ -1602,20 +1674,23 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                     }, 100);
                 }
                 
-                // Set attendees
-                var attendeeIds = [];
-                if (data.attendees) {
-                    $.each(data.attendees, function(index, attendee) {
-                        attendeeIds.push(attendee.staff_id);
-                    });
-                }
-                $('#attendees').val(attendeeIds);
+                // Reload staff dropdown and set attendees
+                loadStaffForAttendees();
+                
+                // Set attendees after staff is loaded
+                setTimeout(function() {
+                    var attendeeIds = [];
+                    if (data.attendees) {
+                        $.each(data.attendees, function(index, attendee) {
+                            attendeeIds.push(attendee.staffid);
+                        });
+                    }
+                    $('#attendees').val(attendeeIds);
+                    $('#attendees').selectpicker('refresh');
+                }, 500);
                 
                 // Update modal title
                 $('#appointmentModalLabel').text('Edit Appointment');
-                
-                // Refresh selectpicker
-                $('.selectpicker').selectpicker('refresh');
                 
                 // Show modal after data is loaded
                 $('#appointmentModal').modal('show');
@@ -1634,6 +1709,9 @@ function loadAppointmentDataAndShowModal(appointmentId) {
 $(document).ready(function() {
     // Initialize selectpicker
     $('.selectpicker').selectpicker();
+    
+    // Load staff members for attendees dropdown
+    loadStaffForAttendees();
     
     // Initialize AJAX search for leads and clients
     init_combined_ajax_search('#contact_id.ajax-search');
@@ -1743,6 +1821,8 @@ $(document).ready(function() {
                     alert_float('success', response.message);
                     $('#appointmentModal').modal('hide');
                     resetAppointmentModal();
+                    // Refresh attendees display
+                    loadAttendeesDisplay(<?php echo $appointment->id; ?>);
                     // Reload the page to show updated data
                     window.location.reload();
                 } else {

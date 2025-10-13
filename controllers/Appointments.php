@@ -1969,6 +1969,44 @@ startxref
             'timeline_activities' => $timeline_activities
         ]);
     }
+
+    /**
+     * Get attendees for appointment (AJAX) - for display refresh
+     */
+    public function get_attendees($appointment_id)
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $attendees = $this->appointments_model->get_appointment_attendees($appointment_id);
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $attendees
+        ]);
+    }
+
+    /**
+     * Get staff members for attendees dropdown (AJAX)
+     */
+    public function get_staff()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+        $this->db->select('staffid, firstname, lastname, email');
+        $this->db->from(db_prefix() . 'staff');
+        $this->db->where('active', 1);
+        $this->db->order_by('firstname', 'ASC');
+        
+        $staff = $this->db->get()->result_array();
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $staff
+        ]);
+    }
     
     
     
