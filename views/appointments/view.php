@@ -1379,11 +1379,6 @@ function resetAppointmentModal() {
     $('#appointmentModalLabel').text('Create Appointment');
     $('#contact_id').html('<option value="">Select Client/Lead</option>');
     $('#contact_id').selectpicker('val', '');
-    
-    // Reset attendees without losing options (just clear selection)
-    $('#attendees').selectpicker('val', []);
-    
-    // Refresh all selectpickers
     $('.selectpicker').selectpicker('refresh');
 }
 
@@ -1532,15 +1527,20 @@ function loadAppointmentData(appointmentId) {
                     }, 100);
                 }
                 
-                // Set attendees (staff already loaded in modal on page load)
-                var attendeeIds = [];
-                if (data.attendees) {
-                    $.each(data.attendees, function(index, attendee) {
-                        attendeeIds.push(attendee.staffid);
-                    });
-                }
-                $('#attendees').val(attendeeIds);
-                $('#attendees').selectpicker('refresh');
+                // Reload staff dropdown and set attendees
+                loadStaffForAttendees();
+                
+                // Set attendees after staff is loaded
+                setTimeout(function() {
+                    var attendeeIds = [];
+                    if (data.attendees) {
+                        $.each(data.attendees, function(index, attendee) {
+                            attendeeIds.push(attendee.staffid);
+                        });
+                    }
+                    $('#attendees').val(attendeeIds);
+                    $('#attendees').selectpicker('refresh');
+                }, 500);
                 
                 // Update modal title
                 $('#appointmentModalLabel').text('Edit Appointment');
@@ -1674,15 +1674,20 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                     }, 100);
                 }
                 
-                // Set attendees (staff already loaded in modal on page load)
-                var attendeeIds = [];
-                if (data.attendees) {
-                    $.each(data.attendees, function(index, attendee) {
-                        attendeeIds.push(attendee.staffid);
-                    });
-                }
-                $('#attendees').val(attendeeIds);
-                $('#attendees').selectpicker('refresh');
+                // Reload staff dropdown and set attendees
+                loadStaffForAttendees();
+                
+                // Set attendees after staff is loaded
+                setTimeout(function() {
+                    var attendeeIds = [];
+                    if (data.attendees) {
+                        $.each(data.attendees, function(index, attendee) {
+                            attendeeIds.push(attendee.staffid);
+                        });
+                    }
+                    $('#attendees').val(attendeeIds);
+                    $('#attendees').selectpicker('refresh');
+                }, 500);
                 
                 // Update modal title
                 $('#appointmentModalLabel').text('Edit Appointment');
@@ -1702,8 +1707,11 @@ function loadAppointmentDataAndShowModal(appointmentId) {
 
 // Initialize modal functionality when document is ready
 $(document).ready(function() {
-    // Initialize selectpicker (staff already loaded in modal HTML)
+    // Initialize selectpicker
     $('.selectpicker').selectpicker();
+    
+    // Load staff members for attendees dropdown
+    loadStaffForAttendees();
     
     // Initialize AJAX search for leads and clients
     init_combined_ajax_search('#contact_id.ajax-search');

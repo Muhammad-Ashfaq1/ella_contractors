@@ -196,16 +196,8 @@ button.delete-btn {
                                 <label for="attendees">Attendees 
                                     <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="Which staff members will be joining you or handling this Appointment?"></i>
                                 </label>
-                                <select class="form-control selectpicker" id="attendees" name="attendees[]" multiple data-live-search="true" data-actions-box="true">
-                                    <?php if(isset($staff) && !empty($staff)): ?>
-                                        <?php foreach($staff as $staff_member): ?>
-                                            <option value="<?php echo $staff_member['staffid']; ?>">
-                                                <?php echo $staff_member['firstname'] . ' ' . $staff_member['lastname']; ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    <?php else: ?>
-                                        <option value="" disabled>No staff members available</option>
-                                    <?php endif; ?>
+                                <select class="form-control selectpicker" id="attendees" name="attendees[]" multiple data-live-search="true">
+                                    <option value="">Loading staff members...</option>
                                 </select>
                             </div>
                         </div>
