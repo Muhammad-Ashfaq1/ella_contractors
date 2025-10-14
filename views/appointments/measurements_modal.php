@@ -19,13 +19,13 @@
                     <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
                     
                     <!-- Tab Navigation with Add Tab Button -->
-                    <div style="position: relative;">
-                        <div style="overflow-x: auto; margin-right: 120px;">
-                            <ul class="nav nav-tabs mb-3" id="dynamic-tabs" style="white-space: nowrap; min-width: 100%;">
+                    <div class="tab-navigation-container">
+                        <div class="tabs-scroll-container">
+                            <ul class="nav nav-tabs mb-3" id="dynamic-tabs">
                                 <!-- Tabs will be added dynamically -->
                             </ul>
                         </div>
-                        <div style="position: absolute; top: 5px; right: 0;">
+                        <div class="add-category-btn-container">
                             <button type="button" class="btn btn-primary btn-sm" id="addTabBtn" onclick="addNewTab()" title="Add Category">
                                 <i class="fa fa-plus"></i> Add Category
                             </button>
@@ -47,9 +47,19 @@
 
 <style>
 /* Fix Select Unit placeholder opacity to match other placeholders */
-.selectpicker-unit option[value=""] {
-    opacity: 0.5;
-    color: #999;
+.measurement-row select option.placeholder-option {
+    color: #95a5a6 !important;
+    opacity: 0.7 !important;
+    font-style: italic !important;
+}
+
+.measurement-row select {
+    color: #333 !important;
+}
+
+.measurement-row select:invalid,
+.measurement-row select.placeholder-active {
+    color: #95a5a6 !important;
 }
 
 /* Custom tab name input styling */
@@ -94,6 +104,11 @@
     box-shadow: 0 0 5px rgba(52, 152, 219, 0.3) !important;
 }
 
+.measurement-row .form-control::placeholder {
+    color: #95a5a6 !important;
+    opacity: 0.7 !important;
+}
+
 .measurement-row label {
     color: #333 !important;
     font-weight: 500 !important;
@@ -122,6 +137,27 @@
     border-color: #dc3545 !important;
 }
 
+/* Tab navigation container */
+.tab-navigation-container {
+    display: flex !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    position: relative !important;
+}
+
+.tabs-scroll-container {
+    flex: 1 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    margin-right: 10px !important;
+}
+
+.add-category-btn-container {
+    flex-shrink: 0 !important;
+    position: relative !important;
+    z-index: 10 !important;
+}
+
 /* Tab styling improvements */
 .tab-title {
     display: inline-block;
@@ -142,6 +178,9 @@
 
 #dynamic-tabs {
     border-bottom: 1px solid #ddd;
+    white-space: nowrap !important;
+    display: inline-block !important;
+    min-width: 100% !important;
 }
 
 #dynamic-tabs li {
@@ -170,21 +209,21 @@
 }
 
 /* Scroll styling */
-#dynamic-tabs::-webkit-scrollbar {
+.tabs-scroll-container::-webkit-scrollbar {
     height: 6px;
 }
 
-#dynamic-tabs::-webkit-scrollbar-track {
+.tabs-scroll-container::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 3px;
 }
 
-#dynamic-tabs::-webkit-scrollbar-thumb {
+.tabs-scroll-container::-webkit-scrollbar-thumb {
     background: #c1c1c1;
     border-radius: 3px;
 }
 
-#dynamic-tabs::-webkit-scrollbar-thumb:hover {
+.tabs-scroll-container::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
 </style>

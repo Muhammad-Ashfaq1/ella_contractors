@@ -8,7 +8,7 @@ var measurementSaved = false;
 
 // Units configuration
 var measurementUnits = [
-    {value: '', label: 'Select Unit'},
+    {value: '', label: 'Select Unit', isPlaceholder: true},
     {value: 'cm', label: 'Centimeters (cm)'},
     {value: 'ft', label: 'Feet (ft)'},
     {value: 'in', label: 'Inches (in)'},
@@ -24,7 +24,9 @@ var measurementUnits = [
 function createMeasurementRow(tabId, rowIndex) {
     var unitsHTML = '';
     measurementUnits.forEach(function(unit) {
-        unitsHTML += '<option value="' + unit.value + '">' + unit.label + '</option>';
+        var optionClass = unit.isPlaceholder ? ' placeholder-option' : '';
+        var disabledAttr = unit.isPlaceholder ? ' disabled selected' : '';
+        unitsHTML += '<option value="' + unit.value + '" class="' + optionClass + '"' + disabledAttr + '>' + unit.label + '</option>';
     });
     
     var rowHtml = '<div class="row measurement-row" data-row="' + rowIndex + '" style="margin-bottom: 15px;">' +
@@ -43,7 +45,7 @@ function createMeasurementRow(tabId, rowIndex) {
         '<div class="col-md-3">' +
             '<div class="form-group">' +
                 '<label for="unit_' + tabId + '_' + rowIndex + '" style="color: #333; font-weight: 500; margin-bottom: 5px; font-size: 14px;">Unit</label>' +
-                '<select class="form-control" id="unit_' + tabId + '_' + rowIndex + '" name="tab_measurements_' + tabId + '[' + rowIndex + '][unit]" style="border-radius: 4px; border: 1px solid #ddd;">' +
+                '<select class="form-control" id="unit_' + tabId + '_' + rowIndex + '" name="tab_measurements_' + tabId + '[' + rowIndex + '][unit]" style="border-radius: 4px; border: 1px solid #ddd;" required onchange="updateSelectPlaceholder(this)">' +
                     unitsHTML +
                 '</select>' +
             '</div>' +
@@ -77,6 +79,10 @@ function addMeasurementRow(tabId) {
     
     $(containerId).append(createMeasurementRow(tabId, rowIndex));
     
+    // Initialize placeholder styling for the new select
+    var newSelect = $(containerId + ' select').last()[0];
+    updateSelectPlaceholder(newSelect);
+    
     // Show/hide remove buttons
     updateRemoveButtons(tabId);
 }
@@ -104,6 +110,25 @@ function updateRemoveButtons(tabId) {
         $(containerId + ' .remove-row-btn').hide();
     } else {
         $(containerId + ' .remove-row-btn').show();
+    }
+}
+
+/**
+ * Update select placeholder styling
+ */
+function updateSelectPlaceholder(selectElement) {
+    var placeholderOption = selectElement.querySelector('option[value=""]');
+    
+    if (selectElement.value === '') {
+        selectElement.classList.add('placeholder-active');
+        // Keep placeholder disabled and selected when no value is selected
+        placeholderOption.disabled = true;
+        placeholderOption.selected = true;
+    } else {
+        selectElement.classList.remove('placeholder-active');
+        // Disable placeholder option when a value is selected
+        placeholderOption.disabled = true;
+        placeholderOption.selected = false;
     }
 }
 
@@ -324,7 +349,9 @@ function loadMeasurementData(measurementId) {
                         // Set values
                         $('input[name="tab_measurements_' + tabId + '[' + rowIndex + '][name]"]').val(item.name);
                         $('input[name="tab_measurements_' + tabId + '[' + rowIndex + '][value]"]').val(item.value);
-                        $('select[name="tab_measurements_' + tabId + '[' + rowIndex + '][unit]"]').val(item.unit);
+                        var selectElement = $('select[name="tab_measurements_' + tabId + '[' + rowIndex + '][unit]"]')[0];
+                        selectElement.value = item.unit;
+                        updateSelectPlaceholder(selectElement);
                     });
                 } else {
                     // Add empty row
