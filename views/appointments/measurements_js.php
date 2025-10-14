@@ -462,9 +462,11 @@ function displayMeasurements(measurements) {
         html += '<td style="text-align: center; padding: 12px;"><strong>' + (measurement.tab_name || 'Untitled') + '</strong></td>';
         html += '<td style="text-align: center; padding: 12px;">' + (measurement.items_count || 0) + ' items</td>';
         html += '<td style="text-align: center; padding: 12px;">' + (measurement.created_at ? new Date(measurement.created_at).toLocaleDateString() : '-') + '</td>';
-        html += '<td style="text-align: center; padding: 12px;">';
-        html += '<button class="btn btn-default btn-xs" onclick="editMeasurement(' + measurement.id + ')" title="Edit"><i class="fa fa-pencil"></i></button> ';
-        html += '<button class="btn btn-danger btn-xs" onclick="deleteMeasurement(' + measurement.id + ')" title="Delete"><i class="fa fa-trash"></i></button>';
+        html += '<td style="text-align: center; padding: 12px; vertical-align: middle;">';
+        html += '<div style="display: flex; flex-direction: row; gap: 4px; align-items: center; justify-content: center;">';
+        html += '<button class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="editMeasurement(' + measurement.id + ')" title="Edit Measurement"><i class="fa fa-edit"></i></button>';
+        html += '<button class="btn btn-sm" style="background-color: #dc3545; border: 1px solid #dc3545; color: white; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="deleteMeasurement(' + measurement.id + ')" title="Delete Measurement"><i class="fa fa-trash"></i></button>';
+        html += '</div>';
         html += '</td>';
         html += '</tr>';
     });

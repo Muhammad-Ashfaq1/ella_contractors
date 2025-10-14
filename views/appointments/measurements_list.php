@@ -3,11 +3,14 @@
 <!-- Measurements Tab Content -->
 <div class="row">
     <div class="col-md-12">
-        <div class="pull-right mbot15">
-            <button type="button" class="btn btn-info btn-sm" onclick="openMeasurementModal()">
-                <i class="fa fa-plus"></i> Add Measurement
-            </button>
-        </div>
+        <h5>
+            Measurements
+            <div class="pull-right" style="margin-top: -5px;">
+                <button type="button" class="btn btn-info btn-sm" onclick="openMeasurementModal()">
+                    <i class="fa fa-plus"></i> Add Measurement
+                </button>
+            </div>
+        </h5>
         <div class="clearfix"></div>
         <hr class="hr-panel-heading" />
         
