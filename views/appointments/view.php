@@ -698,7 +698,7 @@ $(document).ready(function() {
         // Load data for the specific tab when it becomes active
         switch(tabName) {
             case 'measurements':
-            loadMeasurements();
+                loadMeasurements();
                 break;
             case 'estimates':
                 loadEstimates();
@@ -740,6 +740,11 @@ $(document).ready(function() {
     // Reload timeline when timeline tab is shown
     $('a[href="#timeline-tab"]').on('click', function() {
         loadTimeline();
+    });
+    
+    // Reload measurements when measurements tab is shown
+    $('a[href="#measurements-tab"]').on('click', function() {
+        loadMeasurements();
     });
     
     

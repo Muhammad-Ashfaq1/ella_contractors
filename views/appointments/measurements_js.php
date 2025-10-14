@@ -6,6 +6,14 @@ var tabCounter = 0;
 var measurementRowCounters = {};
 var measurementSaved = false;
 
+// Global function to refresh measurements - can be called from anywhere
+window.refreshMeasurements = function() {
+    console.log('refreshMeasurements called globally');
+    if (typeof loadMeasurements === 'function') {
+        loadMeasurements();
+    }
+};
+
 // Units configuration
 var measurementUnits = [
     {value: '', label: 'Select Unit', isPlaceholder: true},
@@ -142,7 +150,7 @@ function addNewTab() {
     }
     
     tabCounter++;
-    var tabId = 'tab' + tabCounter;
+    var tabId = 'measurement_tab' + tabCounter; // Use unique prefix to avoid URL conflicts
     var tabName = 'Add Category';
     
     // Create inline input tab that appears after existing tabs
@@ -322,7 +330,7 @@ function loadMeasurementData(measurementId) {
                 
                 // Create tab for this measurement
                 tabCounter++;
-                var tabId = 'tab' + tabCounter;
+                var tabId = 'measurement_tab' + tabCounter; // Use unique prefix to avoid URL conflicts
                 var tabName = data.tab_name || 'Measurement';
                 
                 // Create tab
@@ -416,7 +424,18 @@ $('#saveMeasurement').on('click', function() {
                 measurementSaved = true;
                 alert_float('success', response.message || 'Measurement saved successfully');
                 $('#measurementModal').modal('hide');
+                // Force reload measurements immediately and ensure measurements tab is active
+                setTimeout(function() {
+                    console.log('Reloading measurements after save...');
+                    // Ensure we're on the measurements tab
+                    $('a[href="#measurements-tab"]').tab('show');
+                    // Reload measurements using both methods
                     loadMeasurements();
+                    // Also try the global refresh function
+                    if (typeof window.refreshMeasurements === 'function') {
+                        window.refreshMeasurements();
+                    }
+                }, 300);
             } else {
                 alert_float('danger', response.message || 'Failed to save measurement');
             }
@@ -442,6 +461,7 @@ $('#saveMeasurement').on('click', function() {
  * Load measurements for appointment
  */
 function loadMeasurements() {
+    console.log('loadMeasurements called for appointment ID:', appointmentId);
     $('#measurements-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading measurements...</p></div>');
     
     $.ajax({
@@ -450,13 +470,15 @@ function loadMeasurements() {
         data: csrf_token_name + '=' + csrf_hash,
         dataType: 'json',
         success: function(response) {
+            console.log('Measurements response:', response);
             if (response.success) {
                 displayMeasurements(response.data);
             } else {
                 $('#measurements-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No measurements found.</p></div>');
             }
         },
-        error: function() {
+        error: function(xhr, status, error) {
+            console.error('Error loading measurements:', error, xhr.responseText);
             $('#measurements-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading measurements.</p></div>');
         }
     });
@@ -525,7 +547,10 @@ function deleteMeasurement(measurementId) {
         success: function(response) {
             if (response.success) {
                 alert_float('success', response.message);
-                loadMeasurements();
+                // Force reload measurements immediately
+                setTimeout(function() {
+                    loadMeasurements();
+                }, 100);
         } else {
                 alert_float('danger', response.message);
             }
@@ -538,9 +563,34 @@ function deleteMeasurement(measurementId) {
 
 // Modal close handler
 $('#measurementModal').on('hidden.bs.modal', function() {
+    console.log('Measurement modal closed, measurementSaved:', measurementSaved);
     if (measurementSaved) {
-        loadMeasurements();
+        // Force reload measurements immediately when modal closes
+        setTimeout(function() {
+            console.log('Reloading measurements after modal close...');
+            // Ensure we're on the measurements tab
+            $('a[href="#measurements-tab"]').tab('show');
+            // Reload measurements
+            loadMeasurements();
+        }, 200);
         measurementSaved = false;
+    }
+    
+    // Clear any URL fragments that might have been created by measurement tabs
+    if (window.location.hash && window.location.hash.includes('measurement_tab')) {
+        // Remove only measurement tab fragments, preserve other URL fragments
+        var url = new URL(window.location);
+        var hash = url.hash;
+        if (hash.includes('measurement_tab')) {
+            // Extract the main tab parameter
+            var tabParam = url.searchParams.get('tab');
+            if (tabParam) {
+                url.hash = '#' + tabParam + '-tab';
+            } else {
+                url.hash = '';
+            }
+            window.history.replaceState({}, '', url);
+        }
     }
 });
 </script>
