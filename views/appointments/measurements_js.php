@@ -115,13 +115,13 @@ function addNewTab() {
     
     tabCounter++;
     var tabId = 'tab' + tabCounter;
-    var tabName = 'Tab ' + tabCounter;
+    var tabName = 'Add Category';
     
     // Create inline input tab that appears after existing tabs
     var tabHtml = '<li class="active" data-tab-id="' + tabId + '" data-edit-mode="true">' +
         '<a href="#' + tabId + '-content" data-toggle="tab" data-tab-id="' + tabId + '">' +
-            '<input type="text" class="custom-tab-name-input" id="tab-name-input" value="' + tabName + '" placeholder="Enter tab name" onkeypress="if(event.key===\'Enter\'){saveTabName(\'' + tabId + '\');}">' +
-            '<button type="button" class="btn btn-xs btn-success" onclick="saveTabName(\'' + tabId + '\')" title="Save Tab" style="margin-left: 5px; padding: 2px 6px;">' +
+            '<input type="text" class="custom-tab-name-input" id="tab-name-input" value="' + tabName + '" placeholder="Enter category name" onkeypress="if(event.key===\'Enter\'){saveTabName(\'' + tabId + '\');}">' +
+            '<button type="button" class="btn btn-xs btn-success" onclick="saveTabName(\'' + tabId + '\')" title="Save Category" style="margin-left: 5px; padding: 2px 6px;">' +
                 '<i class="fa fa-check"></i>' +
             '</button>' +
             '<button type="button" class="btn btn-xs btn-link" onclick="removeTab(\'' + tabId + '\')" title="Remove Tab" style="display: none;">' +
@@ -132,11 +132,11 @@ function addNewTab() {
     
     $('#dynamic-tabs').append(tabHtml);
     
-    // Create tab content placeholder
+    // Create tab content with one measurement line by default
     var contentHtml = '<div class="tab-pane active" id="' + tabId + '-content" data-tab-id="' + tabId + '">' +
-        '<div id="measurements-container-' + tabId + '" style="display: none;">' +
+        '<div id="measurements-container-' + tabId + '">' +
             '<div class="alert alert-info">' +
-                '<i class="fa fa-info-circle"></i> Tab name saved. You can now add measurements.' +
+                '<i class="fa fa-info-circle"></i> Enter category name and add measurements below.' +
             '</div>' +
         '</div>' +
     '</div>';
@@ -148,6 +148,10 @@ function addNewTab() {
     $('[data-tab-id="' + tabId + '"]').parent('li').addClass('active');
     $('.tab-pane').removeClass('active');
     $('#' + tabId + '-content').addClass('active');
+    
+    // Initialize with one measurement row
+    measurementRowCounters[tabId] = 0;
+    addMeasurementRow(tabId);
     
     // Focus on input and hide Add Tab button
     setTimeout(function() {
@@ -165,7 +169,7 @@ function saveTabName(tabId) {
     var tabName = $('#tab-name-input').val().trim();
     
     if (!tabName) {
-        alert_float('warning', 'Please enter a tab name');
+        alert_float('warning', 'Please enter a category name');
         $('#tab-name-input').focus();
         return;
     }
@@ -181,20 +185,16 @@ function saveTabName(tabId) {
     var hiddenField = '<input type="hidden" name="tab_name_' + tabId + '" value="' + tabName + '">';
     $('#' + tabId + '-content').append(hiddenField);
     
-    // Show measurements container and initialize with one row
-    $('#measurements-container-' + tabId).show().html('');
+    // Show measurements container (already has content from creation)
+    $('#measurements-container-' + tabId).show();
     
     // Remove edit mode flag
     $('[data-tab-id="' + tabId + '"]').removeAttr('data-edit-mode');
     
-    // Initialize with one row
-    measurementRowCounters[tabId] = 0;
-    addMeasurementRow(tabId);
-    
     // Show add tab button again
     $('#addTabBtn').show();
     
-    alert_float('success', 'Tab "' + tabName + '" created successfully');
+    alert_float('success', 'Category "' + tabName + '" created successfully');
 }
 
 /**

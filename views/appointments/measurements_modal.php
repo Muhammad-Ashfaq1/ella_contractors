@@ -24,8 +24,8 @@
                             <!-- Tabs will be added dynamically -->
                         </ul>
                         <div style="position: absolute; top: 5px; right: 0;">
-                            <button type="button" class="btn btn-primary btn-sm" id="addTabBtn" onclick="addNewTab()" title="Add Tab">
-                                <i class="fa fa-plus"></i> Add Tab
+                            <button type="button" class="btn btn-primary btn-sm" id="addTabBtn" onclick="addNewTab()" title="Add Category">
+                                <i class="fa fa-plus"></i> Add Category
                             </button>
                         </div>
                     </div>
