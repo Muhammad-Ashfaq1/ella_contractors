@@ -328,11 +328,13 @@ function openMeasurementModal(measurementId = null) {
     estimateRowCounter = 0;
     estimateRowCounterRoofing = 0;
     
+    /* COMMENTED OUT: Windows and Doors tables not needed
     // Clear windows and doors tables for new measurements
     if (!measurementId) {
         $('#windows-tbody').html('');
         $('#doors-tbody').html('');
     }
+    */
     
     if (measurementId) {
         // Load measurement data for editing
@@ -482,8 +484,10 @@ function populateMeasurementForm(data) {
         try {
             var attributes = JSON.parse(data.attributes_json);
             
+            /* COMMENTED OUT: Windows and Doors display not needed
             // Display windows and doors data in their respective tables
             displayExistingWindowsDoorsData(attributes);
+            */
             
             // Handle new siding measurements
             if (attributes.siding_measurements && Array.isArray(attributes.siding_measurements)) {
@@ -541,6 +545,7 @@ function populateMeasurementForm(data) {
     }
 }
 
+/* COMMENTED OUT: Windows and Doors populate functions not needed
 // Populate windows and doors tables with data
 function populateWindowsDoorsTables(category, data) {
     var tbody = $('#' + category + '-tbody');
@@ -579,6 +584,7 @@ function displayExistingWindowsDoorsData(attributes) {
         });
     }
 }
+*/
 
 function editMeasurement(measurementId) {
     openMeasurementModal(measurementId);
@@ -612,10 +618,11 @@ function deleteMeasurement(measurementId) {
 function collectAllTabsData() {
     var allData = {};
     
-    // Collect data from each category tab
-    ['siding', 'roofing', 'windows', 'doors'].forEach(function(category) {
+    // Collect data from each category tab - COMMENTED OUT: Windows and Doors not needed
+    ['siding', 'roofing'/*, 'windows', 'doors'*/].forEach(function(category) {
         var categoryData = {};
         
+        /* COMMENTED OUT: Windows and Doors table data collection not needed
         if (category === 'windows' || category === 'doors') {
             // Handle windows and doors from tables
             var tableData = collectTableData(category);
@@ -623,6 +630,7 @@ function collectAllTabsData() {
                 allData[category] = tableData;
             }
         } else {
+        */
             // Get all inputs for this category (siding, roofing)
             $('input[name^="' + category + '["]').each(function() {
                 var name = $(this).attr('name');
@@ -637,12 +645,13 @@ function collectAllTabsData() {
             if (Object.keys(categoryData).length > 0) {
                 allData[category] = categoryData;
             }
-        }
+        /* } */
     });
     
     return allData;
 }
 
+/* COMMENTED OUT: Windows and Doors table data collection not needed
 // Collect data from windows and doors tables
 function collectTableData(category) {
     var tableData = [];
@@ -680,7 +689,9 @@ function collectTableData(category) {
     
     return tableData;
 }
+*/
 
+/* COMMENTED OUT: Windows and Doors table functions not needed
 // Add window to windows table
 function addToWindowsTable(data, isExisting = false) {
     var tbody = $('#windows-tbody');
@@ -726,7 +737,9 @@ function addToDoorsTable(data, isExisting = false) {
     
     tbody.append(row);
 }
+*/
 
+/* COMMENTED OUT: Windows and Doors edit/remove/modal functions not needed
 // Edit table row
 function editTableRow(rowId, category) {
     var row = $('#' + rowId);
@@ -827,6 +840,7 @@ function updateDoorsTableRow(row, data) {
     cells.eq(6).text(data.united_inches_val || '');
     cells.eq(7).text(data.area_val || '');
 }
+*/
 
 // Tab handling
 $('#category-tabs a[data-toggle="tab"]').on('click', function(e) {
@@ -852,12 +866,15 @@ $('#category-tabs a[data-toggle="tab"]').on('click', function(e) {
     $('input[name="rel_id"]').val(relId);
     $('input[name="rel_type"]').val(relType);
 
+    /* COMMENTED OUT: Windows and Doors dynamic loading not needed
     // Only load dynamic data for windows and doors tabs if we're not editing an existing measurement
     if ((category === 'windows' || category === 'doors') && !$('#measurement_id').val()) {
         loadMeasurementsByCategory(category);
     }
+    */
 });
 
+/* COMMENTED OUT: Windows and Doors category loading functions not needed
 // Load measurements by category for windows and doors
 function loadMeasurementsByCategory(category) {
     $.ajax({
@@ -908,6 +925,7 @@ function populateMeasurementsTable(category, measurements) {
         }
     });
 }
+*/
 
 // Auto-calculate UI and Area when width/height change
 function calculateMeasurements() {
@@ -1045,6 +1063,7 @@ $('#saveMeasurement').on('click', function() {
     });
 });
 
+/* COMMENTED OUT: Windows and Doors save functionality not needed
 // Save only current category's inline rows (called by per-tab Save buttons)
 $(document).on('click', '#js-save-windows, #js-save-doors', function() {
     var which = $(this).attr('id') === 'js-save-windows' ? 'windows' : 'doors';
@@ -1143,6 +1162,7 @@ $(document).on('click', '#js-save-windows, #js-save-doors', function() {
         }
     });
 });
+*/
 
 // AJAX save functionality for measurements
 function saveMeasurementAjax(formData, callback) {
@@ -1180,6 +1200,7 @@ function saveMeasurementAjax(formData, callback) {
     });
 }
 
+/* COMMENTED OUT: Windows and Doors inline row handlers not needed
 // Inline add row handlers for Windows and Doors
 $(document).on('click', '#js-add-window-row', function(e) {
     e.preventDefault();
@@ -1292,5 +1313,6 @@ function renderSavedRow(row, category, data, id) {
     html += '<td>' + actions + '</td>';
     row.removeClass('inline-measure-row').attr('data-measurement-id', id || '').html(html);
 }
+*/
 </script>
 

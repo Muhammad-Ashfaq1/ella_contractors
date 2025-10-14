@@ -60,23 +60,26 @@ class Measurements extends AdminController
 
         // Handle category-specific attributes
         $categorySpecificData = [];
-        $categories = ['siding', 'roofing', 'windows', 'doors'];
+        // COMMENTED OUT: Windows and Doors not needed
+        $categories = ['siding', 'roofing'/*, 'windows', 'doors'*/];
         
+        /* COMMENTED OUT: Bulk data handling for Windows/Doors not needed
         // Check for bulk data first (from Windows/Doors saves)
         if (isset($post['bulk']) && is_array($post['bulk'])) {
             log_message('debug', 'Bulk data received: ' . json_encode($post['bulk']));
             $categorySpecificData = $post['bulk'];
             unset($post['bulk']);
         } else {
-            // Check for individual category data
-            foreach ($categories as $category) {
-                if (isset($post[$category]) && is_array($post[$category])) {
-                    $categorySpecificData[$category] = $post[$category];
-                    unset($post[$category]);
-                }
+        */
+        // Check for individual category data
+        foreach ($categories as $category) {
+            if (isset($post[$category]) && is_array($post[$category])) {
+                $categorySpecificData[$category] = $post[$category];
+                unset($post[$category]);
             }
-            
-            // Handle new siding and roofing measurements structure
+        }
+        
+        // Handle new siding and roofing measurements structure
             if (isset($post['measurements']) && is_array($post['measurements'])) {
                 $sidingMeasurements = [];
                 foreach ($post['measurements'] as $measurement) {
@@ -110,7 +113,7 @@ class Measurements extends AdminController
                 }
                 unset($post['measurements_roofing']);
             }
-        }
+        /* } */ // Closing brace for commented out bulk data handling
 
         // Merge with existing attributes_json if editing
         if ($id > 0) {
@@ -200,6 +203,7 @@ class Measurements extends AdminController
                 $measurement = $this->measurements_model->find($id ?: $this->db->insert_id());
                 $response_data = $measurement;
                 
+                /* COMMENTED OUT: Bulk save response for Windows/Doors not needed
                 // If this is a bulk save (Windows/Doors), return the attributes in the expected format
                 if (isset($post['bulk']) && is_array($post['bulk'])) {
                     $attributes = json_decode($measurement['attributes_json'] ?? '{}', true);
@@ -208,6 +212,7 @@ class Measurements extends AdminController
                         'attributes' => $attributes
                     ];
                 }
+                */
                 
                 echo json_encode([
                     'success' => true,
