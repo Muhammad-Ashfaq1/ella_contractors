@@ -294,6 +294,13 @@ function openMeasurementModal(measurementId = null) {
     } else {
         // Show message and add tab button
         $('#measurementModalLabel').text('Add Measurement');
+        
+        // Auto-trigger add category if no tabs exist (for new measurements)
+        setTimeout(function() {
+            if ($('#dynamic-tabs li').length === 0) {
+                addNewTab();
+            }
+        }, 100);
     }
     
     $('#measurementModal').modal('show');
