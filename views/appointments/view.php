@@ -284,7 +284,7 @@ button.delete-btn {
                                             $hours = $interval->h + ($interval->days * 24);
                                             $minutes = $interval->i;
                                             
-                                            echo ' | ';
+                                            echo ' | Duration: ';
                                             if ($hours > 0) {
                                                 echo $hours . 'hr';
                                             }
@@ -666,14 +666,21 @@ $(document).ready(function() {
     }
     
     // Track tab changes and update URL - ONLY for main page tabs, not modal tabs
-    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-        // Ignore tab events from modals (e.g., measurement modal internal tabs)
+    $('.nav-tabs a[data-toggle="tab"]').not('.modal a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        // Double-check: Ignore tab events from modals (e.g., measurement modal internal tabs)
         if ($(e.target).closest('.modal').length > 0) {
             console.log('Ignoring tab event from modal');
             return;
         }
         
         var target = $(e.target).attr('href');
+        
+        // Only handle main page tabs (those ending with -tab)
+        if (!target || !target.includes('-tab') || target.includes('measurement_tab')) {
+            console.log('Ignoring non-main-tab event:', target);
+            return;
+        }
+        
         var tabName = target.replace('#', '').replace('-tab', '');
         currentActiveTab = tabName;
         

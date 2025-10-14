@@ -151,7 +151,7 @@ function addNewTab() {
     
     tabCounter++;
     var tabId = 'measurement_tab' + tabCounter; // Use unique prefix to avoid URL conflicts
-    var tabName = 'Add Category';
+    var tabName = 'Category';
     
     // Create inline input tab that appears after existing tabs
     var tabHtml = '<li class="active" data-tab-id="' + tabId + '" data-edit-mode="true">' +
@@ -171,7 +171,7 @@ function addNewTab() {
     // Create tab content with one measurement line by default
     var contentHtml = '<div class="tab-pane active" id="' + tabId + '-content" data-tab-id="' + tabId + '">' +
         '<div id="measurements-container-' + tabId + '">' +
-            '<div class="alert alert-info">' +
+            '<div class="alert alert-info" id="category-info-' + tabId + '">' +
                 '<i class="fa fa-info-circle"></i> Enter category name and add measurements below.' +
             '</div>' +
         '</div>' +
@@ -188,6 +188,11 @@ function addNewTab() {
     // Initialize with one measurement row
     measurementRowCounters[tabId] = 0;
     addMeasurementRow(tabId);
+    
+    // Prevent this tab's events from bubbling to main page
+    $('[data-tab-id="' + tabId + '"]').off('shown.bs.tab.modalprevent').on('shown.bs.tab.modalprevent', function(e) {
+        e.stopPropagation();
+    });
     
     // Focus on input and hide Add Tab button
     setTimeout(function() {
@@ -210,6 +215,55 @@ function saveTabName(tabId) {
         return;
     }
 
+    // Check for duplicate category name within current measurement (same modal)
+    var isDuplicateInModal = false;
+    $('#dynamic-tabs li').not('[data-tab-id="' + tabId + '"]').each(function() {
+        var existingTabName = $(this).find('.tab-title').text().trim();
+        if (existingTabName.toLowerCase() === tabName.toLowerCase()) {
+            isDuplicateInModal = true;
+            return false; // break loop
+        }
+    });
+    
+    if (isDuplicateInModal) {
+        alert_float('danger', 'Category name "' + tabName + '" already exists in this measurement. Please use a different name.');
+        $('#tab-name-input').focus().select();
+        return;
+    }
+    
+    // Check for duplicate category name across appointment (other measurements)
+    // We'll do this via AJAX to check existing measurements in the database
+    var measurementId = $('#measurement_id').val();
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/measurements/check_duplicate_category',
+        type: 'POST',
+        data: {
+            appointment_id: appointmentId,
+            category_name: tabName,
+            measurement_id: measurementId, // Exclude current measurement if editing
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        async: false, // Make synchronous to block saving until validation completes
+        success: function(response) {
+            if (!response.success && response.duplicate) {
+                alert_float('danger', 'Category name "' + tabName + '" already exists in another measurement for this appointment. Please use a different name.');
+                $('#tab-name-input').focus().select();
+                isDuplicateInModal = true; // Reuse this flag to prevent saving
+            }
+        },
+        error: function() {
+            // Continue with save if validation endpoint fails (graceful degradation)
+            console.warn('Could not validate duplicate category name');
+        }
+    });
+    
+    // If duplicate found in database, don't save
+    if (isDuplicateInModal) {
+        return;
+    }
+
     // Convert input to tab title span
     var tabLink = $('[data-tab-id="' + tabId + '"] a');
     tabLink.html('<span class="tab-title">' + tabName + '</span>' +
@@ -220,6 +274,9 @@ function saveTabName(tabId) {
     // Add hidden field for form submission
     var hiddenField = '<input type="hidden" name="tab_name_' + tabId + '" value="' + tabName + '">';
     $('#' + tabId + '-content').append(hiddenField);
+    
+    // Remove the info alert div
+    $('#category-info-' + tabId).remove();
     
     // Show measurements container (already has content from creation)
     $('#measurements-container-' + tabId).show();
@@ -312,6 +369,14 @@ function openMeasurementModal(measurementId = null) {
     }
     
     $('#measurementModal').modal('show');
+    
+    // Prevent modal tab events from bubbling to main page
+    setTimeout(function() {
+        $('#measurementModal a[data-toggle="tab"]').off('shown.bs.tab.modalprevent').on('shown.bs.tab.modalprevent', function(e) {
+            e.stopPropagation();
+            console.log('Modal tab switched (prevented from bubbling)');
+        });
+    }, 200);
 }
 
 /**
@@ -352,6 +417,11 @@ function loadMeasurementData(measurementId) {
                 '</div>';
                 
                 $('#dynamic-tab-content').append(contentHtml);
+                
+                // Prevent this tab's events from bubbling to main page
+                $('[data-tab-id="' + tabId + '"]').off('shown.bs.tab.modalprevent').on('shown.bs.tab.modalprevent', function(e) {
+                    e.stopPropagation();
+                });
                 
                 // Populate items
                 measurementRowCounters[tabId] = -1;
@@ -423,9 +493,10 @@ $('#saveMeasurement').on('click', function() {
             
             if (response.success) {
                 measurementSaved = true;
+                console.log('Measurement saved successfully, measurementSaved flag set to:', measurementSaved);
                 alert_float('success', response.message || 'Measurement saved successfully');
+                // Close modal - reload will happen in modal close handler
                 $('#measurementModal').modal('hide');
-                // Reload will happen in modal close handler
             } else {
                 alert_float('danger', response.message || 'Failed to save measurement');
             }
@@ -449,22 +520,35 @@ $('#saveMeasurement').on('click', function() {
 
 // Save original hash when modal opens
 $('#measurementModal').on('show.bs.modal', function() {
-    originalHash = window.location.hash || '#measurements-tab';
+    // Get current main tab from URL or default to measurements
+    var urlParams = new URLSearchParams(window.location.search);
+    var tabParam = urlParams.get('tab');
+    originalHash = tabParam ? '#' + tabParam + '-tab' : '#measurements-tab';
 });
 
 // Modal close handler - reload measurements after modal is fully hidden
 $('#measurementModal').on('hidden.bs.modal', function() {
-    // Restore original hash (removes measurement_tab fragments)
-    if (history.replaceState) {
-        history.replaceState(null, null, window.location.pathname + window.location.search + originalHash);
-    } else {
-        window.location.hash = originalHash || 'measurements-tab';
+    console.log('Measurement modal closed, measurementSaved:', measurementSaved);
+    
+    // Clean up any measurement_tab fragments from URL hash
+    var currentHash = window.location.hash;
+    if (currentHash && currentHash.includes('measurement_tab')) {
+        if (history.replaceState) {
+            history.replaceState(null, null, window.location.pathname + window.location.search + originalHash);
+        } else {
+            window.location.hash = originalHash || 'measurements-tab';
+        }
     }
     
+    // Always reload measurements if saved, regardless of hash state
     if (measurementSaved) {
+        console.log('Reloading measurements after save...');
         // Reload measurements immediately after modal closes
-        loadMeasurements();
-        measurementSaved = false;
+        setTimeout(function() {
+            loadMeasurements();
+            measurementSaved = false;
+            console.log('Measurements reloaded');
+        }, 150);
     }
 });
 }); // End document.ready

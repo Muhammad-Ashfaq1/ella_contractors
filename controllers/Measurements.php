@@ -281,4 +281,49 @@ class Measurements extends AdminController
             'data' => $records
         ]);
     }
+
+    /**
+     * Check if category name already exists for this appointment
+     * Used for validation during measurement creation/editing
+     */
+    public function check_duplicate_category()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $appointment_id = $this->input->post('appointment_id', true);
+        $category_name = $this->input->post('category_name', true);
+        $measurement_id = $this->input->post('measurement_id', true); // For edit mode
+        
+        if (empty($appointment_id) || empty($category_name)) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'duplicate' => false,
+                'message' => 'Invalid parameters'
+            ]);
+            return;
+        }
+        
+        // Check if category name exists in other measurements for this appointment
+        $this->db->where('appointment_id', $appointment_id);
+        $this->db->where('LOWER(tab_name)', strtolower($category_name));
+        
+        // Exclude current measurement if editing
+        if (!empty($measurement_id) && $measurement_id > 0) {
+            $this->db->where('id !=', $measurement_id);
+        }
+        
+        $existing = $this->db->get(db_prefix() . 'ella_contractor_measurement_records')->row();
+        
+        $is_duplicate = !empty($existing);
+        
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => !$is_duplicate,
+            'duplicate' => $is_duplicate,
+            'message' => $is_duplicate ? 'Category name already exists' : 'Category name is available'
+        ]);
+    }
 }
