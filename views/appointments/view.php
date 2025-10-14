@@ -617,6 +617,9 @@ $this->load->view('appointments/estimate_modal', $data);
 <!-- Timeline CSS -->
 <link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/timeline.css'); ?>">
 
+<!-- Include centralized appointment attendees functionality -->
+<script src="<?php echo module_dir_url('ella_contractors', 'assets/js/appointment-attendees.js'); ?>"></script>
+
 <!-- Include Measurement Modal and JavaScript -->
 <?php $this->load->view('appointments/measurements_js'); ?>
 
@@ -1248,35 +1251,7 @@ function refreshAppointmentData(activeTab = null) {
     }
 }
 
-// Load staff members for attendees dropdown
-function loadStaffForAttendees() {
-    $.ajax({
-        url: admin_url + 'ella_contractors/appointments/get_staff',
-        type: 'GET',
-        data: {
-            [csrf_token_name]: csrf_hash
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success && response.data) {
-                var options = '';
-                response.data.forEach(function(staff) {
-                    options += `<option value="${staff.staffid}">${staff.firstname} ${staff.lastname}</option>`;
-                });
-                $('#attendees').html(options);
-                $('#attendees').selectpicker('refresh');
-            } else {
-                $('#attendees').html('<option value="">Error loading staff members</option>');
-                $('#attendees').selectpicker('refresh');
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('Error loading staff members:', error);
-            $('#attendees').html('<option value="">Error loading staff members</option>');
-            $('#attendees').selectpicker('refresh');
-        }
-    });
-}
+// Attendees functionality is now handled by the centralized appointment-attendees.js file
 
 // Attendees Display Refresh Function
 function loadAttendeesDisplay(appointmentId) {
@@ -1527,20 +1502,8 @@ function loadAppointmentData(appointmentId) {
                     }, 100);
                 }
                 
-                // Reload staff dropdown and set attendees
-                loadStaffForAttendees();
-                
-                // Set attendees after staff is loaded
-                setTimeout(function() {
-                    var attendeeIds = [];
-                    if (data.attendees) {
-                        $.each(data.attendees, function(index, attendee) {
-                            attendeeIds.push(attendee.staffid);
-                        });
-                    }
-                    $('#attendees').val(attendeeIds);
-                    $('#attendees').selectpicker('refresh');
-                }, 500);
+                // Reload staff and set attendees using centralized function
+                reloadStaffAndSetAttendees(data.attendees);
                 
                 // Update modal title
                 $('#appointmentModalLabel').text('Edit Appointment');
@@ -1674,20 +1637,8 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                     }, 100);
                 }
                 
-                // Reload staff dropdown and set attendees
-                loadStaffForAttendees();
-                
-                // Set attendees after staff is loaded
-                setTimeout(function() {
-                    var attendeeIds = [];
-                    if (data.attendees) {
-                        $.each(data.attendees, function(index, attendee) {
-                            attendeeIds.push(attendee.staffid);
-                        });
-                    }
-                    $('#attendees').val(attendeeIds);
-                    $('#attendees').selectpicker('refresh');
-                }, 500);
+                // Reload staff and set attendees using centralized function
+                reloadStaffAndSetAttendees(data.attendees);
                 
                 // Update modal title
                 $('#appointmentModalLabel').text('Edit Appointment');
@@ -1710,8 +1661,8 @@ $(document).ready(function() {
     // Initialize selectpicker
     $('.selectpicker').selectpicker();
     
-    // Load staff members for attendees dropdown
-    loadStaffForAttendees();
+    // Initialize attendees functionality
+    initAppointmentAttendees();
     
     // Initialize AJAX search for leads and clients
     init_combined_ajax_search('#contact_id.ajax-search');

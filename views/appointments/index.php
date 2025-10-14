@@ -404,6 +404,8 @@ function openNewAppointmentModal(appointmentId = null) {
     
     // Show modal immediately for new appointments
     if (!appointmentId) {
+        // Reload staff members for attendees dropdown
+        loadStaffForAttendees();
         $('#appointmentModal').modal('show');
     } else {
         // For editing, use the dedicated function that loads data first
@@ -465,17 +467,14 @@ function loadAppointmentData(appointmentId) {
                 $('#status').val(status);
                 
                 
-                // Set attendees
-                var attendeeIds = [];
-                if (data.attendees) {
-                    $.each(data.attendees, function(index, attendee) {
-                        attendeeIds.push(attendee.staff_id);
-                    });
-                }
-                $('#attendees').val(attendeeIds);
+                // Set attendees using centralized function
+                setAppointmentAttendees(data.attendees);
                 
                 // Update modal title
                 $('#appointmentModalLabel').text('Edit Appointment');
+                
+                // Reload staff members for attendees dropdown
+                loadStaffForAttendees();
                 
                 // Refresh selectpicker
                 $('.selectpicker').selectpicker('refresh');
@@ -607,17 +606,14 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 $('#status').val(status);
                 
                 
-                // Set attendees
-                var attendeeIds = [];
-                if (data.attendees) {
-                    $.each(data.attendees, function(index, attendee) {
-                        attendeeIds.push(attendee.staff_id);
-                    });
-                }
-                $('#attendees').val(attendeeIds);
+                // Set attendees using centralized function
+                setAppointmentAttendees(data.attendees);
                 
                 // Update modal title
                 $('#appointmentModalLabel').text('Edit Appointment');
+                
+                // Reload staff members for attendees dropdown
+                loadStaffForAttendees();
                 
                 // Refresh selectpicker
                 $('.selectpicker').selectpicker('refresh');
@@ -728,6 +724,10 @@ function resetAppointmentModal() {
     $('#appointmentModalLabel').text('Create Appointment');
     $('#contact_id').html('<option value="">Select Client/Lead</option>');
     $('#contact_id').selectpicker('val', '');
+    
+    // Reload staff members for attendees dropdown
+    loadStaffForAttendees();
+    
     $('.selectpicker').selectpicker('refresh');
     
     // Clear uploaded files
@@ -1317,7 +1317,12 @@ $(document).on('click', function(e) {
 // APPOINTMENT STATUS DROPDOWN FUNCTIONALITY END
 // ========================================
 
+// Attendees functionality is now handled by the centralized appointment-attendees.js file
+
 $(document).ready(function() {
+    // Initialize attendees functionality
+    initAppointmentAttendees();
+    
     // Check if auto_open parameter is present in URL
     var urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('auto_open') === '1') {
@@ -1333,6 +1338,9 @@ $(document).ready(function() {
     }
 });
 </script>
+
+<!-- Include centralized appointment attendees functionality -->
+<script src="<?php echo module_dir_url('ella_contractors', 'assets/js/appointment-attendees.js'); ?>"></script>
 
 <!-- Include global appointment.js for lead modal functionality -->
 <script src="<?php echo base_url('assets/js/global/appointment.js'); ?>"></script>
