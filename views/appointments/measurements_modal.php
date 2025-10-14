@@ -53,6 +53,12 @@
     font-style: italic !important;
 }
 
+/* Ensure other options maintain normal opacity and color */
+.measurement-row select option:not(.placeholder-option) {
+    color: #333 !important;
+    opacity: 1 !important;
+}
+
 .measurement-row select {
     color: #333 !important;
 }
