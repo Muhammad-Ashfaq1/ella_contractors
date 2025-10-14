@@ -20,9 +20,11 @@
                     
                     <!-- Tab Navigation with Add Tab Button -->
                     <div style="position: relative;">
-                        <ul class="nav nav-tabs mb-3" id="dynamic-tabs">
-                            <!-- Tabs will be added dynamically -->
-                        </ul>
+                        <div style="overflow-x: auto; margin-right: 120px;">
+                            <ul class="nav nav-tabs mb-3" id="dynamic-tabs" style="white-space: nowrap; min-width: 100%;">
+                                <!-- Tabs will be added dynamically -->
+                            </ul>
+                        </div>
                         <div style="position: absolute; top: 5px; right: 0;">
                             <button type="button" class="btn btn-primary btn-sm" id="addTabBtn" onclick="addNewTab()" title="Add Category">
                                 <i class="fa fa-plus"></i> Add Category
@@ -118,6 +120,72 @@
 .measurement-row .btn-danger {
     background-color: #dc3545 !important;
     border-color: #dc3545 !important;
+}
+
+/* Tab styling improvements */
+.tab-title {
+    display: inline-block;
+    margin-right: 2px !important;
+}
+
+.tab-remove-btn {
+    padding: 0 4px !important;
+    margin-left: 2px !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+.tab-remove-btn:hover {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    border-radius: 3px !important;
+}
+
+#dynamic-tabs {
+    border-bottom: 1px solid #ddd;
+}
+
+#dynamic-tabs li {
+    display: inline-block !important;
+    float: none !important;
+    margin-right: 2px;
+}
+
+#dynamic-tabs li a {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 8px 12px !important;
+    text-decoration: none !important;
+    border: 1px solid transparent !important;
+    border-radius: 4px 4px 0 0 !important;
+    background-color: #f8f9fa !important;
+    color: #495057 !important;
+    white-space: nowrap !important;
+}
+
+#dynamic-tabs li.active a {
+    background-color: #fff !important;
+    border-color: #ddd #ddd #fff !important;
+    color: #007bff !important;
+    border-bottom: 1px solid #fff !important;
+}
+
+/* Scroll styling */
+#dynamic-tabs::-webkit-scrollbar {
+    height: 6px;
+}
+
+#dynamic-tabs::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+#dynamic-tabs::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+#dynamic-tabs::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
 </style>
 

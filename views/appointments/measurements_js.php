@@ -179,8 +179,8 @@ function saveTabName(tabId) {
 
     // Convert input to tab title span
     var tabLink = $('[data-tab-id="' + tabId + '"] a');
-    tabLink.html('<span class="tab-title">' + tabName + '</span> ' +
-        '<button type="button" class="btn btn-xs btn-link" onclick="removeTab(\'' + tabId + '\')" title="Remove Tab">' +
+    tabLink.html('<span class="tab-title">' + tabName + '</span>' +
+        '<button type="button" class="btn btn-xs btn-link tab-remove-btn" onclick="removeTab(\'' + tabId + '\')" title="Remove Tab">' +
             '<i class="fa fa-times text-danger"></i>' +
         '</button>');
     
@@ -296,8 +296,8 @@ function loadMeasurementData(measurementId) {
                 // Create tab
                 var tabHtml = '<li class="active" data-tab-id="' + tabId + '">' +
                     '<a href="#' + tabId + '-content" data-toggle="tab" data-tab-id="' + tabId + '">' +
-                        '<span class="tab-title">' + tabName + '</span> ' +
-                        '<button type="button" class="btn btn-xs btn-link" onclick="removeTab(\'' + tabId + '\')" title="Remove Tab">' +
+                        '<span class="tab-title">' + tabName + '</span>' +
+                        '<button type="button" class="btn btn-xs btn-link tab-remove-btn" onclick="removeTab(\'' + tabId + '\')" title="Remove Tab">' +
                             '<i class="fa fa-times text-danger"></i>' +
                         '</button>' +
                     '</a>' +
