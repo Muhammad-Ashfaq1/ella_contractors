@@ -78,5 +78,46 @@
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.1); }
 }
+
+/* Measurement row styling */
+.measurement-row .form-control {
+    border: 1px solid #ddd !important;
+    border-radius: 4px !important;
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+}
+
+.measurement-row .form-control:focus {
+    border-color: #3498db !important;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3) !important;
+}
+
+.measurement-row label {
+    color: #333 !important;
+    font-weight: 500 !important;
+    margin-bottom: 5px !important;
+    font-size: 14px !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+.measurement-row .btn {
+    border-radius: 4px !important;
+    transition: all 0.2s ease !important;
+}
+
+.measurement-row .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.measurement-row .btn-success {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+}
+
+.measurement-row .btn-danger {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
 </style>
 

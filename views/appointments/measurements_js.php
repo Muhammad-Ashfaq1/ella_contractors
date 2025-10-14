@@ -27,30 +27,33 @@ function createMeasurementRow(tabId, rowIndex) {
         unitsHTML += '<option value="' + unit.value + '">' + unit.label + '</option>';
     });
     
-    var rowHtml = '<div class="row measurement-row" data-row="' + rowIndex + '" style="margin-bottom: 10px;">' +
+    var rowHtml = '<div class="row measurement-row" data-row="' + rowIndex + '" style="margin-bottom: 15px;">' +
         '<div class="col-md-4">' +
             '<div class="form-group">' +
-                '<input type="text" class="form-control" name="tab_measurements_' + tabId + '[' + rowIndex + '][name]" placeholder="Measurement name">' +
+                '<label for="name_' + tabId + '_' + rowIndex + '" style="color: #333; font-weight: 500; margin-bottom: 5px; font-size: 14px;">Name</label>' +
+                '<input type="text" class="form-control" id="name_' + tabId + '_' + rowIndex + '" name="tab_measurements_' + tabId + '[' + rowIndex + '][name]" placeholder="Enter measurement name" style="border-radius: 4px; border: 1px solid #ddd;">' +
             '</div>' +
         '</div>' +
         '<div class="col-md-3">' +
             '<div class="form-group">' +
-                '<input type="number" step="0.0001" class="form-control" name="tab_measurements_' + tabId + '[' + rowIndex + '][value]" placeholder="Value">' +
+                '<label for="value_' + tabId + '_' + rowIndex + '" style="color: #333; font-weight: 500; margin-bottom: 5px; font-size: 14px;">Value</label>' +
+                '<input type="number" step="0.0001" class="form-control" id="value_' + tabId + '_' + rowIndex + '" name="tab_measurements_' + tabId + '[' + rowIndex + '][value]" placeholder="0.00" style="border-radius: 4px; border: 1px solid #ddd;">' +
             '</div>' +
         '</div>' +
         '<div class="col-md-3">' +
             '<div class="form-group">' +
-                '<select class="form-control" name="tab_measurements_' + tabId + '[' + rowIndex + '][unit]">' +
+                '<label for="unit_' + tabId + '_' + rowIndex + '" style="color: #333; font-weight: 500; margin-bottom: 5px; font-size: 14px;">Unit</label>' +
+                '<select class="form-control" id="unit_' + tabId + '_' + rowIndex + '" name="tab_measurements_' + tabId + '[' + rowIndex + '][unit]" style="border-radius: 4px; border: 1px solid #ddd;">' +
                     unitsHTML +
                 '</select>' +
             '</div>' +
         '</div>' +
         '<div class="col-md-2">' +
-            '<div class="form-group">' +
-                '<button type="button" class="btn btn-success btn-sm" onclick="addMeasurementRow(\'' + tabId + '\')" title="Add Row">' +
+            '<div class="form-group" style="padding-top: 25px;">' +
+                '<button type="button" class="btn btn-success btn-sm" onclick="addMeasurementRow(\'' + tabId + '\')" title="Add Row" style="width: 35px; height: 35px; border-radius: 4px; padding: 0; display: inline-flex; align-items: center; justify-content: center; margin-right: 5px;">' +
                         '<i class="fa fa-plus"></i>' +
-                '</button> ' +
-                '<button type="button" class="btn btn-danger btn-sm remove-row-btn" onclick="removeMeasurementRow(this)" title="Remove Row">' +
+                '</button>' +
+                '<button type="button" class="btn btn-danger btn-sm remove-row-btn" onclick="removeMeasurementRow(this)" title="Remove Row" style="width: 35px; height: 35px; border-radius: 4px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">' +
                         '<i class="fa fa-minus"></i>' +
                     '</button>' +
             '</div>' +
