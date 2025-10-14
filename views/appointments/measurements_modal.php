@@ -28,8 +28,11 @@
                             </li>
                         </ul>
                         <div style="position: absolute; top: 5px; right: 0;">
-                            <button type="button" class="btn btn-primary btn-sm" onclick="addNewMeasurementTab()" title="Add Custom Category">
+                            <button type="button" class="btn btn-primary btn-sm" id="addCategoryBtn" onclick="addNewMeasurementTab()" title="Add Custom Category">
                                 <i class="fa fa-plus"></i> Add Category
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm" id="saveCategoryBtn" onclick="saveNewCategoryTab()" style="display: none;" title="Save Category">
+                                <i class="fa fa-save"></i> Save
                             </button>
                         </div>
                     </div>
@@ -61,6 +64,35 @@
 .selectpicker-unit option[value=""] {
     opacity: 0.5;
     color: #999;
+}
+
+/* Custom tab name input styling */
+.custom-tab-name-input {
+    border: none !important;
+    border-bottom: 2px dashed #3498db !important;
+    background: transparent !important;
+    padding: 2px 5px !important;
+    width: 120px !important;
+    color: #333 !important;
+    font-size: 14px !important;
+    outline: none !important;
+}
+
+.custom-tab-name-input:focus {
+    border-bottom-color: #2980b9 !important;
+    background-color: rgba(52, 152, 219, 0.05) !important;
+}
+
+.custom-tab-name-input::placeholder {
+    color: #95a5a6;
+    font-style: italic;
+    opacity: 0.7;
+}
+
+/* Pulse animation for Save button */
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
 }
 </style>
 

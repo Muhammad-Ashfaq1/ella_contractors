@@ -51,7 +51,7 @@ function createMeasurementRowHTML(category, counter) {
     var prefix = category === 'siding' ? '' : category + '_';
     var namePrefix = category === 'siding' ? 'measurements' : 'measurements_' + category;
     
-    return '<div class="row estimate-row" data-row="' + counter + '">' +
+    var rowHtml = '<div class="row estimate-row" data-row="' + counter + '">' +
         '<div class="col-md-4">' +
             '<div class="form-group">' +
                 '<label for="measurement_name_' + prefix + counter + '">Name</label>' +
@@ -86,6 +86,9 @@ function createMeasurementRowHTML(category, counter) {
             '</div>' +
         '</div>' +
     '</div>';
+    
+    console.log('Created row HTML for category:', category, 'counter:', counter);
+    return rowHtml;
 }
 
 // Generic function to add measurement row to any category
@@ -123,10 +126,33 @@ function removeEstimateRow(button) {
 
 // Initialize measurement rows for a category
 function initializeCategoryRows(category) {
+    console.log('=== initializeCategoryRows called for:', category);
+    
     rowCounters[category] = 0;
     var containerId = '#estimate-rows-container-' + category;
-    $(containerId).html(createMeasurementRowHTML(category, 0));
+    
+    console.log('Looking for container:', containerId);
+    console.log('Container found:', $(containerId).length > 0);
+    
+    // Ensure the container exists
+    if ($(containerId).length === 0) {
+        console.error('Container not found: ' + containerId);
+        console.log('Available containers:', $('[id^="estimate-rows-container-"]').map(function() { return this.id; }).get());
+        return;
+    }
+    
+    console.log('Container found, creating row HTML...');
+    var rowHtml = createMeasurementRowHTML(category, 0);
+    console.log('Row HTML created:', rowHtml.substring(0, 100) + '...');
+    
+    // Clear and populate with first row
+    $(containerId).html(rowHtml);
+    
+    // Hide remove button for single row
     $(containerId + ' .estimate-row .btn-danger').hide();
+    
+    console.log('Successfully initialized rows for category:', category);
+    console.log('Container now has', $(containerId + ' .estimate-row').length, 'rows');
 }
 
 // Measurements Functions
@@ -196,6 +222,20 @@ function displayMeasurements(measurements) {
         
         var sidingCount = (attrs.siding_measurements && Array.isArray(attrs.siding_measurements)) ? attrs.siding_measurements.length : 0;
         var roofingCount = (attrs.roofing_measurements && Array.isArray(attrs.roofing_measurements)) ? attrs.roofing_measurements.length : 0;
+        
+        // Count custom categories
+        var customCategoryCounts = [];
+        var customTabNames = attrs.custom_tab_names || {};
+        Object.keys(attrs).forEach(function(key) {
+            if (key.endsWith('_measurements') && key !== 'siding_measurements' && key !== 'roofing_measurements' && Array.isArray(attrs[key])) {
+                var category = key.replace('_measurements', '');
+                var categoryName = customTabNames[category] || category.toUpperCase();
+                customCategoryCounts.push({
+                    name: categoryName,
+                    count: attrs[key].length
+                });
+            }
+        });
 
         var rowClass = (idx % 2 === 0) ? 'style="background-color: #f8f9fa;"' : 'style="background-color: white;"';
         
@@ -214,6 +254,18 @@ function displayMeasurements(measurements) {
         html += '</div>';
         html += '</td>';
         html += '</tr>';
+        
+        // Add row for custom categories if any
+        if (customCategoryCounts.length > 0) {
+            html += '<tr ' + rowClass + '>';
+            html += '<td colspan="4" style="padding: 8px 12px; font-size: 12px; color: #666;">';
+            html += '<strong>Additional Categories:</strong> ';
+            customCategoryCounts.forEach(function(cat, i) {
+                html += '<span style="background-color: #6c757d; color: white; padding: 2px 6px; border-radius: 3px; margin-left: 5px; font-size: 10px;">' + cat.name + ' (' + cat.count + ')</span>';
+            });
+            html += '</td>';
+            html += '</tr>';
+        }
     });
 
     html += '</tbody></table></div>';
@@ -231,14 +283,31 @@ function openMeasurementModal(measurementId = null) {
     // Reset the flags when opening modal
     measurementSaved = false;
     modalJustClosed = false;
+    pendingNewTab = null;
     
-    // Remove any unsaved custom tabs
+    // Reset button states
+    $('#addCategoryBtn').show();
+    $('#saveCategoryBtn').hide();
+    
+    // Remove any unsaved custom tabs (only those without data-saved attribute)
     $('#category-tabs li[data-custom="true"]').each(function() {
         var tabLi = $(this);
-        var tabId = tabLi.find('a').attr('href').substring(1);
-        $('#' + tabId).remove();
-        tabLi.remove();
+        if (!tabLi.attr('data-saved')) {
+            var tabId = tabLi.find('a').attr('href').substring(1);
+            $('#' + tabId).remove();
+            tabLi.remove();
+        }
     });
+    
+    // If not editing, also remove saved custom tabs (start fresh)
+    if (!measurementId) {
+        $('#category-tabs li[data-custom="true"]').each(function() {
+            var tabLi = $(this);
+            var tabId = tabLi.find('a').attr('href').substring(1);
+            $('#' + tabId).remove();
+            tabLi.remove();
+        });
+    }
     
     // Store appointment ID before resetting form
     var appointmentId = $('input[name="appointment_id"]').val();
@@ -267,8 +336,11 @@ function openMeasurementModal(measurementId = null) {
     $('#siding-tab').addClass('active');
     
     // Initialize rows for all default categories
-    initializeCategoryRows('siding');
-    initializeCategoryRows('roofing');
+    setTimeout(function() {
+        initializeCategoryRows('siding');
+        initializeCategoryRows('roofing');
+        console.log('Initialized default categories');
+    }, 100);
     
     // Reset all counters
     rowCounters = {};
@@ -447,11 +519,34 @@ function populateMeasurementForm(data) {
     if (data.attributes_json) {
         try {
             var attributes = JSON.parse(data.attributes_json);
+            var customTabNames = attributes.custom_tab_names || {};
             
             // Process all measurement categories dynamically
             Object.keys(attributes).forEach(function(key) {
                 if (key.endsWith('_measurements') && Array.isArray(attributes[key])) {
                     var category = key.replace('_measurements', '');
+                    
+                    // Check if this is a custom category (not siding or roofing)
+                    if (category !== 'siding' && category !== 'roofing') {
+                        // Recreate the custom tab
+                        var tabName = customTabNames[category] || 'Custom';
+                        
+                        var newTabHtml = '<li id="tab-li-' + category + '" data-custom="true" data-tab-id="' + category + '" data-saved="true">' +
+                            '<a href="#' + category + '-tab" data-toggle="tab" data-category="' + category + '">' +
+                                '<span>' + tabName + '</span>' +
+                            '</a>' +
+                            '</li>';
+                        
+                        $('#category-tabs').append(newTabHtml);
+                        
+                        var newTabContent = '<div class="tab-pane" id="' + category + '-tab" data-category="' + category + '">' +
+                            '<div id="estimate-rows-container-' + category + '"></div>' +
+                        '</div>';
+                        
+                        $('.tab-content').append(newTabContent);
+                    }
+                    
+                    // Populate measurements for this category
                     populateCategoryMeasurements(category, attributes[key]);
                 }
             });
@@ -517,10 +612,19 @@ function collectAllTabsData() {
     return allData;
 }
 
-// Tab handling
-$('#category-tabs a[data-toggle="tab"]').on('click', function(e) {
+// Tab handling - Use event delegation to handle dynamically added tabs
+$(document).on('click', '#category-tabs li', function(e) {
+    // If clicking on input, just focus it and don't change tabs
+    if ($(e.target).is('input.custom-tab-name-input')) {
+        $(e.target).focus();
+        return;
+    }
+    
+    var tabLink = $(this).find('a[data-toggle="tab"]');
+    if (tabLink.length === 0) return;
+    
     e.preventDefault();
-    var category = $(this).data('category');
+    var category = tabLink.data('category');
     $('#selected-category').val(category);
 
     // Show the corresponding tab content
@@ -529,7 +633,7 @@ $('#category-tabs a[data-toggle="tab"]').on('click', function(e) {
 
     // Update active tab
     $('#category-tabs li').removeClass('active');
-    $(this).parent().addClass('active');
+    $(this).addClass('active');
 
     // Preserve appointment ID when switching tabs
     var appointmentId = $('input[name="appointment_id"]').val();
@@ -598,7 +702,18 @@ $('#saveMeasurement').on('click', function() {
     
     // Collect measurements from all categories dynamically
     var allMeasurements = {};
+    var customTabNames = {};
     var hasValidMeasurement = false;
+    
+    // Check if there's a pending unsaved custom tab
+    if (pendingNewTab) {
+        alert_float('warning', 'Please save the custom category tab first by clicking the Save button.');
+        $('#saveCategoryBtn').css('animation', 'pulse 0.5s');
+        setTimeout(function() {
+            $('#saveCategoryBtn').css('animation', '');
+        }, 500);
+        return false;
+    }
     
     // Find all measurement containers
     $('[id^="estimate-rows-container-"]').each(function() {
@@ -609,8 +724,32 @@ $('#saveMeasurement').on('click', function() {
         if (measurements.length > 0) {
             allMeasurements[category + '_measurements'] = measurements;
             hasValidMeasurement = true;
+            
+            // Check if this is a custom tab and get its name
+            var tabLi = $('#tab-li-' + category);
+            if (tabLi.attr('data-custom') === 'true' && tabLi.attr('data-saved') === 'true') {
+                // Get tab name from the span (already saved)
+                var tabNameElement = tabLi.find('span');
+                if (tabNameElement.length > 0) {
+                    var tabName = tabNameElement.text().trim();
+                    if (tabName) {
+                        customTabNames[category] = tabName;
+                    }
+                }
+            }
         }
     });
+    
+    // Validation
+    if (!hasValidMeasurement) {
+        alert_float('warning', 'Please enter at least one measurement in any category before saving.');
+        return false;
+    }
+    
+    // Store custom tab names in attributes
+    if (Object.keys(customTabNames).length > 0) {
+        allMeasurements['custom_tab_names'] = customTabNames;
+    }
     
     // Collect data from all tabs (legacy support)
     var allTabsData = collectAllTabsData();
@@ -621,12 +760,6 @@ $('#saveMeasurement').on('click', function() {
     
     // Set category to 'other' since we're saving all tabs (combined measurements)
     data.category = 'other';
-    
-    // Validation
-    if (!hasValidMeasurement) {
-        alert('Please enter at least one measurement in any category before saving.');
-        return false;
-    }
     
     // Show loading indicator
     var submitBtn = $(this);
@@ -707,25 +840,26 @@ function saveMeasurementAjax(formData, callback) {
     });
 }
 
-// Add new custom measurement tab
+// Add new custom measurement tab with inline editable name
 function addNewMeasurementTab() {
     customTabCounter++;
     var tabId = 'custom' + customTabCounter;
-    var tabName = prompt('Enter tab name:');
     
-    if (!tabName || tabName.trim() === '') {
-        customTabCounter--;
-        return;
-    }
+    // Store pending tab info
+    pendingNewTab = {
+        id: tabId,
+        name: ''
+    };
     
-    tabName = tabName.trim();
-    
-    // Create new tab with the provided name
-    var newTabHtml = '<li id="tab-li-' + tabId + '" data-custom="true">' +
-        '<a href="#' + tabId + '-tab" data-toggle="tab" data-category="' + tabId + '">' + tabName + '</a>' +
+    // Create new tab with editable input for name
+    var newTabHtml = '<li id="tab-li-' + tabId + '" data-custom="true" data-tab-id="' + tabId + '">' +
+        '<a href="#' + tabId + '-tab" data-toggle="tab" data-category="' + tabId + '">' +
+            '<input type="text" class="custom-tab-name-input" id="tab-name-' + tabId + '" ' +
+            'placeholder="Category name..." />' +
+        '</a>' +
         '</li>';
     
-    // Add tab to the navigation (before the Add button)
+    // Add tab to the navigation
     $('#category-tabs').append(newTabHtml);
     
     // Create tab content with measurement container
@@ -736,13 +870,110 @@ function addNewMeasurementTab() {
     // Add tab content to the tab-content container
     $('.tab-content').append(newTabContent);
     
-    // Initialize rows for the new category
-    initializeCategoryRows(tabId);
+    console.log('Added tab content for:', tabId, 'Container ID:', '#estimate-rows-container-' + tabId);
     
-    // Switch to the new tab
-    $('#category-tabs a[href="#' + tabId + '-tab"]').tab('show');
+    // Initialize rows for the new category after DOM is ready
+    setTimeout(function() {
+        console.log('Attempting to initialize rows for:', tabId);
+        var containerId = '#estimate-rows-container-' + tabId;
+        console.log('Looking for container:', containerId);
+        console.log('Container exists:', $(containerId).length > 0);
+        
+        if ($(containerId).length > 0) {
+            initializeCategoryRows(tabId);
+        } else {
+            console.error('Container not found, retrying...');
+            // Try again after another short delay
+            setTimeout(function() {
+                if ($(containerId).length > 0) {
+                    initializeCategoryRows(tabId);
+                } else {
+                    console.error('Container still not found after retry');
+                }
+    }, 100);
+        }
+    }, 100);
     
-    alert_float('success', 'Custom tab "' + tabName + '" added successfully!');
+    // Toggle buttons: Hide Add, Show Save
+    $('#addCategoryBtn').hide();
+    $('#saveCategoryBtn').show();
+    
+    // Switch to the new tab manually (since we're preventing default)
+    $('#category-tabs li').removeClass('active');
+    $('#tab-li-' + tabId).addClass('active');
+    $('.tab-pane').removeClass('active');
+    $('#' + tabId + '-tab').addClass('active');
+    $('#selected-category').val(tabId);
+    
+    console.log('Switched to tab:', tabId);
+    console.log('Tab element exists:', $('#' + tabId + '-tab').length > 0);
+    console.log('Tab is active:', $('#' + tabId + '-tab').hasClass('active'));
+    
+    // Focus on tab name input
+    setTimeout(function() {
+        $('#tab-name-' + tabId).focus();
+    }, 100);
+    
+    // Fallback: Force create content if not visible after a delay
+    setTimeout(function() {
+        var containerId = '#estimate-rows-container-' + tabId;
+        if ($(containerId).length > 0 && $(containerId).html().trim() === '') {
+            console.log('Fallback: Container is empty, forcing content creation');
+            $(containerId).html(createMeasurementRowHTML(tabId, 0));
+            $(containerId + ' .estimate-row .btn-danger').hide();
+        }
+    }, 200);
+    
+    // Handle Enter key to save category
+    $('#tab-name-' + tabId).on('keypress', function(e) {
+        if (e.which === 13) { // Enter key
+            e.preventDefault();
+            saveNewCategoryTab();
+        }
+    });
+    
+    alert_float('info', 'Enter category name and click Save to finalize the tab.');
+}
+
+// Save the new category tab (convert input to text)
+function saveNewCategoryTab() {
+    if (!pendingNewTab) {
+        alert_float('warning', 'No pending category to save.');
+        return;
+    }
+    
+    var tabId = pendingNewTab.id;
+    var tabNameInput = $('#tab-name-' + tabId);
+    var tabName = tabNameInput.val().trim();
+    
+    // Validate tab name
+    if (!tabName) {
+        alert_float('warning', 'Please enter a category name.');
+        tabNameInput.css('border-bottom-color', 'red').focus();
+        return;
+    }
+    
+    // Convert input to static text
+    tabNameInput.replaceWith('<span>' + tabName + '</span>');
+    
+    // Mark as saved
+                $('#tab-li-' + tabId).attr('data-saved', 'true');
+    
+    // Update pending tab name
+    pendingNewTab.name = tabName;
+                pendingNewTab = null;
+                
+                // Toggle buttons: Show Add, Hide Save
+    $('#addCategoryBtn').show();
+    $('#saveCategoryBtn').hide();
+    
+    alert_float('success', 'Category "' + tabName + '" added! You can now add measurements.');
+    
+    // Focus on first measurement field
+    var prefix = tabId + '_';
+    setTimeout(function() {
+        $('#measurement_name_' + prefix + '0').focus();
+    }, 100);
 }
 </script>
 
