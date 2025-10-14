@@ -117,10 +117,13 @@ function addNewTab() {
     var tabId = 'tab' + tabCounter;
     var tabName = 'Tab ' + tabCounter;
     
-    // Create input mode tab
+    // Create inline input tab that appears after existing tabs
     var tabHtml = '<li class="active" data-tab-id="' + tabId + '" data-edit-mode="true">' +
         '<a href="#' + tabId + '-content" data-toggle="tab" data-tab-id="' + tabId + '">' +
-            '<span class="tab-title">' + tabName + '</span> ' +
+            '<input type="text" class="custom-tab-name-input" id="tab-name-input" value="' + tabName + '" placeholder="Enter tab name" onkeypress="if(event.key===\'Enter\'){saveTabName(\'' + tabId + '\');}">' +
+            '<button type="button" class="btn btn-xs btn-success" onclick="saveTabName(\'' + tabId + '\')" title="Save Tab" style="margin-left: 5px; padding: 2px 6px;">' +
+                '<i class="fa fa-check"></i>' +
+            '</button>' +
             '<button type="button" class="btn btn-xs btn-link" onclick="removeTab(\'' + tabId + '\')" title="Remove Tab" style="display: none;">' +
                 '<i class="fa fa-times text-danger"></i>' +
             '</button>' +
@@ -129,30 +132,11 @@ function addNewTab() {
     
     $('#dynamic-tabs').append(tabHtml);
     
-    // Create tab content with input field
+    // Create tab content placeholder
     var contentHtml = '<div class="tab-pane active" id="' + tabId + '-content" data-tab-id="' + tabId + '">' +
-        '<div class="row" style="margin-bottom: 15px;">' +
-            '<div class="col-md-8">' +
-                '<div class="form-group">' +
-                    '<label for="tab-name-input">Tab Name:</label>' +
-                    '<input type="text" class="form-control" id="tab-name-input" value="' + tabName + '" placeholder="Enter tab name">' +
-                '</div>' +
-            '</div>' +
-            '<div class="col-md-4">' +
-                '<div class="form-group">' +
-                    '<label>&nbsp;</label><br>' +
-                    '<button type="button" class="btn btn-success btn-sm" onclick="saveTabName(\'' + tabId + '\')">' +
-                        '<i class="fa fa-check"></i> Save' +
-                    '</button> ' +
-                    '<button type="button" class="btn btn-default btn-sm" onclick="cancelTabCreation(\'' + tabId + '\')">' +
-                        '<i class="fa fa-times"></i> Cancel' +
-                    '</button>' +
-                '</div>' +
-            '</div>' +
-        '</div>' +
         '<div id="measurements-container-' + tabId + '" style="display: none;">' +
             '<div class="alert alert-info">' +
-                '<i class="fa fa-info-circle"></i> Save the tab name first, then you can add measurements.' +
+                '<i class="fa fa-info-circle"></i> Tab name saved. You can now add measurements.' +
             '</div>' +
         '</div>' +
     '</div>';
@@ -165,12 +149,12 @@ function addNewTab() {
     $('.tab-pane').removeClass('active');
     $('#' + tabId + '-content').addClass('active');
     
-    // Focus on input
+    // Focus on input and hide Add Tab button
     setTimeout(function() {
         $('#tab-name-input').focus().select();
     }, 100);
     
-    // Hide the add tab button temporarily
+    // Hide the add tab button
     $('#addTabBtn').hide();
 }
 
@@ -186,22 +170,22 @@ function saveTabName(tabId) {
         return;
     }
 
-    // Update the tab title
-    $('[data-tab-id="' + tabId + '"] .tab-title').text(tabName);
+    // Convert input to tab title span
+    var tabLink = $('[data-tab-id="' + tabId + '"] a');
+    tabLink.html('<span class="tab-title">' + tabName + '</span> ' +
+        '<button type="button" class="btn btn-xs btn-link" onclick="removeTab(\'' + tabId + '\')" title="Remove Tab">' +
+            '<i class="fa fa-times text-danger"></i>' +
+        '</button>');
     
     // Add hidden field for form submission
     var hiddenField = '<input type="hidden" name="tab_name_' + tabId + '" value="' + tabName + '">';
     $('#' + tabId + '-content').append(hiddenField);
     
-    // Remove input section and show measurements
-    $('#' + tabId + '-content .row').remove();
+    // Show measurements container and initialize with one row
     $('#measurements-container-' + tabId).show().html('');
     
     // Remove edit mode flag
     $('[data-tab-id="' + tabId + '"]').removeAttr('data-edit-mode');
-    
-    // Show remove button
-    $('[data-tab-id="' + tabId + '"] .btn-link').show();
     
     // Initialize with one row
     measurementRowCounters[tabId] = 0;
@@ -271,6 +255,9 @@ function openMeasurementModal(measurementId = null) {
     $('#dynamic-tab-content').empty();
     tabCounter = 0;
     measurementRowCounters = {};
+    
+    // Reset button states
+    $('#addTabBtn').show();
     
     if (measurementId) {
         // Load existing measurement
@@ -342,6 +329,9 @@ function loadMeasurementData(measurementId) {
                 }
                 
                 updateRemoveButtons(tabId);
+                
+                // Ensure proper button states for editing
+                $('#addTabBtn').show();
             } else {
                 alert_float('danger', response.message || 'Failed to load measurement');
             }
