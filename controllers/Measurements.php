@@ -270,6 +270,9 @@ class Measurements extends AdminController
             
             $record['items'] = $items;
             $record['items_count'] = count($items);
+            
+            // Format created_at date using CRM's date format
+            $record['formatted_date'] = _d($record['created_at']);
         }
         
         header('Content-Type: application/json');
