@@ -185,7 +185,7 @@ function saveTabName(tabId) {
         $('#tab-name-input').focus();
         return;
     }
-    
+
     // Update the tab title
     $('[data-tab-id="' + tabId + '"] .tab-title').text(tabName);
     
@@ -278,13 +278,6 @@ function openMeasurementModal(measurementId = null) {
         $('#measurementModalLabel').text('Edit Measurement');
     } else {
         // Show message and add tab button
-        $('#dynamic-tab-content').html(
-            '<div class="text-center" style="padding: 40px;">' +
-                '<i class="fa fa-plus-circle fa-3x text-muted" style="margin-bottom: 15px;"></i>' +
-                '<h4 class="text-muted">No tabs created yet</h4>' +
-                '<p class="text-muted">Click "Add Tab" to create your first measurement category</p>' +
-            '</div>'
-        );
         $('#measurementModalLabel').text('Add Measurement');
     }
     
@@ -295,12 +288,12 @@ function openMeasurementModal(measurementId = null) {
  * Load measurement data for editing
  */
 function loadMeasurementData(measurementId) {
-        $.ajax({
-            url: admin_url + 'ella_contractors/measurements/get_measurement/' + measurementId,
-            type: 'GET',
+    $.ajax({
+        url: admin_url + 'ella_contractors/measurements/get_measurement/' + measurementId,
+        type: 'GET',
             data: csrf_token_name + '=' + csrf_hash,
-            dataType: 'json',
-            success: function(response) {
+        dataType: 'json',
+        success: function(response) {
             if (response.success && response.data) {
                 var data = response.data;
                 $('#measurement_id').val(data.id);
@@ -396,7 +389,7 @@ $('#saveMeasurement').on('click', function() {
                 measurementSaved = true;
                 alert_float('success', response.message || 'Measurement saved successfully');
                 $('#measurementModal').modal('hide');
-                loadMeasurements();
+                    loadMeasurements();
             } else {
                 alert_float('danger', response.message || 'Failed to save measurement');
             }
@@ -470,8 +463,8 @@ function displayMeasurements(measurements) {
         html += '<td style="text-align: center; padding: 12px;">' + (measurement.items_count || 0) + ' items</td>';
         html += '<td style="text-align: center; padding: 12px;">' + (measurement.created_at ? new Date(measurement.created_at).toLocaleDateString() : '-') + '</td>';
         html += '<td style="text-align: center; padding: 12px;">';
-        html += '<button class="btn btn-sm btn-default" onclick="editMeasurement(' + measurement.id + ')" title="Edit"><i class="fa fa-edit"></i></button> ';
-        html += '<button class="btn btn-sm btn-danger" onclick="deleteMeasurement(' + measurement.id + ')" title="Delete"><i class="fa fa-trash"></i></button>';
+        html += '<button class="btn btn-default btn-xs" onclick="editMeasurement(' + measurement.id + ')" title="Edit"><i class="fa fa-pencil"></i></button> ';
+        html += '<button class="btn btn-danger btn-xs" onclick="deleteMeasurement(' + measurement.id + ')" title="Delete"><i class="fa fa-trash"></i></button>';
         html += '</td>';
         html += '</tr>';
     });
@@ -504,7 +497,7 @@ function deleteMeasurement(measurementId) {
             if (response.success) {
                 alert_float('success', response.message);
                 loadMeasurements();
-            } else {
+        } else {
                 alert_float('danger', response.message);
             }
         },
@@ -601,5 +594,8 @@ $('#measurementModal').on('hidden.bs.modal', function() {
     border-color: #95a5a6;
     color: white;
 }
+
+/* Action button styling - using standard Perfex CRM classes */
+/* No custom styling needed - using btn-default btn-xs and btn-danger btn-xs */
 </style>
 
