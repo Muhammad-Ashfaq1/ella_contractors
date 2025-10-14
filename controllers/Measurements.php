@@ -58,51 +58,32 @@ class Measurements extends AdminController
             }
         }
 
-        // Handle category-specific attributes
+        // Handle category-specific attributes dynamically
         $categorySpecificData = [];
-        $categories = ['siding', 'roofing'];
         
-        // Check for individual category data
-        foreach ($categories as $category) {
-            if (isset($post[$category]) && is_array($post[$category])) {
-                $categorySpecificData[$category] = $post[$category];
-                unset($post[$category]);
-            }
-        }
-        
-        // Handle new siding and roofing measurements structure
-        if (isset($post['measurements']) && is_array($post['measurements'])) {
-            $sidingMeasurements = [];
-            foreach ($post['measurements'] as $measurement) {
-                if (!empty($measurement['name']) && !empty($measurement['value']) && !empty($measurement['unit'])) {
-                    $sidingMeasurements[] = [
-                        'name' => $measurement['name'],
-                        'value' => (float) $measurement['value'],
-                        'unit' => $measurement['unit']
-                    ];
+        // Process all measurements_* fields dynamically
+        foreach ($post as $key => $value) {
+            // Check if key starts with 'measurements' or 'measurements_'
+            if (strpos($key, 'measurements') === 0 && is_array($value)) {
+                $category = $key === 'measurements' ? 'siding' : str_replace('measurements_', '', $key);
+                $measurements = [];
+                
+                foreach ($value as $measurement) {
+                    if (!empty($measurement['name']) && !empty($measurement['value']) && !empty($measurement['unit'])) {
+                        $measurements[] = [
+                            'name' => $measurement['name'],
+                            'value' => (float) $measurement['value'],
+                            'unit' => $measurement['unit']
+                        ];
+                    }
                 }
-            }
-            if (!empty($sidingMeasurements)) {
-                $categorySpecificData['siding_measurements'] = $sidingMeasurements;
-            }
-            unset($post['measurements']);
-        }
-        
-        if (isset($post['measurements_roofing']) && is_array($post['measurements_roofing'])) {
-            $roofingMeasurements = [];
-            foreach ($post['measurements_roofing'] as $measurement) {
-                if (!empty($measurement['name']) && !empty($measurement['value']) && !empty($measurement['unit'])) {
-                    $roofingMeasurements[] = [
-                        'name' => $measurement['name'],
-                        'value' => (float) $measurement['value'],
-                        'unit' => $measurement['unit']
-                    ];
+                
+                if (!empty($measurements)) {
+                    $categorySpecificData[$category . '_measurements'] = $measurements;
                 }
+                
+                unset($post[$key]);
             }
-            if (!empty($roofingMeasurements)) {
-                $categorySpecificData['roofing_measurements'] = $roofingMeasurements;
-            }
-            unset($post['measurements_roofing']);
         }
 
         // Merge with existing attributes_json if editing

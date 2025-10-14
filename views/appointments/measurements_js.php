@@ -1,9 +1,8 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 
 <script>
-// Estimate Row Management Functions
-var estimateRowCounter = 0;
-var estimateRowCounterRoofing = 0;
+// Generic measurement row counters by category
+var rowCounters = {};
 
 // Flag to track if measurement was successfully saved
 var measurementSaved = false;
@@ -11,6 +10,22 @@ var modalJustClosed = false;
 var modalIsOpening = false;
 var lastMeasurementsContent = '';
 var forceReload = false;
+
+// Custom tab management
+var customTabCounter = 0;
+var pendingNewTab = null;
+
+// Units configuration (can be customized)
+var measurementUnits = [
+    {value: '', label: 'Select Unit'},
+    {value: 'cm', label: 'Centimeters (cm)'},
+    {value: 'ft', label: 'Feet (ft)'},
+    {value: 'in', label: 'Inches (in)'},
+    {value: 'm', label: 'Meters (m)'},
+    {value: 'mm', label: 'Millimeters (mm)'},
+    {value: 'sqft', label: 'Square Feet (sqft)'},
+    {value: 'yd', label: 'Yards (yd)'}
+];
 
 // Monitor measurements container changes
 function monitorMeasurementsContainer() {
@@ -25,20 +40,18 @@ function monitorMeasurementsContainer() {
     }, 100);
 }
 
-function addEstimateRow(category = 'siding') {
-    var containerId = category === 'roofing' ? '#estimate-rows-container-roofing' : '#estimate-rows-container';
-    var prefix = category === 'roofing' ? 'roofing_' : '';
-    var namePrefix = category === 'roofing' ? 'measurements_roofing' : 'measurements';
+
+// Generic function to create measurement row HTML
+function createMeasurementRowHTML(category, counter) {
+    var unitsHTML = '';
+    measurementUnits.forEach(function(unit) {
+        unitsHTML += '<option value="' + unit.value + '">' + unit.label + '</option>';
+    });
     
-    if (category === 'roofing') {
-        estimateRowCounterRoofing++;
-        var counter = estimateRowCounterRoofing;
-    } else {
-        estimateRowCounter++;
-        var counter = estimateRowCounter;
-    }
+    var prefix = category === 'siding' ? '' : category + '_';
+    var namePrefix = category === 'siding' ? 'measurements' : 'measurements_' + category;
     
-    var rowHtml = '<div class="row estimate-row" data-row="' + counter + '">' +
+    return '<div class="row estimate-row" data-row="' + counter + '">' +
         '<div class="col-md-4">' +
             '<div class="form-group">' +
                 '<label for="measurement_name_' + prefix + counter + '">Name</label>' +
@@ -55,14 +68,7 @@ function addEstimateRow(category = 'siding') {
             '<div class="form-group">' +
                 '<label for="measurement_unit_' + prefix + counter + '">Unit</label>' +
                 '<select class="form-control selectpicker-unit" name="' + namePrefix + '[' + counter + '][unit]" id="measurement_unit_' + prefix + counter + '">' +
-                    '<option value="">Select Unit</option>' +
-                    '<option value="cm">Centimeters (cm)</option>' +
-                    '<option value="ft">Feet (ft)</option>' +
-                    '<option value="in">Inches (in)</option>' +
-                    '<option value="m">Meters (m)</option>' +
-                    '<option value="mm">Millimeters (mm)</option>' +
-                    '<option value="sqft">Square Feet (sqft)</option>' +
-                    '<option value="yd">Yards (yd)</option>' +
+                    unitsHTML +
                 '</select>' +
             '</div>' +
         '</div>' +
@@ -70,7 +76,7 @@ function addEstimateRow(category = 'siding') {
             '<div class="form-group">' +
                 '<label>&nbsp;</label>' +
                 '<div>' +
-                    '<button type="button" class="btn btn-success btn-sm" onclick="addEstimateRow(\'' + category + '\')" title="Add Estimate">' +
+                    '<button type="button" class="btn btn-success btn-sm" onclick="addEstimateRow(\'' + category + '\')" title="Add Measurement">' +
                         '<i class="fa fa-plus"></i>' +
                     '</button>' +
                     '<button type="button" class="btn btn-danger btn-sm" onclick="removeEstimateRow(this)" title="Remove Row">' +
@@ -80,25 +86,47 @@ function addEstimateRow(category = 'siding') {
             '</div>' +
         '</div>' +
     '</div>';
+}
+
+// Generic function to add measurement row to any category
+function addEstimateRow(category) {
+    if (!rowCounters[category]) {
+        rowCounters[category] = 0;
+    }
     
-    $(containerId).append(rowHtml);
+    rowCounters[category]++;
+    var counter = rowCounters[category];
+    var containerId = '#estimate-rows-container-' + category;
     
-    // Show remove buttons for all rows in this category if there's more than one
+    $(containerId).append(createMeasurementRowHTML(category, counter));
+    
+    // Show remove buttons if more than one row
     var rowCount = $(containerId + ' .estimate-row').length;
     if (rowCount > 1) {
         $(containerId + ' .estimate-row .btn-danger').show();
+    } else {
+        $(containerId + ' .estimate-row .btn-danger').hide();
     }
 }
 
+// Generic function to remove measurement row
 function removeEstimateRow(button) {
+    var container = $(button).closest('[id^="estimate-rows-container"]');
     $(button).closest('.estimate-row').remove();
     
-    // Hide remove buttons if only one row left in the container
-    var container = $(button).closest('[id^="estimate-rows-container"]');
+    // Hide remove buttons if only one row left
     var rowCount = container.find('.estimate-row').length;
     if (rowCount <= 1) {
         container.find('.estimate-row .btn-danger').hide();
     }
+}
+
+// Initialize measurement rows for a category
+function initializeCategoryRows(category) {
+    rowCounters[category] = 0;
+    var containerId = '#estimate-rows-container-' + category;
+    $(containerId).html(createMeasurementRowHTML(category, 0));
+    $(containerId + ' .estimate-row .btn-danger').hide();
 }
 
 // Measurements Functions
@@ -204,6 +232,14 @@ function openMeasurementModal(measurementId = null) {
     measurementSaved = false;
     modalJustClosed = false;
     
+    // Remove any unsaved custom tabs
+    $('#category-tabs li[data-custom="true"]').each(function() {
+        var tabLi = $(this);
+        var tabId = tabLi.find('a').attr('href').substring(1);
+        $('#' + tabId).remove();
+        tabLi.remove();
+    });
+    
     // Store appointment ID before resetting form
     var appointmentId = $('input[name="appointment_id"]').val();
     var relId = $('input[name="rel_id"]').val();
@@ -230,97 +266,12 @@ function openMeasurementModal(measurementId = null) {
     $('.tab-pane').removeClass('active');
     $('#siding-tab').addClass('active');
     
-    // Reset estimate rows for siding tab
-    $('#estimate-rows-container').html('<div class="row estimate-row" data-row="0">' +
-        '<div class="col-md-4">' +
-            '<div class="form-group">' +
-                '<label for="measurement_name_0">Name</label>' +
-                '<input type="text" class="form-control" name="measurements[0][name]" id="measurement_name_0" placeholder="Enter measurement name">' +
-            '</div>' +
-        '</div>' +
-        '<div class="col-md-3">' +
-            '<div class="form-group">' +
-                '<label for="measurement_value_0">Value</label>' +
-                '<input type="number" step="0.0001" class="form-control" name="measurements[0][value]" id="measurement_value_0" placeholder="0.00">' +
-            '</div>' +
-        '</div>' +
-        '<div class="col-md-3">' +
-            '<div class="form-group">' +
-                '<label for="measurement_unit_0">Unit</label>' +
-                '<select class="form-control selectpicker-unit" name="measurements[0][unit]" id="measurement_unit_0">' +
-                    '<option value="">Select Unit</option>' +
-                    '<option value="cm">Centimeters (cm)</option>' +
-                    '<option value="ft">Feet (ft)</option>' +
-                    '<option value="in">Inches (in)</option>' +
-                    '<option value="m">Meters (m)</option>' +
-                    '<option value="mm">Millimeters (mm)</option>' +
-                    '<option value="sqft">Square Feet (sqft)</option>' +
-                    '<option value="yd">Yards (yd)</option>' +
-                '</select>' +
-            '</div>' +
-        '</div>' +
-        '<div class="col-md-2">' +
-            '<div class="form-group">' +
-                '<label>&nbsp;</label>' +
-                '<div>' +
-                    '<button type="button" class="btn btn-success btn-sm" onclick="addEstimateRow()" title="Add Estimate">' +
-                        '<i class="fa fa-plus"></i>' +
-                    '</button>' +
-                    '<button type="button" class="btn btn-danger btn-sm" onclick="removeEstimateRow(this)" title="Remove Row" style="display: none;">' +
-                        '<i class="fa fa-minus"></i>' +
-                    '</button>' +
-                '</div>' +
-            '</div>' +
-        '</div>' +
-    '</div>');
+    // Initialize rows for all default categories
+    initializeCategoryRows('siding');
+    initializeCategoryRows('roofing');
     
-    // Reset estimate rows for roofing tab
-    $('#estimate-rows-container-roofing').html('<div class="row estimate-row" data-row="0">' +
-        '<div class="col-md-4">' +
-            '<div class="form-group">' +
-                '<label for="measurement_name_roofing_0">Name</label>' +
-                '<input type="text" class="form-control" name="measurements_roofing[0][name]" id="measurement_name_roofing_0" placeholder="Enter measurement name">' +
-            '</div>' +
-        '</div>' +
-        '<div class="col-md-3">' +
-            '<div class="form-group">' +
-                '<label for="measurement_value_roofing_0">Value</label>' +
-                '<input type="number" step="0.0001" class="form-control" name="measurements_roofing[0][value]" id="measurement_value_roofing_0" placeholder="0.00">' +
-            '</div>' +
-        '</div>' +
-        '<div class="col-md-3">' +
-            '<div class="form-group">' +
-                '<label for="measurement_unit_roofing_0">Unit</label>' +
-                '<select class="form-control selectpicker-unit" name="measurements_roofing[0][unit]" id="measurement_unit_roofing_0">' +
-                    '<option value="">Select Unit</option>' +
-                    '<option value="cm">Centimeters (cm)</option>' +
-                    '<option value="ft">Feet (ft)</option>' +
-                    '<option value="in">Inches (in)</option>' +
-                    '<option value="m">Meters (m)</option>' +
-                    '<option value="mm">Millimeters (mm)</option>' +
-                    '<option value="sqft">Square Feet (sqft)</option>' +
-                    '<option value="yd">Yards (yd)</option>' +
-                '</select>' +
-            '</div>' +
-        '</div>' +
-        '<div class="col-md-2">' +
-            '<div class="form-group">' +
-                '<label>&nbsp;</label>' +
-                '<div>' +
-                    '<button type="button" class="btn btn-success btn-sm" onclick="addEstimateRow(\'roofing\')" title="Add Estimate">' +
-                        '<i class="fa fa-plus"></i>' +
-                    '</button>' +
-                    '<button type="button" class="btn btn-danger btn-sm" onclick="removeEstimateRow(this)" title="Remove Row" style="display: none;">' +
-                        '<i class="fa fa-minus"></i>' +
-                    '</button>' +
-                '</div>' +
-            '</div>' +
-        '</div>' +
-    '</div>');
-    
-    // Reset counters
-    estimateRowCounter = 0;
-    estimateRowCounterRoofing = 0;
+    // Reset all counters
+    rowCounters = {};
     
     if (measurementId) {
         // Load measurement data for editing
@@ -452,6 +403,33 @@ function loadMeasurementData(measurementId) {
     });
 }
 
+// Generic function to populate measurements for any category
+function populateCategoryMeasurements(category, measurements) {
+    if (!measurements || measurements.length === 0) return;
+    
+    var containerId = '#estimate-rows-container-' + category;
+    $(containerId).html(''); // Clear existing rows
+    rowCounters[category] = -1; // Will be incremented to 0 on first add
+    
+    measurements.forEach(function(measurement, index) {
+        addEstimateRow(category);
+        var rowIndex = rowCounters[category];
+        var prefix = category === 'siding' ? '' : category + '_';
+        
+        $('#measurement_name_' + prefix + rowIndex).val(measurement.name || '');
+        $('#measurement_value_' + prefix + rowIndex).val(measurement.value || '');
+        $('#measurement_unit_' + prefix + rowIndex).val(measurement.unit || '');
+    });
+    
+    // Show/hide remove buttons appropriately
+    var rowCount = $(containerId + ' .estimate-row').length;
+    if (rowCount > 1) {
+        $(containerId + ' .estimate-row .btn-danger').show();
+    } else {
+        $(containerId + ' .estimate-row .btn-danger').hide();
+    }
+}
+
 function populateMeasurementForm(data) {
     // Populate basic fields if they exist
     if (data.designator) $('input[name="designator"]').val(data.designator);
@@ -470,56 +448,14 @@ function populateMeasurementForm(data) {
         try {
             var attributes = JSON.parse(data.attributes_json);
             
-            // Handle new siding measurements
-            if (attributes.siding_measurements && Array.isArray(attributes.siding_measurements)) {
-                // Clear existing rows
-                $('#estimate-rows-container').html('');
-                estimateRowCounter = 0;
-                
-                // Add rows for each siding measurement
-                attributes.siding_measurements.forEach(function(measurement, index) {
-                    addEstimateRow('siding');
-                    var rowIndex = estimateRowCounter;
-                    $('#measurement_name_' + rowIndex).val(measurement.name || '');
-                    $('#measurement_value_' + rowIndex).val(measurement.value || '');
-                    $('#measurement_unit_' + rowIndex).val(measurement.unit || '');
-                });
-                
-                // Show remove buttons if more than one row
-                if (attributes.siding_measurements.length > 1) {
-                    $('#estimate-rows-container .estimate-row .btn-danger').show();
-                }
-            }
-            
-            // Handle new roofing measurements
-            if (attributes.roofing_measurements && Array.isArray(attributes.roofing_measurements)) {
-                // Clear existing rows
-                $('#estimate-rows-container-roofing').html('');
-                estimateRowCounterRoofing = 0;
-                
-                // Add rows for each roofing measurement
-                attributes.roofing_measurements.forEach(function(measurement, index) {
-                    addEstimateRow('roofing');
-                    var rowIndex = estimateRowCounterRoofing;
-                    $('#measurement_name_roofing_' + rowIndex).val(measurement.name || '');
-                    $('#measurement_value_roofing_' + rowIndex).val(measurement.value || '');
-                    $('#measurement_unit_roofing_' + rowIndex).val(measurement.unit || '');
-                });
-                
-                // Show remove buttons if more than one row
-                if (attributes.roofing_measurements.length > 1) {
-                    $('#estimate-rows-container-roofing .estimate-row .btn-danger').show();
-                }
-            }
-            
-            // Handle other category data (legacy)
-            Object.keys(attributes).forEach(function(category) {
-                if (category !== 'siding_measurements' && category !== 'roofing_measurements') {
-                    Object.keys(attributes[category]).forEach(function(field) {
-                        $('input[name="' + category + '[' + field + ']"]').val(attributes[category][field]);
-                    });
+            // Process all measurement categories dynamically
+            Object.keys(attributes).forEach(function(key) {
+                if (key.endsWith('_measurements') && Array.isArray(attributes[key])) {
+                    var category = key.replace('_measurements', '');
+                    populateCategoryMeasurements(category, attributes[key]);
                 }
             });
+            
         } catch (e) {
             console.error('Error parsing attributes:', e);
         }
@@ -628,7 +564,29 @@ function calculateMeasurements() {
 // Bind calculation to width/height inputs
 $(document).on('input change', 'input[name="width_val"], input[name="height_val"], input[name="length_unit"], input[name="area_unit"]', calculateMeasurements);
 
-// Save measurement using new simplified structure
+// Generic function to collect measurements from a category container
+function collectCategoryMeasurements(category) {
+    var measurements = [];
+    var containerId = '#estimate-rows-container-' + category;
+    
+    $(containerId + ' .estimate-row').each(function() {
+        var name = $(this).find('input[name*="[name]"]').val().trim();
+        var value = $(this).find('input[name*="[value]"]').val().trim();
+        var unit = $(this).find('select[name*="[unit]"]').val();
+        
+        if (name && value && unit) {
+            measurements.push({
+                name: name,
+                value: parseFloat(value),
+                unit: unit
+            });
+        }
+    });
+    
+    return measurements;
+}
+
+// Save measurement using generic structure
 $('#saveMeasurement').on('click', function() {
     var formData = $('#measurementForm').serializeArray();
     var data = {};
@@ -638,63 +596,34 @@ $('#saveMeasurement').on('click', function() {
         data[field.name] = field.value;
     });
     
-  // Collect data from siding and roofing estimate rows
-    var sidingMeasurements = [];
-    var roofingMeasurements = [];
+    // Collect measurements from all categories dynamically
+    var allMeasurements = {};
     var hasValidMeasurement = false;
     
-    // Collect siding measurements
-    $('#estimate-rows-container .estimate-row').each(function() {
-        var name = $(this).find('input[name*="[name]"]').val().trim();
-        var value = $(this).find('input[name*="[value]"]').val().trim();
-        var unit = $(this).find('select[name*="[unit]"]').val();
+    // Find all measurement containers
+    $('[id^="estimate-rows-container-"]').each(function() {
+        var containerId = $(this).attr('id');
+        var category = containerId.replace('estimate-rows-container-', '');
+        var measurements = collectCategoryMeasurements(category);
         
-        if (name && value && unit) {
-            sidingMeasurements.push({
-                name: name,
-                value: parseFloat(value),
-                unit: unit
-            });
+        if (measurements.length > 0) {
+            allMeasurements[category + '_measurements'] = measurements;
             hasValidMeasurement = true;
         }
     });
     
-    // Collect roofing measurements
-    $('#estimate-rows-container-roofing .estimate-row').each(function() {
-        var name = $(this).find('input[name*="[name]"]').val().trim();
-        var value = $(this).find('input[name*="[value]"]').val().trim();
-        var unit = $(this).find('select[name*="[unit]"]').val();
-        
-        if (name && value && unit) {
-            roofingMeasurements.push({
-                name: name,
-                value: parseFloat(value),
-                unit: unit
-            });
-            hasValidMeasurement = true;
-        }
-    });
-    
-    
-    // Collect data from all tabs
+    // Collect data from all tabs (legacy support)
     var allTabsData = collectAllTabsData();
     
-    // Add new measurements to the data
-    if (sidingMeasurements.length > 0) {
-        allTabsData.siding_measurements = sidingMeasurements;
-    }
-    if (roofingMeasurements.length > 0) {
-        allTabsData.roofing_measurements = roofingMeasurements;
-    }
-    
-    // Merge all data
+    // Merge measurements with tab data
+    $.extend(allTabsData, allMeasurements);
     $.extend(data, allTabsData);
     
     // Set category to 'other' since we're saving all tabs (combined measurements)
     data.category = 'other';
     
     // Validation
-    if (Object.keys(allTabsData).length === 0 && !hasValidMeasurement) {
+    if (!hasValidMeasurement) {
         alert('Please enter at least one measurement in any category before saving.');
         return false;
     }
@@ -776,6 +705,44 @@ function saveMeasurementAjax(formData, callback) {
             }
         }
     });
+}
+
+// Add new custom measurement tab
+function addNewMeasurementTab() {
+    customTabCounter++;
+    var tabId = 'custom' + customTabCounter;
+    var tabName = prompt('Enter tab name:');
+    
+    if (!tabName || tabName.trim() === '') {
+        customTabCounter--;
+        return;
+    }
+    
+    tabName = tabName.trim();
+    
+    // Create new tab with the provided name
+    var newTabHtml = '<li id="tab-li-' + tabId + '" data-custom="true">' +
+        '<a href="#' + tabId + '-tab" data-toggle="tab" data-category="' + tabId + '">' + tabName + '</a>' +
+        '</li>';
+    
+    // Add tab to the navigation (before the Add button)
+    $('#category-tabs').append(newTabHtml);
+    
+    // Create tab content with measurement container
+    var newTabContent = '<div class="tab-pane" id="' + tabId + '-tab" data-category="' + tabId + '">' +
+        '<div id="estimate-rows-container-' + tabId + '"></div>' +
+    '</div>';
+    
+    // Add tab content to the tab-content container
+    $('.tab-content').append(newTabContent);
+    
+    // Initialize rows for the new category
+    initializeCategoryRows(tabId);
+    
+    // Switch to the new tab
+    $('#category-tabs a[href="#' + tabId + '-tab"]').tab('show');
+    
+    alert_float('success', 'Custom tab "' + tabName + '" added successfully!');
 }
 </script>
 
