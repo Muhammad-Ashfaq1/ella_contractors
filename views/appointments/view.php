@@ -661,34 +661,23 @@ $(document).ready(function() {
         // Small delay to ensure data is loaded before switching tabs
         setTimeout(function() {
             switchToTab(tabParam, false); // Don't update URL since we're setting it from URL
-            // Ensure data is loaded for the specific tab after switching
-            switch(tabParam) {
-                case 'measurements':
-                    loadMeasurements();
-                    break;
-                case 'estimates':
-                    loadEstimates();
-                    break;
-                case 'notes':
-                    loadNotes();
-                    break;
-                case 'attachments':
-                    if (typeof loadAttachments === 'function') {
-                        loadAttachments(true);
-                    }
-                    break;
-                case 'timeline':
-                    loadTimeline();
-                    break;
-            }
+            // Note: Data loading is handled by shown.bs.tab event when tab switches
         }, 500);
     }
     
-    // Track tab changes and update URL
+    // Track tab changes and update URL - ONLY for main page tabs, not modal tabs
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        // Ignore tab events from modals (e.g., measurement modal internal tabs)
+        if ($(e.target).closest('.modal').length > 0) {
+            console.log('Ignoring tab event from modal');
+            return;
+        }
+        
         var target = $(e.target).attr('href');
         var tabName = target.replace('#', '').replace('-tab', '');
         currentActiveTab = tabName;
+        
+        console.log('Main tab switched to:', tabName);
         
         // Update URL without page reload
         var url = new URL(window.location);
@@ -727,26 +716,8 @@ $(document).ready(function() {
         }, 100);
     });
     
-    // Reload estimates when estimates tab is shown
-    $('a[href="#estimates-tab"]').on('click', function() {
-        loadEstimates();
-    });
-    
-    // Reload notes when notes tab is shown
-    $('a[href="#notes-tab"]').on('click', function() {
-        loadNotes();
-    });
-    
-    // Reload timeline when timeline tab is shown
-    $('a[href="#timeline-tab"]').on('click', function() {
-        loadTimeline();
-    });
-    
-    // Reload measurements when measurements tab is shown
-    $('a[href="#measurements-tab"]').on('click', function() {
-        loadMeasurements();
-    });
-    
+    // Note: Tab data loading is handled by shown.bs.tab event above
+    // No need for separate click handlers as they cause double-loading
     
     // Log email button click
     window.logEmailClick = function(appointmentId, emailAddress) {
