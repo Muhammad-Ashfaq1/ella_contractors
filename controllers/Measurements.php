@@ -9,229 +9,207 @@ class Measurements extends AdminController
         $this->load->model('ella_contractors/Ella_appointments_model', 'appointments_model');
     }
 
-
+    /**
+     * Save measurement with dynamic tabs - Generic handler
+     */
     public function save()
     {
         if (!has_permission('ella_contractors', '', 'edit')) {
-            access_denied('ella_contractors');
+            ajax_access_denied();
         }
 
         $post = $this->input->post(null, true);
-        $id   = isset($post['id']) ? (int) $post['id'] : 0;
+        $record_id = isset($post['id']) ? (int) $post['id'] : 0;
         
-        // Handle relationships (appointment, lead, or other)
-        if (isset($post['appointment_id']) && !empty($post['appointment_id'])) {
-            $post['rel_type'] = 'appointment';
-            $post['rel_id'] = (int) $post['appointment_id'];
-        } elseif (isset($post['lead_id']) && !empty($post['lead_id'])) {
-            $post['rel_type'] = 'lead';
-            $post['rel_id'] = (int) $post['lead_id'];
-        } else {
-            $post['rel_type'] = 'appointment'; // Default to appointment if no specific type
-            $post['rel_id'] = isset($post['appointment_id']) ? (int) $post['appointment_id'] : 0;
-        }
-
-        // Handle client name (store in notes or attributes if needed)
-        if (isset($post['client_name']) && !empty($post['client_name'])) {
-            $clientName = $post['client_name'];
-            // Store client name in notes or create a separate field
-            if (empty($post['notes'])) {
-                $post['notes'] = 'Client: ' . $clientName;
-            } else {
-                $post['notes'] = $post['notes'] . ' | Client: ' . $clientName;
-            }
-        }
-
-        // Handle basic measurement fields
-        $width  = (float) ($post['width_val'] ?? 0);
-        $height = (float) ($post['height_val'] ?? 0);
-        if ($width && $height) {
-            if (!isset($post['united_inches_val']) || $post['united_inches_val'] === '') {
-                $post['united_inches_val'] = $width + $height;
-            }
-            if (!isset($post['area_val']) || $post['area_val'] === '') {
-                $lenU  = $post['length_unit'] ?? 'in';
-                $areaU = $post['area_unit'] ?? 'sqft';
-                if ($lenU === 'in' && $areaU === 'sqft') {
-                    $post['area_val'] = ($width * $height) / 144.0;
-                }
-            }
-        }
-
-        // Handle category-specific attributes dynamically
-        $categorySpecificData = [];
+        // Extract relationship data
+        $appointment_id = isset($post['appointment_id']) ? (int) $post['appointment_id'] : 0;
+        $rel_type = isset($post['rel_type']) ? $post['rel_type'] : 'appointment';
+        $rel_id = isset($post['rel_id']) ? (int) $post['rel_id'] : $appointment_id;
+        $org_id = isset($post['org_id']) ? (int) $post['org_id'] : null;
         
-        // Process all measurements_* fields dynamically
+        // Collect all tab data dynamically
+        $tabs_data = [];
         foreach ($post as $key => $value) {
-            // Check if key starts with 'measurements' or 'measurements_'
-            if (strpos($key, 'measurements') === 0 && is_array($value)) {
-                $category = $key === 'measurements' ? 'siding' : str_replace('measurements_', '', $key);
-                $measurements = [];
+            // Match pattern: tab_measurements_[tab_id] (e.g., tab_measurements_custom1)
+            if (preg_match('/^tab_measurements_(.+)$/', $key, $matches) && is_array($value)) {
+                $tab_id = $matches[1];
+                $tab_name = isset($post['tab_name_' . $tab_id]) ? $post['tab_name_' . $tab_id] : ucfirst($tab_id);
                 
-                foreach ($value as $measurement) {
-                    if (!empty($measurement['name']) && !empty($measurement['value']) && !empty($measurement['unit'])) {
+                $measurements = [];
+                foreach ($value as $index => $measurement) {
+                    if (!empty($measurement['name']) && !empty($measurement['unit']) && isset($measurement['value'])) {
                         $measurements[] = [
                             'name' => $measurement['name'],
                             'value' => (float) $measurement['value'],
-                            'unit' => $measurement['unit']
+                            'unit' => $measurement['unit'],
+                            'sort_order' => $index
                         ];
                     }
                 }
                 
                 if (!empty($measurements)) {
-                    $categorySpecificData[$category . '_measurements'] = $measurements;
+                    $tabs_data[] = [
+                        'tab_name' => $tab_name,
+                        'measurements' => $measurements
+                    ];
                 }
-                
-                unset($post[$key]);
             }
-        }
-
-        // Merge with existing attributes_json if editing
-        if ($id > 0) {
-            $existing = $this->measurements_model->find($id);
-            $existing_attributes = json_decode($existing['attributes_json'] ?? '{}', true);
-            $post['attributes_json'] = json_encode(array_merge($existing_attributes, $categorySpecificData));
-            log_message('debug', 'Updated attributes_json: ' . $post['attributes_json']);
-        } else {
-            $post['attributes_json'] = json_encode($categorySpecificData);
-            log_message('debug', 'New attributes_json: ' . $post['attributes_json']);
         }
         
-        // Set required fields for the database
-        if (empty($post['name'])) {
-            $post['name'] = 'Combined Measurement';
-        }
-        if (empty($post['category'])) {
-            $post['category'] = 'other';
-        }
-        if (empty($post['status_code'])) {
-            $post['status_code'] = 1;
-        }
-        if (empty($post['sort_order'])) {
-            $post['sort_order'] = 0;
-        }
-        if (empty($post['intRecordStatusCode'])) {
-            $post['intRecordStatusCode'] = 1;
-        }
-        
-        // Debug: Log the final data being saved
-        log_message('debug', 'Final data being saved: ' . json_encode($post));
-
-        if ($id > 0) {
-            $ok  = $this->measurements_model->update($id, $post);
-            $msg = $ok ? 'Updated successfully' : 'Nothing changed';
-            
-            // Log measurement update if successful and it's for an appointment
-            if ($ok && isset($post['appointment_id']) && $post['appointment_id']) {
-                $measurement_name = $post['name'] ?? 'Measurement';
-                $this->appointments_model->log_activity($post['appointment_id'], 'updated', 'measurement', $measurement_name, ['measurement_id' => $id, 'category' => $post['category'] ?? 'general']);
-            }
-        } else {
-            // Debug: Log what we're trying to insert
-            log_message('debug', 'Attempting to create measurement with data: ' . json_encode($post));
-            
-            // Try direct database insert first
-            $insert_data = [
-                'category' => $post['category'] ?? 'other',
-                'rel_type' => $post['rel_type'] ?? 'appointment',
-                'rel_id' => $post['rel_id'] ?? $post['appointment_id'] ?? 0,
-                'appointment_id' => $post['appointment_id'] ?? 0,
-                'name' => $post['name'] ?? 'Combined Measurement',
-                'attributes_json' => $post['attributes_json'] ?? '{}',
-                'status_code' => $post['status_code'] ?? 1,
-                'sort_order' => $post['sort_order'] ?? 0,
-                'intRecordStatusCode' => $post['intRecordStatusCode'] ?? 1,
-                'dtmCreated' => date('Y-m-d H:i:s')
-            ];
-            
-            log_message('debug', 'Direct insert data: ' . json_encode($insert_data));
-            
-            $this->db->insert(db_prefix() . 'ella_contractors_measurements', $insert_data);
-            $measurement_id = $this->db->insert_id();
-            $ok = (bool) $measurement_id;
-            $msg = $ok ? 'Created successfully' : 'Failed to create';
-            
-            // Debug: Log the result
-            log_message('debug', 'Direct insert result: ' . ($ok ? 'SUCCESS' : 'FAILED') . ', ID: ' . $measurement_id);
-            if (!$ok) {
-                log_message('error', 'Direct insert error: ' . $this->db->last_query());
-                log_message('error', 'Direct insert error message: ' . $this->db->error()['message']);
-                log_message('error', 'Full direct insert error: ' . json_encode($this->db->error()));
-            }
-            
-            // Log measurement creation if successful and it's for an appointment
-            if ($ok && isset($post['appointment_id']) && $post['appointment_id']) {
-                $measurement_name = $post['name'] ?? 'Measurement';
-                $this->appointments_model->log_activity($post['appointment_id'], 'created', 'measurement', $measurement_name, ['measurement_id' => $measurement_id, 'category' => $post['category'] ?? 'general']);
-            }
-        }
-
-        // Handle AJAX requests
-        if ($this->input->is_ajax_request()) {
-            header('Content-Type: application/json');
-            
-            if ($ok) {
-                $measurement = $this->measurements_model->find($id ?: $this->db->insert_id());
-                $response_data = $measurement;
-                
-                echo json_encode([
-                    'success' => true,
-                    'message' => $msg,
-                    'data' => $response_data
-                ]);
-            } else {
+        // Validation
+        if (empty($tabs_data)) {
+            if ($this->input->is_ajax_request()) {
                 echo json_encode([
                     'success' => false,
-                    'message' => $msg,
-                    'data' => null
+                    'message' => 'Please add at least one measurement in any tab'
                 ]);
+                return;
             }
+            set_alert('danger', 'Please add at least one measurement');
+            redirect($_SERVER['HTTP_REFERER'] ?? admin_url('ella_contractors/appointments'));
             return;
         }
-
-        set_alert($ok ? 'success' : 'danger', $msg);
-        $redirectCategory = ($post['category'] === 'combined') ? 'siding' : ($post['category'] ?? 'siding');
-        redirect(admin_url('ella_contractors/measurements/' . $redirectCategory));
-    }
-
-
-    public function delete($id)
-    {
-        if (!has_permission('ella_contractors', '', 'delete')) {
+        
+        $this->db->trans_start();
+        
+        try {
+            if ($record_id > 0) {
+                // Update: Delete old items and create new ones
+                // First, get all existing measurement record IDs for this measurement
+                $existing_records = $this->db->where('id', $record_id)
+                    ->or_where('appointment_id', $appointment_id)
+                    ->get(db_prefix() . 'ella_contractor_measurement_records')
+                    ->result_array();
+                
+                foreach ($existing_records as $rec) {
+                    // Delete items
+                    $this->db->where('measurement_record_id', $rec['id'])
+                        ->delete(db_prefix() . 'ella_contractor_measurement_items');
+                }
+                
+                // Delete records
+                $this->db->where('id', $record_id)
+                    ->or_where('appointment_id', $appointment_id)
+                    ->delete(db_prefix() . 'ella_contractor_measurement_records');
+            }
+            
+            // Insert new records and items
+            foreach ($tabs_data as $tab_data) {
+                $record_data = [
+                    'rel_type' => $rel_type,
+                    'rel_id' => $rel_id,
+                    'org_id' => $org_id,
+                    'appointment_id' => $appointment_id,
+                    'tab_name' => $tab_data['tab_name'],
+                    'created_by' => get_staff_user_id()
+                ];
+                
+                $this->db->insert(db_prefix() . 'ella_contractor_measurement_records', $record_data);
+                $new_record_id = $this->db->insert_id();
+                
+                // Insert measurement items
+                foreach ($tab_data['measurements'] as $measurement) {
+                    $item_data = [
+                        'measurement_record_id' => $new_record_id,
+                        'name' => $measurement['name'],
+                        'value' => $measurement['value'],
+                        'unit' => $measurement['unit'],
+                        'sort_order' => $measurement['sort_order']
+                    ];
+                    
+                    $this->db->insert(db_prefix() . 'ella_contractor_measurement_items', $item_data);
+                }
+            }
+            
+            $this->db->trans_complete();
+            
+            if ($this->db->trans_status() === FALSE) {
+                throw new Exception('Database transaction failed');
+            }
+            
+            // Log activity
+            if ($appointment_id) {
+                $action = $record_id > 0 ? 'updated' : 'created';
+                $this->appointments_model->log_activity($appointment_id, $action, 'measurement', 'Measurements', ['tab_count' => count($tabs_data)]);
+            }
+            
             if ($this->input->is_ajax_request()) {
-                ajax_access_denied();
+                echo json_encode([
+                    'success' => true,
+                    'message' => $record_id > 0 ? 'Measurements updated successfully' : 'Measurements created successfully'
+                ]);
             } else {
-                access_denied('ella_contractors');
+                set_alert('success', $record_id > 0 ? 'Updated successfully' : 'Created successfully');
+                redirect($_SERVER['HTTP_REFERER'] ?? admin_url('ella_contractors/appointments'));
+            }
+            
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            log_message('error', 'Measurement save error: ' . $e->getMessage());
+            
+            if ($this->input->is_ajax_request()) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Error: ' . $e->getMessage()
+                ]);
+            } else {
+                set_alert('danger', 'Error: ' . $e->getMessage());
+                redirect($_SERVER['HTTP_REFERER'] ?? admin_url('ella_contractors/appointments'));
             }
         }
-
-        // Get measurement details before deleting for logging
-        $measurement = $this->measurements_model->find($id);
-        
-        $ok = $this->measurements_model->delete($id);
-        
-        // Log measurement deletion if successful and it's for an appointment
-        if ($ok && $measurement && isset($measurement['appointment_id']) && $measurement['appointment_id']) {
-            $measurement_name = $measurement['name'] ?? 'Measurement';
-            $this->appointments_model->log_activity($measurement['appointment_id'], 'deleted', 'measurement', $measurement_name, ['measurement_id' => $id, 'category' => $measurement['category'] ?? 'general']);
-        }
-        
-        if ($this->input->is_ajax_request()) {
-            header('Content-Type: application/json');
-            echo json_encode([
-                'success' => $ok,
-                'message' => $ok ? 'Measurement deleted successfully' : 'Measurement not found'
-            ]);
-            return;
-        }
-        
-        set_alert($ok ? 'success' : 'danger', $ok ? 'Deleted' : 'Not found');
-        redirect($_SERVER['HTTP_REFERER'] ?? admin_url('ella_contractors/measurements'));
     }
 
 
     /**
-     * Get single measurement for AJAX
+     * Delete measurement record and all its items
+     */
+    public function delete($id)
+    {
+        if (!has_permission('ella_contractors', '', 'delete')) {
+                ajax_access_denied();
+        }
+
+        // Get record details before deleting for logging
+        $record = $this->db->where('id', $id)
+            ->get(db_prefix() . 'ella_contractor_measurement_records')
+            ->row_array();
+        
+        if (!$record) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Measurement record not found'
+            ]);
+            return;
+        }
+        
+        // Delete items first (CASCADE will do this automatically, but being explicit)
+        $this->db->where('measurement_record_id', $id)
+            ->delete(db_prefix() . 'ella_contractor_measurement_items');
+        
+        // Delete record
+        $ok = $this->db->where('id', $id)
+            ->delete(db_prefix() . 'ella_contractor_measurement_records');
+        
+        // Log deletion
+        if ($ok && isset($record['appointment_id']) && $record['appointment_id']) {
+            $this->appointments_model->log_activity(
+                $record['appointment_id'], 
+                'deleted', 
+                'measurement', 
+                $record['tab_name'] ?? 'Measurement',
+                ['record_id' => $id]
+            );
+        }
+        
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => $ok,
+            'message' => $ok ? 'Measurement deleted successfully' : 'Failed to delete measurement'
+        ]);
+    }
+
+    /**
+     * Get measurement record with items for editing
      */
     public function get_measurement($id)
     {
@@ -239,125 +217,65 @@ class Measurements extends AdminController
             ajax_access_denied();
         }
 
-        $measurement = $this->measurements_model->find($id);
+        // Get record
+        $record = $this->db->where('id', $id)
+            ->get(db_prefix() . 'ella_contractor_measurement_records')
+            ->row_array();
+        
+        if (!$record) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Record not found'
+            ]);
+            return;
+        }
+        
+        // Get items for this record
+        $items = $this->db->where('measurement_record_id', $id)
+            ->order_by('sort_order', 'ASC')
+            ->get(db_prefix() . 'ella_contractor_measurement_items')
+            ->result_array();
+        
+        $record['items'] = $items;
         
         header('Content-Type: application/json');
         echo json_encode([
-            'success' => $measurement ? true : false,
-            'data' => $measurement
+            'success' => true,
+            'data' => $record
         ]);
     }
 
-
     /**
-     * Get measurements for appointment (AJAX) - Return original structure for listing
+     * Get all measurements for appointment - organized by tabs
      */
     public function get_appointment_measurements($appointment_id)
     {
-        log_message('debug', 'Getting measurements for appointment: ' . $appointment_id);
         if (!has_permission('ella_contractors', '', 'view')) {
             ajax_access_denied();
         }
 
-        // Get measurements using the existing table structure
-        $this->db->select('id, name, category, rel_type, rel_id, appointment_id, attributes_json, dtmCreated as dateadded');
-        $this->db->from(db_prefix() . 'ella_contractors_measurements');
-        $this->db->where('(appointment_id = ' . (int) $appointment_id . ' OR (rel_type = "appointment" AND rel_id = ' . (int) $appointment_id . '))');
-        $this->db->order_by('dtmCreated', 'DESC');
+        // Get all records for this appointment
+        $records = $this->db->where('appointment_id', $appointment_id)
+            ->order_by('created_at', 'DESC')
+            ->get(db_prefix() . 'ella_contractor_measurement_records')
+            ->result_array();
         
-        $measurements = $this->db->get()->result_array();
-        
-        // Process measurements to ensure proper structure
-        foreach ($measurements as &$measurement) {
-            // Ensure attributes_json is properly decoded
-            if (!empty($measurement['attributes_json'])) {
-                $measurement['attributes'] = json_decode($measurement['attributes_json'], true);
-            } else {
-                $measurement['attributes'] = [];
-            }
+        // Get items for each record
+        foreach ($records as &$record) {
+            $items = $this->db->where('measurement_record_id', $record['id'])
+                ->order_by('sort_order', 'ASC')
+                ->get(db_prefix() . 'ella_contractor_measurement_items')
+                ->result_array();
+            
+            $record['items'] = $items;
+            $record['items_count'] = count($items);
         }
         
         header('Content-Type: application/json');
         echo json_encode([
             'success' => true,
-            'data' => $measurements
-        ]);
-    }
-
-
-    /**
-     * Save measurement via AJAX (for modals)
-     */
-    public function save_measurement_ajax()
-    {
-        if (!has_permission('ella_contractors', '', 'edit')) {
-            ajax_access_denied();
-        }
-
-        $post = $this->input->post(null, true);
-        $id = isset($post['id']) ? (int) $post['id'] : 0;
-
-        // Handle lead relationship
-        if (isset($post['lead_id']) && !empty($post['lead_id'])) {
-            $post['rel_type'] = 'lead';
-            $post['rel_id'] = (int) $post['lead_id'];
-        } else {
-            $post['rel_type'] = 'other';
-            $post['rel_id'] = 0;
-        }
-
-        // Handle client name (store in notes or attributes if needed)
-        if (isset($post['client_name']) && !empty($post['client_name'])) {
-            $clientName = $post['client_name'];
-            if (empty($post['notes'])) {
-                $post['notes'] = 'Client: ' . $clientName;
-            } else {
-                $post['notes'] = $post['notes'] . ' | Client: ' . $clientName;
-            }
-        }
-
-        // Handle basic measurement fields
-        $width = (float) ($post['width'] ?? 0);
-        $height = (float) ($post['height'] ?? 0);
-        if ($width && $height) {
-            if (!isset($post['united_inches_val']) || $post['united_inches_val'] === '') {
-                $post['united_inches_val'] = $width + $height;
-            }
-            if (!isset($post['area_val']) || $post['area_val'] === '') {
-                $post['area_val'] = ($width * $height) / 144.0; // Convert to sqft
-            }
-        }
-
-        // Set category based on the form type
-        if (isset($post['form_type'])) {
-            $post['category'] = $post['form_type'];
-        }
-
-        // Set default values for required fields
-        $post['designator'] = $post['designator'] ?? '';
-        $post['name'] = $post['name'] ?? 'Unnamed ' . ucfirst($post['category'] ?? 'item');
-        $post['location_label'] = $post['location'] ?? '';
-        $post['level_label'] = $post['level'] ?? '';
-        $post['width_val'] = $width;
-        $post['height_val'] = $height;
-        $post['quantity'] = $post['quantity'] ?? 1;
-        $post['length_unit'] = 'in';
-        $post['area_unit'] = 'sqft';
-        $post['ui_unit'] = 'in';
-
-        if ($id > 0) {
-            $ok = $this->measurements_model->update($id, $post);
-            $msg = $ok ? 'Updated successfully' : 'Nothing changed';
-        } else {
-            $ok = (bool) $this->measurements_model->create($post);
-            $msg = $ok ? 'Created successfully' : 'Failed to create';
-        }
-
-        header('Content-Type: application/json');
-        echo json_encode([
-            'success' => $ok,
-            'message' => $msg,
-            'data' => $ok ? $this->measurements_model->find($id ?: $this->db->insert_id()) : null
+            'data' => $records
         ]);
     }
 }

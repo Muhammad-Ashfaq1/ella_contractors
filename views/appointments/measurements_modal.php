@@ -16,38 +16,22 @@
                     <input type="hidden" name="rel_type" value="appointment">
                     <input type="hidden" name="rel_id" value="<?php echo $appointment->id; ?>">
                     <input type="hidden" name="appointment_id" value="<?php echo $appointment->id; ?>">
+                    <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
                     
-                    <!-- Tab Navigation with Add Custom Tab Button -->
+                    <!-- Tab Navigation with Add Tab Button -->
                     <div style="position: relative;">
-                        <ul class="nav nav-tabs mb-3" id="category-tabs">
-                            <li class="active">
-                                <a href="#siding-tab" data-toggle="tab" data-category="siding">Siding</a>
-                            </li>
-                            <li>
-                                <a href="#roofing-tab" data-toggle="tab" data-category="roofing">Roofing</a>
-                            </li>
+                        <ul class="nav nav-tabs mb-3" id="dynamic-tabs">
+                            <!-- Tabs will be added dynamically -->
                         </ul>
                         <div style="position: absolute; top: 5px; right: 0;">
-                            <button type="button" class="btn btn-primary btn-sm" id="addCategoryBtn" onclick="addNewMeasurementTab()" title="Add Custom Category">
-                                <i class="fa fa-plus"></i> Add Category
-                            </button>
-                            <button type="button" class="btn btn-success btn-sm" id="saveCategoryBtn" onclick="saveNewCategoryTab()" style="display: none;" title="Save Category">
-                                <i class="fa fa-save"></i> Save
+                            <button type="button" class="btn btn-primary btn-sm" id="addTabBtn" onclick="addNewTab()" title="Add Tab">
+                                <i class="fa fa-plus"></i> Add Tab
                             </button>
                         </div>
                     </div>
-                    <input type="hidden" name="category" id="selected-category" value="siding">
                     
-                    <div class="tab-content">
-                        <!-- Siding Tab -->
-                        <div class="tab-pane active" id="siding-tab" data-category="siding">
-                            <div id="estimate-rows-container-siding"></div>
-                        </div>
-
-                        <!-- Roofing Tab -->
-                        <div class="tab-pane" id="roofing-tab" data-category="roofing">
-                            <div id="estimate-rows-container-roofing"></div>
-                        </div>
+                    <div class="tab-content" id="dynamic-tab-content">
+                        <!-- Tab content will be added dynamically -->
                     </div>
                 </div>
                 <div class="modal-footer">

@@ -514,98 +514,46 @@ function ella_contractors_activate_module() {
         }
     }
 
-    // Create ella_appointment_measurements table - Simple structure for measurements
-    if (!$CI->db->table_exists(db_prefix() . 'ella_appointment_measurements')) {
-        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_appointment_measurements` (
+    // Create ella_contractor_measurement_records table - New dynamic tab structure
+    if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_measurement_records')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractor_measurement_records` (
             `id` int(11) NOT NULL AUTO_INCREMENT,
-            `appointment_id` int(11) NOT NULL,
-            `category` enum(\'siding\',\'roofing\',\'windows\',\'doors\') NOT NULL DEFAULT \'siding\',
-            `measurement_name` varchar(255) NOT NULL,
-            `measurement_value` decimal(12,4) NOT NULL DEFAULT 0.0000,
-            `measurement_unit` varchar(50) NOT NULL,
+            `rel_type` varchar(50) DEFAULT NULL,
+            `rel_id` bigint unsigned DEFAULT NULL,
+            `org_id` bigint unsigned DEFAULT NULL,
+            `appointment_id` int(11) DEFAULT NULL,
+            `tab_name` varchar(255) NOT NULL,
             `created_by` int(11) NOT NULL,
             `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
             `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`),
-            KEY `appointment_id` (`appointment_id`),
-            KEY `category` (`category`),
-            KEY `created_by` (`created_by`),
-            KEY `created_at` (`created_at`)
+            KEY `idx_rel_type_id` (`rel_type`, `rel_id`),
+            KEY `idx_org_id` (`org_id`),
+            KEY `idx_appointment_id` (`appointment_id`),
+            KEY `idx_tab_name` (`tab_name`),
+            KEY `idx_created_by` (`created_by`)
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
         
-        log_message('info', 'Ella Appointments - Created ella_appointment_measurements table');
+        log_message('info', 'Ella Contractors - Created ella_contractor_measurement_records table');
     }
     
-    // Keep the old table for backward compatibility but don't use it for new measurements
-    // The old table will be used for Windows/Doors complex measurements
-    if (!$CI->db->table_exists(db_prefix() . 'ella_contractors_measurements')) {
-        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractors_measurements` (
-            `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            `category` ENUM(\'windows\',\'doors\',\'roofing\',\'siding\',\'other\') NOT NULL DEFAULT \'other\',
-            `rel_type` ENUM(\'customer\',\'lead\',\'project\',\'appointment\',\'other\') NOT NULL DEFAULT \'customer\',
-            `rel_id` BIGINT UNSIGNED NOT NULL DEFAULT 0,
-            `appointment_id` BIGINT UNSIGNED NULL DEFAULT NULL,
-            `designator` VARCHAR(64) NULL,
-            `name` VARCHAR(191) NOT NULL,
-            `location_label` VARCHAR(128) NULL,
-            `level_label` VARCHAR(64) NULL,
-            `quantity` DECIMAL(12,4) NOT NULL DEFAULT 1.0000,
-            `width_val` DECIMAL(12,4) NULL,
-            `height_val` DECIMAL(12,4) NULL,
-            `length_val` DECIMAL(12,4) NULL,
-            `area_val` DECIMAL(14,4) NULL,
-            `united_inches_val` DECIMAL(12,4) NULL,
-            `length_unit` VARCHAR(16) NULL DEFAULT \'in\',
-            `area_unit` VARCHAR(16) NULL DEFAULT \'sqft\',
-            `ui_unit` VARCHAR(16) NULL DEFAULT \'in\',
-            `attributes_json` JSON NULL,
-            `notes` TEXT NULL,
-            `status_code` TINYINT NOT NULL DEFAULT 1,
-            `sort_order` INT NOT NULL DEFAULT 0,
-            `dtmCreated` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            `dtmLastM` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-            `intCreatedByCode` INT NULL,
-            `intAlteredByCode` INT NULL,
-            `intRecordStatusCode` TINYINT NOT NULL DEFAULT 1,
-            `intBranchCode` INT NULL,
-            `intCompanyCode` INT NULL,
+    // Create ella_contractor_measurement_items table - Individual measurements within each record
+    if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_measurement_items')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractor_measurement_items` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `measurement_record_id` int(11) NOT NULL,
+            `name` varchar(255) NOT NULL,
+            `value` decimal(12,4) NOT NULL DEFAULT 0.0000,
+            `unit` varchar(50) NOT NULL,
+            `sort_order` int(11) DEFAULT 0,
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`),
-            KEY `idx_cat_rel` (`category`,`rel_type`,`rel_id`),
-            KEY `idx_appointment` (`appointment_id`),
-            KEY `idx_location_level` (`location_label`,`level_label`),
-            KEY `idx_created` (`dtmCreated`)
+            KEY `idx_measurement_record_id` (`measurement_record_id`),
+            KEY `idx_sort_order` (`sort_order`),
+            FOREIGN KEY (`measurement_record_id`) REFERENCES `' . db_prefix() . 'ella_contractor_measurement_records`(`id`) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
-    } else {
-        // Check if appointment_id column exists, if not add it
-        if (!$CI->db->field_exists('appointment_id', db_prefix() . 'ella_contractors_measurements')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractors_measurements` ADD COLUMN `appointment_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_id`');
-            try {
-                $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractors_measurements` ADD KEY `idx_appointment` (`appointment_id`)');
-            } catch (Exception $e) {
-                // Key might already exist, ignore error
-            }
-        }
         
-        // Check if 'appointment' is in rel_type enum, if not add it
-        $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractors_measurements` MODIFY COLUMN `rel_type` ENUM(\'customer\',\'lead\',\'project\',\'appointment\',\'other\') NOT NULL DEFAULT \'customer\'');
-        
-        // Add org_id column if it doesn't exist (rel_type and rel_id already exist)
-        if (!$CI->db->field_exists('org_id', db_prefix() . 'ella_contractors_measurements')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractors_measurements` ADD COLUMN `org_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_id`');
-        }
-        
-        // Add org_id index if it doesn't exist (only for existing tables)
-        if ($CI->db->table_exists(db_prefix() . 'ella_contractors_measurements')) {
-            // Check if index exists before adding it
-            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractors_measurements` WHERE Key_name = 'idx_org_id'")->result();
-            if (empty($indexes)) {
-                try {
-                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractors_measurements` ADD INDEX `idx_org_id` (`org_id`)');
-                } catch (Exception $e) {
-                    // Index might already exist, ignore error
-                }
-            }
-        }
+        log_message('info', 'Ella Contractors - Created ella_contractor_measurement_items table');
     }
     
     // Create upload directories
