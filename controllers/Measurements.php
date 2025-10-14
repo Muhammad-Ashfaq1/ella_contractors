@@ -60,17 +60,8 @@ class Measurements extends AdminController
 
         // Handle category-specific attributes
         $categorySpecificData = [];
-        // COMMENTED OUT: Windows and Doors not needed
-        $categories = ['siding', 'roofing'/*, 'windows', 'doors'*/];
+        $categories = ['siding', 'roofing'];
         
-        /* COMMENTED OUT: Bulk data handling for Windows/Doors not needed
-        // Check for bulk data first (from Windows/Doors saves)
-        if (isset($post['bulk']) && is_array($post['bulk'])) {
-            log_message('debug', 'Bulk data received: ' . json_encode($post['bulk']));
-            $categorySpecificData = $post['bulk'];
-            unset($post['bulk']);
-        } else {
-        */
         // Check for individual category data
         foreach ($categories as $category) {
             if (isset($post[$category]) && is_array($post[$category])) {
@@ -80,40 +71,39 @@ class Measurements extends AdminController
         }
         
         // Handle new siding and roofing measurements structure
-            if (isset($post['measurements']) && is_array($post['measurements'])) {
-                $sidingMeasurements = [];
-                foreach ($post['measurements'] as $measurement) {
-                    if (!empty($measurement['name']) && !empty($measurement['value']) && !empty($measurement['unit'])) {
-                        $sidingMeasurements[] = [
-                            'name' => $measurement['name'],
-                            'value' => (float) $measurement['value'],
-                            'unit' => $measurement['unit']
-                        ];
-                    }
+        if (isset($post['measurements']) && is_array($post['measurements'])) {
+            $sidingMeasurements = [];
+            foreach ($post['measurements'] as $measurement) {
+                if (!empty($measurement['name']) && !empty($measurement['value']) && !empty($measurement['unit'])) {
+                    $sidingMeasurements[] = [
+                        'name' => $measurement['name'],
+                        'value' => (float) $measurement['value'],
+                        'unit' => $measurement['unit']
+                    ];
                 }
-                if (!empty($sidingMeasurements)) {
-                    $categorySpecificData['siding_measurements'] = $sidingMeasurements;
-                }
-                unset($post['measurements']);
             }
-            
-            if (isset($post['measurements_roofing']) && is_array($post['measurements_roofing'])) {
-                $roofingMeasurements = [];
-                foreach ($post['measurements_roofing'] as $measurement) {
-                    if (!empty($measurement['name']) && !empty($measurement['value']) && !empty($measurement['unit'])) {
-                        $roofingMeasurements[] = [
-                            'name' => $measurement['name'],
-                            'value' => (float) $measurement['value'],
-                            'unit' => $measurement['unit']
-                        ];
-                    }
-                }
-                if (!empty($roofingMeasurements)) {
-                    $categorySpecificData['roofing_measurements'] = $roofingMeasurements;
-                }
-                unset($post['measurements_roofing']);
+            if (!empty($sidingMeasurements)) {
+                $categorySpecificData['siding_measurements'] = $sidingMeasurements;
             }
-        /* } */ // Closing brace for commented out bulk data handling
+            unset($post['measurements']);
+        }
+        
+        if (isset($post['measurements_roofing']) && is_array($post['measurements_roofing'])) {
+            $roofingMeasurements = [];
+            foreach ($post['measurements_roofing'] as $measurement) {
+                if (!empty($measurement['name']) && !empty($measurement['value']) && !empty($measurement['unit'])) {
+                    $roofingMeasurements[] = [
+                        'name' => $measurement['name'],
+                        'value' => (float) $measurement['value'],
+                        'unit' => $measurement['unit']
+                    ];
+                }
+            }
+            if (!empty($roofingMeasurements)) {
+                $categorySpecificData['roofing_measurements'] = $roofingMeasurements;
+            }
+            unset($post['measurements_roofing']);
+        }
 
         // Merge with existing attributes_json if editing
         if ($id > 0) {
@@ -202,17 +192,6 @@ class Measurements extends AdminController
             if ($ok) {
                 $measurement = $this->measurements_model->find($id ?: $this->db->insert_id());
                 $response_data = $measurement;
-                
-                /* COMMENTED OUT: Bulk save response for Windows/Doors not needed
-                // If this is a bulk save (Windows/Doors), return the attributes in the expected format
-                if (isset($post['bulk']) && is_array($post['bulk'])) {
-                    $attributes = json_decode($measurement['attributes_json'] ?? '{}', true);
-                    $response_data = [
-                        'id' => $measurement['id'],
-                        'attributes' => $attributes
-                    ];
-                }
-                */
                 
                 echo json_encode([
                     'success' => true,

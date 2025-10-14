@@ -25,14 +25,6 @@
                         <li>
                             <a href="#roofing-tab" data-toggle="tab" data-category="roofing">Roofing</a>
                         </li>
-                        <!-- COMMENTED OUT: Windows and Doors tabs not needed
-                        <li>
-                            <a href="#windows-tab" data-toggle="tab" data-category="windows">Windows</a>
-                        </li>
-                        <li>
-                            <a href="#doors-tab" data-toggle="tab" data-category="doors">Doors</a>
-                        </li>
-                        !-->
                     </ul>
                     <input type="hidden" name="category" id="selected-category" value="siding">
                     
@@ -132,18 +124,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- COMMENTED OUT: Windows and Doors tabs content not needed
-                        <!-- Windows Tab -->
-                        <div class="tab-pane" id="windows-tab">
-                            <?php // $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'windows', 'row' => null]); ?>
-                        </div>
-
-                        <!-- Doors Tab -->
-                        <div class="tab-pane" id="doors-tab">
-                            <?php // $this->load->view('ella_contractors/measurements/_form_modal', ['category' => 'doors', 'row' => null]); ?>
-                        </div>
-                        -->
                     </div>
                 </div>
                 <div class="modal-footer">
