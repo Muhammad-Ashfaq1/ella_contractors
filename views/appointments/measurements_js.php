@@ -230,49 +230,16 @@ function saveTabName(tabId) {
         $('#tab-name-input').focus().select();
         return;
     }
-    
-    // Check for duplicate category name across appointment (other measurements)
-    // We'll do this via AJAX to check existing measurements in the database
-    var measurementId = $('#measurement_id').val();
-    
-    $.ajax({
-        url: admin_url + 'ella_contractors/measurements/check_duplicate_category',
-        type: 'POST',
-        data: {
-            appointment_id: appointmentId,
-            category_name: tabName,
-            measurement_id: measurementId, // Exclude current measurement if editing
-            [csrf_token_name]: csrf_hash
-        },
-        dataType: 'json',
-        async: false, // Make synchronous to block saving until validation completes
-        success: function(response) {
-            if (!response.success && response.duplicate) {
-                alert_float('danger', 'Category name "' + tabName + '" already exists in another measurement for this appointment. Please use a different name.');
-                $('#tab-name-input').focus().select();
-                isDuplicateInModal = true; // Reuse this flag to prevent saving
-            }
-        },
-        error: function() {
-            // Continue with save if validation endpoint fails (graceful degradation)
-            console.warn('Could not validate duplicate category name');
-        }
-    });
-    
-    // If duplicate found in database, don't save
-    if (isDuplicateInModal) {
-        return;
-    }
 
-    // Convert input to tab title span
+    // Convert input to tab title span with double-click edit functionality
     var tabLink = $('[data-tab-id="' + tabId + '"] a');
-    tabLink.html('<span class="tab-title">' + tabName + '</span>' +
+    tabLink.html('<span class="tab-title" ondblclick="editTabName(\'' + tabId + '\')" style="cursor: pointer;" title="Double-click to edit">' + tabName + '</span>' +
         '<button type="button" class="btn btn-xs btn-link tab-remove-btn" onclick="removeTab(\'' + tabId + '\')" title="Remove Tab">' +
             '<i class="fa fa-times text-danger"></i>' +
         '</button>');
     
     // Add hidden field for form submission
-    var hiddenField = '<input type="hidden" name="tab_name_' + tabId + '" value="' + tabName + '">';
+    var hiddenField = '<input type="hidden" name="tab_name_' + tabId + '" id="tab_name_' + tabId + '" value="' + tabName + '">';
     $('#' + tabId + '-content').append(hiddenField);
     
     // Remove the info alert div
@@ -288,6 +255,89 @@ function saveTabName(tabId) {
     $('#addTabBtn').show();
     
     alert_float('success', 'Category "' + tabName + '" created successfully');
+}
+
+/**
+ * Edit tab name (category) by double-clicking
+ */
+function editTabName(tabId) {
+    var tabLink = $('[data-tab-id="' + tabId + '"] a');
+    var currentName = $('#tab_name_' + tabId).val();
+    
+    // Replace tab title with inline input
+    tabLink.html(
+        '<input type="text" class="custom-tab-name-input" id="tab-name-edit-input-' + tabId + '" value="' + currentName + '" placeholder="Enter category name" onkeypress="if(event.key===\'Enter\'){updateTabName(\'' + tabId + '\');}" style="width: 150px;">' +
+        '<button type="button" class="btn btn-xs btn-success" onclick="updateTabName(\'' + tabId + '\')" title="Save Category" style="margin-left: 5px; padding: 2px 6px;">' +
+            '<i class="fa fa-check"></i>' +
+        '</button>' +
+        '<button type="button" class="btn btn-xs btn-default" onclick="cancelEditTabName(\'' + tabId + '\')" title="Cancel" style="margin-left: 3px; padding: 2px 6px;">' +
+            '<i class="fa fa-times"></i>' +
+        '</button>'
+    );
+    
+    // Focus and select the input
+    setTimeout(function() {
+        $('#tab-name-edit-input-' + tabId).focus().select();
+    }, 100);
+}
+
+/**
+ * Update tab name after editing
+ */
+function updateTabName(tabId) {
+    var newTabName = $('#tab-name-edit-input-' + tabId).val().trim();
+    var oldTabName = $('#tab_name_' + tabId).val();
+    
+    if (!newTabName) {
+        alert_float('warning', 'Please enter a category name');
+        $('#tab-name-edit-input-' + tabId).focus();
+        return;
+    }
+    
+    // Check for duplicate category name within current measurement (same modal only)
+    var isDuplicate = false;
+    $('#dynamic-tabs li').not('[data-tab-id="' + tabId + '"]').each(function() {
+        var existingTabId = $(this).attr('data-tab-id');
+        var existingName = $('#tab_name_' + existingTabId).val();
+        if (existingName && existingName.toLowerCase() === newTabName.toLowerCase()) {
+            isDuplicate = true;
+            return false; // break loop
+        }
+    });
+    
+    if (isDuplicate) {
+        alert_float('danger', 'Category name "' + newTabName + '" already exists in this measurement. Please use a different name.');
+        $('#tab-name-edit-input-' + tabId).focus().select();
+        return;
+    }
+    
+    // Update tab name
+    var tabLink = $('[data-tab-id="' + tabId + '"] a');
+    tabLink.html('<span class="tab-title" ondblclick="editTabName(\'' + tabId + '\')" style="cursor: pointer;" title="Double-click to edit">' + newTabName + '</span>' +
+        '<button type="button" class="btn btn-xs btn-link tab-remove-btn" onclick="removeTab(\'' + tabId + '\')" title="Remove Tab">' +
+            '<i class="fa fa-times text-danger"></i>' +
+        '</button>');
+    
+    // Save new tab name in hidden field
+    $('#tab_name_' + tabId).val(newTabName);
+    
+    if (oldTabName !== newTabName) {
+        alert_float('success', 'Category renamed from "' + oldTabName + '" to "' + newTabName + '"');
+    }
+}
+
+/**
+ * Cancel editing tab name
+ */
+function cancelEditTabName(tabId) {
+    var currentName = $('#tab_name_' + tabId).val();
+    
+    // Restore original tab title
+    var tabLink = $('[data-tab-id="' + tabId + '"] a');
+    tabLink.html('<span class="tab-title" ondblclick="editTabName(\'' + tabId + '\')" style="cursor: pointer;" title="Double-click to edit">' + currentName + '</span>' +
+        '<button type="button" class="btn btn-xs btn-link tab-remove-btn" onclick="removeTab(\'' + tabId + '\')" title="Remove Tab">' +
+            '<i class="fa fa-times text-danger"></i>' +
+        '</button>');
 }
 
 /**
@@ -398,10 +448,10 @@ function loadMeasurementData(measurementId) {
                 var tabId = 'measurement_tab' + tabCounter; // Use unique prefix to avoid URL conflicts
                 var tabName = data.tab_name || 'Measurement';
                 
-                // Create tab
+                // Create tab with double-click edit functionality
                 var tabHtml = '<li class="active" data-tab-id="' + tabId + '">' +
                     '<a href="#' + tabId + '-content" data-toggle="tab" data-tab-id="' + tabId + '">' +
-                        '<span class="tab-title">' + tabName + '</span>' +
+                        '<span class="tab-title" ondblclick="editTabName(\'' + tabId + '\')" style="cursor: pointer;" title="Double-click to edit">' + tabName + '</span>' +
                         '<button type="button" class="btn btn-xs btn-link tab-remove-btn" onclick="removeTab(\'' + tabId + '\')" title="Remove Tab">' +
                             '<i class="fa fa-times text-danger"></i>' +
                         '</button>' +
@@ -412,7 +462,7 @@ function loadMeasurementData(measurementId) {
                 
                 // Create tab content
                 var contentHtml = '<div class="tab-pane active" id="' + tabId + '-content" data-tab-id="' + tabId + '">' +
-                    '<input type="hidden" name="tab_name_' + tabId + '" value="' + tabName + '">' +
+                    '<input type="hidden" name="tab_name_' + tabId + '" id="tab_name_' + tabId + '" value="' + tabName + '">' +
                     '<div id="measurements-container-' + tabId + '"></div>' +
                 '</div>';
                 
