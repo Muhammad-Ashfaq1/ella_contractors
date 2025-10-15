@@ -629,15 +629,35 @@ var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
 var appointmentId = <?php echo $appointment->id; ?>;
 
 $(document).ready(function() {
-    // Ensure measurements tab is visible on page load
-    $('#measurements-tab').show();
-    $('#measurements-container').show();
-    
-    // Load default tab data when page loads (measurements is default)
-    loadMeasurements();
-    
     // Enhanced tab management system
     var currentActiveTab = 'measurements'; // Default tab
+    
+    // Make tabsLoaded globally accessible so it can be accessed by other functions
+    window.tabsLoaded = {
+        measurements: false,
+        estimates: false,
+        notes: false,
+        attachments: false,
+        timeline: false
+    };
+    
+    // Load measurements tab ONLY if it's the active tab from URL or default
+    var urlParams = new URLSearchParams(window.location.search);
+    var tabParam = urlParams.get('tab');
+    var initialTab = tabParam || 'measurements';
+    
+    // Load initial tab data
+    if (initialTab === 'measurements') {
+        loadMeasurements();
+        window.tabsLoaded.measurements = true;
+    }
+    
+    // Ensure correct tab is visible on page load (remove any hash conflicts)
+    setTimeout(function() {
+        if (typeof window.ensureCorrectTabVisible === 'function') {
+            window.ensureCorrectTabVisible();
+        }
+    }, 200);
     
     // Function to switch tabs and update URL
     function switchToTab(tabName, updateUrl = true) {
@@ -646,9 +666,10 @@ $(document).ready(function() {
         currentActiveTab = tabName;
         
         if (updateUrl) {
-            // Update URL without page reload
+            // Update URL without page reload (no hash, only search params)
             var url = new URL(window.location);
             url.searchParams.set('tab', tabName);
+            url.hash = ''; // Clear any hash
             window.history.replaceState({}, '', url);
         }
     }
@@ -686,30 +707,45 @@ $(document).ready(function() {
         
         console.log('Main tab switched to:', tabName);
         
-        // Update URL without page reload
+        // Update URL without page reload (no hash)
         var url = new URL(window.location);
         url.searchParams.set('tab', tabName);
+        url.hash = ''; // Clear any hash fragments
         window.history.replaceState({}, '', url);
         
-        // Load data for the specific tab when it becomes active
-        switch(tabName) {
-            case 'measurements':
-                loadMeasurements();
-                break;
-            case 'estimates':
-                loadEstimates();
-                break;
-            case 'notes':
-                loadNotes();
-                break;
-            case 'attachments':
-                if (typeof loadAttachments === 'function') {
-                    loadAttachments(true);
-                }
-                break;
-            case 'timeline':
-                loadTimeline();
-                break;
+        // Ensure only this tab is visible
+        setTimeout(function() {
+            if (typeof window.ensureCorrectTabVisible === 'function') {
+                window.ensureCorrectTabVisible();
+            }
+        }, 50);
+        
+        // Load data for the specific tab when it becomes active (only if not already loaded)
+        if (!window.tabsLoaded[tabName]) {
+            switch(tabName) {
+                case 'measurements':
+                    loadMeasurements();
+                    window.tabsLoaded.measurements = true;
+                    break;
+                case 'estimates':
+                    loadEstimates();
+                    window.tabsLoaded.estimates = true;
+                    break;
+                case 'notes':
+                    loadNotes();
+                    window.tabsLoaded.notes = true;
+                    break;
+                case 'attachments':
+                    if (typeof loadAttachments === 'function') {
+                        loadAttachments(true);
+                    }
+                    window.tabsLoaded.attachments = true;
+                    break;
+                case 'timeline':
+                    loadTimeline();
+                    window.tabsLoaded.timeline = true;
+                    break;
+            }
         }
     });
     
@@ -774,6 +810,77 @@ function editAppointment(appointmentId) {
         window.location.href = admin_url + 'ella_contractors/appointments?edit=' + appointmentId;
     }
 }
+
+// Global function to reload measurements only if on measurements tab
+window.reloadMeasurementsIfActive = function() {
+    // Check which tab is currently active
+    var urlParams = new URLSearchParams(window.location.search);
+    var tabParam = urlParams.get('tab');
+    var currentTab = tabParam || 'measurements';
+    
+    console.log('reloadMeasurementsIfActive called, current tab:', currentTab);
+    
+    // Only reload if we're on measurements tab
+    if (currentTab === 'measurements') {
+        console.log('On measurements tab - reloading measurements');
+        loadMeasurements();
+        
+        // Mark as loaded
+        if (typeof window.tabsLoaded !== 'undefined') {
+            window.tabsLoaded.measurements = true;
+        }
+        
+        // Ensure measurements tab is visible and active
+        var measurementsTab = $('#measurements-tab');
+        if (!measurementsTab.hasClass('active')) {
+            console.log('Measurements tab not active, switching to it');
+            $('a[href="#measurements-tab"]').tab('show');
+        }
+    } else {
+        console.log('Not on measurements tab - skipping reload, marking for fresh load on next visit');
+        // Mark measurements as needing reload when user switches back to it
+        if (typeof window.tabsLoaded !== 'undefined') {
+            window.tabsLoaded.measurements = false;
+        }
+    }
+};
+
+// Global function to ensure only the correct tab is visible based on URL parameter
+window.ensureCorrectTabVisible = function() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var tabParam = urlParams.get('tab');
+    var currentTab = tabParam || 'measurements';
+    
+    console.log('ensureCorrectTabVisible called, current tab:', currentTab);
+    
+    // Hide all tab panes first
+    $('.tab-pane').removeClass('active in');
+    
+    // Show only the correct tab pane
+    var targetTabPane = $('#' + currentTab + '-tab');
+    if (targetTabPane.length > 0) {
+        targetTabPane.addClass('active in');
+        console.log('Showing tab pane:', currentTab + '-tab');
+    } else {
+        // Fallback to measurements if tab not found
+        $('#measurements-tab').addClass('active in');
+        console.log('Tab not found, showing measurements-tab');
+    }
+    
+    // Update nav tabs active state
+    $('.nav-tabs li').removeClass('active');
+    var targetNavTab = $('.nav-tabs a[href="#' + currentTab + '-tab"]').parent('li');
+    if (targetNavTab.length > 0) {
+        targetNavTab.addClass('active');
+        console.log('Activating nav tab for:', currentTab);
+    } else {
+        // Fallback to measurements nav tab
+        $('.nav-tabs a[href="#measurements-tab"]').parent('li').addClass('active');
+        console.log('Nav tab not found, activating measurements');
+    }
+    
+    console.log('Tab visibility enforced. Only', currentTab, 'should be visible.');
+};
 
 // Estimates Functions
 function loadEstimates() {
@@ -1186,49 +1293,68 @@ function deleteEstimate(estimateId) {
 
 // Global function to refresh all data and maintain current tab
 function refreshAppointmentData(activeTab = null) {
+    // Mark all tabs as needing reload
+    if (typeof tabsLoaded !== 'undefined') {
+        tabsLoaded.measurements = false;
+        tabsLoaded.estimates = false;
+        tabsLoaded.notes = false;
+        tabsLoaded.attachments = false;
+        tabsLoaded.timeline = false;
+    }
+    
     // Switch to specified tab or stay on current tab
     if (activeTab) {
         switchToTab(activeTab);
         // Load data for the specified tab
         switch(activeTab) {
             case 'measurements':
-        loadMeasurements();
+                loadMeasurements();
+                if (typeof tabsLoaded !== 'undefined') tabsLoaded.measurements = true;
                 break;
             case 'estimates':
                 loadEstimates();
+                if (typeof tabsLoaded !== 'undefined') tabsLoaded.estimates = true;
                 break;
             case 'notes':
                 loadNotes();
+                if (typeof tabsLoaded !== 'undefined') tabsLoaded.notes = true;
                 break;
             case 'attachments':
                 if (typeof loadAttachments === 'function') {
                     loadAttachments(true);
                 }
+                if (typeof tabsLoaded !== 'undefined') tabsLoaded.attachments = true;
                 break;
             case 'timeline':
                 loadTimeline();
+                if (typeof tabsLoaded !== 'undefined') tabsLoaded.timeline = true;
                 break;
         }
-                } else {
+    } else {
         // Maintain current tab - just reload data without switching
         var currentTab = currentActiveTab || 'measurements';
         switch(currentTab) {
             case 'measurements':
                 loadMeasurements();
+                if (typeof tabsLoaded !== 'undefined') tabsLoaded.measurements = true;
                 break;
             case 'estimates':
                 loadEstimates();
+                if (typeof tabsLoaded !== 'undefined') tabsLoaded.estimates = true;
                 break;
             case 'notes':
                 loadNotes();
+                if (typeof tabsLoaded !== 'undefined') tabsLoaded.notes = true;
                 break;
             case 'attachments':
                 if (typeof loadAttachments === 'function') {
                     loadAttachments(true);
                 }
+                if (typeof tabsLoaded !== 'undefined') tabsLoaded.attachments = true;
                 break;
             case 'timeline':
                 loadTimeline();
+                if (typeof tabsLoaded !== 'undefined') tabsLoaded.timeline = true;
                 break;
         }
     }

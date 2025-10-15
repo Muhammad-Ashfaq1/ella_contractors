@@ -522,128 +522,71 @@ $('#saveMeasurement').on('click', function() {
 $('#measurementModal').on('show.bs.modal', function() {
     console.log('Measurement modal opening...');
     
-    // Get current main tab from URL or default to measurements
+    // Store the current tab from URL (not hash) for restoration after modal closes
     var urlParams = new URLSearchParams(window.location.search);
     var tabParam = urlParams.get('tab');
-    originalHash = tabParam ? '#' + tabParam + '-tab' : '#measurements-tab';
+    originalHash = ''; // Don't use hash - we'll rely on URL params only
     
-    // Only fix measurements tab if we're currently on measurements tab
-    if (tabParam === 'measurements' || !tabParam) {
-        console.log('On measurements tab - ensuring visibility...');
-        
-        // Debug: Check measurements tab visibility before modal opens
-        var measurementsTab = $('#measurements-tab');
-        var measurementsContainer = $('#measurements-container');
-        var addButton = $('.btn[onclick="openMeasurementModal()"]');
-        
-        console.log('Measurements tab visibility before modal:', measurementsTab.is(':visible'));
-        console.log('Measurements container visibility before modal:', measurementsContainer.is(':visible'));
-        console.log('Add button visibility before modal:', addButton.is(':visible'));
-        
-        // Ensure measurements tab stays visible
-        measurementsTab.show();
-        measurementsContainer.show();
-        addButton.show();
-        
-        console.log('Measurements tab visibility after show():', measurementsTab.is(':visible'));
-        console.log('Measurements container visibility after show():', measurementsContainer.is(':visible'));
-        console.log('Add button visibility after show():', addButton.is(':visible'));
-    } else {
-        console.log('Not on measurements tab - skipping visibility fixes');
-    }
+    console.log('Current tab from URL:', tabParam || 'measurements (default)');
+    
+    // Don't manipulate main page tab visibility - let the main page handle it
+    // The modal is independent of the main page tabs
 });
 
-// Debug modal shown event
+// Modal shown event
 $('#measurementModal').on('shown.bs.modal', function() {
-    console.log('Measurement modal fully shown...');
-    
-    // Only fix measurements tab if we're currently on measurements tab
-    var urlParams = new URLSearchParams(window.location.search);
-    var tabParam = urlParams.get('tab');
-    
-    if (tabParam === 'measurements' || !tabParam) {
-        console.log('On measurements tab - applying visibility fixes...');
-        
-        // Debug: Check measurements tab visibility after modal is fully shown
-        var measurementsTab = $('#measurements-tab');
-        var measurementsContainer = $('#measurements-container');
-        var addButton = $('.btn[onclick="openMeasurementModal()"]');
-        
-        console.log('Measurements tab visibility after modal shown:', measurementsTab.is(':visible'));
-        console.log('Measurements container visibility after modal shown:', measurementsContainer.is(':visible'));
-        console.log('Add button visibility after modal shown:', addButton.is(':visible'));
-        
-        // Force show measurements tab elements
-        measurementsTab.show();
-        measurementsContainer.show();
-        addButton.show();
-        
-        // Add CSS to ensure measurements tab stays visible
-        measurementsTab.css({
-            'display': 'block !important',
-            'visibility': 'visible !important',
-            'opacity': '1 !important',
-            'z-index': '999 !important'
-        });
-        
-        measurementsContainer.css({
-            'display': 'block !important',
-            'visibility': 'visible !important',
-            'opacity': '1 !important'
-        });
-        
-        addButton.css({
-            'display': 'inline-block !important',
-            'visibility': 'visible !important',
-            'opacity': '1 !important'
-        });
-    } else {
-        console.log('Not on measurements tab - skipping visibility fixes');
-    }
+    console.log('Measurement modal fully shown');
+    // Modal is now displayed - internal tab system handles itself
+    // Main page tabs are independent and managed by view.php
 });
 
 // Modal close handler - reload measurements after modal is fully hidden
 $('#measurementModal').on('hidden.bs.modal', function() {
     console.log('Measurement modal closed, measurementSaved:', measurementSaved);
     
-    // Clean up any measurement_tab fragments from URL hash
+    // Clean up any hash fragments from URL (remove hash completely to avoid conflicts)
     var currentHash = window.location.hash;
-    if (currentHash && currentHash.includes('measurement_tab')) {
+    if (currentHash) {
+        console.log('Removing hash fragment:', currentHash);
         if (history.replaceState) {
-            history.replaceState(null, null, window.location.pathname + window.location.search + originalHash);
+            // Remove hash entirely, keep only pathname and search params
+            history.replaceState(null, null, window.location.pathname + window.location.search);
         } else {
-            window.location.hash = originalHash || 'measurements-tab';
+            window.location.hash = '';
         }
     }
     
-    // Only reload measurements if saved AND we're on measurements tab
+    // Only reload measurements if saved
     if (measurementSaved) {
-        console.log('Reloading measurements after save...');
+        console.log('Measurement saved - calling reloadMeasurementsIfActive...');
         
-        // Check which tab we're currently on
-        var urlParams = new URLSearchParams(window.location.search);
-        var tabParam = urlParams.get('tab');
-        var currentTab = tabParam || 'measurements';
-        
-        console.log('Current tab:', currentTab);
-        
-        // Only reload and switch if we're on measurements tab
-        if (currentTab === 'measurements') {
-            setTimeout(function() {
-                loadMeasurements();
-                // Only switch to measurements tab if we're already on measurements tab
-                $('a[href="#measurements-tab"]').tab('show');
-                measurementSaved = false;
-                console.log('Measurements reloaded and tab switched to Measurements');
-            }, 150);
-        } else {
-            // Just reload measurements data without switching tabs
-            setTimeout(function() {
-                loadMeasurements();
-                measurementSaved = false;
-                console.log('Measurements reloaded but staying on current tab:', currentTab);
-            }, 150);
-        }
+        // Use the global function that respects current tab state
+        setTimeout(function() {
+            if (typeof window.reloadMeasurementsIfActive === 'function') {
+                window.reloadMeasurementsIfActive();
+            } else {
+                // Fallback: check tab and reload if on measurements
+                var urlParams = new URLSearchParams(window.location.search);
+                var tabParam = urlParams.get('tab');
+                var currentTab = tabParam || 'measurements';
+                
+                if (currentTab === 'measurements') {
+                    console.log('On measurements tab - reloading');
+                    loadMeasurements();
+                } else {
+                    console.log('Not on measurements tab - skipping reload');
+                }
+            }
+            measurementSaved = false;
+            
+            // Force ensure only the correct tab is visible
+            ensureCorrectTabVisible();
+        }, 150);
+    } else {
+        // Even if not saved, ensure correct tab is visible
+        setTimeout(function() {
+            ensureCorrectTabVisible();
+        }, 100);
     }
 });
 }); // End document.ready
@@ -749,9 +692,20 @@ function deleteMeasurement(measurementId) {
             console.log('Delete measurement response:', response);
             if (response.success) {
                 alert_float('success', response.message);
-                // Reload measurements immediately
-                console.log('Calling loadMeasurements() after delete');
-                loadMeasurements();
+                // Reload measurements only if on measurements tab
+                console.log('Calling reloadMeasurementsIfActive() after delete');
+                if (typeof window.reloadMeasurementsIfActive === 'function') {
+                    window.reloadMeasurementsIfActive();
+                } else {
+                    // Fallback: check tab and reload if on measurements
+                    var urlParams = new URLSearchParams(window.location.search);
+                    var tabParam = urlParams.get('tab');
+                    var currentTab = tabParam || 'measurements';
+                    
+                    if (currentTab === 'measurements') {
+                        loadMeasurements();
+                    }
+                }
             } else {
                 alert_float('danger', response.message);
             }
