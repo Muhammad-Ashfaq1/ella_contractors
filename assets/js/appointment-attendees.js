@@ -1,16 +1,38 @@
 /**
  * Centralized JavaScript for Appointment Attendees Functionality
- * Used by both appointments index and view pages
+ * Used by: appointments index, view pages, and leads page
+ * 
+ * This is the SINGLE SOURCE OF TRUTH for loading attendees across the application
  */
 
 // Load staff members for attendees dropdown
 function loadStaffForAttendees() {
+    // Get CSRF token dynamically to handle all contexts
+    var csrfTokenName = '';
+    var csrfTokenHash = '';
+    
+    // Try to get CSRF token from multiple sources
+    if (typeof window.csrf_token_name !== 'undefined' && typeof window.csrf_hash !== 'undefined') {
+        csrfTokenName = window.csrf_token_name;
+        csrfTokenHash = window.csrf_hash;
+    } else if (typeof csrfData !== 'undefined' && csrfData.token_name && csrfData.hash) {
+        csrfTokenName = csrfData.token_name;
+        csrfTokenHash = csrfData.hash;
+    } else {
+        // Try to get from page variables (appointments index/view pages)
+        csrfTokenName = csrf_token_name || 'csrf_token_name';
+        csrfTokenHash = csrf_hash || '';
+    }
+    
+    var ajaxData = {};
+    if (csrfTokenName && csrfTokenHash) {
+        ajaxData[csrfTokenName] = csrfTokenHash;
+    }
+    
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/get_staff',
         type: 'GET',
-        data: {
-            [csrf_token_name]: csrf_hash
-        },
+        data: ajaxData,
         dataType: 'json',
         success: function(response) {
             if (response.success && response.data) {
@@ -20,13 +42,16 @@ function loadStaffForAttendees() {
                 });
                 $('#attendees').html(options);
                 $('#attendees').selectpicker('refresh');
+                console.log('✓ Staff members loaded successfully:', response.data.length, 'members');
             } else {
                 $('#attendees').html('<option value="">Error loading staff members</option>');
                 $('#attendees').selectpicker('refresh');
+                console.warn('Invalid response format from get_staff endpoint');
             }
         },
         error: function(xhr, status, error) {
             console.error('Error loading staff members:', error);
+            console.error('Status:', xhr.status, 'Response:', xhr.responseText);
             $('#attendees').html('<option value="">Error loading staff members</option>');
             $('#attendees').selectpicker('refresh');
         }
