@@ -686,7 +686,7 @@ function displayMeasurements(measurements) {
         html = '<div class="table-responsive"><table class="table table-hover" style="margin-bottom: 0;">';
         html += '<thead style="background-color: #2c3e50; color: white;">';
         html += '<tr>';
-        html += '<th style="text-align: center; padding: 12px;">Tab Name</th>';
+        html += '<th style="text-align: center; padding: 12px;">Category</th>';
         html += '<th style="text-align: center; padding: 12px;">Items Count</th>';
         html += '<th style="text-align: center; padding: 12px;">Created At</th>';
         html += '<th style="text-align: center; padding: 12px; width: 120px;">Actions</th>';
