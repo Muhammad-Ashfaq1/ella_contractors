@@ -1534,7 +1534,6 @@ function loadAppointmentData(appointmentId) {
                 $('#phone').val(data.phone);
                 $('#address').val(data.address);
                 $('#notes').val(data.notes);
-                $('#type_id').val(data.type_id);
                 
                 // Handle reminder checkbox
                 $('#send_reminder').prop('checked', data.send_reminder == 1);
@@ -1542,6 +1541,9 @@ function loadAppointmentData(appointmentId) {
                 // Set status dropdown
                 var status = data.appointment_status || 'scheduled';
                 $('#status').val(status);
+                
+                // Set appointment type (types already loaded from PHP)
+                $('#type_id').val(data.type_id);
                 
                 // Refresh selectpicker
                 $('.selectpicker').selectpicker('refresh');
@@ -1669,7 +1671,6 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 $('#phone').val(data.phone);
                 $('#address').val(data.address);
                 $('#notes').val(data.notes);
-                $('#type_id').val(data.type_id);
                 
                 // Handle reminder checkbox
                 $('#send_reminder').prop('checked', data.send_reminder == 1);
@@ -1677,6 +1678,9 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 // Set status dropdown
                 var status = data.appointment_status || 'scheduled';
                 $('#status').val(status);
+                
+                // Set appointment type (types already loaded from PHP)
+                $('#type_id').val(data.type_id);
                 
                 // Refresh selectpicker
                 $('.selectpicker').selectpicker('refresh');

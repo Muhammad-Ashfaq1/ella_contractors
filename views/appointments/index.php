@@ -596,7 +596,6 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 $('#phone').val(data.phone);
                 $('#address').val(data.address);
                 $('#notes').val(data.notes);
-                $('#type_id').val(data.type_id);
                 
                 // Handle reminder checkbox
                 $('#send_reminder').prop('checked', data.send_reminder == 1);
@@ -604,7 +603,6 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 // Set status dropdown
                 var status = data.appointment_status || 'scheduled';
                 $('#status').val(status);
-                
                 
                 // Set attendees using centralized function
                 setAppointmentAttendees(data.attendees);
@@ -614,6 +612,9 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 
                 // Reload staff members for attendees dropdown
                 loadStaffForAttendees();
+                
+                // Set appointment type (types already loaded from PHP in modal.php)
+                $('#type_id').val(data.type_id);
                 
                 // Refresh selectpicker
                 $('.selectpicker').selectpicker('refresh');

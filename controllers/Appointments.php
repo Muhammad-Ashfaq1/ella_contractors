@@ -68,6 +68,9 @@ class Appointments extends AdminController
         // Load clients and leads for estimate modal
         $data['clients'] = $this->clients_model->get();
         $data['leads'] = $this->leads_model->get();
+        // Load appointment types for modal dropdown
+        $data['appointment_types'] = $this->appointments_model->get_appointment_types();
+        $data['statuses'] = $this->appointments_model->get_statuses();
         
         // Load language file for view
         $this->lang->load('ella_contractors/ella_contractors', 'english');
