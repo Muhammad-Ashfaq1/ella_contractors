@@ -153,6 +153,9 @@ function ella_contractors_load_helpers() {
     
     // Load timeline helper
     $CI->load->helper('ella_contractors/ella_timeline_helper');
+    
+    // Load appointments helper
+    $CI->load->helper('ella_contractors/ella_appointments_helper');
 }
 
 function ella_contractors_activate_module() {

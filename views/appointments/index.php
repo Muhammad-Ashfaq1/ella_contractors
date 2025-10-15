@@ -1344,3 +1344,7 @@ $(document).ready(function() {
 
 <!-- Include global appointment.js for lead modal functionality -->
 <script src="<?php echo base_url('assets/js/global/appointment.js'); ?>"></script>
+
+
+
+<!-- create_appointment -->
