@@ -520,10 +520,86 @@ $('#saveMeasurement').on('click', function() {
 
 // Save original hash when modal opens
 $('#measurementModal').on('show.bs.modal', function() {
+    console.log('Measurement modal opening...');
+    
     // Get current main tab from URL or default to measurements
     var urlParams = new URLSearchParams(window.location.search);
     var tabParam = urlParams.get('tab');
     originalHash = tabParam ? '#' + tabParam + '-tab' : '#measurements-tab';
+    
+    // Only fix measurements tab if we're currently on measurements tab
+    if (tabParam === 'measurements' || !tabParam) {
+        console.log('On measurements tab - ensuring visibility...');
+        
+        // Debug: Check measurements tab visibility before modal opens
+        var measurementsTab = $('#measurements-tab');
+        var measurementsContainer = $('#measurements-container');
+        var addButton = $('.btn[onclick="openMeasurementModal()"]');
+        
+        console.log('Measurements tab visibility before modal:', measurementsTab.is(':visible'));
+        console.log('Measurements container visibility before modal:', measurementsContainer.is(':visible'));
+        console.log('Add button visibility before modal:', addButton.is(':visible'));
+        
+        // Ensure measurements tab stays visible
+        measurementsTab.show();
+        measurementsContainer.show();
+        addButton.show();
+        
+        console.log('Measurements tab visibility after show():', measurementsTab.is(':visible'));
+        console.log('Measurements container visibility after show():', measurementsContainer.is(':visible'));
+        console.log('Add button visibility after show():', addButton.is(':visible'));
+    } else {
+        console.log('Not on measurements tab - skipping visibility fixes');
+    }
+});
+
+// Debug modal shown event
+$('#measurementModal').on('shown.bs.modal', function() {
+    console.log('Measurement modal fully shown...');
+    
+    // Only fix measurements tab if we're currently on measurements tab
+    var urlParams = new URLSearchParams(window.location.search);
+    var tabParam = urlParams.get('tab');
+    
+    if (tabParam === 'measurements' || !tabParam) {
+        console.log('On measurements tab - applying visibility fixes...');
+        
+        // Debug: Check measurements tab visibility after modal is fully shown
+        var measurementsTab = $('#measurements-tab');
+        var measurementsContainer = $('#measurements-container');
+        var addButton = $('.btn[onclick="openMeasurementModal()"]');
+        
+        console.log('Measurements tab visibility after modal shown:', measurementsTab.is(':visible'));
+        console.log('Measurements container visibility after modal shown:', measurementsContainer.is(':visible'));
+        console.log('Add button visibility after modal shown:', addButton.is(':visible'));
+        
+        // Force show measurements tab elements
+        measurementsTab.show();
+        measurementsContainer.show();
+        addButton.show();
+        
+        // Add CSS to ensure measurements tab stays visible
+        measurementsTab.css({
+            'display': 'block !important',
+            'visibility': 'visible !important',
+            'opacity': '1 !important',
+            'z-index': '999 !important'
+        });
+        
+        measurementsContainer.css({
+            'display': 'block !important',
+            'visibility': 'visible !important',
+            'opacity': '1 !important'
+        });
+        
+        addButton.css({
+            'display': 'inline-block !important',
+            'visibility': 'visible !important',
+            'opacity': '1 !important'
+        });
+    } else {
+        console.log('Not on measurements tab - skipping visibility fixes');
+    }
 });
 
 // Modal close handler - reload measurements after modal is fully hidden
@@ -540,15 +616,34 @@ $('#measurementModal').on('hidden.bs.modal', function() {
         }
     }
     
-    // Always reload measurements if saved, regardless of hash state
+    // Only reload measurements if saved AND we're on measurements tab
     if (measurementSaved) {
         console.log('Reloading measurements after save...');
-        // Reload measurements immediately after modal closes
-        setTimeout(function() {
-            loadMeasurements();
-            measurementSaved = false;
-            console.log('Measurements reloaded');
-        }, 150);
+        
+        // Check which tab we're currently on
+        var urlParams = new URLSearchParams(window.location.search);
+        var tabParam = urlParams.get('tab');
+        var currentTab = tabParam || 'measurements';
+        
+        console.log('Current tab:', currentTab);
+        
+        // Only reload and switch if we're on measurements tab
+        if (currentTab === 'measurements') {
+            setTimeout(function() {
+                loadMeasurements();
+                // Only switch to measurements tab if we're already on measurements tab
+                $('a[href="#measurements-tab"]').tab('show');
+                measurementSaved = false;
+                console.log('Measurements reloaded and tab switched to Measurements');
+            }, 150);
+        } else {
+            // Just reload measurements data without switching tabs
+            setTimeout(function() {
+                loadMeasurements();
+                measurementSaved = false;
+                console.log('Measurements reloaded but staying on current tab:', currentTab);
+            }, 150);
+        }
     }
 });
 }); // End document.ready
@@ -557,6 +652,7 @@ $('#measurementModal').on('hidden.bs.modal', function() {
  * Load measurements for appointment
  */
 function loadMeasurements() {
+    console.log('loadMeasurements() called for appointmentId:', appointmentId);
     $('#measurements-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading measurements...</p></div>');
     
     $.ajax({
@@ -565,9 +661,12 @@ function loadMeasurements() {
         data: csrf_token_name + '=' + csrf_hash,
         dataType: 'json',
         success: function(response) {
+            console.log('Measurements AJAX response:', response);
             if (response && response.success) {
+                console.log('Response successful, data length:', response.data ? response.data.length : 0);
                 displayMeasurements(response.data);
             } else {
+                console.log('Response not successful or no success flag');
                 $('#measurements-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No measurements found.</p></div>');
             }
         },
@@ -583,40 +682,47 @@ function loadMeasurements() {
  */
 function displayMeasurements(measurements) {
     console.log('displayMeasurements() called with', measurements.length, 'measurements');
-    if (measurements.length === 0) {
-        $('#measurements-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No measurements found.</p></div>');
-        return;
-    }
-
-    var html = '<div class="table-responsive"><table class="table table-hover">';
-    html += '<thead style="background-color: #2c3e50; color: white;">';
-    html += '<tr>';
-    html += '<th style="text-align: center; padding: 12px;">Tab Name</th>';
-    html += '<th style="text-align: center; padding: 12px;">Items Count</th>';
-    html += '<th style="text-align: center; padding: 12px;">Created At</th>';
-    html += '<th style="text-align: center; padding: 12px; width: 120px;">Actions</th>';
-    html += '</tr>';
-    html += '</thead>';
-    html += '<tbody>';
-
-    measurements.forEach(function(measurement, idx) {
-        var rowClass = (idx % 2 === 0) ? 'style="background-color: #f8f9fa;"' : '';
-        
-        html += '<tr ' + rowClass + '>';
-        html += '<td style="text-align: center; padding: 12px;"><strong>' + (measurement.tab_name || 'Untitled') + '</strong></td>';
-        html += '<td style="text-align: center; padding: 12px;">' + (measurement.items_count || 0) + ' items</td>';
-        html += '<td style="text-align: center; padding: 12px;">' + (measurement.created_at ? measurement.formatted_date || new Date(measurement.created_at).toLocaleDateString() : '-') + '</td>';
-        html += '<td style="text-align: center; padding: 12px; vertical-align: middle;">';
-        html += '<div style="display: flex; flex-direction: row; gap: 4px; align-items: center; justify-content: center;">';
-        html += '<button class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="editMeasurement(' + measurement.id + ')" title="Edit Measurement"><i class="fa fa-edit"></i></button>';
-        html += '<button class="btn btn-sm" style="background-color: #dc3545; border: 1px solid #dc3545; color: white; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="deleteMeasurement(' + measurement.id + ')" title="Delete Measurement"><i class="fa fa-trash"></i></button>';
-        html += '</div>';
-        html += '</td>';
+    console.log('Measurements data:', measurements);
+    
+    var html = '';
+    
+    if (!measurements || measurements.length === 0) {
+        console.log('No measurements to display');
+        html = '<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No measurements found.</p></div>';
+    } else {
+        html = '<div class="table-responsive"><table class="table table-hover" style="margin-bottom: 0;">';
+        html += '<thead style="background-color: #2c3e50; color: white;">';
+        html += '<tr>';
+        html += '<th style="text-align: center; padding: 12px;">Tab Name</th>';
+        html += '<th style="text-align: center; padding: 12px;">Items Count</th>';
+        html += '<th style="text-align: center; padding: 12px;">Created At</th>';
+        html += '<th style="text-align: center; padding: 12px; width: 120px;">Actions</th>';
         html += '</tr>';
-    });
+        html += '</thead>';
+        html += '<tbody>';
 
-    html += '</tbody></table></div>';
+        measurements.forEach(function(measurement, idx) {
+            var rowClass = (idx % 2 === 0) ? 'style="background-color: #f8f9fa;"' : 'style="background-color: white;"';
+            
+            html += '<tr ' + rowClass + '>';
+            html += '<td style="text-align: center; padding: 12px;"><strong>' + (measurement.tab_name || 'Untitled') + '</strong></td>';
+            html += '<td style="text-align: center; padding: 12px;">' + (measurement.items_count || 0) + ' items</td>';
+            html += '<td style="text-align: center; padding: 12px;">' + (measurement.formatted_date || new Date(measurement.created_at).toLocaleDateString() || '-') + '</td>';
+            html += '<td style="text-align: center; padding: 12px; vertical-align: middle;">';
+            html += '<div style="display: flex; flex-direction: row; gap: 4px; align-items: center; justify-content: center;">';
+            html += '<button class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="editMeasurement(' + measurement.id + ')" title="Edit Measurement"><i class="fa fa-edit"></i></button>';
+            html += '<button class="btn btn-sm" style="background-color: #dc3545; border: 1px solid #dc3545; color: white; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="deleteMeasurement(' + measurement.id + ')" title="Delete Measurement"><i class="fa fa-trash"></i></button>';
+            html += '</div>';
+            html += '</td>';
+            html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+    }
+    
+    console.log('Setting measurements HTML, length:', html.length);
     $('#measurements-container').html(html);
+    console.log('Measurements container updated');
 }
 
 /**
