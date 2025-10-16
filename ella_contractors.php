@@ -49,12 +49,6 @@ function ella_contractors_init_menu() {
                 'icon' => 'fa fa-calendar-check-o',
                 'position' => 10,
             ],
-            // [
-            //     'slug' => 'ella_contractors_measurements',
-            //     'name' => 'Measurements',
-            //     'href' => admin_url('ella_contractors/measurements'),
-            //     'icon' => 'fa fa-square-o',
-            // ],
             [
                 'slug' => 'ella_contractors_presentations',
                 'name' => 'Presentations',
@@ -558,6 +552,22 @@ function ella_contractors_activate_module() {
         
         log_message('info', 'Ella Contractors - Created ella_contractor_measurement_items table');
     }
+
+
+    // Add Appointment ID Column in proposals Table starts here 
+
+    if (!$CI->db->field_exists('appointment_id', db_prefix() . 'proposals')) {
+        $CI->db->query('ALTER TABLE `' . db_prefix() . 'proposals` ADD COLUMN `appointment_id` int(11) DEFAULT NULL AFTER `org_id`');
+        try {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'proposals` ADD KEY `appointment_id` (`appointment_id`)');
+        } catch (Exception $e) {
+            // Key might already exist, ignore error
+        }
+    }
+
+    // Add Appointment ID Column in proposals Table ends here 
+    
+    
     
     // Create upload directories
     $base_path = FCPATH . 'uploads/ella_presentations/';

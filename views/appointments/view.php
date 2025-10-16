@@ -431,7 +431,6 @@ button.delete-btn {
                             <li role="presentation">
                                 <a href="#estimates-tab" aria-controls="estimates-tab" role="tab" data-toggle="tab">
                                     <i class="fa fa-file-text-o"></i> Estimates
-                                    <span class="label label-info" style="display: none;" id="estimates-count">0</span>
                                 </a>
                             </li>
                             <li role="presentation">
@@ -464,20 +463,17 @@ button.delete-btn {
                                     <div class="col-md-12">
                                         <div class="pull-right mbot15">
                                             <?php if (!empty($appointment->contact_id)): ?>
-                                                <a href="<?php echo admin_url('proposals/proposal?rel_type=lead&rel_id=' . $appointment->contact_id . '&create_estimates=true'); ?>" class="btn btn-info btn-sm">
+                                                <a href="<?php echo admin_url('proposals/proposal?rel_type=lead&rel_id=' . $appointment->contact_id . '&create_estimates=true&appt_id=' . $appointment->id); ?>" class="btn btn-info btn-sm" target="_blank">
                                                     <i class="fa fa-plus"></i> New Estimate
                                                 </a>
                                             <?php endif; ?>
                                         </div>
+                                        
                                         <div class="clearfix"></div>
                                         <hr class="hr-panel-heading" />
                                         
                                         <div id="estimates-container">
-                                            <!-- Estimates will be loaded here via AJAX -->
-                                            <div class="text-center">
-                                                <i class="fa fa-spinner fa-spin fa-2x"></i>
-                                                <p>Loading estimates...</p>
-                                            </div>
+                                            <?php $this->load->view('appointments/estimates_listing'); ?>
                                         </div>
                                     </div>
                                 </div>
@@ -724,8 +720,7 @@ $(document).ready(function() {
                     window.tabsLoaded.measurements = true;
                     break;
                 case 'estimates':
-                    // Estimates are managed via proposals - show info message
-                    $('#estimates-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>Estimates are now managed through Proposals. Click "New Estimate" to create one.</p></div>');
+                    loadEstimates();
                     window.tabsLoaded.estimates = true;
                     break;
                 case 'notes':
@@ -1174,8 +1169,7 @@ function refreshAppointmentData(activeTab = null) {
                 if (typeof tabsLoaded !== 'undefined') tabsLoaded.measurements = true;
                 break;
             case 'estimates':
-                // Estimates are managed via proposals - show info message
-                $('#estimates-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>Estimates are now managed through Proposals. Click "New Estimate" to create one.</p></div>');
+                loadEstimates();
                 if (typeof tabsLoaded !== 'undefined') tabsLoaded.estimates = true;
                 break;
             case 'notes':
@@ -1202,8 +1196,7 @@ function refreshAppointmentData(activeTab = null) {
                 if (typeof tabsLoaded !== 'undefined') tabsLoaded.measurements = true;
                 break;
             case 'estimates':
-                // Estimates are managed via proposals - show info message
-                $('#estimates-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>Estimates are now managed through Proposals. Click "New Estimate" to create one.</p></div>');
+                loadEstimates();
                 if (typeof tabsLoaded !== 'undefined') tabsLoaded.estimates = true;
                 break;
             case 'notes':
@@ -1775,6 +1768,7 @@ $(function () {
 
 <?php $this->load->view('appointments/attachments_js.php'); ?>
 <?php $this->load->view('appointments/sms_js.php'); ?>
+<?php $this->load->view('appointments/estimates_js.php'); ?>
 
 <!-- Load module CSS for SMS modal styling -->
 <link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/ella-contractors.css'); ?>">
