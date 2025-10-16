@@ -28,20 +28,7 @@ $route[$module_name . '/measurements/delete/(:num)'] = 'Measurements/delete/$1';
 $route[$module_name . '/measurements/get_measurement/(:num)'] = 'Measurements/get_measurement/$1';
 $route[$module_name . '/measurements/get_appointment_measurements/(:num)'] = 'Measurements/get_appointment_measurements/$1';
 
-// Estimates routes
-$route[$module_name . '/estimates'] = 'Estimates/index';
-$route[$module_name . '/estimates/create'] = 'Estimates/create_estimate';
-$route[$module_name . '/estimates/update/(:num)'] = 'Estimates/update_estimate/$1';
-$route[$module_name . '/estimates/delete/(:num)'] = 'Estimates/delete_estimate/$1';
-$route[$module_name . '/estimates/view/(:num)'] = 'Estimates/view_estimate/$1';
-$route[$module_name . '/estimates/table'] = 'Estimates/table';
-$route[$module_name . '/estimates/get_estimate_data/(:num)'] = 'Estimates/get_estimate_data/$1';
-$route[$module_name . '/estimates/estimates_bulk_action'] = 'Estimates/estimates_bulk_action';
-
-
-$route[$module_name . '/estimates/manage_estimate'] = 'Estimates/manage_estimate';
-$route[$module_name . '/estimates/(:any)'] = 'Estimates/$1';
-
+// Estimates routes - REMOVED - Now using Proposals module
 
 
 // Appointments routes
@@ -70,7 +57,6 @@ $route[$module_name . '/appointments/delete_note/(:num)'] = 'Appointments/delete
 
 // AJAX endpoints
 $route[$module_name . '/get_line_items_ajax'] = $module_name . '/get_line_items_ajax';
-$route[$module_name . '/get_estimates_ajax'] = $module_name . '/get_estimates_ajax';
 
 // Global appointment AJAX endpoints
 $route[$module_name . '/appointments/get_types'] = 'Appointments/get_types';

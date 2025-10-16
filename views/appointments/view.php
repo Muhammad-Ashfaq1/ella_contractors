@@ -463,9 +463,11 @@ button.delete-btn {
                                 <div class="row">
                                     <div class="col-md-12">
                                         <div class="pull-right mbot15">
-                                            <button type="button" class="btn btn-info btn-sm" onclick="openEstimateModal()">
-                                                <i class="fa fa-plus"></i> New Estimate
-                                            </button>
+                                            <?php if (!empty($appointment->contact_id)): ?>
+                                                <a href="<?php echo admin_url('proposals/proposal?rel_type=lead&rel_id=' . $appointment->contact_id . '&create_estimates=true'); ?>" class="btn btn-info btn-sm">
+                                                    <i class="fa fa-plus"></i> New Estimate
+                                                </a>
+                                            <?php endif; ?>
                                         </div>
                                         <div class="clearfix"></div>
                                         <hr class="hr-panel-heading" />
@@ -577,12 +579,6 @@ button.delete-btn {
 
 <!-- Include Measurement Modal -->
 <?php $this->load->view('appointments/measurements_modal'); ?>
-
-<?php 
-// Include estimate modal data
-$data['appointment'] = $appointment;
-$this->load->view('appointments/estimate_modal', $data);
-?>
 
 <!-- Include Attachment Upload Modal -->
 <?php $this->load->view('appointments/attachments_upload_modal'); ?>
@@ -728,7 +724,8 @@ $(document).ready(function() {
                     window.tabsLoaded.measurements = true;
                     break;
                 case 'estimates':
-                    loadEstimates();
+                    // Estimates are managed via proposals - show info message
+                    $('#estimates-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>Estimates are now managed through Proposals. Click "New Estimate" to create one.</p></div>');
                     window.tabsLoaded.estimates = true;
                     break;
                 case 'notes':
@@ -747,16 +744,6 @@ $(document).ready(function() {
                     break;
             }
         }
-    });
-    
-    // Reload estimates when estimate modal is closed
-    $('#estimateModal').on('hidden.bs.modal', function() {
-        // Small delay to ensure any pending operations complete
-        setTimeout(function() {
-            loadEstimates();
-            // Switch to estimates tab to show updated data
-            $('a[href="#estimates-tab"]').tab('show');
-        }, 100);
     });
     
     // Note: Tab data loading is handled by shown.bs.tab event above
@@ -882,32 +869,6 @@ window.ensureCorrectTabVisible = function() {
     console.log('Tab visibility enforced. Only', currentTab, 'should be visible.');
 };
 
-// Estimates Functions
-function loadEstimates() {
-    
-    // Show loading indicator
-    $('#estimates-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading estimates...</p></div>');
-    
-    $.ajax({
-        url: admin_url + 'ella_contractors/appointments/get_estimates/' + appointmentId,
-        type: 'GET',
-        data: {
-            [csrf_token_name]: csrf_hash
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response && response.success) {
-                displayEstimates(response.data);
-            } else {
-                $('#estimates-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No estimates found for this appointment.</p></div>');
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('Error loading estimates:', error, xhr.responseText);
-            $('#estimates-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading estimates. Please try again.</p></div>');
-        }
-    });
-}
 
 // Notes Functions
 function loadNotes() {
@@ -957,81 +918,6 @@ function loadTimeline() {
     });
 }
 
-function displayEstimates(estimates) {
-    if (estimates.length === 0) {
-        $('#estimates-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No estimates found for this appointment.</p></div>');
-        return;
-    }
-
-    var html = '<div class="table-responsive"><table class="table table-hover" style="margin-bottom: 0;">';
-    html += '<thead style="background-color: #2c3e50; color: white;">';
-    html += '<tr>';
-    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Estimate Name</th>';
-    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Status</th>';
-    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Line Items</th>';
-    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Total Amount</th>';
-    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Created By</th>';
-    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600;">Created Date</th>';
-    html += '<th style="text-align: center; padding: 12px 8px; font-weight: 600; width: 120px;">Actions</th>';
-    html += '</tr>';
-    html += '</thead>';
-    html += '<tbody>';
-
-    estimates.forEach(function(estimate, idx) {
-        var statusClass = '';
-        var statusText = estimate.status;
-        var statusColor = '';
-        
-        switch(estimate.status) {
-            case 'draft':
-                statusClass = 'label-warning';
-                statusColor = '#f39c12';
-                break;
-            case 'sent':
-                statusClass = 'label-info';
-                statusColor = '#3498db';
-                break;
-            case 'accepted':
-                statusClass = 'label-success';
-                statusColor = '#27ae60';
-                break;
-            case 'rejected':
-                statusClass = 'label-danger';
-                statusColor = '#e74c3c';
-                break;
-            case 'expired':
-                statusClass = 'label-default';
-                statusColor = '#95a5a6';
-                break;
-        }
-        
-        var totalAmount = estimate.total_amount ? parseFloat(estimate.total_amount).toFixed(2) : '0.00';
-        var createdDate = estimate.created_at ? new Date(estimate.created_at).toLocaleDateString() : '-';
-
-        // Alternate row colors
-        var rowClass = (idx % 2 === 0) ? 'style="background-color: #f8f9fa;"' : 'style="background-color: white;"';
-
-        html += '<tr ' + rowClass + '>';
-        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + estimate.estimate_name + '</strong></td>';
-        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;">';
-        html += '<span style="background-color: ' + statusColor + '; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">' + statusText.toUpperCase() + '</span>';
-        html += '</td>';
-        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + (estimate.line_items_count || 0) + '</strong></td>';
-        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>$' + totalAmount + '</strong></td>';
-        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + (estimate.created_by_name || '-') + '</strong></td>';
-        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;"><strong>' + createdDate + '</strong></td>';
-        html += '<td style="text-align: center; padding: 12px 8px; vertical-align: middle;">';
-        html += '<div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">';
-        html += '<button class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="openEstimateModal(' + estimate.id + ')" title="Edit Estimate"><i class="fa fa-edit"></i></button>';
-        html += '<button class="btn btn-sm" style="background-color: #dc3545; border: 1px solid #dc3545; color: white; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="deleteEstimate(' + estimate.id + ')" title="Delete Estimate"><i class="fa fa-trash"></i></button>';
-        html += '</div>';
-        html += '</td>';
-        html += '</tr>';
-    });
-
-    html += '</tbody></table></div>';
-    $('#estimates-container').html(html);
-}
 
 function displayNotes(notes) {
     if (notes.length === 0) {
@@ -1267,30 +1153,6 @@ function deleteNote(noteId) {
     }
 }
 
-function deleteEstimate(estimateId) {
-    if (confirm('Are you sure you want to delete this estimate?')) {
-        $.ajax({
-            url: admin_url + 'ella_contractors/appointments/delete_estimate/' + appointmentId + '/' + estimateId,
-            type: 'POST',
-            data: {
-                [csrf_token_name]: csrf_hash
-            },
-            dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    alert_float('success', 'Estimate deleted successfully');
-                    loadEstimates(); // Reload estimates
-                } else {
-                    alert_float('danger', response.message || 'Failed to delete estimate');
-                }
-            },
-            error: function() {
-                alert_float('danger', 'Error deleting estimate');
-            }
-        });
-    }
-}
-
 // Global function to refresh all data and maintain current tab
 function refreshAppointmentData(activeTab = null) {
     // Mark all tabs as needing reload
@@ -1312,7 +1174,8 @@ function refreshAppointmentData(activeTab = null) {
                 if (typeof tabsLoaded !== 'undefined') tabsLoaded.measurements = true;
                 break;
             case 'estimates':
-                loadEstimates();
+                // Estimates are managed via proposals - show info message
+                $('#estimates-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>Estimates are now managed through Proposals. Click "New Estimate" to create one.</p></div>');
                 if (typeof tabsLoaded !== 'undefined') tabsLoaded.estimates = true;
                 break;
             case 'notes':
@@ -1339,7 +1202,8 @@ function refreshAppointmentData(activeTab = null) {
                 if (typeof tabsLoaded !== 'undefined') tabsLoaded.measurements = true;
                 break;
             case 'estimates':
-                loadEstimates();
+                // Estimates are managed via proposals - show info message
+                $('#estimates-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>Estimates are now managed through Proposals. Click "New Estimate" to create one.</p></div>');
                 if (typeof tabsLoaded !== 'undefined') tabsLoaded.estimates = true;
                 break;
             case 'notes':
