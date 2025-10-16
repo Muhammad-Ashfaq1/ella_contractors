@@ -463,7 +463,7 @@ button.delete-btn {
                                     <div class="col-md-12">
                                         <div class="pull-right mbot15">
                                             <?php if (!empty($appointment->contact_id)): ?>
-                                                <a href="<?php echo admin_url('proposals/proposal?rel_type=lead&rel_id=' . $appointment->contact_id . '&create_estimates=true&appt_id=' . $appointment->id); ?>" class="btn btn-info btn-sm" target="_blank">
+                                                <a href="<?php echo admin_url('proposals/proposal?rel_type=lead&rel_id=' . $appointment->contact_id . '&create_estimates=true&appt_id=' . $appointment->id); ?>" class="btn btn-info btn-sm">
                                                     <i class="fa fa-plus"></i> New Estimate
                                                 </a>
                                             <?php endif; ?>
