@@ -58,78 +58,48 @@ $(document).ready(function() {
 });
 
 function displayEstimates(estimates) {
-    if (!estimates || estimates.length === 0) {
-        $('#estimates-list-container').html(
-            '<div class="estimate-empty">' +
-            '<i class="fa fa-file-text-o"></i>' +
-            '<p>No estimates found for this appointment.</p>' +
-            '<p class="text-muted">Click "New Estimate" to create one.</p>' +
-            '</div>'
-        );
-        return;
-    }
-
     var html = '';
     
-    estimates.forEach(function(estimate) {
-        html += '<div class="estimate-card">';
-        
-        // Header
-        html += '<div class="estimate-header">';
-        html += '<div>';
-        html += '<h4 class="estimate-title">' + htmlEscape(estimate.subject) + '</h4>';
-        html += '<span class="estimate-id">#' + estimate.id + '</span>';
-        html += '</div>';
-        html += '<div>' + estimate.status_formatted + '</div>';
-        html += '</div>';
-        
-        // Body
-        html += '<div class="estimate-body">';
-        
-        html += '<div class="estimate-info-row">';
-        html += '<span class="estimate-info-label">To:</span>';
-        html += '<span class="estimate-info-value">' + htmlEscape(estimate.proposal_to) + '</span>';
-        html += '</div>';
-        
-        html += '<div class="estimate-info-row">';
-        html += '<span class="estimate-info-label">Date:</span>';
-        html += '<span class="estimate-info-value">' + formatDate(estimate.date) + '</span>';
-        html += '</div>';
-        
-        html += '<div class="estimate-info-row">';
-        html += '<span class="estimate-info-label">Valid Until:</span>';
-        html += '<span class="estimate-info-value">' + formatDate(estimate.open_till) + '</span>';
-        html += '</div>';
-        
-        html += '<div class="estimate-info-row">';
-        html += '<span class="estimate-info-label">Total:</span>';
-        html += '<span class="estimate-info-value estimate-total">$' + formatMoney(estimate.total) + '</span>';
-        html += '</div>';
-        
-        html += '</div>';
-        
-        // Footer
-        html += '<div class="estimate-footer">';
-        html += '<div class="estimate-meta">';
-        html += 'Created by ' + htmlEscape(estimate.created_by);
-        html += '<br>on ' + formatDateTime(estimate.date_created);
-        html += '</div>';
-        html += '<div class="estimate-actions">';
-        html += '<a href="' + estimate.view_url + '" class="btn btn-sm btn-default" title="View Proposal" target="_blank">';
-        html += '<i class="fa fa-eye"></i> View';
-        html += '</a>';
-        
-        <?php if (has_permission('proposals', '', 'edit')): ?>
-        html += '<a href="' + estimate.edit_url + '" class="btn btn-sm btn-info" title="Edit Proposal" target="_blank">';
-        html += '<i class="fa fa-edit"></i> Edit';
-        html += '</a>';
-        <?php endif; ?>
-        
-        html += '</div>';
-        html += '</div>';
-        
-        html += '</div>'; // Close estimate-card
-    });
+    if (!estimates || estimates.length === 0) {
+        html = '<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No estimates found.</p></div>';
+    } else {
+        html = '<div class="table-responsive"><table class="table table-hover" style="margin-bottom: 0;">';
+        html += '<thead style="background-color: #2c3e50; color: white;">';
+        html += '<tr>';
+        html += '<th style="text-align: center; padding: 12px;">Subject</th>';
+        html += '<th style="text-align: center; padding: 12px;">To</th>';
+        html += '<th style="text-align: center; padding: 12px;">Total</th>';
+        html += '<th style="text-align: center; padding: 12px;">Status</th>';
+        html += '<th style="text-align: center; padding: 12px;">Created</th>';
+        html += '<th style="text-align: center; padding: 12px; width: 120px;">Actions</th>';
+        html += '</tr>';
+        html += '</thead>';
+        html += '<tbody>';
+
+        estimates.forEach(function(estimate, idx) {
+            var rowClass = (idx % 2 === 0) ? 'style="background-color: #f8f9fa;"' : 'style="background-color: white;"';
+            
+            html += '<tr ' + rowClass + '>';
+            html += '<td style="text-align: center; padding: 12px;"><strong>' + htmlEscape(estimate.subject) + '</strong></td>';
+            html += '<td style="text-align: center; padding: 12px;">' + htmlEscape(estimate.proposal_to) + '</td>';
+            html += '<td style="text-align: center; padding: 12px;"><strong style="color: #2ecc71;">$' + formatMoney(estimate.total) + '</strong></td>';
+            html += '<td style="text-align: center; padding: 12px;">' + estimate.status_formatted + '</td>';
+            html += '<td style="text-align: center; padding: 12px;">' + formatDate(estimate.date) + '</td>';
+            html += '<td style="text-align: center; padding: 12px; vertical-align: middle;">';
+            html += '<div style="display: flex; flex-direction: row; gap: 4px; align-items: center; justify-content: center;">';
+            html += '<a href="' + estimate.view_url + '" class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="View Proposal" target="_blank"><i class="fa fa-eye"></i></a>';
+            
+            <?php if (has_permission('proposals', '', 'edit')): ?>
+            html += '<a href="' + estimate.edit_url + '" class="btn btn-sm" style="background-color: #5bc0de; border: 1px solid #46b8da; color: white; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Edit Proposal" target="_blank"><i class="fa fa-edit"></i></a>';
+            <?php endif; ?>
+            
+            html += '</div>';
+            html += '</td>';
+            html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+    }
     
     $('#estimates-list-container').html(html);
 }
