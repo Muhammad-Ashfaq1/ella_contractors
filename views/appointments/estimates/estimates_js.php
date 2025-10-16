@@ -87,10 +87,10 @@ function displayEstimates(estimates) {
             html += '<td style="text-align: center; padding: 12px;">' + formatDate(estimate.date) + '</td>';
             html += '<td style="text-align: center; padding: 12px; vertical-align: middle;">';
             html += '<div style="display: flex; flex-direction: row; gap: 4px; align-items: center; justify-content: center;">';
-            html += '<a href="' + estimate.view_url + '" class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="View Proposal" target="_blank"><i class="fa fa-eye"></i></a>';
+            html += '<a href="' + estimate.view_url + '" class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="View Proposal"><i class="fa fa-eye"></i></a>';
             
             <?php if (has_permission('proposals', '', 'edit')): ?>
-            html += '<a href="' + estimate.edit_url + '" class="btn btn-sm" style="background-color: #5bc0de; border: 1px solid #46b8da; color: white; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Edit Proposal" target="_blank"><i class="fa fa-edit"></i></a>';
+            html += '<a href="' + estimate.edit_url + '" class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Edit Proposal"><i class="fa fa-edit"></i></a>';
             <?php endif; ?>
             
             html += '</div>';
