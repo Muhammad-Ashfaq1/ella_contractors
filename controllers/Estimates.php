@@ -85,32 +85,5 @@ class Estimates extends AdminController
             'count' => $count
         ]);
     }
-
-    /**
-     * Delete estimate/proposal link to appointment
-     * This doesn't delete the proposal, just removes the appointment_id reference
-     * @param int $proposal_id
-     */
-    public function unlink_from_appointment($proposal_id)
-    {
-        if (!has_permission('ella_contractors', '', 'edit')) {
-            ajax_access_denied();
-        }
-
-        $this->db->where('id', $proposal_id);
-        $this->db->update(db_prefix() . 'proposals', ['appointment_id' => null]);
-
-        if ($this->db->affected_rows() > 0) {
-            echo json_encode([
-                'success' => true,
-                'message' => 'Proposal unlinked from appointment'
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Failed to unlink proposal'
-            ]);
-        }
-    }
 }
 

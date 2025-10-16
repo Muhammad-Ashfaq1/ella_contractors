@@ -125,12 +125,6 @@ function displayEstimates(estimates) {
         html += '</a>';
         <?php endif; ?>
         
-        <?php if (has_permission('proposals', '', 'delete')): ?>
-        html += '<button onclick="unlinkEstimate(' + estimate.id + ')" class="btn btn-sm btn-warning" title="Unlink from Appointment">';
-        html += '<i class="fa fa-unlink"></i>';
-        html += '</button>';
-        <?php endif; ?>
-        
         html += '</div>';
         html += '</div>';
         
@@ -138,33 +132,6 @@ function displayEstimates(estimates) {
     });
     
     $('#estimates-list-container').html(html);
-}
-
-// Unlink estimate from appointment
-function unlinkEstimate(proposalId) {
-    if (!confirm('Are you sure you want to unlink this estimate from the appointment? The proposal will not be deleted, just the link to this appointment will be removed.')) {
-        return;
-    }
-    
-    $.ajax({
-        url: admin_url + 'ella_contractors/estimates/unlink_from_appointment/' + proposalId,
-        type: 'POST',
-        data: {
-            [csrf_token_name]: csrf_hash
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                alert_float('success', response.message || 'Estimate unlinked successfully');
-                loadEstimates(); // Reload the list
-            } else {
-                alert_float('danger', response.message || 'Failed to unlink estimate');
-            }
-        },
-        error: function() {
-            alert_float('danger', 'Error unlinking estimate');
-        }
-    });
 }
 
 // Helper functions
