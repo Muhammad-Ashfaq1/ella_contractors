@@ -73,7 +73,7 @@ $join = [
         SELECT 
             appointment_id, 
             COUNT(*) as estimate_count
-        FROM ' . db_prefix() . 'ella_contractor_estimates 
+        FROM ' . db_prefix() . 'proposals 
         WHERE appointment_id IS NOT NULL 
         GROUP BY appointment_id
     ) estimate_counts ON estimate_counts.appointment_id = ' . db_prefix() . 'appointly_appointments.id'
