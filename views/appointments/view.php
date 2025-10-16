@@ -473,7 +473,7 @@ button.delete-btn {
                                         <hr class="hr-panel-heading" />
                                         
                                         <div id="estimates-container">
-                                            <?php $this->load->view('appointments/estimates_listing'); ?>
+                                            <?php $this->load->view('appointments/estimates/listing'); ?>
                                         </div>
                                     </div>
                                 </div>
@@ -1768,7 +1768,7 @@ $(function () {
 
 <?php $this->load->view('appointments/attachments_js.php'); ?>
 <?php $this->load->view('appointments/sms_js.php'); ?>
-<?php $this->load->view('appointments/estimates_js.php'); ?>
+<?php $this->load->view('appointments/estimates/estimates_js'); ?>
 
 <!-- Load module CSS for SMS modal styling -->
 <link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/ella-contractors.css'); ?>">

@@ -43,6 +43,12 @@ class Estimates extends AdminController
                 // Convert object to array if needed
                 $prop = is_object($proposal) ? (array)$proposal : $proposal;
                 
+                // Build edit URL with appointment parameters
+                $edit_params = '?create_estimates=true&appt_id=' . $appointment_id;
+                if (!empty($prop['rel_type']) && !empty($prop['rel_id'])) {
+                    $edit_params .= '&rel_type=' . $prop['rel_type'] . '&rel_id=' . $prop['rel_id'];
+                }
+                
                 $formatted_proposals[] = [
                     'id' => $prop['id'],
                     'subject' => $prop['subject'],
@@ -53,7 +59,7 @@ class Estimates extends AdminController
                     'status' => $prop['status'],
                     'status_formatted' => format_proposal_status($prop['status']),
                     'view_url' => admin_url('proposals/list_proposals/' . $prop['id']),
-                    'edit_url' => admin_url('proposals/proposal/' . $prop['id']),
+                    'edit_url' => admin_url('proposals/proposal/' . $prop['id'] . $edit_params),
                     'created_by' => get_staff_full_name($prop['addedfrom']),
                     'date_created' => $prop['datecreated']
                 ];
