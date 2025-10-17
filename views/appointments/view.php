@@ -328,28 +328,6 @@ button.delete-btn {
                             </div>
                         </div>
                         
-                        <!-- Action Buttons Row -->
-                        <div class="row">
-                            <div class="col-md-12 text-right">
-                                <div class="action-buttons-container">
-                                    <div class="btn-group connected-buttons" role="group">
-
-                                        <?php if (!empty($appointment->contact_id) && !empty($appointment->phone)): ?>
-                                            <a href="javascript:void(0)" class="btn btn-success" onclick="openSMSModal(<?php echo $appointment->contact_id; ?>, '<?php echo $appointment->phone; ?>')">
-                                                <i class="fa fa-comment"></i> Send SMS
-                                            </a>
-                                         <?php endif; ?>
-                                        <a href="mailto:<?php echo $appointment->email; ?>" class="btn btn-primary btn-sm connected-btn-middle" title="<?php echo _l('email_client'); ?>" target="_blank" onclick="logEmailClick(<?php echo $appointment->id; ?>, '<?php echo $appointment->email; ?>')">
-                                            <i class="fa fa-envelope"></i> <?php echo _l('email_client'); ?>
-                                        </a>
-                                        <a href="javascript:void(0)" onclick="sendReminderClient(<?php echo $appointment->id; ?>)" class="btn btn-warning btn-sm connected-btn-right" title="<?php echo _l('send_reminder'); ?>">
-                                            <i class="fa fa-bell"></i> <?php echo _l('send_reminder'); ?>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                
                         <!-- Lead Information Section -->
                         <div class="row">
                             <div class="col-md-6">
@@ -391,7 +369,7 @@ button.delete-btn {
                     
                         
                         <div class="row">
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <h5>
                                     <?php echo _l('attendees'); ?>
                                     <button class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px;" onclick="editAppointment(<?php echo $appointment->id; ?>)" title="Edit Attendees">
@@ -408,6 +386,23 @@ button.delete-btn {
                                     <?php else: ?>
                                         <p class="text-muted">No attendees assigned</p>
                                     <?php endif; ?>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-right">
+                                <div class="action-buttons-container" style="margin-top: 30px;">
+                                    <div class="btn-group connected-buttons" role="group">
+                                        <?php if (!empty($appointment->contact_id) && !empty($appointment->phone)): ?>
+                                            <a href="javascript:void(0)" class="btn btn-success connected-btn-left" onclick="openSMSModal(<?php echo $appointment->contact_id; ?>, '<?php echo $appointment->phone; ?>')">
+                                                <i class="fa fa-comment"></i> Send SMS
+                                            </a>
+                                         <?php endif; ?>
+                                        <a href="mailto:<?php echo $appointment->email; ?>" class="btn btn-primary btn-sm connected-btn-middle" title="<?php echo _l('email_client'); ?>" target="_blank" onclick="logEmailClick(<?php echo $appointment->id; ?>, '<?php echo $appointment->email; ?>')">
+                                            <i class="fa fa-envelope"></i> <?php echo _l('email_client'); ?>
+                                        </a>
+                                        <a href="javascript:void(0)" onclick="sendReminderClient(<?php echo $appointment->id; ?>)" class="btn btn-warning btn-sm connected-btn-right" title="<?php echo _l('send_reminder'); ?>">
+                                            <i class="fa fa-bell"></i> <?php echo _l('send_reminder'); ?>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
