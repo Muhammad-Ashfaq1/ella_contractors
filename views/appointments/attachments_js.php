@@ -6,14 +6,27 @@
 ?>
 
 <script>
+// Disable Dropzone auto-discovery to prevent automatic initialization
+if (typeof Dropzone !== 'undefined') {
+    Dropzone.autoDiscover = false;
+}
+
+// Track if Dropzone has been initialized (global flag)
+var attachmentDropzoneInitialized = false;
+
 $(document).ready(function() {
     // Load attachments when attachments tab is clicked
     $('a[href="#attachments-tab"]').on('click', function() {
         loadAttachments(true); // Force refresh when tab is clicked
     });
     
-    // Initialize Dropzone for attachment uploads
-    initializeAttachmentDropzone();
+    // Initialize Dropzone when upload modal is opened (lazy initialization)
+    $('#attachmentUploadModal').on('shown.bs.modal', function() {
+        if (!attachmentDropzoneInitialized) {
+            initializeAttachmentDropzone();
+            attachmentDropzoneInitialized = true;
+        }
+    });
     
     // Check if we're on attachments tab on page load (integrate with main tab system)
     setTimeout(function() {
@@ -194,6 +207,20 @@ function deleteAttachment(attachmentId) {
  * Following the CRM pattern from projects and other modules
  */
 function initializeAttachmentDropzone() {
+    var dropzoneElement = document.querySelector('#appointment-attachment-upload');
+    
+    // Check if element exists
+    if (!dropzoneElement) {
+        return;
+    }
+    
+    // Check if Dropzone is already attached (prevent re-initialization)
+    if (dropzoneElement.dropzone) {
+        console.log('Dropzone already initialized, destroying old instance');
+        dropzoneElement.dropzone.destroy();
+    }
+    
+    // Create new Dropzone instance
     if ($('#appointment-attachment-upload').length > 0) {
         new Dropzone('#appointment-attachment-upload', appCreateDropzoneOptions({
             paramName: "file",

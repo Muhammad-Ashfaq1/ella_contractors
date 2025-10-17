@@ -77,10 +77,19 @@
                                         echo '<ul>';
                                         foreach ($additional_data['changes'] as $field => $change) {
                                             echo '<li><strong>' . ucfirst(str_replace('_', ' ', $field)) . ':</strong> ';
-                                            if (isset($change['old']) && isset($change['new'])) {
-                                                echo '<span class="change-item change-old">' . htmlspecialchars($change['old']) . '</span> → ';
-                                                echo '<span class="change-item change-new">' . htmlspecialchars($change['new']) . '</span>';
+                                            if (is_array($change)) {
+                                                if (isset($change['old']) && isset($change['new'])) {
+                                                    // Handle old/new format
+                                                    $old_value = is_array($change['old']) ? json_encode($change['old']) : $change['old'];
+                                                    $new_value = is_array($change['new']) ? json_encode($change['new']) : $change['new'];
+                                                    echo '<span class="change-item change-old">' . htmlspecialchars($old_value) . '</span> → ';
+                                                    echo '<span class="change-item change-new">' . htmlspecialchars($new_value) . '</span>';
+                                                } else {
+                                                    // Handle array without old/new structure
+                                                    echo htmlspecialchars(json_encode($change));
+                                                }
                                             } else {
+                                                // Handle simple string value
                                                 echo htmlspecialchars($change);
                                             }
                                             echo '</li>';

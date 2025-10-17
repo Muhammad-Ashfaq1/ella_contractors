@@ -227,6 +227,34 @@ button.delete-btn {
     color: white;
     text-decoration: none;
 }
+
+/* Prevent scroll jumps and layout shifts */
+html {
+    scroll-behavior: auto !important;
+}
+
+.tab-content {
+    min-height: 300px;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* Prevent Bootstrap tab transitions from causing scroll issues */
+.tab-content > .tab-pane {
+    display: none;
+    visibility: hidden;
+}
+
+.tab-content > .active {
+    display: block;
+    visibility: visible;
+}
 </style>
 
 <div id="wrapper">
@@ -616,6 +644,19 @@ var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
 var appointmentId = <?php echo $appointment->id; ?>;
 
 $(document).ready(function() {
+    // Prevent hash-based scrolling that causes UI blinking
+    if (window.location.hash) {
+        // Remove hash without triggering scroll
+        history.replaceState(null, null, ' ');
+    }
+    
+    // Prevent default Bootstrap tab behavior that causes scroll jumps
+    $('a[data-toggle="tab"]').on('click', function(e) {
+        e.preventDefault();
+        $(this).tab('show');
+        return false;
+    });
+    
     // Enhanced tab management system
     var currentActiveTab = 'measurements'; // Default tab
     
@@ -639,13 +680,6 @@ $(document).ready(function() {
         window.tabsLoaded.measurements = true;
     }
     
-    // Ensure correct tab is visible on page load (remove any hash conflicts)
-    setTimeout(function() {
-        if (typeof window.ensureCorrectTabVisible === 'function') {
-            window.ensureCorrectTabVisible();
-        }
-    }, 200);
-    
     // Function to switch tabs and update URL
     function switchToTab(tabName, updateUrl = true) {
         var tabSelector = 'a[href="#' + tabName + '-tab"]';
@@ -664,13 +698,10 @@ $(document).ready(function() {
     // Check for tab parameter in URL and switch to appropriate tab
     var urlParams = new URLSearchParams(window.location.search);
     var tabParam = urlParams.get('tab');
-    if (tabParam) {
+    if (tabParam && tabParam !== 'measurements') {
         currentActiveTab = tabParam;
-        // Small delay to ensure data is loaded before switching tabs
-        setTimeout(function() {
-            switchToTab(tabParam, false); // Don't update URL since we're setting it from URL
-            // Note: Data loading is handled by shown.bs.tab event when tab switches
-        }, 500);
+        // Switch to the requested tab without delay
+        switchToTab(tabParam, false);
     }
     
     // Track tab changes and update URL - ONLY for main page tabs, not modal tabs
@@ -699,13 +730,6 @@ $(document).ready(function() {
         url.searchParams.set('tab', tabName);
         url.hash = ''; // Clear any hash fragments
         window.history.replaceState({}, '', url);
-        
-        // Ensure only this tab is visible
-        setTimeout(function() {
-            if (typeof window.ensureCorrectTabVisible === 'function') {
-                window.ensureCorrectTabVisible();
-            }
-        }, 50);
         
         // Load data for the specific tab when it becomes active (only if not already loaded)
         if (!window.tabsLoaded[tabName]) {
@@ -788,33 +812,22 @@ function editAppointment(appointmentId) {
     }
 }
 
-// Global function to reload measurements only if on measurements tab
+// Global function to reload measurements only if on measurements tab (optimized)
 window.reloadMeasurementsIfActive = function() {
     // Check which tab is currently active
     var urlParams = new URLSearchParams(window.location.search);
     var tabParam = urlParams.get('tab');
     var currentTab = tabParam || 'measurements';
     
-    console.log('reloadMeasurementsIfActive called, current tab:', currentTab);
-    
     // Only reload if we're on measurements tab
     if (currentTab === 'measurements') {
-        console.log('On measurements tab - reloading measurements');
         loadMeasurements();
         
         // Mark as loaded
         if (typeof window.tabsLoaded !== 'undefined') {
             window.tabsLoaded.measurements = true;
         }
-        
-        // Ensure measurements tab is visible and active
-        var measurementsTab = $('#measurements-tab');
-        if (!measurementsTab.hasClass('active')) {
-            console.log('Measurements tab not active, switching to it');
-            $('a[href="#measurements-tab"]').tab('show');
-        }
     } else {
-        console.log('Not on measurements tab - skipping reload, marking for fresh load on next visit');
         // Mark measurements as needing reload when user switches back to it
         if (typeof window.tabsLoaded !== 'undefined') {
             window.tabsLoaded.measurements = false;
@@ -822,41 +835,23 @@ window.reloadMeasurementsIfActive = function() {
     }
 };
 
-// Global function to ensure only the correct tab is visible based on URL parameter
+// Global function to ensure only the correct tab is visible based on URL parameter (optimized to prevent scroll issues)
 window.ensureCorrectTabVisible = function() {
     var urlParams = new URLSearchParams(window.location.search);
     var tabParam = urlParams.get('tab');
     var currentTab = tabParam || 'measurements';
     
-    console.log('ensureCorrectTabVisible called, current tab:', currentTab);
-    
-    // Hide all tab panes first
-    $('.tab-pane').removeClass('active in');
-    
-    // Show only the correct tab pane
+    // Only update if not already correct (prevents unnecessary reflows)
     var targetTabPane = $('#' + currentTab + '-tab');
-    if (targetTabPane.length > 0) {
+    if (targetTabPane.length > 0 && !targetTabPane.hasClass('active')) {
+        // Hide all tab panes first
+        $('.tab-pane').removeClass('active in');
         targetTabPane.addClass('active in');
-        console.log('Showing tab pane:', currentTab + '-tab');
-    } else {
-        // Fallback to measurements if tab not found
-        $('#measurements-tab').addClass('active in');
-        console.log('Tab not found, showing measurements-tab');
+        
+        // Update nav tabs active state
+        $('.nav-tabs li').removeClass('active');
+        $('.nav-tabs a[href="#' + currentTab + '-tab"]').parent('li').addClass('active');
     }
-    
-    // Update nav tabs active state
-    $('.nav-tabs li').removeClass('active');
-    var targetNavTab = $('.nav-tabs a[href="#' + currentTab + '-tab"]').parent('li');
-    if (targetNavTab.length > 0) {
-        targetNavTab.addClass('active');
-        console.log('Activating nav tab for:', currentTab);
-    } else {
-        // Fallback to measurements nav tab
-        $('.nav-tabs a[href="#measurements-tab"]').parent('li').addClass('active');
-        console.log('Nav tab not found, activating measurements');
-    }
-    
-    console.log('Tab visibility enforced. Only', currentTab, 'should be visible.');
 };
 
 
