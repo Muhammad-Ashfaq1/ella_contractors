@@ -669,16 +669,52 @@ $(document).ready(function() {
         timeline: false
     };
     
-    // Load measurements tab ONLY if it's the active tab from URL or default
+    // Single unified function to load tab data (handles both initial load and tab switching)
+    window.loadTabData = function(tabName, forceReload = false) {
+        // Skip if already loaded and not forcing reload
+        if (window.tabsLoaded[tabName] && !forceReload) {
+            return;
+        }
+        
+        switch(tabName) {
+            case 'measurements':
+                if (typeof loadMeasurements === 'function') {
+                    loadMeasurements();
+                }
+                break;
+            case 'estimates':
+                if (typeof loadEstimates === 'function') {
+                    loadEstimates();
+                }
+                break;
+            case 'notes':
+                if (typeof loadNotes === 'function') {
+                    loadNotes();
+                }
+                break;
+            case 'attachments':
+                if (typeof loadAttachments === 'function') {
+                    loadAttachments(true);
+                }
+                break;
+            case 'timeline':
+                if (typeof loadTimeline === 'function') {
+                    loadTimeline();
+                }
+                break;
+        }
+        
+        // Mark as loaded
+        window.tabsLoaded[tabName] = true;
+    };
+    
+    // Get initial tab from URL or default to measurements
     var urlParams = new URLSearchParams(window.location.search);
     var tabParam = urlParams.get('tab');
     var initialTab = tabParam || 'measurements';
     
     // Load initial tab data
-    if (initialTab === 'measurements') {
-        loadMeasurements();
-        window.tabsLoaded.measurements = true;
-    }
+    window.loadTabData(initialTab);
     
     // Function to switch tabs and update URL
     function switchToTab(tabName, updateUrl = true) {
@@ -695,13 +731,17 @@ $(document).ready(function() {
         }
     }
     
-    // Check for tab parameter in URL and switch to appropriate tab
-    var urlParams = new URLSearchParams(window.location.search);
-    var tabParam = urlParams.get('tab');
+    // Check for tab parameter in URL and activate appropriate tab
     if (tabParam && tabParam !== 'measurements') {
         currentActiveTab = tabParam;
-        // Switch to the requested tab without delay
-        switchToTab(tabParam, false);
+        
+        // Activate the correct tab visually
+        $('.nav-tabs li').removeClass('active');
+        $('.nav-tabs a[href="#' + tabParam + '-tab"]').parent('li').addClass('active');
+        
+        // Activate the correct tab pane
+        $('.tab-pane').removeClass('active in');
+        $('#' + tabParam + '-tab').addClass('active in');
     }
     
     // Track tab changes and update URL - ONLY for main page tabs, not modal tabs
@@ -731,33 +771,8 @@ $(document).ready(function() {
         url.hash = ''; // Clear any hash fragments
         window.history.replaceState({}, '', url);
         
-        // Load data for the specific tab when it becomes active (only if not already loaded)
-        if (!window.tabsLoaded[tabName]) {
-            switch(tabName) {
-                case 'measurements':
-                    loadMeasurements();
-                    window.tabsLoaded.measurements = true;
-                    break;
-                case 'estimates':
-                    loadEstimates();
-                    window.tabsLoaded.estimates = true;
-                    break;
-                case 'notes':
-                    loadNotes();
-                    window.tabsLoaded.notes = true;
-                    break;
-                case 'attachments':
-                    if (typeof loadAttachments === 'function') {
-                        loadAttachments(true);
-                    }
-                    window.tabsLoaded.attachments = true;
-                    break;
-                case 'timeline':
-                    loadTimeline();
-                    window.tabsLoaded.timeline = true;
-                    break;
-            }
-        }
+        // Load data for the tab using unified function
+        window.loadTabData(tabName);
     });
     
     // Note: Tab data loading is handled by shown.bs.tab event above
@@ -1141,70 +1156,23 @@ function deleteNote(noteId) {
 // Global function to refresh all data and maintain current tab
 function refreshAppointmentData(activeTab = null) {
     // Mark all tabs as needing reload
-    if (typeof tabsLoaded !== 'undefined') {
-        tabsLoaded.measurements = false;
-        tabsLoaded.estimates = false;
-        tabsLoaded.notes = false;
-        tabsLoaded.attachments = false;
-        tabsLoaded.timeline = false;
+    if (typeof window.tabsLoaded !== 'undefined') {
+        window.tabsLoaded.measurements = false;
+        window.tabsLoaded.estimates = false;
+        window.tabsLoaded.notes = false;
+        window.tabsLoaded.attachments = false;
+        window.tabsLoaded.timeline = false;
     }
     
-    // Switch to specified tab or stay on current tab
+    var targetTab = activeTab || currentActiveTab || 'measurements';
+    
+    // Switch to tab if specified
     if (activeTab) {
         switchToTab(activeTab);
-        // Load data for the specified tab
-        switch(activeTab) {
-            case 'measurements':
-                loadMeasurements();
-                if (typeof tabsLoaded !== 'undefined') tabsLoaded.measurements = true;
-                break;
-            case 'estimates':
-                loadEstimates();
-                if (typeof tabsLoaded !== 'undefined') tabsLoaded.estimates = true;
-                break;
-            case 'notes':
-                loadNotes();
-                if (typeof tabsLoaded !== 'undefined') tabsLoaded.notes = true;
-                break;
-            case 'attachments':
-                if (typeof loadAttachments === 'function') {
-                    loadAttachments(true);
-                }
-                if (typeof tabsLoaded !== 'undefined') tabsLoaded.attachments = true;
-                break;
-            case 'timeline':
-                loadTimeline();
-                if (typeof tabsLoaded !== 'undefined') tabsLoaded.timeline = true;
-                break;
-        }
-    } else {
-        // Maintain current tab - just reload data without switching
-        var currentTab = currentActiveTab || 'measurements';
-        switch(currentTab) {
-            case 'measurements':
-                loadMeasurements();
-                if (typeof tabsLoaded !== 'undefined') tabsLoaded.measurements = true;
-                break;
-            case 'estimates':
-                loadEstimates();
-                if (typeof tabsLoaded !== 'undefined') tabsLoaded.estimates = true;
-                break;
-            case 'notes':
-                loadNotes();
-                if (typeof tabsLoaded !== 'undefined') tabsLoaded.notes = true;
-                break;
-            case 'attachments':
-                if (typeof loadAttachments === 'function') {
-                    loadAttachments(true);
-                }
-                if (typeof tabsLoaded !== 'undefined') tabsLoaded.attachments = true;
-                break;
-            case 'timeline':
-                loadTimeline();
-                if (typeof tabsLoaded !== 'undefined') tabsLoaded.timeline = true;
-                break;
-        }
     }
+    
+    // Use unified function to load data with force reload
+    window.loadTabData(targetTab, true);
 }
 
 // Attendees functionality is now handled by the centralized appointment-attendees.js file
