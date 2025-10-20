@@ -59,7 +59,6 @@ function ella_contractors_init_menu() {
             [
                 'slug' => 'ella_contractors_line_items',
                 'name' => 'Service Items',
-                'href' => admin_url('ella_contractors/line_items'),
                 'href' => admin_url('invoice_items?service_items=true'),
                 'icon' => 'fa fa-list-alt',
                 'position' => 25,
