@@ -202,6 +202,12 @@
 </div>
 <?php init_tail(); ?>
 <script>
+  // Activate EllaContractors > Service Items menu
+  $(document).ready(function() {
+      $('.menu-item-ella_contractors').addClass('active').find('ul').addClass('in');
+      $('.sub-menu-item-ella_contractors_line_items').addClass('active');
+  });
+  
   $(function(){
 
     var notSortableAndSearchableItemColumns = [];
