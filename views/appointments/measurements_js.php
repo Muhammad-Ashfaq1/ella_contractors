@@ -424,7 +424,6 @@ function openMeasurementModal(measurementId = null) {
     setTimeout(function() {
         $('#measurementModal a[data-toggle="tab"]').off('shown.bs.tab.modalprevent').on('shown.bs.tab.modalprevent', function(e) {
             e.stopPropagation();
-            console.log('Modal tab switched (prevented from bubbling)');
         });
     }, 200);
 }
@@ -543,9 +542,13 @@ $('#saveMeasurement').on('click', function() {
             
             if (response.success) {
                 measurementSaved = true;
-                console.log('Measurement saved successfully, measurementSaved flag set to:', measurementSaved);
+
                 alert_float('success', response.message || 'Measurement saved successfully');
-                // Close modal - reload will happen in modal close handler
+                
+                // Immediately reload measurements (like Notes and Attachments tabs)
+                loadMeasurements();
+                
+                // Close modal - measurements already reloaded
                 $('#measurementModal').modal('hide');
             } else {
                 alert_float('danger', response.message || 'Failed to save measurement');
@@ -570,14 +573,12 @@ $('#saveMeasurement').on('click', function() {
 
 // Save original hash when modal opens
 $('#measurementModal').on('show.bs.modal', function() {
-    console.log('Measurement modal opening...');
     
     // Store the current tab from URL (not hash) for restoration after modal closes
     var urlParams = new URLSearchParams(window.location.search);
     var tabParam = urlParams.get('tab');
     originalHash = ''; // Don't use hash - we'll rely on URL params only
     
-    console.log('Current tab from URL:', tabParam || 'measurements (default)');
     
     // Don't manipulate main page tab visibility - let the main page handle it
     // The modal is independent of the main page tabs
@@ -585,19 +586,15 @@ $('#measurementModal').on('show.bs.modal', function() {
 
 // Modal shown event
 $('#measurementModal').on('shown.bs.modal', function() {
-    console.log('Measurement modal fully shown');
-    // Modal is now displayed - internal tab system handles itself
-    // Main page tabs are independent and managed by view.php
+
 });
 
 // Modal close handler - reload measurements after modal is fully hidden
 $('#measurementModal').on('hidden.bs.modal', function() {
-    console.log('Measurement modal closed, measurementSaved:', measurementSaved);
     
     // Clean up any hash fragments from URL (remove hash completely to avoid conflicts)
     var currentHash = window.location.hash;
     if (currentHash) {
-        console.log('Removing hash fragment:', currentHash);
         if (history.replaceState) {
             // Remove hash entirely, keep only pathname and search params
             history.replaceState(null, null, window.location.pathname + window.location.search);
@@ -608,7 +605,6 @@ $('#measurementModal').on('hidden.bs.modal', function() {
     
     // Only reload measurements if saved
     if (measurementSaved) {
-        console.log('Measurement saved - calling reloadMeasurementsIfActive...');
         
         // Use the global function that respects current tab state
         setTimeout(function() {
@@ -742,20 +738,10 @@ function deleteMeasurement(measurementId) {
             console.log('Delete measurement response:', response);
             if (response.success) {
                 alert_float('success', response.message);
-                // Reload measurements only if on measurements tab
-                console.log('Calling reloadMeasurementsIfActive() after delete');
-                if (typeof window.reloadMeasurementsIfActive === 'function') {
-                    window.reloadMeasurementsIfActive();
-                } else {
-                    // Fallback: check tab and reload if on measurements
-                    var urlParams = new URLSearchParams(window.location.search);
-                    var tabParam = urlParams.get('tab');
-                    var currentTab = tabParam || 'measurements';
-                    
-                    if (currentTab === 'measurements') {
-                        loadMeasurements();
-                    }
-                }
+                
+                // Immediately reload measurements (like Notes and Attachments tabs)
+                console.log('Immediately reloading measurements after delete...');
+                loadMeasurements();
             } else {
                 alert_float('danger', response.message);
             }
