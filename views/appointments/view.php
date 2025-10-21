@@ -1063,15 +1063,32 @@ function addNote() {
 }
 
 function editNote(noteId) {
-    // Get the note content
-    var noteElement = $('button[onclick="editNote(' + noteId + ')"]').closest('.feed-item');
-    var noteText = noteElement.find('.text').html();
+    // Get the note content - using timeline structure
+    var noteWrapper = $('button[onclick="editNote(' + noteId + ')"]').closest('.timeline-record-wrapper');
+    
+    if (noteWrapper.length === 0) {
+        alert_float('danger', 'Note element not found');
+        return;
+    }
+    
+    var noteDescriptionElement = noteWrapper.find('.note-description');
+    
+    if (noteDescriptionElement.length === 0) {
+        alert_float('danger', 'Note content not found');
+        return;
+    }
+    
+    var noteText = noteDescriptionElement.html();
     
     // Extract just the text content (remove HTML tags)
-    var textContent = noteText.replace(/<[^>]*>/g, '').replace(/^[^-]+-\s*/, '');
+    var textContent = noteText ? noteText.replace(/<[^>]*>/g, '').trim() : '';
     
     // Create edit form with tags section
-    var editForm = '<div class="feed-item" data-note-edit="' + noteId + '">';
+    var editForm = '<div class="timeline-record-wrapper" data-note-edit="' + noteId + '">';
+    editForm += '<div class="timeline-date-section">';
+    editForm += '<div class="date"><i class="fa fa-edit text-info"></i></div>';
+    editForm += '</div>';
+    editForm += '<div class="timeline-content-section">';
     editForm += '<div class="form-group">';
     editForm += '<div class="lead emoji-picker-container leadnotes">';
     editForm += '<textarea class="form-control" rows="3" id="edit-note-' + noteId + '" data-emojiable="true">' + textContent + '</textarea>';
@@ -1085,13 +1102,19 @@ function editNote(noteId) {
     }
     
     editForm += '<div class="text-right">';
-    editForm += '<button class="btn btn-default btn-xs" onclick="cancelEditNote(' + noteId + ')" title="Cancel">Cancel</button> ';
-    editForm += '<button class="btn btn-info btn-xs" onclick="updateNote(' + noteId + ')" title="Update">Update</button>';
+    editForm += '<button class="btn btn-default btn-xs" onclick="cancelEditNote(' + noteId + ')" title="Cancel"><i class="fa fa-times"></i> Cancel</button> ';
+    editForm += '<button class="btn btn-info btn-xs" onclick="updateNote(' + noteId + ')" title="Update"><i class="fa fa-check"></i> Update</button>';
+    editForm += '</div>';
     editForm += '</div>';
     editForm += '</div>';
     
     // Replace the note with edit form
-    noteElement.replaceWith(editForm);
+    noteWrapper.replaceWith(editForm);
+    
+    // Re-initialize emoji picker for the new textarea
+    if (typeof window.emojiPicker !== 'undefined') {
+        window.emojiPicker.discover();
+    }
 }
 
 function cancelEditNote(noteId) {
