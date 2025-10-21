@@ -174,44 +174,24 @@ function ella_contractors_activate_module() {
         add_option('allowed_files', '.pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar');
     }
     
-    // Create ella_media_folders table
-    if (!$CI->db->table_exists(db_prefix() . 'ella_media_folders')) {
-        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_media_folders` (
-            `id` int(11) NOT NULL AUTO_INCREMENT,
-            `name` varchar(255) NOT NULL,
-            `lead_id` int(11) DEFAULT NULL,
-            `is_default` tinyint(1) DEFAULT 0,
-            `active` tinyint(1) DEFAULT 1,
-            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (`id`),
-            KEY `lead_id` (`lead_id`),
-            KEY `is_default` (`is_default`),
-            KEY `active` (`active`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
-    }
-    
-    // Create ella_contractor_media table
+    // Create ella_contractor_media table (for presentations and appointment attachments)
     if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_media')) {
         $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractor_media` (
             `id` int(11) NOT NULL AUTO_INCREMENT,
-            `rel_type` varchar(50) DEFAULT NULL,
-            `rel_id` bigint unsigned DEFAULT NULL,
+            `rel_type` varchar(50) DEFAULT NULL COMMENT "Type: appointment, presentation",
+            `rel_id` bigint unsigned DEFAULT NULL COMMENT "Related entity ID",
             `org_id` bigint unsigned DEFAULT NULL,
-            `folder_id` int(11) DEFAULT NULL,
-            `lead_id` int(11) DEFAULT NULL,
             `file_name` varchar(255) NOT NULL,
             `original_name` varchar(255) NOT NULL,
             `file_type` varchar(100) NOT NULL,
             `file_size` int(11) NOT NULL,
             `description` text,
-            `is_default` tinyint(1) DEFAULT 0,
+            `is_default` tinyint(1) DEFAULT 0 COMMENT "Default presentation flag",
             `active` tinyint(1) DEFAULT 1,
             `date_uploaded` datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`),
             KEY `idx_rel_type_id` (`rel_type`, `rel_id`),
             KEY `idx_org_id` (`org_id`),
-            KEY `folder_id` (`folder_id`),
-            KEY `lead_id` (`lead_id`),
             KEY `is_default` (`is_default`),
             KEY `active` (`active`),
             KEY `file_type` (`file_type`)
@@ -715,140 +695,6 @@ function ella_contractors_deactivate_module() {
     // Uncomment the code below when you need to remove rel_type, rel_id, org_id columns
     // during module deactivation. This will clean up the database structure.
     
-    /*
-    // List of EllaContractor tables that have the new columns
-    $tables = [
-        'ella_contractor_media',
-        'ella_contractor_line_item_groups',
-        'ella_contractor_line_items', 
-        'ella_contractor_estimates',
-        'ella_contractor_estimate_line_items',
-        'ella_contractors_measurements'
-    ];
-    
-    foreach ($tables as $table) {
-        $full_table_name = db_prefix() . $table;
-        
-        // Check if table exists before attempting to drop columns
-        if (!$CI->db->table_exists($full_table_name)) {
-            log_message('info', "Table {$full_table_name} does not exist, skipping column drops");
-            continue;
-        }
-        
-        log_message('info', "Processing table for column drops: {$full_table_name}");
-        
-        // Drop indexes first (to avoid constraint issues)
-        try {
-            $CI->db->query("ALTER TABLE `{$full_table_name}` DROP INDEX IF EXISTS `idx_rel_type_id`");
-            log_message('info', "Dropped idx_rel_type_id index from {$full_table_name}");
-        } catch (Exception $e) {
-            log_message('debug', "Index idx_rel_type_id may not exist on {$full_table_name}: " . $e->getMessage());
-        }
-        
-        try {
-            $CI->db->query("ALTER TABLE `{$full_table_name}` DROP INDEX IF EXISTS `idx_org_id`");
-            log_message('info', "Dropped idx_org_id index from {$full_table_name}");
-        } catch (Exception $e) {
-            log_message('debug', "Index idx_org_id may not exist on {$full_table_name}: " . $e->getMessage());
-        }
-        
-        // Drop columns in reverse order (org_id, rel_id, rel_type)
-        if ($CI->db->field_exists('org_id', $full_table_name)) {
-            $CI->db->query("ALTER TABLE `{$full_table_name}` DROP COLUMN `org_id`");
-            log_message('info', "Dropped org_id column from {$full_table_name}");
-        }
-        
-        if ($CI->db->field_exists('rel_id', $full_table_name)) {
-            $CI->db->query("ALTER TABLE `{$full_table_name}` DROP COLUMN `rel_id`");
-            log_message('info', "Dropped rel_id column from {$full_table_name}");
-        }
-        
-        if ($CI->db->field_exists('rel_type', $full_table_name)) {
-            $CI->db->query("ALTER TABLE `{$full_table_name}` DROP COLUMN `rel_type`");
-            log_message('info', "Dropped rel_type column from {$full_table_name}");
-        }
-        
-        log_message('info', "Completed column drops for table: {$full_table_name}");
-    }
-    
-    log_message('info', 'EllaContractor column deactivation completed successfully');
-    */
-    
-    // ========================================
-    // TABLE DROPPING FUNCTIONALITY  
-    // ========================================
-    // Uncomment the code below when you need to completely remove all EllaContractor tables
-    // during module deactivation. WARNING: This will delete all data!
-    
-    /*
-    // Drop tables if they exist (in reverse dependency order)
-    $tables_to_drop = [
-        'ella_contractor_estimate_line_items',  // Pivot table first
-        'ella_contractor_estimates',
-        'ella_contractor_line_items',
-        'ella_contractor_line_item_groups',
-        'ella_contractors_measurements',
-        'ella_contractor_media',
-        'ella_media_folders'
-    ];
-    
-    foreach ($tables_to_drop as $table) {
-        $full_table_name = db_prefix() . $table;
-        if ($CI->db->table_exists($full_table_name)) {
-            $CI->db->query("DROP TABLE `{$full_table_name}`");
-            log_message('info', "Dropped table: {$full_table_name}");
-        }
-    }
-    */
-    
-    // ========================================
-    // DIRECTORY CLEANUP FUNCTIONALITY
-    // ========================================
-    // Uncomment the code below when you need to remove upload directories
-    // during module deactivation. WARNING: This will delete all uploaded files!
-    
-    /*
-    // Remove upload directories (be careful with this)
-    $directories_to_remove = [
-        FCPATH . 'uploads/ella_presentations/',
-        FCPATH . 'uploads/ella_line_items/'
-    ];
-    
-    foreach ($directories_to_remove as $dir) {
-        if (is_dir($dir)) {
-            // Remove all files in directory first
-            $files = glob($dir . '*');
-            foreach ($files as $file) {
-                if (is_file($file)) {
-                    unlink($file);
-                }
-            }
-            // Remove directory
-            rmdir($dir);
-            log_message('info', "Removed directory: {$dir}");
-        }
-    }
-    */
-    
-    // ========================================
-    // OPTION CLEANUP FUNCTIONALITY
-    // ========================================
-    // Uncomment the code below when you need to remove module options
-    // during module deactivation
-    
-    /*
-    // Remove module-specific options
-    $options_to_remove = [
-        'ella_contractors_version'
-    ];
-    
-    foreach ($options_to_remove as $option) {
-        delete_option($option);
-        log_message('info', "Removed option: {$option}");
-    }
-    */
-    
-    log_message('info', 'EllaContractor module deactivated (no cleanup performed - uncomment desired cleanup code above)');
 }
 
 

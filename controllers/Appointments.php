@@ -1631,8 +1631,6 @@ startxref
                 'rel_type' => 'appointment',
                 'rel_id' => $appointment_id,
                 'org_id' => null,
-                'folder_id' => null,
-                'lead_id' => null,
                 'file_name' => $unique_filename,
                 'original_name' => $file_data['name'],
                 'file_type' => $file_data['type'],
