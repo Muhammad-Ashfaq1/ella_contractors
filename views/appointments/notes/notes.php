@@ -4,15 +4,15 @@
     <div class="col-md-12">
         <!-- Add Note Section -->
         <div class="row mbot15">
-            <div class="col-md-8">
+            <div class="col-md-10">
                 <div class="form-group" id="appointmentnote">
                     <div class="lead emoji-picker-container leadnotes">
                         <textarea id="appointment_note_description" name="appointment_note_description" class="form-control" rows="3" data-emojiable="true" placeholder="Add a note about this appointment..."></textarea>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 text-right">
-                <button type="button" class="btn btn-info btn-sm" onclick="addNote()" id="note-btn">
+            <div class="col-md-2">
+                <button type="button" class="btn btn-info btn-sm pull-right mtop25" onclick="addNote()" id="note-btn">
                     <i class="fa fa-plus"></i> Add Note
                 </button>
             </div>
@@ -34,3 +34,34 @@
         </div>
     </div>
 </div>
+
+<style>
+/* Ensure button maintains color when clicked */
+#note-btn.btn-info {
+    background-color: #5bc0de !important;
+    border-color: #46b8da !important;
+    color: #fff !important;
+}
+
+#note-btn.btn-info:hover {
+    background-color: #31b0d5 !important;
+    border-color: #269abc !important;
+    color: #fff !important;
+}
+
+#note-btn.btn-info:active,
+#note-btn.btn-info:focus,
+#note-btn.btn-info.active {
+    background-color: #31b0d5 !important;
+    border-color: #269abc !important;
+    color: #fff !important;
+    box-shadow: none !important;
+}
+
+#note-btn.btn-info:disabled {
+    background-color: #5bc0de !important;
+    border-color: #46b8da !important;
+    opacity: 0.65 !important;
+    color: #fff !important;
+}
+</style>
