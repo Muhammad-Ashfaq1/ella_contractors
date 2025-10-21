@@ -23,41 +23,12 @@ class Ella_contractors extends AdminController
         }
         $this->load->model('leads_model');
         $data['title'] = 'Presentations';
-        $data['folders'] = $this->ella_media_model->get_folders();
         $data['media'] = $this->ella_media_model->get_media();
         $data['leads'] = $this->leads_model->get();
         $this->load->view('ella_contractors/presentations', $data);
     }
 
-    public function create_folder() {
-        if (!has_permission('ella_contractors', '', 'create')) {
-            access_denied('ella_contractors');
-        }
-
-        $this->load->library('form_validation');
-        $this->form_validation->set_rules('name', 'Folder Name', 'required');
-        $this->form_validation->set_rules('lead_id', 'Lead', 'numeric');
-
-        if ($this->form_validation->run() == FALSE) {
-            set_alert('warning', validation_errors());
-            } else {
-                $data = [
-                'name' => $this->input->post('name'),
-                'lead_id' => $this->input->post('lead_id') ?: null,
-                'is_default' => 0, // Folders are never default
-                'active' => 1      // Folders are always active
-            ];
-            $folder_id = $this->ella_media_model->create_folder($data);
-            if ($folder_id) {
-                set_alert('success', 'Folder created successfully');
-                } else {
-                set_alert('warning', 'Failed to create folder');
-            }
-        }
-        redirect(admin_url('ella_contractors/presentations'));
-    }
-
-    public function upload_presentation($folder_id) {
+    public function upload_presentation() {
         if (!has_permission('ella_contractors', '', 'create')) {
             access_denied('ella_contractors');
         }
@@ -92,7 +63,7 @@ class Ella_contractors extends AdminController
             return;
         }
 
-        $uploaded = handle_ella_media_upload($folder_id, $lead_id, $is_default, $active);
+        $uploaded = handle_ella_media_upload($lead_id, $is_default, $active);
 
         if ($uploaded && !empty($uploaded)) {
             // Update description if needed

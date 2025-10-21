@@ -3,7 +3,7 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 if (!function_exists('handle_ella_media_upload')) {
-    function handle_ella_media_upload($folder_id, $lead_id = null, $is_default = 0, $active = 1, $index_name = 'file') {
+    function handle_ella_media_upload($lead_id = null, $is_default = 0, $active = 1, $index_name = 'file') {
         $CI = &get_instance();
         $uploaded_files = [];
         
@@ -74,7 +74,6 @@ if (!function_exists('handle_ella_media_upload')) {
                     
                     if (move_uploaded_file($tmpFilePath, $newFilePath)) {
                         $data = [
-                            'folder_id' => $folder_id,
                             'lead_id' => $lead_id,
                             'file_name' => $filename,
                             'original_name' => $originalName,
