@@ -470,7 +470,7 @@ html {
 
                             <!-- Notes Tab -->
                             <div role="tabpanel" class="tab-pane" id="notes-tab">
-                                <?php $this->load->view('appointments/notes'); ?>
+                                <?php $this->load->view('appointments/notes/notes'); ?>
                             </div>
 
                             <!-- Attachments Tab -->
@@ -1366,7 +1366,7 @@ $(function () {
 
 </script>
 
-<?php $this->load->view('appointments/notes_js'); ?>
+<?php $this->load->view('appointments/notes/notes_js'); ?>
 <?php $this->load->view('appointments/attachments_js.php'); ?>
 <?php $this->load->view('appointments/sms_js.php'); ?>
 <?php $this->load->view('appointments/estimates/estimates_js'); ?>
