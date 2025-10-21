@@ -51,15 +51,6 @@ if (!function_exists('formatBytes')) {
                                                 <small class="text-muted">Supported formats: HTML, PDF, PPT, PPTX (Max size: 50MB)</small>
                                             </div>
                                             <div class="form-group">
-                                                <label for="lead_id">Attach to Lead (Optional)</label>
-                                                <select name="lead_id" class="selectpicker" data-width="100%">
-                                                    <option value="">None</option>
-                                                    <?php foreach ($leads as $lead): ?>
-                                                        <option value="<?= $lead['id']; ?>"><?= $lead['name']; ?></option>
-                                                    <?php endforeach; ?>
-                                                </select>
-                                            </div>
-                                            <div class="form-group">
                                                 <label for="description">Description</label>
                                                 <textarea name="description" class="form-control" rows="3"></textarea>
                                             </div>
@@ -91,7 +82,6 @@ if (!function_exists('formatBytes')) {
                             <thead>
                                 <tr>
                                     <th>File Name</th>
-                                    <th>Lead</th>
                                     <th>Type</th>
                                     <th>Size</th>
                                     <th>Is Default</th>
@@ -104,14 +94,13 @@ if (!function_exists('formatBytes')) {
                                 <?php foreach ($media as $file): ?>
                                     <tr>
                                         <td><?= $file['original_name']; ?></td>
-                                        <td><?= $file['lead_id'] ? get_lead_name($file['lead_id']) : 'None'; ?></td>
                                         <td><?= strtoupper(pathinfo($file['file_name'], PATHINFO_EXTENSION)); ?></td>
                                         <td><?= formatBytes($file['file_size']); ?></td>
                                         <td><?= $file['is_default'] ? 'Yes' : 'No'; ?></td>
                                         <td><?= $file['active'] ? 'Yes' : 'No'; ?></td>
                                         <td><?= date('M d, Y', strtotime($file['date_uploaded'])); ?></td>
                                         <td>
-                                            <a href="#" class="btn btn-info btn-xs" onclick="previewFile(<?= $file['id']; ?>, '<?= $file['original_name']; ?>', '<?= strtolower(pathinfo($file['file_name'], PATHINFO_EXTENSION)); ?>', '<?= site_url('uploads/ella_presentations/' . ($file['is_default'] ? 'default/' : ($file['lead_id'] ? 'lead_' . $file['lead_id'] . '/' : 'general/')) . $file['file_name']); ?>'); return false;">Preview</a>
+                                            <a href="#" class="btn btn-info btn-xs" onclick="previewFile(<?= $file['id']; ?>, '<?= $file['original_name']; ?>', '<?= strtolower(pathinfo($file['file_name'], PATHINFO_EXTENSION)); ?>', '<?= site_url('uploads/ella_presentations/' . ($file['is_default'] ? 'default/' : 'general/') . $file['file_name']); ?>'); return false;">Preview</a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

@@ -15,10 +15,8 @@ class Presentations extends AdminController
         if (!has_permission('ella_contractors', '', 'view')) {
             access_denied('ella_contractors');
         }
-        $this->load->model('leads_model');
         $data['title'] = 'Presentations';
         $data['media'] = $this->ella_media_model->get_media();
-        $data['leads'] = $this->leads_model->get();
         $this->load->view('ella_contractors/presentations', $data);
     }
 
@@ -30,7 +28,6 @@ class Presentations extends AdminController
             access_denied('ella_contractors');
         }
         
-        $lead_id = $this->input->post('lead_id') ?: null;
         $is_default = $this->input->post('is_default') ? 1 : 0;
         $active = $this->input->post('active') ? 1 : 0;
         $description = $this->input->post('description');
@@ -60,7 +57,7 @@ class Presentations extends AdminController
             return;
         }
 
-        $uploaded = handle_ella_media_upload($lead_id, $is_default, $active);
+        $uploaded = handle_ella_media_upload($is_default, $active);
 
         if ($uploaded && !empty($uploaded)) {
             // Update description if needed
@@ -90,7 +87,7 @@ class Presentations extends AdminController
         // If it's already a PDF, serve it directly
         if ($ext === 'pdf') {
             $file_path = FCPATH . 'uploads/ella_presentations/' . 
-                        ($file->is_default ? 'default/' : ($file->lead_id ? 'lead_' . $file->lead_id . '/' : 'general/')) . 
+                        ($file->is_default ? 'default/' : 'general/') . 
                         $file->file_name;
             
             if (file_exists($file_path)) {
@@ -162,7 +159,7 @@ class Presentations extends AdminController
     private function convert_ppt_to_pdf($file) {
         $ext = strtolower(pathinfo($file->file_name, PATHINFO_EXTENSION));
         $original_path = FCPATH . 'uploads/ella_presentations/' . 
-                        ($file->is_default ? 'default/' : ($file->lead_id ? 'lead_' . $file->lead_id . '/' : 'general/')) . 
+                        ($file->is_default ? 'default/' : 'general/') . 
                         $file->file_name;
         
         // Create a cache directory for converted PDFs
@@ -373,7 +370,7 @@ startxref
     private function show_conversion_error($file) {
         $ext = strtolower(pathinfo($file->file_name, PATHINFO_EXTENSION));
         $original_url = site_url('uploads/ella_presentations/' . 
-                        ($file->is_default ? 'default/' : ($file->lead_id ? 'lead_' . $file->lead_id . '/' : 'general/')) . 
+                        ($file->is_default ? 'default/' : 'general/') . 
                         $file->file_name);
         
         echo '<!DOCTYPE html>

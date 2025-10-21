@@ -9,12 +9,9 @@ class Ella_media_model extends App_Model
         parent::__construct();
     }
 
-    public function get_media($lead_id = null)
+    public function get_media()
     {
-        if ($lead_id) {
-            $this->db->where('lead_id', $lead_id);
-        }
-        $this->db->or_where('is_default', 1);
+        $this->db->order_by('date_uploaded', 'DESC');
         return $this->db->get(db_prefix() . 'ella_contractor_media')->result_array();
     }
 

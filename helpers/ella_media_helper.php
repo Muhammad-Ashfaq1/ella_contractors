@@ -3,18 +3,12 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 if (!function_exists('handle_ella_media_upload')) {
-    function handle_ella_media_upload($lead_id = null, $is_default = 0, $active = 1, $index_name = 'file') {
+    function handle_ella_media_upload($is_default = 0, $active = 1, $index_name = 'file') {
         $CI = &get_instance();
         $uploaded_files = [];
         
         $base_path = FCPATH . 'uploads/ella_presentations/';
-        if ($is_default) {
-            $path = $base_path . 'default/';
-        } elseif ($lead_id) {
-            $path = $base_path . 'lead_' . $lead_id . '/';
-        } else {
-            $path = $base_path . 'general/';
-        }
+        $path = $is_default ? $base_path . 'default/' : $base_path . 'general/';
         
         _maybe_create_upload_path($path);
         
@@ -74,7 +68,6 @@ if (!function_exists('handle_ella_media_upload')) {
                     
                     if (move_uploaded_file($tmpFilePath, $newFilePath)) {
                         $data = [
-                            'lead_id' => $lead_id,
                             'file_name' => $filename,
                             'original_name' => $originalName,
                             'file_type' => $_FILES[$index_name]['type'][$i],
