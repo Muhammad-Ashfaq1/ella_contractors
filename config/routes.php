@@ -22,7 +22,6 @@ $route[$module_name . '/activate'] = $module_name . '/activate_module';
 $route[$module_name . '/presentations'] = 'Presentations/index';
 $route[$module_name . '/presentations/upload'] = 'Presentations/upload';
 $route[$module_name . '/presentations/get_preview_pdf/(:num)'] = 'Presentations/get_preview_pdf/$1';
-$route[$module_name . '/presentations/debug_upload'] = 'Presentations/debug_upload';
 
 // Measurement routes (for appointment view only)
 $route[$module_name . '/measurements/save'] = 'Measurements/save';

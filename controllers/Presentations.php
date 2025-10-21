@@ -106,51 +106,6 @@ class Presentations extends AdminController
         }
     }
 
-    /**
-     * Debug upload information (admin only)
-     */
-    public function debug_upload() {
-        if (!is_admin()) {
-            access_denied();
-        }
-        
-        echo "<h3>Upload Debug Information</h3>";
-        
-        // Check upload directories
-        $base_path = FCPATH . 'uploads/ella_presentations/';
-        $directories = [
-            $base_path,
-            $base_path . 'default/',
-            $base_path . 'general/',
-        ];
-        
-        echo "<h4>Directory Status:</h4>";
-        foreach ($directories as $dir) {
-            $exists = is_dir($dir);
-            $writable = $exists ? is_writable($dir) : false;
-            echo "<p><strong>" . $dir . "</strong>: " . 
-                 ($exists ? "Exists" : "Does not exist") . " | " . 
-                 ($writable ? "Writable" : "Not writable") . "</p>";
-        }
-        
-        // Check PHP upload settings
-        echo "<h4>PHP Upload Settings:</h4>";
-        echo "<p>upload_max_filesize: " . ini_get('upload_max_filesize') . "</p>";
-        echo "<p>post_max_size: " . ini_get('post_max_size') . "</p>";
-        echo "<p>max_execution_time: " . ini_get('max_execution_time') . "</p>";
-        echo "<p>memory_limit: " . ini_get('memory_limit') . "</p>";
-        
-        // Check allowed files
-        echo "<h4>Allowed Files Setting:</h4>";
-        echo "<p>" . get_option('allowed_files') . "</p>";
-        
-        // Check if helper function exists
-        echo "<h4>Helper Function Status:</h4>";
-        echo "<p>handle_ella_media_upload function exists: " . (function_exists('handle_ella_media_upload') ? 'Yes' : 'No') . "</p>";
-        
-        echo "<br><a href='" . admin_url('ella_contractors/presentations') . "'>Back to Presentations</a>";
-    }
-
     // ==================== PRIVATE METHODS ====================
 
     /**
