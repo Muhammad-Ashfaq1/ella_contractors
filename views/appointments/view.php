@@ -194,40 +194,6 @@ button.delete-btn {
     color: #6c757d;
 }
 
-.typos {
-    margin: 10px 0;
-}
-
-.typos ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-}
-
-.typos ul li {
-    margin: 0;
-}
-
-.typos ul li a {
-    display: inline-block;
-    padding: 5px 10px;
-    background: #007bff;
-    color: white;
-    text-decoration: none;
-    border-radius: 3px;
-    font-size: 12px;
-    transition: background-color 0.3s;
-}
-
-.typos ul li a:hover {
-    background: #0056b3;
-    color: white;
-    text-decoration: none;
-}
-
 /* Prevent scroll jumps and layout shifts */
 html {
     scroll-behavior: auto !important;
@@ -514,7 +480,6 @@ html {
                                                         <textarea id="appointment_note_description" name="appointment_note_description" class="form-control" rows="3" data-emojiable="true" placeholder="Add a note about this appointment..."></textarea>
                                                     </div>
                                                 </div>
-                                                <?php echo get_typos_by_category('notes'); ?>
                                             </div>
                                             <div class="col-md-4 text-right">
                                                 <button type="button" class="btn btn-info btn-sm" onclick="addNote()" id="note-btn">
@@ -524,11 +489,6 @@ html {
                                         </div>
                                         
                                         <hr class="hr-panel-heading" />
-                                        
-                                        <!-- Hidden tags template for editing -->
-                                        <div id="tags-template" class="hide">
-                                            <?php echo get_typos_by_category('notes'); ?>
-                                        </div>
                                         
                                         <!-- Notes Display -->
                                         <div class="panel_s no-shadow">
@@ -1094,12 +1054,6 @@ function editNote(noteId) {
     editForm += '<textarea class="form-control" rows="3" id="edit-note-' + noteId + '" data-emojiable="true">' + textContent + '</textarea>';
     editForm += '</div>';
     editForm += '</div>';
-    
-    // Add tags section (clone from the template)
-    var tagsHtml = $('#tags-template').html();
-    if (tagsHtml) {
-        editForm += '<div class="form-group">' + tagsHtml + '</div>';
-    }
     
     editForm += '<div class="text-right">';
     editForm += '<button class="btn btn-default btn-xs" onclick="cancelEditNote(' + noteId + ')" title="Cancel"><i class="fa fa-times"></i> Cancel</button> ';
