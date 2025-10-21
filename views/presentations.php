@@ -37,7 +37,7 @@ if (!function_exists('formatBytes')) {
                         <div id="uploadPresentationModal" class="modal fade">
                             <div class="modal-dialog">
                                 <div class="modal-content">
-                                    <?php echo form_open_multipart(admin_url('ella_contractors/upload_presentation')); ?>
+                                    <?php echo form_open_multipart(admin_url('ella_contractors/presentations/upload')); ?>
                                         <div class="modal-header">
                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                                 <span aria-hidden="true">&times;</span>
@@ -174,7 +174,7 @@ function previewFile(fileId, fileName, fileExt, fileUrl) {
         previewContent = '<iframe src="' + fileUrl + '" width="100%" height="600px" frameborder="0"></iframe>';
     } else if (fileExt === 'ppt' || fileExt === 'pptx') {
         // Convert PPT/PPTX to PDF for preview
-        var pdfPreviewUrl = '<?= admin_url('ella_contractors/get_preview_pdf/'); ?>' + fileId;
+        var pdfPreviewUrl = '<?= admin_url('ella_contractors/presentations/get_preview_pdf/'); ?>' + fileId;
         previewContent = '<iframe src="' + pdfPreviewUrl + '" width="100%" height="600px" frameborder="0"></iframe>';
     } else if (fileExt === 'html') {
         previewContent = '<iframe src="' + fileUrl + '" width="100%" height="600px" frameborder="0"></iframe>';
