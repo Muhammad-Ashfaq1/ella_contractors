@@ -804,6 +804,11 @@ $('#saveAppointment').on('click', function() {
         $('#end_time').val(endParts[1]);
     }
     
+    // Show loader and disable button
+    var $saveBtn = $('#saveAppointment');
+    var originalBtnText = $saveBtn.text();
+    $saveBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+    
     // Get form data using FormData to handle file uploads
     var formData = new FormData($('#appointmentForm')[0]);
     
@@ -836,6 +841,10 @@ $('#saveAppointment').on('click', function() {
         },
         error: function(xhr, status, error) {
             alert_float('danger', 'Error saving appointment: ' + error);
+        },
+        complete: function() {
+            // Hide loader and re-enable button
+            $saveBtn.prop('disabled', false).text(originalBtnText);
         }
     });
 });
