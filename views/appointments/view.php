@@ -1392,6 +1392,16 @@ function updateInputFiles(inputElement) {
 }
 
 function addNewFiles(newFiles, inputElement, dropZoneElement) {
+    // Check maximum file limit (10 files)
+    const maxFiles = 10;
+    const currentFileCount = appointmentFiles.length;
+    const newFileCount = newFiles.length;
+    
+    if (currentFileCount + newFileCount > maxFiles) {
+        alert_float('warning', 'Maximum ' + maxFiles + ' files allowed. You currently have ' + currentFileCount + ' file(s).');
+        return;
+    }
+    
     // Check file types (allow common document and image types)
     const allowedFileTypes = [
         'image/jpeg', 'image/png', 'image/gif', 'image/webp',
@@ -1545,6 +1555,14 @@ function addDeleteButton(thumbnailElement, file, dropZoneElement, inputElement) 
 function applyAppointmentEventListeners() {
     document.querySelectorAll("#appointment_files").forEach((inputElement) => {
         const dropZoneElement = inputElement.closest(".drop-zone");
+        
+        // Check if already initialized to prevent double event listeners
+        if (dropZoneElement.dataset.dropzoneInitialized === 'true') {
+            return;
+        }
+        
+        // Mark as initialized
+        dropZoneElement.dataset.dropzoneInitialized = 'true';
         
         // Click event to trigger file select (but not on thumbnails or delete buttons)
         dropZoneElement.addEventListener("click", (e) => {
