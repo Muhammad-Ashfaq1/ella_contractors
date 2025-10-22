@@ -146,7 +146,15 @@ button.delete-btn {
                     <input type="hidden" id="phone_validated" name="phone_validated" value="">
                     
                     <div class="row">
-                        <div class="col-md-12">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="contact_id">Client/Lead <span class="text-danger">*</span></label>
+                                <select class="form-control ajax-search" id="contact_id" name="contact_id" data-live-search="true" required>
+                                    <option value="">Select Client/Lead</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="subject"> Appointment Name <span class="text-danger">*</span> 
                                     <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="Give this appointment a friendly name to remember"></i>
@@ -174,14 +182,6 @@ button.delete-btn {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="contact_id">Client/Lead <span class="text-danger">*</span></label>
-                                <select class="form-control ajax-search" id="contact_id" name="contact_id" data-live-search="true" required>
-                                    <option value="">Select Client/Lead</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
                                 <label for="attendees">Attendees 
                                     <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="Which staff members will be joining you or handling this Appointment?"></i>
                                 </label>
@@ -190,25 +190,22 @@ button.delete-btn {
                                 </select>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="email">Email</label>
                                 <input type="email" class="form-control" id="email" name="email">
                             </div>
                         </div>
+                    </div>
+                    
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="phone">Phone</label>
                                 <input type="tel" class="form-control" id="phone" name="phone">
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-12">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="address">Address</label>
                                 <input type="text" class="form-control" id="address" name="address">
