@@ -144,6 +144,8 @@ button.delete-btn {
                     <!-- Hidden fields for data validation -->
                     <input type="hidden" id="email_validated" name="email_validated" value="1">
                     <input type="hidden" id="phone_validated" name="phone_validated" value="">
+                    <input type="hidden" id="type_id" name="type_id" value="">
+                    <input type="hidden" id="status" name="status" value="scheduled">
                     
                     <div class="row">
                         <div class="col-md-6">
