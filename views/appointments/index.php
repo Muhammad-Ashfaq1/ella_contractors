@@ -467,14 +467,11 @@ function loadAppointmentData(appointmentId) {
                 $('#status').val(status);
                 
                 
-                // Set attendees using centralized function
-                setAppointmentAttendees(data.attendees);
-                
                 // Update modal title
                 $('#appointmentModalLabel').text('Edit Appointment');
                 
-                // Reload staff members for attendees dropdown
-                loadStaffForAttendees();
+                // Reload staff and set attendees using centralized function (same as view.php)
+                reloadStaffAndSetAttendees(data.attendees);
                 
                 // Refresh selectpicker
                 $('.selectpicker').selectpicker('refresh');
@@ -604,17 +601,14 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 var status = data.appointment_status || 'scheduled';
                 $('#status').val(status);
                 
-                // Set attendees using centralized function
-                setAppointmentAttendees(data.attendees);
+                // Set appointment type (types already loaded from PHP in modal.php)
+                $('#type_id').val(data.type_id);
                 
                 // Update modal title
                 $('#appointmentModalLabel').text('Edit Appointment');
                 
-                // Reload staff members for attendees dropdown
-                loadStaffForAttendees();
-                
-                // Set appointment type (types already loaded from PHP in modal.php)
-                $('#type_id').val(data.type_id);
+                // Reload staff and set attendees using centralized function (same as view.php)
+                reloadStaffAndSetAttendees(data.attendees);
                 
                 // Refresh selectpicker
                 $('.selectpicker').selectpicker('refresh');
