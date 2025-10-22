@@ -918,6 +918,7 @@ function resetAppointmentModal() {
     $('#appointmentForm')[0].reset();
     $('#appointment_id').val('');
     $('#appointmentModalLabel').text('Create Appointment');
+    $('#saveAppointment').text('Create Appointment'); // Update button text for creation
     $('#contact_id').html('<option value="">Select Client/Lead</option>');
     $('#contact_id').selectpicker('val', '');
     $('.selectpicker').selectpicker('refresh');
@@ -1073,8 +1074,9 @@ function loadAppointmentData(appointmentId) {
                 // Reload staff and set attendees using centralized function
                 reloadStaffAndSetAttendees(data.attendees);
                 
-                // Update modal title
+                // Update modal title and button text for editing
                 $('#appointmentModalLabel').text('Edit Appointment');
+                $('#saveAppointment').text('Save Appointment');
             } else {
                 alert_float('danger', response.message);
             }
@@ -1210,8 +1212,9 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 // Reload staff and set attendees using centralized function
                 reloadStaffAndSetAttendees(data.attendees);
                 
-                // Update modal title
+                // Update modal title and button text for editing
                 $('#appointmentModalLabel').text('Edit Appointment');
+                $('#saveAppointment').text('Save Appointment');
                 
                 // Show modal after data is loaded
                 $('#appointmentModal').modal('show');
@@ -1293,7 +1296,7 @@ $(document).ready(function() {
     $('#saveAppointment').on('click', function() {
         // Client-side validation
         if (!$('#subject').val()) {
-            alert_float('danger', 'Subject is required');
+            alert_float('danger', 'Appointment name is required');
             return;
         }
         

@@ -467,8 +467,9 @@ function loadAppointmentData(appointmentId) {
                 $('#status').val(status);
                 
                 
-                // Update modal title
+                // Update modal title and button text for editing
                 $('#appointmentModalLabel').text('Edit Appointment');
+                $('#saveAppointment').text('Save Appointment');
                 
                 // Reload staff and set attendees using centralized function (same as view.php)
                 reloadStaffAndSetAttendees(data.attendees);
@@ -604,8 +605,9 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 // Set appointment type (types already loaded from PHP in modal.php)
                 $('#type_id').val(data.type_id);
                 
-                // Update modal title
+                // Update modal title and button text for editing
                 $('#appointmentModalLabel').text('Edit Appointment');
+                $('#saveAppointment').text('Save Appointment');
                 
                 // Reload staff and set attendees using centralized function (same as view.php)
                 reloadStaffAndSetAttendees(data.attendees);
@@ -717,6 +719,7 @@ function resetAppointmentModal() {
     $('#appointmentForm')[0].reset();
     $('#appointment_id').val('');
     $('#appointmentModalLabel').text('Create Appointment');
+    $('#saveAppointment').text('Create Appointment'); // Update button text for creation
     $('#contact_id').html('<option value="">Select Client/Lead</option>');
     $('#contact_id').selectpicker('val', '');
     
@@ -765,7 +768,7 @@ function deleteAppointment(appointmentId) {
 $('#saveAppointment').on('click', function() {
     // Client-side validation
     if (!$('#subject').val()) {
-        alert_float('danger', 'Subject is required');
+        alert_float('danger', 'Appointment name is required');
         return;
     }
     
