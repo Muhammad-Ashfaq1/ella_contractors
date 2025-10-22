@@ -395,7 +395,8 @@ class Appointments extends AdminController
             'type_id' => $this->input->post('type_id') ?: null,
             'appointment_status' => $this->input->post('status') ?: 'scheduled',
             'source' => 'ella_contractor',
-            'send_reminder' => $this->input->post('send_reminder') ? 1 : 0
+            'send_reminder' => $this->input->post('send_reminder') ? 1 : 0,
+            'reminder_48h' => $this->input->post('reminder_48h') ? 1 : 0
         ];
         
         $appointment_id = $this->input->post('appointment_id');

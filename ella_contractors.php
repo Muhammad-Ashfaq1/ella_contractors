@@ -645,14 +645,25 @@ function ella_contractors_activate_module() {
             }
         }
         
-        // Add send_reminder column to appointly_appointments table if it doesn't exist
+        // Add send_reminder column to appointly_appointments table if it doesn't exist (used for instant reminder)
         if (!$CI->db->field_exists('send_reminder', db_prefix() . 'appointly_appointments')) {
             try {
-                // Add send_reminder column
-                $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `send_reminder` TINYINT(1) DEFAULT 0 AFTER `appointment_status`');
+                // Add send_reminder column (default 1 for instant reminders)
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `send_reminder` TINYINT(1) DEFAULT 1 AFTER `appointment_status`');
                 log_message('info', 'Ella Appointments - Created send_reminder column');
             } catch (Exception $e) {
                 log_message('error', 'Ella Appointments - Error creating send_reminder column: ' . $e->getMessage());
+            }
+        }
+        
+        // Add reminder_48h column to appointly_appointments table if it doesn't exist
+        if (!$CI->db->field_exists('reminder_48h', db_prefix() . 'appointly_appointments')) {
+            try {
+                // Add reminder_48h column
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `reminder_48h` TINYINT(1) DEFAULT 1 AFTER `send_reminder`');
+                log_message('info', 'Ella Appointments - Created reminder_48h column');
+            } catch (Exception $e) {
+                log_message('error', 'Ella Appointments - Error creating reminder_48h column: ' . $e->getMessage());
             }
         }
     

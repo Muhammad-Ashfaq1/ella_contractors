@@ -922,6 +922,10 @@ function resetAppointmentModal() {
     $('#contact_id').html('<option value="">Select Client/Lead</option>');
     $('#contact_id').selectpicker('val', '');
     $('.selectpicker').selectpicker('refresh');
+    
+    // Reset reminder checkboxes to default (checked)
+    $('#send_reminder').prop('checked', true);
+    $('#reminder_48h').prop('checked', true);
 }
 
 // Global functions for modal operations
@@ -986,8 +990,9 @@ function loadAppointmentData(appointmentId) {
                 $('#address').val(data.address);
                 $('#notes').val(data.notes);
                 
-                // Handle reminder checkbox
+                // Handle reminder checkboxes
                 $('#send_reminder').prop('checked', data.send_reminder == 1);
+                $('#reminder_48h').prop('checked', data.reminder_48h == 1);
                 
                 // Set status dropdown
                 var status = data.appointment_status || 'scheduled';
@@ -1124,8 +1129,9 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 $('#address').val(data.address);
                 $('#notes').val(data.notes);
                 
-                // Handle reminder checkbox
+                // Handle reminder checkboxes
                 $('#send_reminder').prop('checked', data.send_reminder == 1);
+                $('#reminder_48h').prop('checked', data.reminder_48h == 1);
                 
                 // Set status dropdown
                 var status = data.appointment_status || 'scheduled';

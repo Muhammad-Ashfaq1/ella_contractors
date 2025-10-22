@@ -226,9 +226,14 @@ button.delete-btn {
                     
                     <div class="row">
                         <div class="col-md-12">
+                            <h5>Customer Notifications</h5>
                             <div class="checkbox">
-                                <input type="checkbox" name="send_reminder" id="send_reminder" value="1">
-                                <label for="send_reminder"><?= _l('appointment_send_reminder_followup'); ?></label>
+                                <input type="checkbox" name="send_reminder" id="send_reminder" value="1" checked>
+                                <label for="send_reminder">Instantly Send Appointment Date/Time to Customer</label>
+                            </div>
+                            <div class="checkbox">
+                                <input type="checkbox" name="reminder_48h" id="reminder_48h" value="1" checked>
+                                <label for="reminder_48h">Send 48 Hour Reminder to Customer</label>
                             </div>
                         </div>
                     </div>

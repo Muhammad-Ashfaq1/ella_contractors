@@ -452,8 +452,9 @@ function loadAppointmentData(appointmentId) {
                 $('#notes').val(data.notes);
                 $('#type_id').val(data.type_id);
                 
-                // Handle reminder checkbox
+                // Handle reminder checkboxes
                 $('#send_reminder').prop('checked', data.send_reminder == 1);
+                $('#reminder_48h').prop('checked', data.reminder_48h == 1);
                 
                 // Set status dropdown
                 var status = data.appointment_status || 'scheduled';
@@ -588,8 +589,9 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 $('#address').val(data.address);
                 $('#notes').val(data.notes);
                 
-                // Handle reminder checkbox
+                // Handle reminder checkboxes
                 $('#send_reminder').prop('checked', data.send_reminder == 1);
+                $('#reminder_48h').prop('checked', data.reminder_48h == 1);
                 
                 // Set status dropdown
                 var status = data.appointment_status || 'scheduled';
@@ -730,6 +732,10 @@ function resetAppointmentModal() {
     $('#appointmentThumbnails').empty();
     $('.drop-zone__thumb').remove();
     $('.drop-zone__prompt').show();
+    
+    // Reset reminder checkboxes to default (checked)
+    $('#send_reminder').prop('checked', true);
+    $('#reminder_48h').prop('checked', true);
 }
 
 function deleteAppointment(appointmentId) {
