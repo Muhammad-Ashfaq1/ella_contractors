@@ -237,9 +237,7 @@ button.delete-btn {
                     <div class="row">
                         <div class="col-md-12">
                             <hr class="hr-panel-heading" />
-                            <h5><?php echo _l('appointment_attachments'); ?></h5>
-                            <p class="text-muted">Upload files after creating the appointment. Files will be attached to the appointment once saved.</p>
-                            
+                            <h5><?php echo _l('appointment_attachments'); ?></h5>                            
                             <div class="drop-zone" id="appointmentDropzone">
                                 <span class="drop-zone__prompt">Drop files here or click to select</span>
                                 <input type="file" name="appointment_files[]" class="drop-zone__input" id="appointment_files" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
