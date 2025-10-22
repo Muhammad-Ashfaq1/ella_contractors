@@ -422,6 +422,7 @@ class Appointments extends AdminController
                         'message' => 'Appointment updated successfully'
                     ]);
                 } else {
+                    die('inside else condition');
                     $db_error = $this->db->error();
                     $error_message = 'Failed to update appointment.';
                     if (!empty($db_error['message'])) {

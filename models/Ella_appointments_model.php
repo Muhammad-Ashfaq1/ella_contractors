@@ -13,6 +13,24 @@ class Ella_appointments_model extends App_Model
     }
 
     /**
+     * Get default appointment type ID (English)
+     * Returns the ID of "English" appointment type from appointly_appointment_types
+     * @return int|null
+     */
+    private function get_default_type_id()
+    {
+        $english_type = $this->db->where('type', 'English')
+                                 ->get(db_prefix() . 'appointly_appointment_types')
+                                 ->row();
+        
+        if ($english_type && !empty($english_type->id) && $english_type->id > 0) {
+            return $english_type->id;
+        }
+        
+        return null;
+    }
+
+    /**
      * Get all appointments with additional EllaContractor data
      * Only shows appointments created from EllaContractors module
      */
@@ -71,9 +89,9 @@ class Ella_appointments_model extends App_Model
     {
         $data['created_by'] = get_staff_user_id();
         
-        // Ensure type_id is valid (NULL if empty/0, otherwise keep the value)
-        if (isset($data['type_id']) && (empty($data['type_id']) || $data['type_id'] == 0)) {
-            $data['type_id'] = null;
+        // Set default type_id to "English" if not provided or empty
+        if (!isset($data['type_id']) || empty($data['type_id']) || $data['type_id'] == 0) {
+            $data['type_id'] = $this->get_default_type_id();
         }
         
         $this->db->insert(db_prefix() . 'appointly_appointments', $data);
@@ -129,9 +147,18 @@ class Ella_appointments_model extends App_Model
             }
         }
 
-        // Ensure type_id is valid (NULL if empty/0, otherwise keep the value)
-        if (isset($data['type_id']) && (empty($data['type_id']) || $data['type_id'] == 0)) {
-            $data['type_id'] = null;
+        // For update, don't override type_id or status with defaults
+        // Remove them from $data if not provided to preserve existing values
+        if (!isset($data['type_id']) || empty($data['type_id'])) {
+            unset($data['type_id']);
+        }
+        
+        if (!isset($data['appointment_status']) || empty($data['appointment_status'])) {
+            unset($data['appointment_status']);
+        }
+        
+        if (!isset($data['status']) || empty($data['status'])) {
+            unset($data['status']);
         }
         
         $this->db->where('id', $id);

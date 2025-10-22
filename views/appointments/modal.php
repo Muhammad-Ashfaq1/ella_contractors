@@ -146,23 +146,12 @@ button.delete-btn {
                     <input type="hidden" id="phone_validated" name="phone_validated" value="">
                     
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <div class="form-group">
                                 <label for="subject"> Appointment Name <span class="text-danger">*</span> 
                                     <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="Give this appointment a friendly name to remember"></i>
                                 </label>
                                 <input type="text" class="form-control" id="subject" name="subject" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="type_id">Appointment Type</label>
-                                <select class="form-control" id="type_id" name="type_id">
-                                    <option value="0">Select Type</option>
-                                    <?php foreach($appointment_types as $type): ?>
-                                        <option value="<?php echo $type['id']; ?>"><?php echo $type['type']; ?></option>
-                                    <?php endforeach; ?>
-                                </select>
                             </div>
                         </div>
                     </div>
@@ -219,29 +208,19 @@ button.delete-btn {
                     </div>
                     
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <div class="form-group">
                                 <label for="address">Address</label>
                                 <input type="text" class="form-control" id="address" name="address">
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="notes">Notes</label>
-                                <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
-                            </div>
-                        </div>
                     </div>
                     
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <div class="form-group">
-                                <label for="status">Status</label>
-                                <select class="form-control" id="status" name="status">
-                                    <option value="scheduled"><?php echo strtoupper(_l('scheduled')); ?></option>
-                                    <option value="cancelled"><?php echo strtoupper(_l('cancelled')); ?></option>
-                                    <option value="complete"><?php echo strtoupper(_l('complete')); ?></option>
-                                </select>
+                                <label for="notes">Notes</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
                             </div>
                         </div>
                     </div>
