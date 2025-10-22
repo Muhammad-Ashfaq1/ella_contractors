@@ -395,13 +395,6 @@ function openNewAppointmentModal(appointmentId = null) {
     // Reset form
     resetAppointmentModal();
     
-    // Set today's date as default (only for new appointments)
-    if (!appointmentId) {
-        var today = '<?php echo date('Y-m-d\TH:i'); ?>';
-        $('#start_datetime').val(today);
-        $('#end_datetime').val(today);
-    }
-    
     // Show modal immediately for new appointments
     if (!appointmentId) {
         // Reload staff members for attendees dropdown
@@ -779,6 +772,15 @@ $('#saveAppointment').on('click', function() {
     
     if (!$('#end_datetime').val()) {
         alert_float('danger', 'End date & time is required');
+        return;
+    }
+    
+    // Validate end time is greater than start time
+    var startDateTimeObj = new Date($('#start_datetime').val());
+    var endDateTimeObj = new Date($('#end_datetime').val());
+    
+    if (endDateTimeObj <= startDateTimeObj) {
+        alert_float('danger', 'End date & time must be greater than start date & time');
         return;
     }
     
