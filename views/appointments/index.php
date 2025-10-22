@@ -999,6 +999,7 @@ function addDeleteButton(thumbnailElement, file, dropZoneElement, inputElement) 
     thumbnailElement.appendChild(deleteButton);
     
     deleteButton.addEventListener('click', function(event) {
+        event.preventDefault();
         event.stopPropagation();
         
         // Remove file from appointmentFiles array
@@ -1024,8 +1025,16 @@ function applyAppointmentEventListeners() {
     document.querySelectorAll("#appointment_files").forEach((inputElement) => {
         const dropZoneElement = inputElement.closest(".drop-zone");
         
-        // Click event to trigger file select
-        dropZoneElement.addEventListener("click", () => {
+        // Click event to trigger file select (but not on thumbnails or delete buttons)
+        dropZoneElement.addEventListener("click", (e) => {
+            // Don't trigger file picker if clicking on thumbnail or delete button
+            if (e.target.classList.contains('drop-zone__thumb') || 
+                e.target.classList.contains('delete-btn') ||
+                e.target.closest('.drop-zone__thumb') ||
+                e.target.closest('.delete-btn')) {
+                return;
+            }
+            // Trigger file picker for all other clicks in dropzone
             inputElement.click();
         });
         
