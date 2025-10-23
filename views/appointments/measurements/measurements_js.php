@@ -253,9 +253,12 @@ function saveTabName(tabId) {
         return;
     }
 
-    // Convert input to tab title span with double-click edit functionality
+    // Convert input to tab title span with pencil edit functionality
     var tabLink = $('[data-tab-id="' + tabId + '"] a');
-    tabLink.html('<span class="tab-title" ondblclick="editTabName(\'' + tabId + '\')" style="cursor: pointer;" title="Double-click to edit">' + tabName + '</span>' +
+    tabLink.html('<span class="tab-title">' + 
+        tabName + 
+        ' <i class="fa fa-pencil" onclick="editTabName(\'' + tabId + '\'); event.stopPropagation();" style="font-size: 11px; margin-left: 4px; opacity: 0.6; cursor: pointer;" title="Edit category name"></i>' +
+        '</span>' +
         '<button type="button" class="btn btn-xs btn-link tab-remove-btn" onclick="removeTab(\'' + tabId + '\')" title="Remove Tab">' +
             '<i class="fa fa-times text-danger"></i>' +
         '</button>');
@@ -335,7 +338,10 @@ function updateTabName(tabId) {
     
     // Update tab name
     var tabLink = $('[data-tab-id="' + tabId + '"] a');
-    tabLink.html('<span class="tab-title" ondblclick="editTabName(\'' + tabId + '\')" style="cursor: pointer;" title="Double-click to edit">' + newTabName + '</span>' +
+    tabLink.html('<span class="tab-title">' + 
+        newTabName + 
+        ' <i class="fa fa-pencil" onclick="editTabName(\'' + tabId + '\'); event.stopPropagation();" style="font-size: 11px; margin-left: 4px; opacity: 0.6; cursor: pointer;" title="Edit category name"></i>' +
+        '</span>' +
         '<button type="button" class="btn btn-xs btn-link tab-remove-btn" onclick="removeTab(\'' + tabId + '\')" title="Remove Tab">' +
             '<i class="fa fa-times text-danger"></i>' +
         '</button>');
@@ -356,7 +362,10 @@ function cancelEditTabName(tabId) {
     
     // Restore original tab title
     var tabLink = $('[data-tab-id="' + tabId + '"] a');
-    tabLink.html('<span class="tab-title" ondblclick="editTabName(\'' + tabId + '\')" style="cursor: pointer;" title="Double-click to edit">' + currentName + '</span>' +
+    tabLink.html('<span class="tab-title">' + 
+        currentName + 
+        ' <i class="fa fa-pencil" onclick="editTabName(\'' + tabId + '\'); event.stopPropagation();" style="font-size: 11px; margin-left: 4px; opacity: 0.6; cursor: pointer;" title="Edit category name"></i>' +
+        '</span>' +
         '<button type="button" class="btn btn-xs btn-link tab-remove-btn" onclick="removeTab(\'' + tabId + '\')" title="Remove Tab">' +
             '<i class="fa fa-times text-danger"></i>' +
         '</button>');
@@ -469,10 +478,13 @@ function loadMeasurementData(measurementId) {
                 var tabId = 'measurement_tab' + tabCounter; // Use unique prefix to avoid URL conflicts
                 var tabName = data.tab_name || 'Measurement';
                 
-                // Create tab with double-click edit functionality
+                // Create tab with pencil edit functionality
                 var tabHtml = '<li class="active" data-tab-id="' + tabId + '">' +
                     '<a href="#' + tabId + '-content" data-toggle="tab" data-tab-id="' + tabId + '">' +
-                        '<span class="tab-title" ondblclick="editTabName(\'' + tabId + '\')" style="cursor: pointer;" title="Double-click to edit">' + tabName + '</span>' +
+                        '<span class="tab-title">' + 
+                            tabName + 
+                            ' <i class="fa fa-pencil" onclick="editTabName(\'' + tabId + '\'); event.stopPropagation();" style="font-size: 11px; margin-left: 4px; opacity: 0.6; cursor: pointer;" title="Edit category name"></i>' +
+                        '</span>' +
                         '<button type="button" class="btn btn-xs btn-link tab-remove-btn" onclick="removeTab(\'' + tabId + '\')" title="Remove Tab">' +
                             '<i class="fa fa-times text-danger"></i>' +
                         '</button>' +
@@ -771,6 +783,11 @@ function deleteMeasurement(measurementId) {
 .tab-title {
     display: inline-block;
     margin-right: 5px;
+}
+
+.tab-title:hover .fa-pencil {
+    opacity: 1 !important;
+    transition: opacity 0.2s ease;
 }
 
 #dynamic-tabs li a {
