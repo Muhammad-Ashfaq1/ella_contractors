@@ -443,7 +443,7 @@ html {
                         <div class="tab-content">
                             <!-- Measurements Tab -->
                             <div role="tabpanel" class="tab-pane active" id="measurements-tab">
-                                <?php $this->load->view('appointments/measurements_list'); ?>
+                                <?php $this->load->view('appointments/measurements/measurements_list'); ?>
                             </div>
 
                             <!-- Estimates Tab -->
@@ -524,7 +524,7 @@ html {
 </div>
 
 <!-- Include Measurement Modal -->
-<?php $this->load->view('appointments/measurements_modal'); ?>
+<?php $this->load->view('appointments/measurements/measurements_modal'); ?>
 
 <!-- Include Attachment Upload Modal -->
 <?php $this->load->view('appointments/attachments_upload_modal'); ?>
@@ -570,7 +570,7 @@ var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id :
 </script>
 
 <!-- Include Measurement Modal and JavaScript -->
-<?php $this->load->view('appointments/measurements_js'); ?>
+<?php $this->load->view('appointments/measurements/measurements_js'); ?>
 
 <script>
 
