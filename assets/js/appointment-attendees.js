@@ -42,7 +42,6 @@ function loadStaffForAttendees() {
                 });
                 $('#attendees').html(options);
                 $('#attendees').selectpicker('refresh');
-                console.log('✓ Staff members loaded successfully:', response.data.length, 'members');
             } else {
                 $('#attendees').html('<option value="">Error loading staff members</option>');
                 $('#attendees').selectpicker('refresh');
