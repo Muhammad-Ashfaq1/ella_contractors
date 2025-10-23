@@ -44,7 +44,7 @@ if (!$CI->db->field_exists('appointment_status', db_prefix() . 'appointly_appoin
 }
 
 $aColumns = [
-    '1',
+    db_prefix() . 'appointly_appointments.id as checkbox_id', // For checkbox selection
     db_prefix() . 'appointly_appointments.id as id',
     'COALESCE(' . db_prefix() . 'leads.name, "") as lead_name',
     'COALESCE(' . db_prefix() . 'leads.id, "") as lead_id',
@@ -55,7 +55,7 @@ $aColumns = [
     'COALESCE(' . db_prefix() . 'appointly_appointments.appointment_status, "scheduled") as status',
     'COALESCE(measurement_counts.measurement_count, 0) as measurement_count',
     'COALESCE(estimate_counts.estimate_count, 0) as estimate_count',
-    '1'
+    db_prefix() . 'appointly_appointments.id as options_id' // For options column
 ];
 
 $join = [
@@ -167,6 +167,7 @@ try {
     foreach ($rResult as $aRow) {
         $row = [];
         
+        // Checkbox column - centered with proper structure for export functionality
         $row[] = '<div class="text-center"><div class="checkbox"><input type="checkbox" value="' . htmlspecialchars($aRow['id']) . '"><label></label></div></div>';
         
         $row[] = '<div class="text-center">' . htmlspecialchars($aRow['id']) . '</div>';
@@ -237,15 +238,20 @@ try {
                 $status_label = strtoupper($status);
         }
         
-        // Create status display with simple dropdown approach
-        $outputStatus = '<div class="status-wrapper" style="position: relative; display: inline-block;">';
+        // Create status display with dropdown - export only the main status label
+        // Use data-order attribute for DataTables to properly sort and export
+        $outputStatus = '<div class="text-center" data-order="' . htmlspecialchars($status_label) . '">';
+        $outputStatus .= '<div class="status-wrapper" style="position: relative; display: inline-block;">';
         $outputStatus .= '<span class="status-button label ' . $status_class . '" id="status-btn-' . $aRow['id'] . '" style="cursor: pointer !important;">';
         $outputStatus .= $status_label;
         $outputStatus .= '</span>';
         
+        // Hidden span for export only (will be extracted by DataTables export)
+        $outputStatus .= '<span class="hide export-value">' . htmlspecialchars($status_label) . '</span>';
+        
         // Dropdown menu positioned on the left side
         if ($has_permission_edit) {
-            $outputStatus .= '<div id="status-menu-' . $aRow['id'] . '" class="status-dropdown" style="display: none; position: absolute; top: 0; right: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 120px;">';
+            $outputStatus .= '<div id="status-menu-' . $aRow['id'] . '" class="status-dropdown not-export" style="display: none; position: absolute; top: 0; right: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 120px;">';
             
             $available_statuses = [
                 ['value' => 'scheduled', 'label' => strtoupper(_l('scheduled'))],
@@ -255,7 +261,7 @@ try {
             
             foreach ($available_statuses as $status_option) {
                 if ($status !== $status_option['value']) {
-                    $outputStatus .= '<div class="status-option" onclick="appointment_mark_as(\'' . $status_option['value'] . '\', ' . $aRow['id'] . '); return false;" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;">';
+                    $outputStatus .= '<div class="status-option not-export" onclick="appointment_mark_as(\'' . $status_option['value'] . '\', ' . $aRow['id'] . '); return false;" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;">';
                     $outputStatus .= $status_option['label'];
                     $outputStatus .= '</div>';
                 }
@@ -265,7 +271,8 @@ try {
         }
         
         $outputStatus .= '</div>';
-        $row[] = '<div class="text-center">' . $outputStatus . '</div>';
+        $outputStatus .= '</div>';
+        $row[] = $outputStatus;
         
         // Display measurement count with clickable badge
         $measurement_count = isset($aRow['measurement_count']) ? (int) $aRow['measurement_count'] : 0;

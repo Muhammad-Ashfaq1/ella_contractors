@@ -45,7 +45,12 @@
                             <table class="table table-striped table-ella_appointments">
                                 <thead>
                                     <tr>
-                                        <th width="50px"></th>
+                                        <th width="50px" class="text-center">
+                                            <div class="checkbox">
+                                                <input type="checkbox" id="mass_select_all" data-to-table="ella_appointments">
+                                                <label></label>
+                                            </div>
+                                        </th>
                                         <th class="text-center"><?php echo _l('id'); ?></th>
                                         <th class="text-center">Lead</th>
                                         <th class="text-center" style="min-width: 250px;">Appointment Name</th>
