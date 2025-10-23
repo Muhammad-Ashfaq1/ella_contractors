@@ -562,13 +562,17 @@ html {
 <!-- Include centralized appointment attendees functionality -->
 <script src="<?php echo module_dir_url('ella_contractors', 'assets/js/appointment-attendees.js'); ?>"></script>
 
+<!-- Define global variables BEFORE loading other JavaScript files -->
+<script>
+var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
+var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
+var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
+</script>
+
 <!-- Include Measurement Modal and JavaScript -->
 <?php $this->load->view('appointments/measurements_js'); ?>
 
 <script>
-var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
-var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
-var appointmentId = <?php echo $appointment->id; ?>;
 
 $(document).ready(function() {
     // Prevent hash-based scrolling that causes UI blinking
@@ -675,7 +679,6 @@ $(document).ready(function() {
     $('.nav-tabs a[data-toggle="tab"]').not('.modal a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
         // Double-check: Ignore tab events from modals (e.g., measurement modal internal tabs)
         if ($(e.target).closest('.modal').length > 0) {
-            console.log('Ignoring tab event from modal');
             return;
         }
         
@@ -683,14 +686,11 @@ $(document).ready(function() {
         
         // Only handle main page tabs (those ending with -tab)
         if (!target || !target.includes('-tab') || target.includes('measurement_tab')) {
-            console.log('Ignoring non-main-tab event:', target);
             return;
         }
         
         var tabName = target.replace('#', '').replace('-tab', '');
         currentActiveTab = tabName;
-        
-        console.log('Main tab switched to:', tabName);
         
         // Update URL without page reload (no hash)
         var url = new URL(window.location);
@@ -775,7 +775,13 @@ window.ensureCorrectTabVisible = function() {
 
 // Timeline Functions
 function loadTimeline() {
-    // Show loading indicator
+    var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
+    
+    if (!appointmentId) {
+        $('#timeline-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Invalid appointment ID.</p></div>');
+        return;
+    }
+    
     $('#timeline-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading timeline...</p></div>');
     
     $.ajax({
@@ -789,7 +795,6 @@ function loadTimeline() {
             $('#timeline-container').html(response);
         },
         error: function(xhr, status, error) {
-            console.error('Error loading timeline:', error, xhr.responseText);
             $('#timeline-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Error loading timeline. Please try again.</p></div>');
         }
     });
@@ -1233,7 +1238,6 @@ function loadAppointmentDataAndShowModal(appointmentId) {
 
 // Initialize modal functionality when document is ready
 $(document).ready(function() {
-    console.log('welcome to latest changes in view.php');
     // Initialize selectpicker
     $('.selectpicker').selectpicker();
     

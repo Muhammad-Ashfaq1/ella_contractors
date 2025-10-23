@@ -8,9 +8,13 @@
 
 // Notes Functions
 function loadNotes() {
-    var appointmentId = <?php echo isset($appointment) ? $appointment->id : 'appointmentId'; ?>;
+    var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
     
-    // Show loading indicator
+    if (!appointmentId) {
+        $('#appointment-notes-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Invalid appointment ID.</p></div>');
+        return;
+    }
+    
     $('#appointment-notes-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading notes...</p></div>');
     
     $.ajax({
@@ -136,7 +140,13 @@ $(window).on('beforeunload', function() {
 
 // Add note function
 function addNote() {
-    var appointmentId = <?php echo isset($appointment) ? $appointment->id : 'appointmentId'; ?>;
+    var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
+    
+    if (!appointmentId) {
+        alert_float('danger', 'Invalid appointment ID');
+        return;
+    }
+    
     var description = $('#appointment_note_description').val().trim();
     
     if (!description) {
@@ -257,7 +267,13 @@ function cancelEditNote(noteId) {
 }
 
 function updateNote(noteId) {
-    var appointmentId = <?php echo isset($appointment) ? $appointment->id : 'appointmentId'; ?>;
+    var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
+    
+    if (!appointmentId) {
+        alert_float('danger', 'Invalid appointment ID');
+        return;
+    }
+    
     var newDescription = $('#edit-note-' + noteId).val();
     
     if (!newDescription.trim()) {

@@ -617,10 +617,7 @@ $('#measurementModal').on('hidden.bs.modal', function() {
                 var currentTab = tabParam || 'measurements';
                 
                 if (currentTab === 'measurements') {
-                    console.log('On measurements tab - reloading');
                     loadMeasurements();
-                } else {
-                    console.log('Not on measurements tab - skipping reload');
                 }
             }
             measurementSaved = false;
@@ -641,7 +638,13 @@ $('#measurementModal').on('hidden.bs.modal', function() {
  * Load measurements for appointment
  */
 function loadMeasurements() {
-    console.log('loadMeasurements() called for appointmentId:', appointmentId);
+    var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
+    
+    if (!appointmentId) {
+        $('#measurements-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Invalid appointment ID.</p></div>');
+        return;
+    }
+    
     $('#measurements-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading measurements...</p></div>');
     
     $.ajax({
@@ -650,12 +653,9 @@ function loadMeasurements() {
         data: csrf_token_name + '=' + csrf_hash,
         dataType: 'json',
         success: function(response) {
-            console.log('Measurements AJAX response:', response);
             if (response && response.success) {
-                console.log('Response successful, data length:', response.data ? response.data.length : 0);
                 displayMeasurements(response.data);
             } else {
-                console.log('Response not successful or no success flag');
                 $('#measurements-container').html('<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No measurements found.</p></div>');
             }
         },
@@ -670,13 +670,9 @@ function loadMeasurements() {
  * Display measurements
  */
 function displayMeasurements(measurements) {
-    console.log('displayMeasurements() called with', measurements.length, 'measurements');
-    console.log('Measurements data:', measurements);
-    
     var html = '';
     
     if (!measurements || measurements.length === 0) {
-        console.log('No measurements to display');
         html = '<div class="text-center text-muted"><i class="fa fa-info-circle fa-2x"></i><p>No measurements found.</p></div>';
     } else {
         html = '<div class="table-responsive"><table class="table table-hover" style="margin-bottom: 0;">';
@@ -709,9 +705,7 @@ function displayMeasurements(measurements) {
         html += '</tbody></table></div>';
     }
     
-    console.log('Setting measurements HTML, length:', html.length);
     $('#measurements-container').html(html);
-    console.log('Measurements container updated');
 }
 
 /**
@@ -735,12 +729,10 @@ function deleteMeasurement(measurementId) {
         data: csrf_token_name + '=' + csrf_hash,
         dataType: 'json',
         success: function(response) {
-            console.log('Delete measurement response:', response);
             if (response.success) {
                 alert_float('success', response.message);
                 
-                // Immediately reload measurements (like Notes and Attachments tabs)
-                console.log('Immediately reloading measurements after delete...');
+                // Immediately reload measurements
                 loadMeasurements();
             } else {
                 alert_float('danger', response.message);

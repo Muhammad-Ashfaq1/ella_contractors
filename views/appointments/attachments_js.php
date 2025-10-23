@@ -216,7 +216,6 @@ function initializeAttachmentDropzone() {
     
     // Check if Dropzone is already attached (prevent re-initialization)
     if (dropzoneElement.dropzone) {
-        console.log('Dropzone already initialized, destroying old instance');
         dropzoneElement.dropzone.destroy();
     }
     
@@ -263,7 +262,6 @@ function initializeAttachmentDropzone() {
                 
                 this.on("success", function(file, response) {
                     // Handle individual file success
-                    console.log('File uploaded:', file.name);
                 });
             },
             sending: function(file, xhr, formData) {

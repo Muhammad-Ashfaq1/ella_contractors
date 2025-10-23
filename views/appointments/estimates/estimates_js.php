@@ -3,9 +3,13 @@
 <script>
 // Load estimates for appointment
 function loadEstimates() {
-    var appointmentId = <?php echo isset($appointment) ? $appointment->id : 'appointmentId'; ?>;
+    var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
     
-    // Show loading indicator
+    if (!appointmentId) {
+        $('#estimates-list-container').html('<div class="text-center text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Invalid appointment ID.</p></div>');
+        return;
+    }
+    
     $('#estimates-list-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><p>Loading estimates...</p></div>');
     
     $.ajax({
