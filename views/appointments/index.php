@@ -16,9 +16,6 @@
                                     <button type="button" class="btn btn-info" id="new-appointment">
                                         <i class="fa fa-plus" style="margin-right: 2% !important;"></i> New Appointment
                                     </button>
-                                    <button type="button" class="btn btn-danger hide" id="bulk-delete-appointments" style="margin-left: 5px;">
-                                        <i class="fa fa-trash"></i> Delete Selected (<span id="selected-count">0</span>)
-                                    </button>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group pull-right">
@@ -106,6 +103,22 @@ $this->load->view('appointments/modal', $data);
 .table-ella_appointments th {
     text-align: center;
     vertical-align: middle;
+}
+
+/* Bulk delete button styling in DataTable toolbar */
+#bulk-delete-appointments {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 5px !important;
+}
+#bulk-delete-appointments.hide {
+    display: none !important;
+}
+/* Ensure button appears in same line as other DataTable controls */
+.dataTables_length, .dt-buttons, #bulk-delete-appointments {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 10px;
 }
 
 /* Simple Status Dropdown Styling */
@@ -278,6 +291,49 @@ function init_combined_ajax_search(selector) {
 $(document).ready(function() {
     // Initialize DataTable for appointments
     initDataTable('.table-ella_appointments', admin_url + 'ella_contractors/appointments/table', undefined, undefined, {}, [2, 'desc']);
+    
+    // Function to add bulk delete button to DataTable toolbar
+    function addBulkDeleteButton() {
+        if ($('.table-ella_appointments').length && $('#bulk-delete-appointments').length === 0) {
+            // Find the DataTable wrapper
+            var $wrapper = $('.table-ella_appointments').closest('.dataTables_wrapper');
+            
+            if ($wrapper.length) {
+                // Try to find the buttons container first (if Export button exists)
+                var $buttonsContainer = $wrapper.find('.dt-buttons');
+                
+                if ($buttonsContainer.length) {
+                    // Add bulk delete button after export button
+                    $buttonsContainer.append('<button type="button" class="btn btn-danger hide" id="bulk-delete-appointments">' +
+                        '<i class="fa fa-trash"></i> Delete (<span id="selected-count">0</span>)' +
+                    '</button>');
+                } else {
+                    // Fallback: add to the left side with length dropdown
+                    var $lengthContainer = $wrapper.find('.dataTables_length');
+                    if ($lengthContainer.length) {
+                        $lengthContainer.after('<button type="button" class="btn btn-danger hide" id="bulk-delete-appointments" style="margin-left: 10px;">' +
+                            '<i class="fa fa-trash"></i> Delete (<span id="selected-count">0</span>)' +
+                        '</button>');
+                    } else {
+                        // Last resort: add to the top of the wrapper
+                        $wrapper.prepend('<div style="display: inline-block; margin-right: 10px;"><button type="button" class="btn btn-danger hide" id="bulk-delete-appointments">' +
+                            '<i class="fa fa-trash"></i> Delete (<span id="selected-count">0</span>)' +
+                        '</button></div>');
+                    }
+                }
+            }
+        }
+    }
+    
+    // Add bulk delete button to DataTable toolbar after initialization
+    setTimeout(addBulkDeleteButton, 800);
+    
+    // Re-add button after table draws (if needed)
+    if ($('.table-ella_appointments').length) {
+        $('.table-ella_appointments').on('draw.dt', function() {
+            setTimeout(addBulkDeleteButton, 100);
+        });
+    }
     
     // Initialize selectpicker
     $('.selectpicker').selectpicker();
@@ -1151,8 +1207,8 @@ $(document).ready(function() {
         }
     }
     
-    // Handle bulk delete button click
-    $('#bulk-delete-appointments').on('click', function() {
+    // Handle bulk delete button click (using delegation since button is added dynamically)
+    $(document).on('click', '#bulk-delete-appointments', function() {
         var selectedIds = [];
         $('.table-ella_appointments tbody input[type="checkbox"]:checked').each(function() {
             var appointmentId = $(this).val();
