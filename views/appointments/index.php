@@ -229,6 +229,30 @@ $this->load->view('appointments/modal', $data);
     cursor: pointer;
     opacity: 0.7;
 }
+
+/* Lead link hover effects */
+.table-ella_appointments .lead-link {
+    color: #03a9f4;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.table-ella_appointments .lead-link:hover {
+    color: #0288d1;
+    text-decoration: none;
+    transform: translateX(2px);
+}
+
+.table-ella_appointments .lead-link i {
+    transition: all 0.2s ease;
+}
+
+.table-ella_appointments .lead-link:hover i {
+    opacity: 1 !important;
+    transform: translateX(2px);
+}
 </style>
 
 <script>
@@ -1273,6 +1297,65 @@ $(document).ready(function() {
     // END BULK DELETE FUNCTIONALITY
     // ========================================
 });
+
+// ========================================
+// LEAD MODAL FUNCTIONALITY
+// ========================================
+
+/**
+ * Fallback function to open lead modal if init_lead doesn't work
+ * This ensures lead modal always opens on the same page
+ */
+$(document).ready(function() {
+    // Event delegation for dynamically loaded lead links
+    $(document).on('click', '.lead-link', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        var leadId = $(this).data('lead-id');
+        
+        if (!leadId) {
+            return false;
+        }
+        
+        // Try Perfex's built-in init_lead function first
+        if (typeof init_lead === 'function') {
+            init_lead(leadId);
+        } else {
+            // Fallback: Show loading and trigger AJAX
+            alert_float('info', 'Loading lead details...');
+            
+            // Attempt to load via AJAX
+            $.ajax({
+                url: admin_url + 'leads/client/' + leadId,
+                type: 'GET',
+                success: function(response) {
+                    // Check if response contains modal HTML
+                    if (response && response.indexOf('lead-modal') !== -1) {
+                        // Remove existing modal
+                        $('#lead-modal').remove();
+                        
+                        // Append and show
+                        $('body').append(response);
+                        $('#lead-modal').modal('show');
+                    } else {
+                        // If no modal HTML, fallback to page load
+                        window.location.href = admin_url + 'leads/index/' + leadId;
+                    }
+                },
+                error: function() {
+                    alert_float('danger', 'Failed to load lead details');
+                }
+            });
+        }
+        
+        return false;
+    });
+});
+
+// ========================================
+// END LEAD MODAL FUNCTIONALITY
+// ========================================
 </script>
 
 <!-- Include shared appointment dropzone functionality -->

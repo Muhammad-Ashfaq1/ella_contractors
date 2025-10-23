@@ -172,11 +172,14 @@ try {
         
         $row[] = '<div class="text-center">' . htmlspecialchars($aRow['id']) . '</div>';
         
-        // Lead column with hyperlink
+        // Lead column with modal trigger (no redirect)
         $lead_name = isset($aRow['lead_name']) ? $aRow['lead_name'] : '';
         $lead_id = isset($aRow['lead_id']) ? $aRow['lead_id'] : '';
         if (!empty($lead_name) && !empty($lead_id)) {
-            $lead_link = '<a href="' . admin_url('leads/index/' . $lead_id) . '">' . htmlspecialchars($lead_name) . '</a>';
+            // Use onclick to trigger lead modal instead of href redirect
+            $lead_link = '<a href="javascript:void(0);" onclick="init_lead(' . $lead_id . '); return false;" class="lead-link" data-lead-id="' . $lead_id . '" title="Click to view lead details">' 
+                         . htmlspecialchars($lead_name) 
+                         . ' <i class="fa fa-user" style="font-size: 11px; margin-left: 3px; opacity: 0.6;"></i></a>';
         } else {
             $lead_link = '<span class="text-muted">No Lead</span>';
         }
