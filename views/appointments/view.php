@@ -1233,6 +1233,7 @@ function loadAppointmentDataAndShowModal(appointmentId) {
 
 // Initialize modal functionality when document is ready
 $(document).ready(function() {
+    console.log('welcome to latest changes in view.php');
     // Initialize selectpicker
     $('.selectpicker').selectpicker();
     
