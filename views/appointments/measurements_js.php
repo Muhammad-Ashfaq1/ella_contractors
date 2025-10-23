@@ -47,7 +47,7 @@ function createMeasurementRow(tabId, rowIndex) {
         '<div class="col-md-3">' +
             '<div class="form-group">' +
                 '<label for="value_' + tabId + '_' + rowIndex + '" style="color: #333; font-weight: 500; margin-bottom: 5px; font-size: 14px;">Value</label>' +
-                '<input type="number" step="0.0001" class="form-control" id="value_' + tabId + '_' + rowIndex + '" name="tab_measurements_' + tabId + '[' + rowIndex + '][value]" placeholder="0.00" style="border-radius: 4px; border: 1px solid #ddd;">' +
+                '<input type="number" step="0.01" class="form-control measurement-value-input" id="value_' + tabId + '_' + rowIndex + '" name="tab_measurements_' + tabId + '[' + rowIndex + '][value]" placeholder="0.00" style="border-radius: 4px; border: 1px solid #ddd;">' +
             '</div>' +
         '</div>' +
         '<div class="col-md-3">' +
@@ -834,5 +834,6 @@ function deleteMeasurement(measurementId) {
 
 /* Action button styling - using standard Perfex CRM classes */
 /* No custom styling needed - using btn-default btn-xs and btn-danger btn-xs */
+
 </style>
 

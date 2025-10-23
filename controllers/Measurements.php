@@ -38,9 +38,12 @@ class Measurements extends AdminController
                 $measurements = [];
                 foreach ($value as $index => $measurement) {
                     if (!empty($measurement['name']) && !empty($measurement['unit']) && isset($measurement['value'])) {
+                        // Round value to 2 decimal places maximum
+                        $measurementValue = round((float) $measurement['value'], 2);
+                        
                         $measurements[] = [
                             'name' => $measurement['name'],
-                            'value' => (float) $measurement['value'],
+                            'value' => $measurementValue,
                             'unit' => $measurement['unit'],
                             'sort_order' => $index
                         ];
