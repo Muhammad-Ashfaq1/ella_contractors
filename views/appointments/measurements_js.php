@@ -405,10 +405,10 @@ function openMeasurementModal(measurementId = null) {
     if (measurementId) {
         // Load existing measurement
         loadMeasurementData(measurementId);
-        $('#measurementModalLabel').text('Edit Measurement');
+        $('#measurementModalLabel').text('Edit Measurement Category');
     } else {
         // Show message and add tab button
-        $('#measurementModalLabel').text('Add Measurement');
+        $('#measurementModalLabel').text('Add Measurement Category');
         
         // Auto-trigger add category if no tabs exist (for new measurements)
         setTimeout(function() {

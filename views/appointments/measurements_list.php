@@ -5,7 +5,7 @@
     <div class="col-md-12">
         <div class="pull-right mbot15">
             <button type="button" class="btn btn-info btn-sm" onclick="openMeasurementModal()">
-                <i class="fa fa-plus"></i> Add Measurement
+                <i class="fa fa-plus"></i> Add Measurement Category
             </button>
         </div>
         <div class="clearfix"></div>
