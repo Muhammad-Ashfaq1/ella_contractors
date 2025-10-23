@@ -16,6 +16,9 @@
                                     <button type="button" class="btn btn-info" id="new-appointment">
                                         <i class="fa fa-plus" style="margin-right: 2% !important;"></i> New Appointment
                                     </button>
+                                    <button type="button" class="btn btn-danger hide" id="bulk-delete-appointments" style="margin-left: 5px;">
+                                        <i class="fa fa-trash"></i> Delete Selected (<span id="selected-count">0</span>)
+                                    </button>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group pull-right">
@@ -1119,6 +1122,100 @@ $(document).ready(function() {
         var newUrl = window.location.pathname;
         window.history.replaceState({}, document.title, newUrl);
     }
+    
+    // ========================================
+    // BULK DELETE FUNCTIONALITY
+    // ========================================
+    
+    // Handle individual checkbox changes
+    $(document).on('change', '.table-ella_appointments tbody input[type="checkbox"]', function() {
+        updateBulkDeleteButton();
+    });
+    
+    // Handle select all checkbox
+    $(document).on('change', '#mass_select_all', function() {
+        var isChecked = $(this).prop('checked');
+        $('.table-ella_appointments tbody input[type="checkbox"]').prop('checked', isChecked);
+        updateBulkDeleteButton();
+    });
+    
+    // Update bulk delete button visibility and count
+    function updateBulkDeleteButton() {
+        var selectedCount = $('.table-ella_appointments tbody input[type="checkbox"]:checked').length;
+        $('#selected-count').text(selectedCount);
+        
+        if (selectedCount > 0) {
+            $('#bulk-delete-appointments').removeClass('hide');
+        } else {
+            $('#bulk-delete-appointments').addClass('hide');
+        }
+    }
+    
+    // Handle bulk delete button click
+    $('#bulk-delete-appointments').on('click', function() {
+        var selectedIds = [];
+        $('.table-ella_appointments tbody input[type="checkbox"]:checked').each(function() {
+            var appointmentId = $(this).val();
+            if (appointmentId) {
+                selectedIds.push(appointmentId);
+            }
+        });
+        
+        if (selectedIds.length === 0) {
+            alert_float('warning', 'No appointments selected');
+            return;
+        }
+        
+        // Confirm deletion
+        var confirmMessage = 'Are you sure you want to delete ' + selectedIds.length + ' appointment(s)? This action cannot be undone.';
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+        
+        // Show loading state
+        var $btn = $(this);
+        var originalHtml = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Deleting...');
+        
+        // Send AJAX request
+        $.ajax({
+            url: admin_url + 'ella_contractors/appointments/bulk_delete',
+            type: 'POST',
+            data: {
+                ids: selectedIds,
+                [csrf_token_name]: csrf_hash
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    
+                    // Uncheck mass select all
+                    $('#mass_select_all').prop('checked', false);
+                    
+                    // Hide bulk delete button
+                    $('#bulk-delete-appointments').addClass('hide');
+                    
+                    // Reload table
+                    $('.table-ella_appointments').DataTable().ajax.reload();
+                } else {
+                    alert_float('danger', response.message || 'Failed to delete appointments');
+                }
+            },
+            error: function(xhr, status, error) {
+                alert_float('danger', 'Error deleting appointments: ' + error);
+                console.error('Bulk delete error:', error);
+            },
+            complete: function() {
+                // Restore button state
+                $btn.prop('disabled', false).html(originalHtml);
+            }
+        });
+    });
+    
+    // ========================================
+    // END BULK DELETE FUNCTIONALITY
+    // ========================================
 });
 </script>
 

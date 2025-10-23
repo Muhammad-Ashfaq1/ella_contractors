@@ -503,6 +503,63 @@ class Appointments extends AdminController
     }
 
     /**
+     * Bulk delete appointments via AJAX
+     */
+    public function bulk_delete()
+    {
+        if (!has_permission('ella_contractors', '', 'delete')) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ]);
+            return;
+        }
+
+        $ids = $this->input->post('ids');
+        
+        if (empty($ids) || !is_array($ids)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'No appointments selected'
+            ]);
+            return;
+        }
+
+        $deleted_count = 0;
+        $failed_count = 0;
+        
+        foreach ($ids as $id) {
+            if ($this->appointments_model->delete_appointment($id)) {
+                $deleted_count++;
+            } else {
+                $failed_count++;
+            }
+        }
+
+        $total = count($ids);
+        
+        if ($deleted_count > 0) {
+            $message = $deleted_count . ' appointment(s) deleted successfully';
+            if ($failed_count > 0) {
+                $message .= ' (' . $failed_count . ' failed)';
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'message' => $message,
+                'deleted_count' => $deleted_count,
+                'failed_count' => $failed_count,
+                'total' => $total
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to delete appointments'
+            ]);
+        }
+    }
+
+    /**
      * Handle attendees for appointment
      */
     private function handle_attendees($appointment_id)
