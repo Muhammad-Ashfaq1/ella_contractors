@@ -242,19 +242,17 @@ try {
         }
         
         // Create status display with dropdown - export only the main status label
-        // Use data-order attribute for DataTables to properly sort and export
+        // Use data-order for DataTables to properly sort
         $outputStatus = '<div class="text-center" data-order="' . htmlspecialchars($status_label) . '">';
-        $outputStatus .= '<div class="status-wrapper" style="position: relative; display: inline-block;">';
-        $outputStatus .= '<span class="status-button label ' . $status_class . '" id="status-btn-' . $aRow['id'] . '" style="cursor: pointer !important;">';
+        
+        // Main status text for display and export
+        $outputStatus .= '<span class="status-button label ' . $status_class . '" id="status-btn-' . $aRow['id'] . '" style="cursor: pointer !important; position: relative; display: inline-block;">';
         $outputStatus .= $status_label;
         $outputStatus .= '</span>';
         
-        // Hidden span for export only (will be extracted by DataTables export)
-        $outputStatus .= '<span class="hide export-value">' . htmlspecialchars($status_label) . '</span>';
-        
-        // Dropdown menu positioned on the left side
+        // Dropdown menu positioned on the left side (excluded from export via table-export-exclude class)
         if ($has_permission_edit) {
-            $outputStatus .= '<div id="status-menu-' . $aRow['id'] . '" class="status-dropdown not-export" style="display: none; position: absolute; top: 0; right: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 120px;">';
+            $outputStatus .= '<div id="status-menu-' . $aRow['id'] . '" class="status-dropdown table-export-exclude" style="display: none; position: absolute; top: 0; right: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 120px;">';
             
             $available_statuses = [
                 ['value' => 'scheduled', 'label' => strtoupper(_l('scheduled'))],
@@ -264,7 +262,7 @@ try {
             
             foreach ($available_statuses as $status_option) {
                 if ($status !== $status_option['value']) {
-                    $outputStatus .= '<div class="status-option not-export" onclick="appointment_mark_as(\'' . $status_option['value'] . '\', ' . $aRow['id'] . '); return false;" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;">';
+                    $outputStatus .= '<div class="status-option table-export-exclude" onclick="appointment_mark_as(\'' . $status_option['value'] . '\', ' . $aRow['id'] . '); return false;" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;">';
                     $outputStatus .= $status_option['label'];
                     $outputStatus .= '</div>';
                 }
@@ -273,7 +271,6 @@ try {
             $outputStatus .= '</div>';
         }
         
-        $outputStatus .= '</div>';
         $outputStatus .= '</div>';
         $row[] = $outputStatus;
         

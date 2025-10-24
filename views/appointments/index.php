@@ -122,11 +122,6 @@ $this->load->view('appointments/modal', $data);
 }
 
 /* Simple Status Dropdown Styling */
-.status-wrapper {
-    position: relative;
-    display: inline-block;
-}
-
 .status-button {
     cursor: pointer !important;
     transition: opacity 0.2s ease;
@@ -140,6 +135,7 @@ $this->load->view('appointments/modal', $data);
     letter-spacing: 0.5px;
     text-transform: uppercase;
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    position: relative; /* Required for dropdown positioning */
 }
 
 .status-button:hover {
@@ -159,6 +155,7 @@ $this->load->view('appointments/modal', $data);
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     min-width: 120px;
+    margin-right: 5px; /* Small gap between button and dropdown */
 }
 
 .status-option {
@@ -253,6 +250,15 @@ $this->load->view('appointments/modal', $data);
     opacity: 1 !important;
     transform: translateX(2px);
 }
+
+/* Hide dropdown menu from print/export */
+@media print {
+    .status-dropdown,
+    .status-option,
+    .table-export-exclude {
+        display: none !important;
+    }
+}
 </style>
 
 <script>
@@ -314,7 +320,9 @@ function init_combined_ajax_search(selector) {
 
 $(document).ready(function() {
     // Initialize DataTable for appointments
-    initDataTable('.table-ella_appointments', admin_url + 'ella_contractors/appointments/table', undefined, undefined, {}, [2, 'desc']);
+    // Sort by column 4 (Scheduled date) descending by default
+    // Columns: 0=checkbox, 1=ID, 2=Lead, 3=Subject, 4=Scheduled, 5=Status, 6=Measurements, 7=Estimates, 8=Options
+    initDataTable('.table-ella_appointments', admin_url + 'ella_contractors/appointments/table', undefined, undefined, {}, [4, 'desc']);
     
     // Function to add bulk delete button to DataTable toolbar
     function addBulkDeleteButton() {
@@ -1065,28 +1073,36 @@ function updateAppointmentStatusInPlace(appointment_id, newStatus) {
     });
     
     if (rowIndex !== -1) {
-        // Get the current row data
-        var rowData = table.row(rowIndex).data();
-        
-        // Update the status in the row data (column 5 is the status column)
-        rowData[5] = newStatus;
+        // Get status label for data attributes
+        var statusLabel = '';
+        switch (newStatus) {
+            case 'cancelled':
+                statusLabel = '<?php echo strtoupper(_l('cancelled')); ?>';
+                break;
+            case 'complete':
+                statusLabel = '<?php echo strtoupper(_l('complete')); ?>';
+                break;
+            case 'scheduled':
+                statusLabel = '<?php echo strtoupper(_l('scheduled')); ?>';
+                break;
+            default:
+                statusLabel = newStatus.toUpperCase();
+        }
         
         // Generate new status HTML
         var statusHtml = generateStatusHtml(newStatus, appointment_id);
         
-        // Update the status cell directly in the DOM
+        // Update the status cell directly in the DOM without re-drawing
+        // This preserves the current sort order and pagination
         var statusCell = table.cell(rowIndex, 5).node();
-        $(statusCell).html('<div class="text-center">' + statusHtml + '</div>');
-        
-        // Update the row data in DataTable
-        table.row(rowIndex).data(rowData).draw(false);
+        $(statusCell).html('<div class="text-center" data-order="' + statusLabel + '">' + statusHtml + '</div>');
         
         // Reinitialize tooltips for the updated status element
         $('[data-toggle="tooltip"]').tooltip();
     } else {
-        // Fallback: if row not found, reload the table
+        // Fallback: if row not found, reload the table without resetting pagination/sort
         console.warn('Row not found for appointment ID:', appointment_id, 'reloading table...');
-        table.ajax.reload(null, false);
+        table.ajax.reload(null, false); // false = maintain current page
     }
 }
 
@@ -1120,15 +1136,15 @@ function generateStatusHtml(status, appointment_id) {
             statusLabel = status.toUpperCase();
     }
     
-    // Create status display HTML - simple approach
-    var statusHtml = '<div class="status-wrapper" style="position: relative; display: inline-block;">';
-    statusHtml += '<span class="status-button label ' + statusClass + '" id="status-btn-' + appointment_id + '" style="cursor: pointer !important;">';
+    // Create status display HTML matching backend structure for proper export
+    // Main status text for display and export
+    var statusHtml = '<span class="status-button label ' + statusClass + '" id="status-btn-' + appointment_id + '" style="cursor: pointer !important; position: relative; display: inline-block;">';
     statusHtml += statusLabel;
     statusHtml += '</span>';
     
-    // Dropdown menu positioned on the left side
+    // Dropdown menu positioned on the left side (excluded from export via table-export-exclude class)
     if (hasPermission) {
-        statusHtml += '<div id="status-menu-' + appointment_id + '" class="status-dropdown" style="display: none; position: absolute; top: 0; right: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 120px;">';
+        statusHtml += '<div id="status-menu-' + appointment_id + '" class="status-dropdown table-export-exclude" style="display: none; position: absolute; top: 0; right: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 120px;">';
         
         var availableStatuses = [
             {value: 'scheduled', label: '<?php echo strtoupper(_l('scheduled')); ?>'},
@@ -1139,7 +1155,7 @@ function generateStatusHtml(status, appointment_id) {
         for (var i = 0; i < availableStatuses.length; i++) {
             var statusOption = availableStatuses[i];
             if (status !== statusOption.value) {
-                statusHtml += '<div class="status-option" onclick="appointment_mark_as(\'' + statusOption.value + '\', ' + appointment_id + '); return false;" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;">';
+                statusHtml += '<div class="status-option table-export-exclude" onclick="appointment_mark_as(\'' + statusOption.value + '\', ' + appointment_id + '); return false;" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;">';
                 statusHtml += statusOption.label;
                 statusHtml += '</div>';
             }
@@ -1147,8 +1163,6 @@ function generateStatusHtml(status, appointment_id) {
         
         statusHtml += '</div>';
     }
-    
-    statusHtml += '</div>';
     
     return statusHtml;
 }
@@ -1174,7 +1188,7 @@ $(document).on('click', '.status-button', function(e) {
 
 // Hide status menus when clicking outside
 $(document).on('click', function(e) {
-    if (!$(e.target).closest('.status-wrapper').length) {
+    if (!$(e.target).closest('.status-button').length && !$(e.target).closest('.status-dropdown').length) {
         $('.status-dropdown').hide();
     }
 });
