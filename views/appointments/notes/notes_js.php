@@ -226,12 +226,42 @@ function editNote(noteId) {
     // Extract just the text content (remove HTML tags)
     var textContent = noteText ? noteText.replace(/<[^>]*>/g, '').trim() : '';
     
+    // Get customer/lead info
+    var customerInfo = '';
+    <?php if (!empty($appointment->lead_name)): ?>
+        customerInfo += '<div class="alert alert-info" style="margin-bottom: 10px; padding: 8px 12px;">';
+        customerInfo += '<strong><i class="fa fa-user"></i> Customer:</strong> <?php echo addslashes($appointment->lead_name); ?><br>';
+        <?php if (!empty($appointment->email)): ?>
+        customerInfo += '<strong><i class="fa fa-envelope"></i> Email:</strong> <?php echo addslashes($appointment->email); ?><br>';
+        <?php endif; ?>
+        <?php if (!empty($appointment->phone)): ?>
+        customerInfo += '<strong><i class="fa fa-phone"></i> Phone:</strong> <?php echo addslashes($appointment->phone); ?>';
+        <?php endif; ?>
+        customerInfo += '</div>';
+    <?php elseif (!empty($appointment->name)): ?>
+        customerInfo += '<div class="alert alert-info" style="margin-bottom: 10px; padding: 8px 12px;">';
+        customerInfo += '<strong><i class="fa fa-user"></i> Customer:</strong> <?php echo addslashes($appointment->name); ?><br>';
+        <?php if (!empty($appointment->email)): ?>
+        customerInfo += '<strong><i class="fa fa-envelope"></i> Email:</strong> <?php echo addslashes($appointment->email); ?><br>';
+        <?php endif; ?>
+        <?php if (!empty($appointment->phone)): ?>
+        customerInfo += '<strong><i class="fa fa-phone"></i> Phone:</strong> <?php echo addslashes($appointment->phone); ?>';
+        <?php endif; ?>
+        customerInfo += '</div>';
+    <?php endif; ?>
+    
     // Create edit form
     var editForm = '<div class="timeline-record-wrapper" data-note-edit="' + noteId + '">';
     editForm += '<div class="timeline-date-section">';
     editForm += '<div class="date"><i class="fa fa-edit text-info"></i></div>';
     editForm += '</div>';
     editForm += '<div class="timeline-content-section">';
+    
+    // Add customer info
+    if (customerInfo) {
+        editForm += customerInfo;
+    }
+    
     editForm += '<div class="form-group">';
     editForm += '<div class="lead emoji-picker-container leadnotes">';
     editForm += '<textarea class="form-control" rows="3" id="edit-note-' + noteId + '" data-emojiable="true">' + textContent + '</textarea>';
