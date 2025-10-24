@@ -156,9 +156,7 @@ function addNote() {
     var $noteBtn = $('#note-btn');
     var originalHtml = $noteBtn.html();
     $noteBtn.html('<i class="fa fa-spinner fa-spin"></i> Adding...')
-             .prop('disabled', true)
-             .removeClass('btn-info')
-             .addClass('btn-info'); // Re-add to ensure styles apply
+             .prop('disabled', true);
     
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/add_note/' + appointmentId,
@@ -200,11 +198,9 @@ function addNote() {
             alert_float('danger', 'Error adding note');
         },
         complete: function() {
-            // Restore button with proper class
+            // Restore button
             $noteBtn.html(originalHtml)
-                   .prop('disabled', false)
-                   .removeClass('btn-info')
-                   .addClass('btn-info'); // Ensure color is maintained
+                   .prop('disabled', false);
         }
     });
 }
@@ -244,7 +240,7 @@ function editNote(noteId) {
     
     editForm += '<div class="text-right">';
     editForm += '<button class="btn btn-default btn-xs" onclick="cancelEditNote(' + noteId + ')" title="Cancel"><i class="fa fa-times"></i> Cancel</button> ';
-    editForm += '<button class="btn btn-info btn-xs" onclick="updateNote(' + noteId + ')" title="Update"><i class="fa fa-check"></i> Update</button>';
+    editForm += '<button class="btn btn-primary btn-xs" onclick="updateNote(' + noteId + ')" title="Update"><i class="fa fa-check"></i> Update</button>';
     editForm += '</div>';
     editForm += '</div>';
     editForm += '</div>';

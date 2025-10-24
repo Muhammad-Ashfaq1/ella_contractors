@@ -11,7 +11,7 @@
                     </div>
                 </div>
                 <div class="text-right">
-                    <button type="button" class="btn btn-info btn-sm" onclick="addNote()" id="note-btn">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="addNote()" id="note-btn">
                         <i class="fa fa-plus"></i> Add Note
                     </button>
                 </div>
@@ -36,46 +36,46 @@
 </div>
 
 <style>
-/* Ensure button maintains color when clicked */
-#note-btn.btn-info,
-#note-btn.btn-info:visited {
-    background-color: #5bc0de !important;
-    border-color: #46b8da !important;
+/* Ensure button maintains color when clicked - matching CRM primary button */
+#note-btn.btn-primary,
+#note-btn.btn-primary:visited {
+    background-color: #337ab7 !important;
+    border-color: #2e6da4 !important;
     color: #fff !important;
 }
 
-#note-btn.btn-info:hover {
-    background-color: #31b0d5 !important;
-    border-color: #269abc !important;
+#note-btn.btn-primary:hover {
+    background-color: #286090 !important;
+    border-color: #204d74 !important;
     color: #fff !important;
 }
 
-#note-btn.btn-info:active,
-#note-btn.btn-info:focus,
-#note-btn.btn-info.active,
-#note-btn.btn-info:active:focus {
-    background-color: #5bc0de !important;
-    border-color: #46b8da !important;
+#note-btn.btn-primary:active,
+#note-btn.btn-primary:focus,
+#note-btn.btn-primary.active,
+#note-btn.btn-primary:active:focus {
+    background-color: #337ab7 !important;
+    border-color: #2e6da4 !important;
     color: #fff !important;
     box-shadow: none !important;
     outline: none !important;
 }
 
 /* Maintain color when disabled/loading */
-#note-btn.btn-info:disabled,
-#note-btn.btn-info[disabled] {
-    background-color: #5bc0de !important;
-    border-color: #46b8da !important;
+#note-btn.btn-primary:disabled,
+#note-btn.btn-primary[disabled] {
+    background-color: #337ab7 !important;
+    border-color: #2e6da4 !important;
     color: #fff !important;
     opacity: 0.8 !important;
     cursor: not-allowed !important;
 }
 
 /* Prevent Bootstrap default styles from overriding */
-.btn-info:not(:disabled):not(.disabled):active,
-.btn-info:not(:disabled):not(.disabled).active,
-.show > .btn-info.dropdown-toggle {
-    background-color: #5bc0de !important;
-    border-color: #46b8da !important;
+.btn-primary:not(:disabled):not(.disabled):active,
+.btn-primary:not(:disabled):not(.disabled).active,
+.show > .btn-primary.dropdown-toggle {
+    background-color: #337ab7 !important;
+    border-color: #2e6da4 !important;
 }
 </style>
