@@ -547,7 +547,15 @@ function ella_contractors_activate_module() {
 
     // Add Appointment ID Column in proposals Table ends here 
     
-    
+    // Add updated_by column to measurement_records table
+    if (!$CI->db->field_exists('updated_by', db_prefix() . 'ella_contractor_measurement_records')) {
+        $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_measurement_records` ADD COLUMN `updated_by` int(11) DEFAULT NULL AFTER `created_by`');
+        try {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_measurement_records` ADD KEY `idx_updated_by` (`updated_by`)');
+        } catch (Exception $e) {
+            // Key might already exist, ignore error
+        }
+    }
     
     // Create upload directories
     $base_path = FCPATH . 'uploads/ella_presentations/';

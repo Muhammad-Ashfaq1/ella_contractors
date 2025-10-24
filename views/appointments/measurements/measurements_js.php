@@ -714,7 +714,7 @@ function displayMeasurements(measurements) {
         html += '<tr>';
         html += '<th style="text-align: center; padding: 12px;">Category</th>';
         html += '<th style="text-align: center; padding: 12px;">Items Count</th>';
-        html += '<th style="text-align: center; padding: 12px;">Created At</th>';
+        html += '<th style="text-align: center; padding: 12px;">Last Updated</th>';
         html += '<th style="text-align: center; padding: 12px; width: 120px;">Actions</th>';
         html += '</tr>';
         html += '</thead>';
@@ -723,10 +723,26 @@ function displayMeasurements(measurements) {
         measurements.forEach(function(measurement, idx) {
             var rowClass = (idx % 2 === 0) ? 'style="background-color: #f8f9fa;"' : 'style="background-color: white;"';
             
+            // Format updated info: "October 21, 2025 | By: Tanner"
+            var updatedInfo = '';
+            if (measurement.formatted_updated_date) {
+                updatedInfo = measurement.formatted_updated_date;
+                if (measurement.updated_by_name) {
+                    updatedInfo += ' <span style="color: #6c757d;">|</span> By: <strong>' + measurement.updated_by_name + '</strong>';
+                }
+            } else if (measurement.formatted_date) {
+                updatedInfo = measurement.formatted_date;
+                if (measurement.updated_by_name) {
+                    updatedInfo += ' <span style="color: #6c757d;">|</span> By: <strong>' + measurement.updated_by_name + '</strong>';
+                }
+            } else {
+                updatedInfo = '-';
+            }
+            
             html += '<tr ' + rowClass + '>';
             html += '<td style="text-align: center; padding: 12px;"><strong>' + (measurement.tab_name || 'Untitled') + '</strong></td>';
             html += '<td style="text-align: center; padding: 12px;">' + (measurement.items_count || 0) + ' items</td>';
-            html += '<td style="text-align: center; padding: 12px;">' + (measurement.formatted_date || new Date(measurement.created_at).toLocaleDateString() || '-') + '</td>';
+            html += '<td style="text-align: center; padding: 12px;">' + updatedInfo + '</td>';
             html += '<td style="text-align: center; padding: 12px; vertical-align: middle;">';
             html += '<div style="display: flex; flex-direction: row; gap: 4px; align-items: center; justify-content: center;">';
             html += '<button class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="editMeasurement(' + measurement.id + ')" title="Edit Measurement"><i class="fa fa-edit"></i></button>';

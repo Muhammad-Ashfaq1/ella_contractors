@@ -104,7 +104,8 @@ class Measurements extends AdminController
                     'org_id' => $org_id,
                     'appointment_id' => $appointment_id,
                     'tab_name' => $tab_data['tab_name'],
-                    'created_by' => get_staff_user_id()
+                    'created_by' => get_staff_user_id(),
+                    'updated_by' => get_staff_user_id()
                 ];
                 
                 $this->db->insert(db_prefix() . 'ella_contractor_measurement_records', $record_data);
@@ -258,11 +259,14 @@ class Measurements extends AdminController
             ajax_access_denied();
         }
 
-        // Get all records for this appointment
-        $records = $this->db->where('appointment_id', $appointment_id)
-            ->order_by('created_at', 'DESC')
-            ->get(db_prefix() . 'ella_contractor_measurement_records')
-            ->result_array();
+        // Get all records for this appointment with staff info
+        $this->db->select(db_prefix() . 'ella_contractor_measurement_records.*, 
+            CONCAT(' . db_prefix() . 'staff.firstname, " ", ' . db_prefix() . 'staff.lastname) as updated_by_name');
+        $this->db->from(db_prefix() . 'ella_contractor_measurement_records');
+        $this->db->join(db_prefix() . 'staff', db_prefix() . 'staff.staffid = ' . db_prefix() . 'ella_contractor_measurement_records.updated_by', 'left');
+        $this->db->where(db_prefix() . 'ella_contractor_measurement_records.appointment_id', $appointment_id);
+        $this->db->order_by(db_prefix() . 'ella_contractor_measurement_records.created_at', 'DESC');
+        $records = $this->db->get()->result_array();
         
         // Get items for each record
         foreach ($records as &$record) {
@@ -274,8 +278,17 @@ class Measurements extends AdminController
             $record['items'] = $items;
             $record['items_count'] = count($items);
             
-            // Format created_at date using CRM's date format
-            $record['formatted_date'] = _d($record['created_at']);
+            // Format dates using same format as appointment listing: "October 21st, 2025  |  9:45am"
+            $record['formatted_date'] = $this->format_date_time($record['created_at']);
+            $record['formatted_updated_date'] = $this->format_date_time($record['updated_at']);
+            
+            // Get staff name - fallback to created_by if updated_by is null
+            if (empty($record['updated_by_name'])) {
+                $this->db->select('CONCAT(firstname, " ", lastname) as name');
+                $this->db->where('staffid', $record['created_by']);
+                $staff = $this->db->get(db_prefix() . 'staff')->row();
+                $record['updated_by_name'] = $staff ? $staff->name : 'Unknown';
+            }
         }
         
         header('Content-Type: application/json');
