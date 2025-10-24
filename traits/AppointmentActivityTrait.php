@@ -3,49 +3,79 @@
 /**
  * AppointmentActivityTrait
  * 
- * Reusable trait for logging appointment activities following the leads activity pattern
- * Provides consistent logging across all appointment-related operations
+ * Unified activity logging system for appointment-related operations
+ * Supports: APPOINTMENT, NOTES, ATTACHMENTS, MEASUREMENT, ESTIMATES, PROPOSAL
+ * Actions: created, updated, deleted, added, sent, clicked
  * 
  * @package EllaContractors
- * @version 1.0.0
+ * @version 2.0.0
  */
 trait AppointmentActivityTrait
 {
     /**
-     * Log appointment activity
-     * Following the same pattern as Leads_model::log_lead_activity
+     * Unified activity logger - Single entry point for all timeline logs
      * 
-     * @param int    $appointment_id    Appointment ID
-     * @param string $description_key   Activity description key for translation
-     * @param bool   $integration       Whether this is from integration (default: false)
-     * @param string $additional_data   Additional data to store (serialized)
+     * Usage Examples:
+     * - add_activity_log(1, 'APPOINTMENT', 'created', ['subject' => 'Meeting', 'date' => '2025-01-15'])
+     * - add_activity_log(1, 'NOTES', 'updated', ['note_id' => 5, 'content' => 'Updated note'])
+     * - add_activity_log(1, 'ATTACHMENTS', 'deleted', ['filename' => 'doc.pdf'])
+     * - add_activity_log(1, 'MEASUREMENT', 'created', ['tab_name' => 'Room 1', 'items' => 5])
+     * - add_activity_log(1, 'ESTIMATES', 'created', ['estimate_id' => 10, 'total' => 5000])
+     * 
+     * @param int    $appointment_id    Appointment ID (rel_id)
+     * @param string $log_type          Log type: APPOINTMENT, NOTES, ATTACHMENTS, MEASUREMENT, ESTIMATES, PROPOSAL
+     * @param string $action            Action: created, updated, deleted, added, sent, clicked
+     * @param array  $additional_data   Additional data to store (flexible array)
+     * @param bool   $integration       Whether from integration (default: false)
      * @return int|false                Log ID on success, false on failure
      */
-    public function log_appointment_activity($appointment_id, $description_key, $integration = false, $additional_data = '')
+    public function add_activity_log($appointment_id, $log_type, $action, $additional_data = [], $integration = false)
     {
         $CI = &get_instance();
         
-        // Get staff ID - use current logged in staff or default to 1
+        // Validate log_type
+        $valid_log_types = ['APPOINTMENT', 'NOTES', 'ATTACHMENTS', 'MEASUREMENT', 'ESTIMATES', 'PROPOSAL'];
+        $log_type = strtoupper($log_type);
+        if (!in_array($log_type, $valid_log_types)) {
+            log_message('error', 'Invalid log_type: ' . $log_type);
+            return false;
+        }
+        
+        // Validate action
+        $valid_actions = ['created', 'updated', 'deleted', 'added', 'sent', 'clicked', 'uploaded', 'removed'];
+        $action = strtolower($action);
+        if (!in_array($action, $valid_actions)) {
+            log_message('error', 'Invalid action: ' . $action);
+            return false;
+        }
+        
+        // Get staff ID
         $staff_id = 1;
         if (get_staff_user_id()) {
             $staff_id = get_staff_user_id();
         }
-        
-        // If integration, use staff ID 1
-        if ($integration == true) {
+        if ($integration === true) {
             $staff_id = 1;
         }
         
-        // Update last_activity in staff table (following leads pattern)
-        $staff_data['last_login'] = date('Y-m-d H:i:s');
+        // Update staff last activity
         $CI->db->where('staffid', $staff_id);
-        $CI->db->update(db_prefix() . 'staff', $staff_data);
+        $CI->db->update(db_prefix() . 'staff', ['last_login' => date('Y-m-d H:i:s')]);
         
-        // Get organization ID if available
+        // Get organization ID
         $org_id = null;
         if (function_exists('get_organization_id')) {
             $org_id = get_organization_id();
         }
+        
+        // Build description key for language translation
+        $description_key = strtolower($log_type) . '_' . $action;
+        
+        // Build human-readable description
+        $description = $this->build_description($log_type, $action, $additional_data);
+        
+        // Ensure table columns exist (check and add if needed)
+        $this->ensure_log_table_columns();
         
         // Prepare log data
         $log = [
@@ -53,24 +83,29 @@ trait AppointmentActivityTrait
             'rel_id'          => $appointment_id,
             'org_id'          => $org_id,
             'staff_id'        => $staff_id,
-            'description'     => _l($description_key), // Translate the description
+            'log_type'        => $log_type,
+            'action'          => $action,
+            'description'     => $description,
             'description_key' => $description_key,
-            'additional_data' => $additional_data,
+            'additional_data' => !empty($additional_data) ? json_encode($additional_data) : null,
             'date'            => date('Y-m-d H:i:s'),
             'full_name'       => get_staff_full_name($staff_id),
+            'created_at'      => date('Y-m-d H:i:s')
         ];
         
-        // Insert into activity log table
+        // Insert log
         $CI->db->insert(db_prefix() . 'ella_appointment_activity_log', $log);
         $log_id = $CI->db->insert_id();
         
+        // Trigger hook for extensibility
         if ($log_id) {
-            // Trigger hook for additional processing
             hooks()->do_action('appointment_activity_logged', [
-                'log_id' => $log_id,
+                'log_id'         => $log_id,
                 'appointment_id' => $appointment_id,
-                'description_key' => $description_key,
-                'staff_id' => $staff_id
+                'log_type'       => $log_type,
+                'action'         => $action,
+                'staff_id'       => $staff_id,
+                'data'           => $additional_data
             ]);
         }
         
@@ -78,337 +113,225 @@ trait AppointmentActivityTrait
     }
     
     /**
-     * Get appointment activity log
-     * Following the same pattern as Leads_model::get_lead_activity_log
+     * Get timeline (activity logs) with optional filtering
      * 
-     * @param int $appointment_id Appointment ID
-     * @return array              Array of activity logs
+     * Usage Examples:
+     * - get_timeline(1) - Get all logs for appointment ID 1
+     * - get_timeline(1, ['log_type' => 'NOTES']) - Only notes logs
+     * - get_timeline(1, ['action' => 'created']) - Only creation logs
+     * - get_timeline(1, ['log_type' => 'MEASUREMENT', 'action' => 'deleted']) - Deleted measurements
+     * - get_timeline(1, ['limit' => 10]) - Latest 10 logs
+     * - get_timeline(1, ['order' => 'ASC']) - Oldest first
+     * 
+     * @param int   $appointment_id  Appointment ID
+     * @param array $filters         Optional filters: log_type, action, limit, order (ASC/DESC)
+     * @return array                 Array of activity logs
      */
-    public function get_appointment_activity_log($appointment_id)
+    public function get_timeline($appointment_id, $filters = [])
     {
         $CI = &get_instance();
         
-        $sorting = hooks()->apply_filters('appointment_activity_log_default_sort', 'DESC');
-        
+        // Base query
         $CI->db->where('rel_id', $appointment_id);
         $CI->db->where('rel_type', 'appointment');
-        $CI->db->order_by('date', $sorting);
         
-        return $CI->db->get(db_prefix() . 'ella_appointment_activity_log')->result_array();
+        // Apply filters
+        if (!empty($filters['log_type'])) {
+            $CI->db->where('log_type', strtoupper($filters['log_type']));
+        }
+        
+        if (!empty($filters['action'])) {
+            $CI->db->where('action', strtolower($filters['action']));
+        }
+        
+        // Sorting
+        $order = !empty($filters['order']) ? strtoupper($filters['order']) : 'DESC';
+        $order = in_array($order, ['ASC', 'DESC']) ? $order : 'DESC';
+        $CI->db->order_by('date', $order);
+        
+        // Limit
+        if (!empty($filters['limit']) && is_numeric($filters['limit'])) {
+            $CI->db->limit($filters['limit']);
+        }
+        
+        $logs = $CI->db->get(db_prefix() . 'ella_appointment_activity_log')->result_array();
+        
+        // Decode JSON additional_data for each log
+        foreach ($logs as &$log) {
+            if (!empty($log['additional_data'])) {
+                $decoded = json_decode($log['additional_data'], true);
+                $log['additional_data'] = $decoded ? $decoded : $log['additional_data'];
+            }
+        }
+        
+        return $logs;
     }
     
     /**
-     * Log appointment creation
+     * Build human-readable description from log_type, action, and data
      * 
-     * @param int    $appointment_id Appointment ID
-     * @param string $subject       Appointment subject
-     * @param string $date          Appointment date
-     * @param string $time          Appointment time
-     * @return int|false            Log ID on success, false on failure
+     * @param string $log_type         Log type
+     * @param string $action           Action
+     * @param array  $additional_data  Additional data
+     * @return string                  Human-readable description
      */
-    public function log_appointment_created($appointment_id, $subject, $date, $time)
+    private function build_description($log_type, $action, $additional_data)
     {
-        $additional_data = serialize([
-            'subject' => $subject,
-            'date' => $date,
-            'time' => $time
-        ]);
+        $entity = $this->get_entity_display_name($log_type);
+        $action_display = ucfirst($action);
         
-        return $this->log_appointment_activity(
-            $appointment_id, 
-            'appointment_activity_created', 
-            false, 
-            $additional_data
-        );
+        // Extract key info from additional_data
+        $name = '';
+        if (!empty($additional_data['subject'])) {
+            $name = $additional_data['subject'];
+        } elseif (!empty($additional_data['tab_name'])) {
+            $name = $additional_data['tab_name'];
+        } elseif (!empty($additional_data['filename'])) {
+            $name = $additional_data['filename'];
+        } elseif (!empty($additional_data['estimate_id'])) {
+            $name = 'Estimate #' . $additional_data['estimate_id'];
+        } elseif (!empty($additional_data['note_id'])) {
+            $name = 'Note #' . $additional_data['note_id'];
+        }
+        
+        // Build description based on action
+        switch ($action) {
+            case 'created':
+            case 'added':
+                return $name ? "{$entity} '{$name}' {$action_display}" : "{$entity} {$action_display}";
+            
+            case 'updated':
+                if (!empty($additional_data['changes'])) {
+                    $changes = is_array($additional_data['changes']) ? implode(', ', array_keys($additional_data['changes'])) : '';
+                    return $name ? "{$entity} '{$name}' Updated ({$changes})" : "{$entity} Updated";
+                }
+                return $name ? "{$entity} '{$name}' Updated" : "{$entity} Updated";
+            
+            case 'deleted':
+            case 'removed':
+                return $name ? "{$entity} '{$name}' {$action_display}" : "{$entity} {$action_display}";
+            
+            case 'sent':
+                if ($log_type === 'SMS' && !empty($additional_data['phone_number'])) {
+                    return "SMS Sent to {$additional_data['phone_number']}";
+                } elseif ($log_type === 'EMAIL' && !empty($additional_data['email_address'])) {
+                    return "Email Sent to {$additional_data['email_address']}";
+                }
+                return "{$entity} Sent";
+            
+            case 'clicked':
+                return "{$entity} Clicked";
+            
+            case 'uploaded':
+                return $name ? "{$entity} '{$name}' Uploaded" : "{$entity} Uploaded";
+            
+            default:
+                return "{$entity} {$action_display}";
+        }
     }
     
     /**
-     * Log appointment update
+     * Get display name for entity type
      * 
-     * @param int    $appointment_id Appointment ID
-     * @param string $subject       Appointment subject
-     * @param array  $changes       Array of changed fields
-     * @return int|false            Log ID on success, false on failure
+     * @param string $log_type  Log type
+     * @return string           Display name
      */
-    public function log_appointment_updated($appointment_id, $subject, $changes = [])
+    private function get_entity_display_name($log_type)
     {
-        $additional_data = serialize([
-            'subject' => $subject,
-            'changes' => $changes
-        ]);
+        $names = [
+            'APPOINTMENT'  => 'Appointment',
+            'NOTES'        => 'Note',
+            'ATTACHMENTS'  => 'Attachment',
+            'MEASUREMENT'  => 'Measurement',
+            'ESTIMATES'    => 'Estimate',
+            'PROPOSAL'     => 'Proposal',
+            'SMS'          => 'SMS',
+            'EMAIL'        => 'Email'
+        ];
         
-        return $this->log_appointment_activity(
-            $appointment_id, 
-            'appointment_activity_updated', 
-            false, 
-            $additional_data
-        );
+        return $names[$log_type] ?? ucfirst(strtolower($log_type));
     }
     
     /**
-     * Log appointment status change
+     * Ensure activity log table has required columns
+     * Adds log_type and action columns if they don't exist
      * 
-     * @param int    $appointment_id Appointment ID
-     * @param string $old_status    Previous status
-     * @param string $new_status    New status
-     * @return int|false            Log ID on success, false on failure
+     * @return void
      */
-    public function log_appointment_status_changed($appointment_id, $old_status, $new_status)
+    private function ensure_log_table_columns()
     {
-        $additional_data = serialize([
-            'old_status' => $old_status,
-            'new_status' => $new_status
-        ]);
+        $CI = &get_instance();
+        $table = db_prefix() . 'ella_appointment_activity_log';
         
-        return $this->log_appointment_activity(
-            $appointment_id, 
-            'appointment_activity_status_changed', 
-            false, 
-            $additional_data
-        );
+        // Check and add log_type column
+        if (!$CI->db->field_exists('log_type', $table)) {
+            try {
+                $CI->db->query("ALTER TABLE `{$table}` ADD COLUMN `log_type` VARCHAR(50) NULL AFTER `staff_id`");
+                $CI->db->query("ALTER TABLE `{$table}` ADD INDEX `idx_log_type` (`log_type`)");
+                log_message('info', 'Added log_type column to ella_appointment_activity_log table');
+            } catch (Exception $e) {
+                log_message('error', 'Failed to add log_type column: ' . $e->getMessage());
+            }
+        }
+        
+        // Check and add action column
+        if (!$CI->db->field_exists('action', $table)) {
+            try {
+                $CI->db->query("ALTER TABLE `{$table}` ADD COLUMN `action` VARCHAR(50) NULL AFTER `log_type`");
+                $CI->db->query("ALTER TABLE `{$table}` ADD INDEX `idx_action` (`action`)");
+                log_message('info', 'Added action column to ella_appointment_activity_log table');
+            } catch (Exception $e) {
+                log_message('error', 'Failed to add action column: ' . $e->getMessage());
+            }
+        }
     }
     
+    // ==================== BACKWARD COMPATIBILITY METHODS ====================
+    // These methods maintain compatibility with existing code
+    // They now use the unified add_activity_log() internally
     
     /**
-     * Log appointment measurement added
-     * 
-     * @param int    $appointment_id Appointment ID
-     * @param string $measurement   Measurement details
-     * @return int|false            Log ID on success, false on failure
+     * @deprecated Use add_activity_log() instead
      */
-    public function log_appointment_measurement_added($appointment_id, $measurement)
+    public function log_activity($appointment_id, $activity_type, $entity_type, $entity_name = '', $data = [])
     {
-        $additional_data = serialize([
-            'measurement' => $measurement
-        ]);
+        // Map old entity_type to new log_type
+        $log_type_map = [
+            'appointment' => 'APPOINTMENT',
+            'note'        => 'NOTES',
+            'attachment'  => 'ATTACHMENTS',
+            'file'        => 'ATTACHMENTS',
+            'measurement' => 'MEASUREMENT',
+            'estimate'    => 'ESTIMATES',
+            'proposal'    => 'PROPOSAL',
+            'sms'         => 'SMS',
+            'email'       => 'EMAIL'
+        ];
         
-        return $this->log_appointment_activity(
-            $appointment_id, 
-            'appointment_activity_measurement_added', 
-            false, 
-            $additional_data
-        );
+        $log_type = $log_type_map[strtolower($entity_type)] ?? strtoupper($entity_type);
+        
+        // Add entity name to data if provided
+        if ($entity_name) {
+            $data['entity_name'] = $entity_name;
+        }
+        
+        return $this->add_activity_log($appointment_id, $log_type, $activity_type, $data);
     }
     
     /**
-     * Log appointment measurement removed
-     * 
-     * @param int    $appointment_id Appointment ID
-     * @param string $measurement   Measurement details
-     * @return int|false            Log ID on success, false on failure
-     */
-    public function log_appointment_measurement_removed($appointment_id, $measurement)
-    {
-        $additional_data = serialize([
-            'measurement' => $measurement
-        ]);
-        
-        return $this->log_appointment_activity(
-            $appointment_id, 
-            'appointment_activity_measurement_removed', 
-            false, 
-            $additional_data
-        );
-    }
-    
-    /**
-     * Log appointment scheduled event process
-     * 
-     * @param int    $appointment_id Appointment ID
-     * @param string $process       Process description
-     * @param string $status        Process status
-     * @return int|false            Log ID on success, false on failure
-     */
-    public function log_appointment_process($appointment_id, $process, $status = 'completed')
-    {
-        $additional_data = serialize([
-            'process' => $process,
-            'status' => $status
-        ]);
-        
-        return $this->log_appointment_activity(
-            $appointment_id, 
-            'appointment_activity_process', 
-            false, 
-            $additional_data
-        );
-    }
-    
-    /**
-     * Log appointment deletion
-     * 
-     * @param int    $appointment_id Appointment ID
-     * @param string $subject       Appointment subject
-     * @return int|false            Log ID on success, false on failure
-     */
-    public function log_appointment_deleted($appointment_id, $subject)
-    {
-        $additional_data = serialize([
-            'subject' => $subject
-        ]);
-        
-        return $this->log_appointment_activity(
-            $appointment_id, 
-            'appointment_activity_deleted', 
-            false, 
-            $additional_data
-        );
-    }
-    
-    /**
-     * Log appointment attachment activity (generic method)
-     * 
-     * @param int    $appointment_id Appointment ID
-     * @param string $action        Action type (uploaded, deleted, etc.)
-     * @param string $filename      File name
-     * @param array  $additional_data Additional data (file_size, file_type, etc.)
-     * @return int|false            Log ID on success, false on failure
+     * @deprecated Use add_activity_log() instead
      */
     public function log_appointment_attachment_activity($appointment_id, $action, $filename, $additional_data = [])
     {
-        // Build description key dynamically
-        $description_key = 'appointment_activity_attachment_' . $action;
-        
-        // Merge filename with additional data
-        $data = array_merge([
-            'filename' => $filename
-        ], $additional_data);
-        
-        $serialized_data = serialize($data);
-        
-        return $this->log_appointment_activity(
-            $appointment_id, 
-            $description_key, 
-            false, 
-            $serialized_data
-        );
-    }
-    
-    
-    /**
-     * Generic activity logger - handles all activity types dynamically
-     * 
-     * @param int    $appointment_id Appointment ID
-     * @param string $activity_type Activity type (created, updated, deleted, sent, etc.)
-     * @param string $entity_type   Entity type (estimate, measurement, note, email, sms, file)
-     * @param string $entity_name   Name/title of the entity
-     * @param array  $data          Additional data to store
-     * @param string $description   Custom description (optional)
-     * @return int|false            Log ID on success, false on failure
-     */
-    public function log_activity($appointment_id, $activity_type, $entity_type, $entity_name = '', $data = [], $description = '')
-    {
-        // Build description if not provided
-        if (empty($description)) {
-            $description = $this->build_activity_description($activity_type, $entity_type, $entity_name, $data);
-        }
-        
-        // Build description key
-        $description_key = $entity_type . '_' . $activity_type;
-        
-        // Prepare additional data
-        $additional_data = serialize(array_merge($data, [
-            'entity_type' => $entity_type,
-            'entity_name' => $entity_name,
-            'activity_type' => $activity_type
-        ]));
-        
-        return $this->log_appointment_activity($appointment_id, $description_key, $description, $additional_data);
+        $additional_data['filename'] = $filename;
+        return $this->add_activity_log($appointment_id, 'ATTACHMENTS', $action, $additional_data);
     }
     
     /**
-     * Build activity description dynamically
-     * 
-     * @param string $activity_type Activity type
-     * @param string $entity_type   Entity type
-     * @param string $entity_name   Entity name
-     * @param array  $data          Additional data
-     * @return string               Generated description
+     * @deprecated Use get_timeline() instead
      */
-    private function build_activity_description($activity_type, $entity_type, $entity_name, $data)
+    public function get_appointment_activity_log($appointment_id)
     {
-        // Proper entity display names
-        $entity_display = $this->get_proper_entity_name($entity_type);
-        $activity_display = $this->get_proper_activity_name($activity_type);
-        
-        switch ($activity_type) {
-            case 'created':
-                if ($entity_name) {
-                    return "{$entity_display} '{$entity_name}' Created";
-                }
-                return "{$entity_display} Created";
-            case 'updated':
-                if ($entity_name) {
-                    return "{$entity_display} '{$entity_name}' Updated";
-                }
-                return "{$entity_display} Updated";
-            case 'deleted':
-                if ($entity_name) {
-                    return "{$entity_display} '{$entity_name}' Deleted";
-                }
-                return "{$entity_display} Deleted";
-            case 'sent':
-                if ($entity_type === 'sms') {
-                    $phone = $data['phone_number'] ?? 'unknown';
-                    return "SMS Sent to {$phone}";
-                } elseif ($entity_type === 'email') {
-                    $email = $data['email_address'] ?? 'unknown';
-                    $subject = $data['subject'] ?? '';
-                    return "Email Sent to {$email}" . ($subject ? ": {$subject}" : '');
-                }
-                return "{$entity_display} Sent";
-            case 'clicked':
-                if ($entity_type === 'email') {
-                    $email = $data['email_address'] ?? 'unknown';
-                    return "Email Button Clicked for {$email}";
-                }
-                return "{$entity_display} Clicked";
-            case 'added':
-                return "{$entity_display} Added to Appointment";
-            default:
-                return "{$entity_display} {$activity_display}";
-        }
-    }
-    
-    /**
-     * Get proper entity display name
-     * 
-     * @param string $entity_type Entity type
-     * @return string             Proper display name
-     */
-    private function get_proper_entity_name($entity_type)
-    {
-        $names = [
-            'appointment' => 'Appointment',
-            'estimate' => 'Estimate',
-            'measurement' => 'Measurement',
-            'note' => 'Note',
-            'email' => 'Email',
-            'sms' => 'SMS',
-            'file' => 'File',
-            'attachment' => 'Attachment'
-        ];
-        
-        return $names[$entity_type] ?? ucfirst($entity_type);
-    }
-    
-    /**
-     * Get proper activity display name
-     * 
-     * @param string $activity_type Activity type
-     * @return string               Proper display name
-     */
-    private function get_proper_activity_name($activity_type)
-    {
-        $names = [
-            'created' => 'Created',
-            'updated' => 'Updated',
-            'deleted' => 'Deleted',
-            'sent' => 'Sent',
-            'clicked' => 'Clicked',
-            'added' => 'Added'
-        ];
-        
-        return $names[$activity_type] ?? ucfirst($activity_type);
+        return $this->get_timeline($appointment_id);
     }
 }

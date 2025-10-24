@@ -70,7 +70,23 @@
                                 
                                 // Show detailed changes if available (keep existing functionality)
                                 if (!empty($activity['additional_data'])) {
-                                    $additional_data = @unserialize($activity['additional_data']);
+                                    // Handle both JSON (new system) and serialized (old system) data
+                                    $additional_data = null;
+                                    
+                                    if (is_array($activity['additional_data'])) {
+                                        // Already decoded by get_timeline() - new system
+                                        $additional_data = $activity['additional_data'];
+                                    } elseif (is_string($activity['additional_data'])) {
+                                        // Try JSON first (new system)
+                                        $json_decoded = @json_decode($activity['additional_data'], true);
+                                        if ($json_decoded !== null && is_array($json_decoded)) {
+                                            $additional_data = $json_decoded;
+                                        } else {
+                                            // Fallback to unserialize (old system)
+                                            $additional_data = @unserialize($activity['additional_data']);
+                                        }
+                                    }
+                                    
                                     if ($additional_data !== false && is_array($additional_data) && isset($additional_data['changes']) && !empty($additional_data['changes'])) {
                                         echo '<div class="timeline-activity-details">';
                                         echo '<h6>Changes:</h6>';

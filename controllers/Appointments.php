@@ -994,8 +994,17 @@ class Appointments extends AdminController
                 $success = $this->misc_model->edit_note($update_data, $note_id);
                 
                 if ($success) {
-                    // Log note update activity
-                    $this->appointments_model->log_activity($rel_id, 'updated', 'note', '', ['note_id' => $note_id, 'changes' => ['content' => ['old' => $note->description, 'new' => $data['description']]]]);
+                    // Log note update activity using unified method
+                    $this->appointments_model->add_activity_log(
+                        $rel_id, 
+                        'NOTES', 
+                        'updated', 
+                        [
+                            'note_id' => $note_id,
+                            'content_preview' => substr(strip_tags($data['description']), 0, 100),
+                            'changes' => ['old' => $note->description, 'new' => $data['description']]
+                        ]
+                    );
                     echo json_encode(['success' => true, 'message' => 'Note updated successfully']);
                 } else {
                     echo json_encode(['success' => false, 'message' => 'Failed to update note']);
@@ -1005,8 +1014,17 @@ class Appointments extends AdminController
                 $note_id = $this->misc_model->add_note($data, 'appointment', $rel_id);
                 
                 if ($note_id) {
-                    // Log note addition activity
-                    $this->appointments_model->log_activity($rel_id, 'added', 'note', '', ['note_id' => $note_id, 'note_content' => $data['description']]);
+                    // Log note addition activity using unified method
+                    $this->appointments_model->add_activity_log(
+                        $rel_id, 
+                        'NOTES', 
+                        'created', 
+                        [
+                            'note_id' => $note_id,
+                            'content_preview' => substr(strip_tags($data['description']), 0, 100),
+                            'added_by' => get_staff_user_id()
+                        ]
+                    );
                     echo json_encode(['success' => true, 'message' => 'Note added successfully']);
                 } else {
                     echo json_encode(['success' => false, 'message' => 'Failed to add note']);
@@ -1055,11 +1073,34 @@ class Appointments extends AdminController
             ajax_access_denied();
         }
 
+        // Fetch only real notes from tblnotes table, NOT timeline activities
         $notes = $this->misc_model->get_notes($appointment_id, 'appointment');
         
+        // Filter out any notes that look like timeline activities
+        $filtered_notes = [];
         if ($notes) {
+            foreach ($notes as $note) {
+                // Skip notes that are actually timeline activity descriptions
+                $description = strip_tags($note['description']);
+                $timeline_keywords = ['APPOINTMENT CREATED', 'NOTE ADDED', 'NOTE UPDATED', 'APPOINTMENT UPDATED', 'APPOINTMENT STATUS CHANGED'];
+                
+                $is_timeline_activity = false;
+                foreach ($timeline_keywords as $keyword) {
+                    if (stripos($description, $keyword) !== false && strlen($description) < 50) {
+                        $is_timeline_activity = true;
+                        break;
+                    }
+                }
+                
+                if (!$is_timeline_activity) {
+                    $filtered_notes[] = $note;
+                }
+            }
+        }
+        
+        if ($filtered_notes) {
             // Add time_ago and profile image for each note
-            foreach ($notes as &$note) {
+            foreach ($filtered_notes as &$note) {
                 $note['time_ago'] = time_ago($note['dateadded']);
                 
                 // Add profile image path (same as timeline)
@@ -1073,7 +1114,7 @@ class Appointments extends AdminController
                     $note['profile_image'] = admin_url('assets/images/user-placeholder.jpg');
                 }
             }
-            echo json_encode(['success' => true, 'data' => $notes]);
+            echo json_encode(['success' => true, 'data' => $filtered_notes]);
         } else {
             echo json_encode(['success' => true, 'data' => []]);
         }
@@ -1088,9 +1129,25 @@ class Appointments extends AdminController
             ajax_access_denied();
         }
 
+        // Get note details before deleting for logging
+        $note = $this->db->get_where(db_prefix() . 'notes', ['id' => $note_id])->row();
+        
         $success = $this->misc_model->delete_note($note_id);
         
         if ($success) {
+            // Log note deletion using unified method
+            if ($note && $note->rel_type === 'appointment') {
+                $this->appointments_model->add_activity_log(
+                    $note->rel_id, 
+                    'NOTES', 
+                    'deleted', 
+                    [
+                        'note_id' => $note_id,
+                        'content_preview' => substr(strip_tags($note->description), 0, 100),
+                        'deleted_by' => get_staff_user_id()
+                    ]
+                );
+            }
             echo json_encode(['success' => true, 'message' => 'Note deleted successfully']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to delete note or you do not have permission']);
@@ -1182,14 +1239,16 @@ class Appointments extends AdminController
                 if ($result['success']) {
                     $uploaded_files[] = $result;
                     
-                    // Log attachment upload activity using generic method
-                    $this->appointments_model->log_appointment_attachment_activity(
+                    // Log attachment upload activity using unified method
+                    $this->appointments_model->add_activity_log(
                         $appointment_id,
+                        'ATTACHMENTS',
                         'uploaded',
-                        $file_data['name'],
                         [
+                            'filename' => $file_data['name'],
                             'file_size' => $this->format_bytes($file_data['size']),
-                            'file_type' => strtolower(pathinfo($file_data['name'], PATHINFO_EXTENSION))
+                            'file_type' => strtolower(pathinfo($file_data['name'], PATHINFO_EXTENSION)),
+                            'media_id' => $result['media_id'] ?? null
                         ]
                     );
                 } else {
@@ -1251,11 +1310,16 @@ class Appointments extends AdminController
                 @unlink($file_path);
             }
             
-            // Log attachment deletion activity using generic method
-            $this->appointments_model->log_appointment_attachment_activity(
+            // Log attachment deletion activity using unified method
+            $this->appointments_model->add_activity_log(
                 $attachment->rel_id,
+                'ATTACHMENTS',
                 'deleted',
-                $attachment->original_name
+                [
+                    'filename' => $attachment->original_name,
+                    'file_type' => strtolower(pathinfo($attachment->original_name, PATHINFO_EXTENSION)),
+                    'attachment_id' => $attachment_id
+                ]
             );
             
             echo json_encode([
@@ -1740,8 +1804,8 @@ startxref
             return;
         }
         
-        // Get timeline activities
-        $timeline_activities = $this->appointments_model->get_appointment_timeline($id);
+        // Get timeline activities using unified method
+        $timeline_activities = $this->appointments_model->get_timeline($id);
         
         // Load language file for timeline
         $this->lang->load('ella_contractors/ella_contractors', 'english');

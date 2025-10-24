@@ -109,12 +109,18 @@ class Ella_appointments_model extends App_Model
             // Log general activity
             log_activity('New Appointment Created [ID: ' . $appointment_id . ', Subject: ' . $data['subject'] . ']');
             
-            // Log detailed appointment activity using trait
-            $this->log_appointment_created(
+            // Log to timeline using unified method
+            $this->add_activity_log(
                 $appointment_id, 
-                $data['subject'], 
-                $data['date'] ?? '', 
-                $data['start_hour'] ?? ''
+                'APPOINTMENT', 
+                'created', 
+                [
+                    'subject' => $data['subject'],
+                    'date' => $data['date'] ?? '',
+                    'time' => $data['start_hour'] ?? '',
+                    'contact_id' => $data['contact_id'] ?? null,
+                    'type_id' => $data['type_id'] ?? null
+                ]
             );
             
             return $appointment_id;
@@ -174,17 +180,32 @@ class Ella_appointments_model extends App_Model
         if ($this->db->affected_rows() >= 0) {
             // Log general activity (only if there were actual changes)
             if (!empty($changes)) {
-                log_activity('Appointment Updated [ID: ' . $id . ', Subject: ' . $data['subject'] . ']');
+                log_activity('Appointment Updated [ID: ' . $id . ', Subject: ' . ($data['subject'] ?? $original->subject) . ']');
                 
-                // Log detailed appointment activity using trait
-                $this->log_appointment_updated($id, $data['subject'], $changes);
+                // Log to timeline using unified method
+                $this->add_activity_log(
+                    $id, 
+                    'APPOINTMENT', 
+                    'updated', 
+                    [
+                        'subject' => $data['subject'] ?? $original->subject,
+                        'changes' => $changes,
+                        'changed_fields' => array_keys($changes)
+                    ]
+                );
                 
-                // Check if status changed specifically
+                // Check if status changed - log separately for better filtering
                 if (isset($changes['appointment_status'])) {
-                    $this->log_appointment_status_changed(
-                        $id, 
-                        $changes['appointment_status']['old'], 
-                        $changes['appointment_status']['new']
+                    $this->add_activity_log(
+                        $id,
+                        'APPOINTMENT',
+                        'updated',
+                        [
+                            'subject' => $data['subject'] ?? $original->subject,
+                            'status_change' => true,
+                            'old_status' => $changes['appointment_status']['old'],
+                            'new_status' => $changes['appointment_status']['new']
+                        ]
                     );
                 }
             }
@@ -203,8 +224,18 @@ class Ella_appointments_model extends App_Model
         $appointment = $this->get_appointment($id);
         
         if ($appointment) {
-            // Log deletion before actually deleting
-            $this->log_appointment_deleted($id, $appointment->subject);
+            // Log deletion before actually deleting (using unified method)
+            $this->add_activity_log(
+                $id, 
+                'APPOINTMENT', 
+                'deleted', 
+                [
+                    'subject' => $appointment->subject,
+                    'date' => $appointment->date,
+                    'time' => $appointment->start_hour,
+                    'deleted_by' => get_staff_user_id()
+                ]
+            );
             
             // Delete attendees first
             $this->db->where('appointment_id', $id);
@@ -337,49 +368,39 @@ class Ella_appointments_model extends App_Model
     
     /**
      * Get comprehensive timeline for appointment
-     * Combines appointment activities, notes, and other related activities
+     * Uses unified get_timeline() method and enriches with icons/colors
      * 
      * @param int $appointment_id Appointment ID
-     * @return array              Timeline data
+     * @return array              Timeline data with icons and colors
      */
     public function get_appointment_timeline($appointment_id)
     {
+        // Get all activities using unified method
+        $activities = $this->get_timeline($appointment_id);
+        
         $timeline = [];
         
-        // Get appointment activities
-        $activities = $this->get_appointment_activity_log($appointment_id);
-        
         foreach ($activities as $activity) {
+            // Determine icon and color based on log_type and action
+            $icon = $this->get_icon_for_activity($activity['log_type'] ?? '', $activity['action'] ?? '');
+            $color = $this->get_color_for_activity($activity['log_type'] ?? '', $activity['action'] ?? '');
+            
             $timeline[] = [
                 'type' => 'activity',
+                'log_type' => $activity['log_type'] ?? 'APPOINTMENT',
+                'action' => $activity['action'] ?? '',
                 'date' => $activity['date'],
                 'staff_id' => $activity['staff_id'],
                 'full_name' => $activity['full_name'],
                 'description' => $activity['description'],
                 'description_key' => $activity['description_key'],
-                'additional_data' => $activity['additional_data'],
-                'icon' => $this->get_activity_icon($activity['description_key']),
-                'color' => $this->get_activity_color($activity['description_key'])
+                'additional_data' => $activity['additional_data'], // Already decoded by get_timeline()
+                'icon' => $icon,
+                'color' => $color
             ];
         }
         
-        // Get appointment creation date
-        $appointment = $this->get_appointment($appointment_id);
-        if ($appointment) {
-            $timeline[] = [
-                'type' => 'created',
-                'date' => $appointment->dateadded ?? $appointment->date,
-                'staff_id' => $appointment->created_by,
-                'full_name' => get_staff_full_name($appointment->created_by),
-                'description' => 'Appointment created',
-                'description_key' => 'appointment_created',
-                'additional_data' => serialize(['subject' => $appointment->subject]),
-                'icon' => 'fa fa-calendar-plus',
-                'color' => 'success'
-            ];
-        }
-        
-        // Sort timeline by date (newest first)
+        // Sort timeline by date (newest first) - already sorted but ensure
         usort($timeline, function($a, $b) {
             return strtotime($b['date']) - strtotime($a['date']);
         });
@@ -388,10 +409,90 @@ class Ella_appointments_model extends App_Model
     }
     
     /**
-     * Get activity icon based on description key
+     * Get icon based on log_type and action (NEW unified system)
      * 
-     * @param string $description_key Activity description key
-     * @return string                FontAwesome icon class
+     * @param string $log_type  Log type (APPOINTMENT, NOTES, ATTACHMENTS, etc.)
+     * @param string $action    Action (created, updated, deleted, etc.)
+     * @return string           FontAwesome icon class
+     */
+    private function get_icon_for_activity($log_type, $action)
+    {
+        // Icon mapping by log_type and action
+        $icon_map = [
+            'APPOINTMENT' => [
+                'created' => 'fa fa-calendar-plus',
+                'updated' => 'fa fa-edit',
+                'deleted' => 'fa fa-trash'
+            ],
+            'NOTES' => [
+                'created' => 'fa fa-sticky-note',
+                'updated' => 'fa fa-edit',
+                'deleted' => 'fa fa-trash'
+            ],
+            'ATTACHMENTS' => [
+                'uploaded' => 'fa fa-upload',
+                'deleted' => 'fa fa-trash',
+                'created' => 'fa fa-paperclip'
+            ],
+            'MEASUREMENT' => [
+                'created' => 'fa fa-ruler-combined',
+                'updated' => 'fa fa-ruler',
+                'deleted' => 'fa fa-minus-square'
+            ],
+            'ESTIMATES' => [
+                'created' => 'fa fa-file-invoice',
+                'updated' => 'fa fa-file-invoice-dollar',
+                'deleted' => 'fa fa-trash'
+            ],
+            'PROPOSAL' => [
+                'created' => 'fa fa-file-invoice',
+                'updated' => 'fa fa-file-invoice-dollar',
+                'deleted' => 'fa fa-trash'
+            ],
+            'SMS' => [
+                'sent' => 'fa fa-comment'
+            ],
+            'EMAIL' => [
+                'sent' => 'fa fa-envelope',
+                'clicked' => 'fa fa-envelope-open'
+            ]
+        ];
+        
+        return $icon_map[$log_type][$action] ?? 'fa fa-info-circle';
+    }
+    
+    /**
+     * Get color based on log_type and action (NEW unified system)
+     * 
+     * @param string $log_type  Log type
+     * @param string $action    Action
+     * @return string           Bootstrap color class
+     */
+    private function get_color_for_activity($log_type, $action)
+    {
+        // Color mapping by action (mostly action-based)
+        $action_colors = [
+            'created' => 'success',
+            'uploaded' => 'success',
+            'added' => 'success',
+            'updated' => 'info',
+            'deleted' => 'danger',
+            'removed' => 'danger',
+            'sent' => 'primary',
+            'clicked' => 'warning'
+        ];
+        
+        // Override for specific log_types if needed
+        if ($log_type === 'MEASUREMENT') {
+            return $action_colors[$action] ?? 'primary';
+        }
+        
+        return $action_colors[$action] ?? 'default';
+    }
+    
+    /**
+     * @deprecated Use get_icon_for_activity() instead
+     * Legacy method for backward compatibility
      */
     private function get_activity_icon($description_key)
     {
@@ -403,7 +504,6 @@ class Ella_appointments_model extends App_Model
             'appointment_activity_measurement_removed' => 'fa fa-minus-square',
             'appointment_activity_process' => 'fa fa-cogs',
             'appointment_activity_deleted' => 'fa fa-trash',
-            // Dynamic attachment activities
             'appointment_activity_attachment_uploaded' => 'fa fa-upload',
             'appointment_activity_attachment_deleted' => 'fa fa-trash',
             'estimate_created' => 'fa fa-file-invoice',
@@ -418,6 +518,11 @@ class Ella_appointments_model extends App_Model
             'note_added' => 'fa fa-sticky-note',
             'note_updated' => 'fa fa-edit',
             'note_deleted' => 'fa fa-trash',
+            'notes_created' => 'fa fa-sticky-note',
+            'notes_updated' => 'fa fa-edit',
+            'notes_deleted' => 'fa fa-trash',
+            'attachments_uploaded' => 'fa fa-upload',
+            'attachments_deleted' => 'fa fa-trash',
             'file_attached' => 'fa fa-paperclip',
             'file_deleted' => 'fa fa-times-circle'
         ];
@@ -426,10 +531,8 @@ class Ella_appointments_model extends App_Model
     }
     
     /**
-     * Get activity color based on description key
-     * 
-     * @param string $description_key Activity description key
-     * @return string                Bootstrap color class
+     * @deprecated Use get_color_for_activity() instead
+     * Legacy method for backward compatibility
      */
     private function get_activity_color($description_key)
     {
@@ -441,7 +544,6 @@ class Ella_appointments_model extends App_Model
             'appointment_activity_measurement_removed' => 'danger',
             'appointment_activity_process' => 'secondary',
             'appointment_activity_deleted' => 'danger',
-            // Dynamic attachment activities
             'appointment_activity_attachment_uploaded' => 'success',
             'appointment_activity_attachment_deleted' => 'danger',
             'estimate_created' => 'success',
@@ -456,6 +558,11 @@ class Ella_appointments_model extends App_Model
             'note_added' => 'secondary',
             'note_updated' => 'info',
             'note_deleted' => 'danger',
+            'notes_created' => 'secondary',
+            'notes_updated' => 'info',
+            'notes_deleted' => 'danger',
+            'attachments_uploaded' => 'success',
+            'attachments_deleted' => 'danger',
             'file_attached' => 'success',
             'file_deleted' => 'danger'
         ];
