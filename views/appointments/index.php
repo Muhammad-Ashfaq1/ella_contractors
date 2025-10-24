@@ -122,6 +122,11 @@ $this->load->view('appointments/modal', $data);
 }
 
 /* Simple Status Dropdown Styling */
+.status-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
 .status-button {
     cursor: pointer !important;
     transition: opacity 0.2s ease;
@@ -135,7 +140,6 @@ $this->load->view('appointments/modal', $data);
     letter-spacing: 0.5px;
     text-transform: uppercase;
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    position: relative; /* Required for dropdown positioning */
 }
 
 .status-button:hover {
@@ -155,7 +159,6 @@ $this->load->view('appointments/modal', $data);
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     min-width: 120px;
-    margin-right: 5px; /* Small gap between button and dropdown */
 }
 
 .status-option {
@@ -1136,9 +1139,11 @@ function generateStatusHtml(status, appointment_id) {
             statusLabel = status.toUpperCase();
     }
     
-    // Create status display HTML matching backend structure for proper export
+    // Create status display HTML matching backend structure (with wrapper for positioning)
+    var statusHtml = '<div class="status-wrapper" style="position: relative; display: inline-block;">';
+    
     // Main status text for display and export
-    var statusHtml = '<span class="status-button label ' + statusClass + '" id="status-btn-' + appointment_id + '" style="cursor: pointer !important; position: relative; display: inline-block;">';
+    statusHtml += '<span class="status-button label ' + statusClass + '" id="status-btn-' + appointment_id + '" style="cursor: pointer !important;">';
     statusHtml += statusLabel;
     statusHtml += '</span>';
     
@@ -1164,6 +1169,8 @@ function generateStatusHtml(status, appointment_id) {
         statusHtml += '</div>';
     }
     
+    statusHtml += '</div>';
+    
     return statusHtml;
 }
 
@@ -1188,7 +1195,7 @@ $(document).on('click', '.status-button', function(e) {
 
 // Hide status menus when clicking outside
 $(document).on('click', function(e) {
-    if (!$(e.target).closest('.status-button').length && !$(e.target).closest('.status-dropdown').length) {
+    if (!$(e.target).closest('.status-wrapper').length) {
         $('.status-dropdown').hide();
     }
 });

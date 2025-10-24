@@ -244,9 +244,10 @@ try {
         // Create status display with dropdown - export only the main status label
         // Use data-order for DataTables to properly sort
         $outputStatus = '<div class="text-center" data-order="' . htmlspecialchars($status_label) . '">';
+        $outputStatus .= '<div class="status-wrapper" style="position: relative; display: inline-block;">';
         
         // Main status text for display and export
-        $outputStatus .= '<span class="status-button label ' . $status_class . '" id="status-btn-' . $aRow['id'] . '" style="cursor: pointer !important; position: relative; display: inline-block;">';
+        $outputStatus .= '<span class="status-button label ' . $status_class . '" id="status-btn-' . $aRow['id'] . '" style="cursor: pointer !important;">';
         $outputStatus .= $status_label;
         $outputStatus .= '</span>';
         
@@ -271,6 +272,7 @@ try {
             $outputStatus .= '</div>';
         }
         
+        $outputStatus .= '</div>';
         $outputStatus .= '</div>';
         $row[] = $outputStatus;
         
