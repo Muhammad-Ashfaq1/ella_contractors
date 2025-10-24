@@ -723,17 +723,17 @@ function displayMeasurements(measurements) {
         measurements.forEach(function(measurement, idx) {
             var rowClass = (idx % 2 === 0) ? 'style="background-color: #f8f9fa;"' : 'style="background-color: white;"';
             
-            // Format updated info: "October 21, 2025 | By: Tanner"
+            // Format updated info: "October 21st, 2025  |  9:45am  |  By: Tanner"
             var updatedInfo = '';
-            if (measurement.formatted_updated_date) {
+            if (measurement.formatted_updated_date && measurement.formatted_updated_date !== '-') {
                 updatedInfo = measurement.formatted_updated_date;
                 if (measurement.updated_by_name) {
-                    updatedInfo += ' <span style="color: #6c757d;">|</span> By: <strong>' + measurement.updated_by_name + '</strong>';
+                    updatedInfo += '  <span style="color: #6c757d;">|</span>  By: <strong>' + measurement.updated_by_name + '</strong>';
                 }
-            } else if (measurement.formatted_date) {
+            } else if (measurement.formatted_date && measurement.formatted_date !== '-') {
                 updatedInfo = measurement.formatted_date;
                 if (measurement.updated_by_name) {
-                    updatedInfo += ' <span style="color: #6c757d;">|</span> By: <strong>' + measurement.updated_by_name + '</strong>';
+                    updatedInfo += '  <span style="color: #6c757d;">|</span>  By: <strong>' + measurement.updated_by_name + '</strong>';
                 }
             } else {
                 updatedInfo = '-';

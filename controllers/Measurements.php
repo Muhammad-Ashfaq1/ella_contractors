@@ -299,6 +299,34 @@ class Measurements extends AdminController
     }
 
     /**
+     * Format date and time in the same format as appointment listing
+     * Format: "October 21st, 2025  |  9:45am"
+     * 
+     * @param string $datetime DateTime string
+     * @return string Formatted date and time
+     */
+    private function format_date_time($datetime)
+    {
+        if (empty($datetime)) {
+            return '-';
+        }
+        
+        $date_obj = DateTime::createFromFormat('Y-m-d H:i:s', $datetime);
+        if (!$date_obj) {
+            return htmlspecialchars($datetime);
+        }
+        
+        // Format date as "October 21st, 2025"
+        $date_formatted = $date_obj->format('F jS, Y');
+        
+        // Format time as "9:45am" (lowercase, no leading zeros)
+        $time_formatted = strtolower($date_obj->format('g:ia'));
+        
+        // Combine: "October 21st, 2025  |  9:45am"
+        return $date_formatted . '  |  ' . $time_formatted;
+    }
+    
+    /**
      * Check if category name already exists for this appointment
      * Used for validation during measurement creation/editing
      */
