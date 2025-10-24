@@ -77,23 +77,21 @@ class Measurements extends AdminController
         
         try {
             if ($record_id > 0) {
-                // Update: Delete old items and create new ones
-                // First, get all existing measurement record IDs for this measurement
-                $existing_records = $this->db->where('id', $record_id)
-                    ->or_where('appointment_id', $appointment_id)
+                // Update: Delete only the specific record being edited, not all appointment records
+                // Get the specific measurement record being edited
+                $existing_record = $this->db->where('id', $record_id)
                     ->get(db_prefix() . 'ella_contractor_measurement_records')
-                    ->result_array();
+                    ->row_array();
                 
-                foreach ($existing_records as $rec) {
-                    // Delete items
-                    $this->db->where('measurement_record_id', $rec['id'])
+                if ($existing_record) {
+                    // Delete items for this specific record only
+                    $this->db->where('measurement_record_id', $existing_record['id'])
                         ->delete(db_prefix() . 'ella_contractor_measurement_items');
+                    
+                    // Delete only this specific record
+                    $this->db->where('id', $record_id)
+                        ->delete(db_prefix() . 'ella_contractor_measurement_records');
                 }
-                
-                // Delete records
-                $this->db->where('id', $record_id)
-                    ->or_where('appointment_id', $appointment_id)
-                    ->delete(db_prefix() . 'ella_contractor_measurement_records');
             }
             
             // Insert new records and items
