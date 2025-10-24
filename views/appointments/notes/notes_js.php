@@ -206,6 +206,31 @@ function addNote() {
 }
 
 function editNote(noteId) {
+    // Check if any edit form is currently open
+    var existingEditForm = $('[data-note-edit]');
+    if (existingEditForm.length > 0) {
+        var existingNoteId = existingEditForm.attr('data-note-edit');
+        
+        // If clicking the same note that's already being edited, do nothing
+        if (existingNoteId == noteId) {
+            return;
+        }
+        
+        // Close existing edit form by reloading notes, then open the new one
+        loadNotes();
+        
+        // Wait for notes to reload before opening the new edit form
+        setTimeout(function() {
+            openEditForm(noteId);
+        }, 500);
+        return;
+    }
+    
+    // No existing edit form, open directly
+    openEditForm(noteId);
+}
+
+function openEditForm(noteId) {
     // Get the note content - using timeline structure
     var noteWrapper = $('button[onclick="editNote(' + noteId + ')"]').closest('.timeline-record-wrapper');
     
