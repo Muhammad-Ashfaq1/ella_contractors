@@ -37,7 +37,8 @@
 
 <style>
 /* Ensure button maintains color when clicked */
-#note-btn.btn-info {
+#note-btn.btn-info,
+#note-btn.btn-info:visited {
     background-color: #5bc0de !important;
     border-color: #46b8da !important;
     color: #fff !important;
@@ -51,17 +52,30 @@
 
 #note-btn.btn-info:active,
 #note-btn.btn-info:focus,
-#note-btn.btn-info.active {
-    background-color: #31b0d5 !important;
-    border-color: #269abc !important;
-    color: #fff !important;
-    box-shadow: none !important;
-}
-
-#note-btn.btn-info:disabled {
+#note-btn.btn-info.active,
+#note-btn.btn-info:active:focus {
     background-color: #5bc0de !important;
     border-color: #46b8da !important;
-    opacity: 0.65 !important;
     color: #fff !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Maintain color when disabled/loading */
+#note-btn.btn-info:disabled,
+#note-btn.btn-info[disabled] {
+    background-color: #5bc0de !important;
+    border-color: #46b8da !important;
+    color: #fff !important;
+    opacity: 0.8 !important;
+    cursor: not-allowed !important;
+}
+
+/* Prevent Bootstrap default styles from overriding */
+.btn-info:not(:disabled):not(.disabled):active,
+.btn-info:not(:disabled):not(.disabled).active,
+.show > .btn-info.dropdown-toggle {
+    background-color: #5bc0de !important;
+    border-color: #46b8da !important;
 }
 </style>
