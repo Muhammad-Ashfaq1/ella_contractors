@@ -100,9 +100,6 @@ function displayNotes(notes) {
         html += '</div>';
         html += '</div>';
         
-        if (i >= 0 && i != len - 1) {
-            html += '<hr />';
-        }
         i++;
     });
     
