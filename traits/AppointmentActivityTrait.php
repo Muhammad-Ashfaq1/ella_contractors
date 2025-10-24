@@ -186,6 +186,9 @@ trait AppointmentActivityTrait
             $name = $additional_data['subject'];
         } elseif (!empty($additional_data['tab_name'])) {
             $name = $additional_data['tab_name'];
+        } elseif (!empty($additional_data['categories'])) {
+            // For measurements with multiple categories
+            $name = $additional_data['categories'];
         } elseif (!empty($additional_data['filename'])) {
             $name = $additional_data['filename'];
         } elseif (!empty($additional_data['estimate_id'])) {
@@ -194,13 +197,21 @@ trait AppointmentActivityTrait
             $name = 'Note #' . $additional_data['note_id'];
         }
         
-        // Build description based on action
+        // Build description based on action and log_type
         switch ($action) {
             case 'created':
             case 'added':
+                // Special handling for measurements
+                if ($log_type === 'MEASUREMENT' && !empty($additional_data['total_items'])) {
+                    return $name ? "{$entity} '{$name}' Created ({$additional_data['total_items']} items)" : "{$entity} Created ({$additional_data['total_items']} items)";
+                }
                 return $name ? "{$entity} '{$name}' {$action_display}" : "{$entity} {$action_display}";
             
             case 'updated':
+                // Special handling for measurements
+                if ($log_type === 'MEASUREMENT' && !empty($additional_data['total_items'])) {
+                    return $name ? "{$entity} '{$name}' Updated ({$additional_data['total_items']} items)" : "{$entity} Updated ({$additional_data['total_items']} items)";
+                }
                 if (!empty($additional_data['changes'])) {
                     $changes = is_array($additional_data['changes']) ? implode(', ', array_keys($additional_data['changes'])) : '';
                     return $name ? "{$entity} '{$name}' Updated ({$changes})" : "{$entity} Updated";
@@ -209,6 +220,10 @@ trait AppointmentActivityTrait
             
             case 'deleted':
             case 'removed':
+                // Special handling for measurements
+                if ($log_type === 'MEASUREMENT' && !empty($additional_data['items_count'])) {
+                    return $name ? "{$entity} '{$name}' Deleted ({$additional_data['items_count']} items)" : "{$entity} Deleted";
+                }
                 return $name ? "{$entity} '{$name}' {$action_display}" : "{$entity} {$action_display}";
             
             case 'sent':

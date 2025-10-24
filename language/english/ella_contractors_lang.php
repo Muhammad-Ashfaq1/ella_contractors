@@ -30,10 +30,6 @@ $lang['close'] = 'Close';
 $lang['appointment_activity_attachment_uploaded'] = 'Attachment uploaded';
 $lang['appointment_activity_attachment_deleted'] = 'Attachment deleted';
 
-// Timeline action labels (shorter versions for display)
-$lang['timeline_action_attachment_uploaded'] = 'ATTACHMENT UPLOADED';
-$lang['timeline_action_attachment_deleted'] = 'ATTACHMENT DELETED';
-
 // Basic status strings
 $lang['scheduled'] = 'Scheduled';
 $lang['cancelled'] = 'Cancelled';
@@ -59,8 +55,16 @@ $lang['timeline_action_updated'] = 'UPDATED';
 $lang['timeline_action_appointment_updated'] = 'APPOINTMENT UPDATED';
 $lang['timeline_action_status_changed'] = 'STATUS CHANGED';
 $lang['timeline_action_measurement_added'] = 'MEASUREMENT ADDED';
+$lang['timeline_action_measurement_updated'] = 'MEASUREMENT UPDATED';
 $lang['timeline_action_measurement_removed'] = 'MEASUREMENT REMOVED';
 $lang['timeline_action_note_added'] = 'NOTE ADDED';
+$lang['timeline_action_note_updated'] = 'NOTE UPDATED';
+$lang['timeline_action_note_removed'] = 'NOTE REMOVED';
+$lang['timeline_action_attachment_uploaded'] = 'ATTACHMENT UPLOADED';
+$lang['timeline_action_attachment_removed'] = 'ATTACHMENT REMOVED';
+$lang['timeline_action_proposal_created'] = 'PROPOSAL CREATED';
+$lang['timeline_action_proposal_updated'] = 'PROPOSAL UPDATED';
+$lang['timeline_action_proposal_deleted'] = 'PROPOSAL DELETED';
 $lang['timeline_action_process_completed'] = 'PROCESS COMPLETED';
 $lang['timeline_action_process_failed'] = 'PROCESS FAILED';
 $lang['timeline_action_deleted'] = 'DELETED';

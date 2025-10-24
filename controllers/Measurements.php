@@ -129,10 +129,29 @@ class Measurements extends AdminController
                 throw new Exception('Database transaction failed');
             }
             
-            // Log activity
+            // Log activity using unified logging system
             if ($appointment_id) {
                 $action = $record_id > 0 ? 'updated' : 'created';
-                $this->appointments_model->log_activity($appointment_id, $action, 'measurement', 'Measurements', ['tab_count' => count($tabs_data)]);
+                
+                // Prepare measurement details for logging
+                $tab_names = array_column($tabs_data, 'tab_name');
+                $total_items = 0;
+                foreach ($tabs_data as $tab) {
+                    $total_items += count($tab['measurements']);
+                }
+                
+                $this->appointments_model->add_activity_log(
+                    $appointment_id,
+                    'MEASUREMENT',
+                    $action,
+                    [
+                        'tab_names' => $tab_names,
+                        'tab_count' => count($tabs_data),
+                        'total_items' => $total_items,
+                        'categories' => implode(', ', $tab_names),
+                        'record_id' => $record_id > 0 ? $record_id : null
+                    ]
+                );
             }
             
             if ($this->input->is_ajax_request()) {
@@ -184,6 +203,10 @@ class Measurements extends AdminController
             return;
         }
         
+        // Get items count before deletion for logging
+        $items_count = $this->db->where('measurement_record_id', $id)
+            ->count_all_results(db_prefix() . 'ella_contractor_measurement_items');
+        
         // Delete items first (CASCADE will do this automatically, but being explicit)
         $this->db->where('measurement_record_id', $id)
             ->delete(db_prefix() . 'ella_contractor_measurement_items');
@@ -192,14 +215,17 @@ class Measurements extends AdminController
         $ok = $this->db->where('id', $id)
             ->delete(db_prefix() . 'ella_contractor_measurement_records');
         
-        // Log deletion
+        // Log deletion using unified logging system
         if ($ok && isset($record['appointment_id']) && $record['appointment_id']) {
-            $this->appointments_model->log_activity(
-                $record['appointment_id'], 
-                'deleted', 
-                'measurement', 
-                $record['tab_name'] ?? 'Measurement',
-                ['record_id' => $id]
+            $this->appointments_model->add_activity_log(
+                $record['appointment_id'],
+                'MEASUREMENT',
+                'deleted',
+                [
+                    'tab_name' => $record['tab_name'],
+                    'items_count' => $items_count,
+                    'record_id' => $id
+                ]
             );
         }
         
