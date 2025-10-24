@@ -338,20 +338,20 @@ $(document).ready(function() {
                 var $buttonsContainer = $wrapper.find('.dt-buttons');
                 
                 if ($buttonsContainer.length) {
-                    // Add bulk delete button after export button
-                    $buttonsContainer.append('<button type="button" class="btn btn-danger hide" id="bulk-delete-appointments">' +
+                    // Add bulk delete button after export button - matching delete button style
+                    $buttonsContainer.append('<button type="button" class="btn btn-danger btn-xs hide" id="bulk-delete-appointments">' +
                         '<i class="fa fa-trash"></i> Delete (<span id="selected-count">0</span>)' +
                     '</button>');
                 } else {
                     // Fallback: add to the left side with length dropdown
                     var $lengthContainer = $wrapper.find('.dataTables_length');
                     if ($lengthContainer.length) {
-                        $lengthContainer.after('<button type="button" class="btn btn-danger hide" id="bulk-delete-appointments" style="margin-left: 10px;">' +
+                        $lengthContainer.after('<button type="button" class="btn btn-danger btn-xs hide" id="bulk-delete-appointments" style="margin-left: 10px;">' +
                             '<i class="fa fa-trash"></i> Delete (<span id="selected-count">0</span>)' +
                         '</button>');
                     } else {
                         // Last resort: add to the top of the wrapper
-                        $wrapper.prepend('<div style="display: inline-block; margin-right: 10px;"><button type="button" class="btn btn-danger hide" id="bulk-delete-appointments">' +
+                        $wrapper.prepend('<div style="display: inline-block; margin-right: 10px;"><button type="button" class="btn btn-danger btn-xs hide" id="bulk-delete-appointments">' +
                             '<i class="fa fa-trash"></i> Delete (<span id="selected-count">0</span>)' +
                         '</button></div>');
                     }
