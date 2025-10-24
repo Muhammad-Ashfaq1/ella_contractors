@@ -4,17 +4,17 @@
     <div class="col-md-12">
         <!-- Add Note Section -->
         <div class="row mbot15">
-            <div class="col-md-10">
+            <div class="col-md-12">
                 <div class="form-group" id="appointmentnote">
                     <div class="lead emoji-picker-container leadnotes">
                         <textarea id="appointment_note_description" name="appointment_note_description" class="form-control" rows="3" data-emojiable="true" placeholder="Add a note about this appointment..."></textarea>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-2">
-                <button type="button" class="btn btn-info btn-sm pull-right mtop25" onclick="addNote()" id="note-btn">
-                    <i class="fa fa-plus"></i> Add Note
-                </button>
+                <div class="text-right">
+                    <button type="button" class="btn btn-info btn-sm" onclick="addNote()" id="note-btn">
+                        <i class="fa fa-plus"></i> Add Note
+                    </button>
+                </div>
             </div>
         </div>
         
