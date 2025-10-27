@@ -340,8 +340,8 @@ $(document).ready(function() {
                 if ($buttonsContainer.length) {
                     // Add bulk delete button after export button - matching delete button style
                     $buttonsContainer.append('<button type="button" class="btn btn-danger btn-xs hide" id="bulk-delete-appointments">' +
-                        '<i class="fa fa-trash"></i> Delete (<span id="selected-count">0</span>)' +
-                    '</button>');
+                                            '<i class="fa fa-trash"></i> Delete All (<span id="selected-count">0</span>)' +
+                                         '</button>');
                 } else {
                     // Fallback: add to the left side with length dropdown
                     var $lengthContainer = $wrapper.find('.dataTables_length');
