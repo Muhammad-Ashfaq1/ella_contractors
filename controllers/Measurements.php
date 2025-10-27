@@ -347,7 +347,7 @@ class Measurements extends AdminController
         $time_formatted = strtolower($date_obj->format('g:ia'));
         
         // Combine: "October 21st, 2025  |  9:45am"
-        return $date_formatted . '  |  ' . $time_formatted;
+        return $date_formatted . ' - ' . $time_formatted;
     }
     
     /**
