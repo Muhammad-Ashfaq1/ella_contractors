@@ -171,22 +171,24 @@ try {
         $row[] = '<div class="text-center"><div class="checkbox"><input type="checkbox" value="' . htmlspecialchars($aRow['id']) . '"><label></label></div></div>';
         
         $row[] = '<div class="text-center">' . htmlspecialchars($aRow['id']) . '</div>';
-        
-        // Lead column with modal trigger (no redirect)
-        $lead_name = isset($aRow['lead_name']) ? $aRow['lead_name'] : '';
-        $lead_id = isset($aRow['lead_id']) ? $aRow['lead_id'] : '';
-        if (!empty($lead_name) && !empty($lead_id)) {
-            // Use onclick to trigger lead modal instead of href redirect
-            $lead_link = '<a href="javascript:void(0);" onclick="init_lead(' . $lead_id . '); return false;" class="lead-link" data-lead-id="' . $lead_id . '" title="Click to view lead details">' 
-                         . htmlspecialchars($lead_name) 
-                         . ' <i class="fa fa-user" style="font-size: 11px; margin-left: 3px; opacity: 0.6;"></i></a>';
-        } else {
-            $lead_link = '<span class="text-muted">No Lead</span>';
-        }
-        $row[] = '<div class="text-center">' . $lead_link . '</div>';
-        
+
+        // Appointment (subject) column FIRST
         $subject = '<a href="' . admin_url('ella_contractors/appointments/view/' . $aRow['id']) . '" class="appointment-subject-link" title="' . htmlspecialchars($aRow['subject']) . '">' . htmlspecialchars($aRow['subject']) . '</a>';
         $row[] = '<div class="text-center">' . $subject . '</div>';
+
+        // Lead column AFTER subject
+                $lead_name = isset($aRow['lead_name']) ? $aRow['lead_name'] : '';
+                $lead_id = isset($aRow['lead_id']) ? $aRow['lead_id'] : '';
+                if (!empty($lead_name) && !empty($lead_id)) {
+                    $lead_link = '<a href="javascript:void(0);" onclick="init_lead(' . $lead_id . '); return false;" class="lead-link" data-lead-id="' . $lead_id . '" title="Click to view lead details">'
+                                . htmlspecialchars($lead_name)
+                                . ' <i class="fa fa-user" style="font-size: 11px; margin-left: 3px; opacity: 0.6;"></i></a>';
+                } else {
+                    $lead_link = '<span class="text-muted">No Lead</span>';
+                }
+                $row[] = '<div class="text-center">' . $lead_link . '</div>';
+
+                        
         
         // Format date as "July 5th, 2025" with time underneath
         $date_formatted = '';

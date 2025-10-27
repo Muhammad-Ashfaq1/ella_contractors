@@ -52,8 +52,8 @@
                                             </div>
                                         </th>
                                         <th class="text-center"><?php echo _l('id'); ?></th>
+                                        <th class="text-center" style="min-width: 250px;">Appointment</th>
                                         <th class="text-center">Lead</th>
-                                        <th class="text-center" style="min-width: 250px;">Appointment Name</th>
                                         <th class="text-center">Scheduled</th>
                                         <th class="text-center"><?php echo _l('appointment_status'); ?></th>
                                         <th class="text-center" width="100px">Measurements</th>
