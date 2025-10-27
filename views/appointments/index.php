@@ -121,6 +121,24 @@ $this->load->view('appointments/modal', $data);
     margin-right: 10px;
 }
 
+
+/* Match hover of Delete All button with listing delete button */
+#bulk-delete-appointments.btn-danger {
+    background-color: #dc3545; /* same as row delete */
+    border-color: #dc3545;
+    color: #fff;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#bulk-delete-appointments.btn-danger:hover,
+.table-ella_appointments .btn-danger:hover {
+    background-color: #bb2d3b; /* darker red like Bootstrap hover */
+    border-color: #b02a37;
+    color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+
 /* Simple Status Dropdown Styling */
 .status-wrapper {
     position: relative;
