@@ -749,7 +749,14 @@ function displayMeasurements(measurements) {
                     var itemName = item.name || 'Unnamed';
                     var itemValue = parseFloat(item.value).toFixed(2);
                     var itemUnit = item.unit || '';
-                    measurementsList += '<span style="color: #495057;">' + itemName + '</span> <span style="color: #6c757d;">|</span> <strong>' + itemValue + ' ' + itemUnit + '</strong>';
+                    measurementsList += `
+                                        <div style="text-align: center; white-space: nowrap; line-height: 1.3; margin: 2px 0;">
+                                            <strong style="color: #495057;">${itemName}</strong>
+                                            <span style="color: #6c757d;"> | </span>
+                                            <span style="color: #212529;">${itemValue} ${itemUnit}</span>
+                                        </div>
+                                        `;
+                                        
                 });
             } else {
                 measurementsList = '<span style="color: #999;">No measurements</span>';
