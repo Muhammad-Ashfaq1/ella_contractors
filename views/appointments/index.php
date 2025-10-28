@@ -45,11 +45,8 @@
                             <table class="table table-striped table-ella_appointments">
                                 <thead>
                                     <tr>
-                                        <th width="50px" class="text-center">
-                                            <div class="checkbox">
-                                                <input type="checkbox" id="mass_select_all" data-to-table="ella_appointments">
-                                                <label></label>
-                                            </div>
+                                        <th>
+                                            <span class="hide"> - </span><div class="checkbox mass_select_all_wrap"><input type="checkbox" id="mass_select_all" data-to-table="ella_appointments"><label></label></div>
                                         </th>
                                         <th class="text-center"><?php echo _l('id'); ?></th>
                                         <th class="text-center" style="min-width: 250px;">Appointment</th>
@@ -86,6 +83,20 @@ $this->load->view('appointments/modal', $data);
 
 
 <style>
+
+/* Fix checkbox alignment - center the checkmark icon */
+.table-ella_appointments .checkbox label::after {
+    padding-left: 3.5px !important;
+    padding-top: 2px !important;
+}
+
+/* Ensure checkbox column width matches leads table */
+.table-ella_appointments thead th:first-child,
+.table-ella_appointments tbody td:first-child {
+    width: 30px;
+    text-align: left;
+}
+
 /* Custom styling for appointment count badges */
 .table-ella_appointments .label {
     font-size: 11px;
