@@ -353,8 +353,13 @@ function init_combined_ajax_search(selector) {
 $(document).ready(function() {
     // Initialize DataTable for appointments
     // Sort by column 4 (Scheduled datetime - combined date+time for proper chronological sorting) descending by default
-    // Columns: 0=checkbox, 1=ID, 2=Lead, 3=Subject, 4=Scheduled(datetime), 5=Status, 6=Measurements, 7=Estimates, 8=Options
-    initDataTable('.table-ella_appointments', admin_url + 'ella_contractors/appointments/table', undefined, undefined, {}, [4, 'desc']);
+    // Columns: 0=checkbox, 1=ID, 2=Appointment, 3=Lead, 4=Scheduled(datetime), 5=Status, 6=Measurements, 7=Estimates, 8=Options
+    // Disable sorting on checkbox column (column 0)
+    initDataTable('.table-ella_appointments', admin_url + 'ella_contractors/appointments/table', undefined, undefined, {
+        columnDefs: [
+            { orderable: false, targets: 0 } // Disable sorting on checkbox column
+        ]
+    }, [4, 'desc']);
     
     // Function to add bulk delete button to DataTable toolbar
     function addBulkDeleteButton() {
