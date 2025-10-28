@@ -100,19 +100,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-
-/* Make attachment modal extra wide for better file preview display */
-#attachmentUploadModal .modal-dialog.modal-lg {
-    width: 90%;
-    max-width: 1200px;
-}
-
-@media (max-width: 768px) {
-    #attachmentUploadModal .modal-dialog.modal-lg {
-        width: 95%;
-        margin: 10px auto;
-    }
-}
 </style>
 
 <!-- Attachment Upload Modal -->
