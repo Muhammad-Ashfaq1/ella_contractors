@@ -700,6 +700,24 @@ function ella_contractors_activate_module() {
         log_message('info', 'Ella Appointments - Created ella_appointment_activity_log table');
     }
     
+    // Create ella_appointment_presentations pivot table for linking appointments to presentations
+    if (!$CI->db->table_exists(db_prefix() . 'ella_appointment_presentations')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_appointment_presentations` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `appointment_id` int(11) NOT NULL,
+            `presentation_id` int(11) NOT NULL,
+            `attached_by` int(11) NOT NULL,
+            `attached_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `idx_appointment_id` (`appointment_id`),
+            KEY `idx_presentation_id` (`presentation_id`),
+            KEY `idx_attached_by` (`attached_by`),
+            UNIQUE KEY `unique_appointment_presentation` (`appointment_id`, `presentation_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+        
+        log_message('info', 'Ella Appointments - Created ella_appointment_presentations pivot table');
+    }
+    
     // Set module version
     update_option('ella_contractors_version', '1.0.0');
     

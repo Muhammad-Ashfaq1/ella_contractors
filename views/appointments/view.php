@@ -322,8 +322,9 @@ html {
                             </div>
                         </div>
                         
-                        <!-- Lead Information Section -->
+                        <!-- Lead Information and Attendees Section -->
                         <div class="row">
+                            <!-- Left Column: Lead Information -->
                             <div class="col-md-6">
                                 <h5>Lead Information</h5>
                                 <table class="table table-condensed">
@@ -358,12 +359,25 @@ html {
                                     </tr>
                                     <?php endif; ?>
                                 </table>
+                                
+                                <!-- Action Buttons -->
+                                <div class="action-buttons-container" style="margin-top: 20px;">
+                                    <div class="btn-group connected-buttons" role="group">
+                                        <?php if (!empty($appointment->contact_id) && !empty($appointment->phone)): ?>
+                                            <a href="javascript:void(0)" class="btn btn-success connected-btn-left" onclick="openSMSModal(<?php echo $appointment->contact_id; ?>, '<?php echo $appointment->phone; ?>')">
+                                                <i class="fa fa-comment"></i> Send SMS
+                                            </a>
+                                         <?php endif; ?>
+                                        <a href="mailto:<?php echo $appointment->email; ?>" class="btn btn-primary btn-sm <?php echo (!empty($appointment->contact_id) && !empty($appointment->phone)) ? 'connected-btn-right' : 'connected-btn-left connected-btn-right'; ?>" title="<?php echo _l('email_client'); ?>" target="_blank" onclick="logEmailClick(<?php echo $appointment->id; ?>, '<?php echo $appointment->email; ?>')">
+                                            <i class="fa fa-envelope"></i> <?php echo _l('email_client'); ?>
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    
-                        
-                        <div class="row">
+                            
+                            <!-- Right Column: Attendees, Presentations, and Reminders -->
                             <div class="col-md-6">
+                                <!-- Attendees Section -->
                                 <h5>
                                     <?php echo _l('attendees'); ?>
                                     <button class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px;" onclick="editAppointment(<?php echo $appointment->id; ?>)" title="Edit Attendees">
@@ -381,22 +395,47 @@ html {
                                         <p class="text-muted">No attendees assigned</p>
                                     <?php endif; ?>
                                 </div>
-                            </div>
-                            <div class="col-md-6 text-right">
-                                <div class="action-buttons-container" style="margin-top: 30px;">
-                                    <div class="btn-group connected-buttons" role="group">
-                                        <?php if (!empty($appointment->contact_id) && !empty($appointment->phone)): ?>
-                                            <a href="javascript:void(0)" class="btn btn-success connected-btn-left" onclick="openSMSModal(<?php echo $appointment->contact_id; ?>, '<?php echo $appointment->phone; ?>')">
-                                                <i class="fa fa-comment"></i> Send SMS
-                                            </a>
-                                         <?php endif; ?>
-                                        <a href="mailto:<?php echo $appointment->email; ?>" class="btn btn-primary btn-sm connected-btn-middle" title="<?php echo _l('email_client'); ?>" target="_blank" onclick="logEmailClick(<?php echo $appointment->id; ?>, '<?php echo $appointment->email; ?>')">
-                                            <i class="fa fa-envelope"></i> <?php echo _l('email_client'); ?>
+                                
+                                <!-- Attach Presentation Section -->
+                                <div style="margin-top: 20px;">
+                                    <h5>
+                                        Attach Presentation
+                                        <a href="<?php echo admin_url('ella_contractors/presentations'); ?>" class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px;" title="Manage Presentations">
+                                            <i class="fa fa-cog"></i>
                                         </a>
-                                        <a href="javascript:void(0)" onclick="sendReminderClient(<?php echo $appointment->id; ?>)" class="btn btn-warning btn-sm connected-btn-right" title="<?php echo _l('send_reminder'); ?>">
-                                            <i class="fa fa-bell"></i> <?php echo _l('send_reminder'); ?>
-                                        </a>
+                                    </h5>
+                                    <div id="attached-presentations-container">
+                                        <!-- Presentations will be loaded here -->
+                                        <p class="text-muted">Loading presentations...</p>
                                     </div>
+                                    <button class="btn btn-info btn-sm" style="margin-top: 10px;" onclick="openAttachPresentationModal()">
+                                        <i class="fa fa-paperclip"></i> Attach Presentation
+                                    </button>
+                                </div>
+                                
+                                <!-- Reminder Settings Section -->
+                                <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 4px;">
+                                    <h5 style="margin-top: 0;">Reminder Settings</h5>
+                                    
+                                    <div class="checkbox">
+                                        <label>
+                                            <input type="checkbox" id="instant_reminder_toggle" <?php echo ($appointment->send_reminder == 1) ? 'checked' : ''; ?> onchange="updateReminderSetting('instant', this.checked)">
+                                            <strong>Instant Reminder</strong> - Send immediately after creation
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="checkbox">
+                                        <label>
+                                            <input type="checkbox" id="reminder_48h_toggle" <?php echo ($appointment->reminder_48h == 1) ? 'checked' : ''; ?> onchange="updateReminderSetting('48h', this.checked)">
+                                            <strong>48-Hour Reminder</strong> - Send 48 hours before appointment
+                                        </label>
+                                    </div>
+                                    
+                                    <p class="text-muted" style="margin-top: 10px; margin-bottom: 0; font-size: 12px;">
+                                        <a href="<?php echo admin_url('settings?group=email_templates'); ?>" target="_blank" style="color: #7f8c8d;">
+                                            <i class="fa fa-edit"></i> Edit reminder templates and settings
+                                        </a>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -853,6 +892,232 @@ function loadAttendeesDisplay(appointmentId) {
         }
     });
 }
+
+// Update Reminder Setting
+function updateReminderSetting(type, enabled) {
+    var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
+    var field = type === 'instant' ? 'send_reminder' : 'reminder_48h';
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/update_reminder_setting',
+        type: 'POST',
+        data: {
+            appointment_id: appointmentId,
+            field: field,
+            value: enabled ? 1 : 0,
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                var reminderType = type === 'instant' ? 'Instant reminder' : '48-hour reminder';
+                var action = enabled ? 'enabled' : 'disabled';
+                alert_float('success', reminderType + ' ' + action + ' successfully');
+            } else {
+                alert_float('danger', response.message || 'Failed to update reminder setting');
+                // Revert checkbox
+                if (type === 'instant') {
+                    $('#instant_reminder_toggle').prop('checked', !enabled);
+                } else {
+                    $('#reminder_48h_toggle').prop('checked', !enabled);
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            alert_float('danger', 'Error updating reminder setting: ' + error);
+            // Revert checkbox
+            if (type === 'instant') {
+                $('#instant_reminder_toggle').prop('checked', !enabled);
+            } else {
+                $('#reminder_48h_toggle').prop('checked', !enabled);
+            }
+        }
+    });
+}
+
+// Load Attached Presentations
+function loadAttachedPresentations() {
+    var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_attached_presentations',
+        type: 'GET',
+        data: {
+            appointment_id: appointmentId,
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                renderAttachedPresentations(response.data);
+            } else {
+                $('#attached-presentations-container').html('<p class="text-muted">No presentations attached</p>');
+            }
+        },
+        error: function(xhr, status, error) {
+            $('#attached-presentations-container').html('<p class="text-danger">Error loading presentations</p>');
+        }
+    });
+}
+
+function renderAttachedPresentations(presentations) {
+    var html = '';
+    
+    if (presentations && presentations.length > 0) {
+        html = '<ul class="list-unstyled">';
+        presentations.forEach(function(presentation) {
+            html += '<li style="margin-bottom: 8px;">';
+            html += '<i class="fa fa-file-powerpoint-o" style="color: #e67e22;"></i> ';
+            html += '<a href="' + admin_url + 'ella_contractors/presentations/preview/' + presentation.id + '" target="_blank">';
+            html += presentation.original_name || presentation.file_name;
+            html += '</a>';
+            html += ' <button class="btn btn-xs btn-danger" onclick="detachPresentation(' + presentation.id + ')" title="Remove">';
+            html += '<i class="fa fa-times"></i></button>';
+            html += '</li>';
+        });
+        html += '</ul>';
+    } else {
+        html = '<p class="text-muted">No presentations attached</p>';
+    }
+    
+    $('#attached-presentations-container').html(html);
+}
+
+// Open Attach Presentation Modal
+function openAttachPresentationModal() {
+    // Create modal dynamically
+    var modalHtml = `
+    <div class="modal fade" id="attachPresentationModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Attach Presentation</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Select Presentation</label>
+                        <select class="form-control selectpicker" id="presentation_select" data-live-search="true">
+                            <option value="">Loading presentations...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="attachPresentation()">Attach</button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+    
+    // Remove existing modal if any
+    $('#attachPresentationModal').remove();
+    
+    // Append to body
+    $('body').append(modalHtml);
+    
+    // Load available presentations
+    $.ajax({
+        url: admin_url + 'ella_contractors/presentations/get_all',
+        type: 'GET',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success && response.data && response.data.length > 0) {
+                var options = '<option value="">-- Select Presentation --</option>';
+                response.data.forEach(function(presentation) {
+                    options += '<option value="' + presentation.id + '">';
+                    options += presentation.original_name || presentation.file_name;
+                    options += '</option>';
+                });
+                $('#presentation_select').html(options);
+                $('#presentation_select').selectpicker('refresh');
+            } else {
+                $('#presentation_select').html('<option value="">No presentations available</option>');
+                $('#presentation_select').selectpicker('refresh');
+            }
+        },
+        error: function() {
+            $('#presentation_select').html('<option value="">Error loading presentations</option>');
+            $('#presentation_select').selectpicker('refresh');
+        }
+    });
+    
+    // Show modal
+    $('#attachPresentationModal').modal('show');
+}
+
+// Attach Presentation to Appointment
+function attachPresentation() {
+    var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
+    var presentationId = $('#presentation_select').val();
+    
+    if (!presentationId) {
+        alert_float('warning', 'Please select a presentation');
+        return;
+    }
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/attach_presentation',
+        type: 'POST',
+        data: {
+            appointment_id: appointmentId,
+            presentation_id: presentationId,
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                alert_float('success', 'Presentation attached successfully');
+                $('#attachPresentationModal').modal('hide');
+                loadAttachedPresentations(); // Reload list
+            } else {
+                alert_float('danger', response.message || 'Failed to attach presentation');
+            }
+        },
+        error: function(xhr, status, error) {
+            alert_float('danger', 'Error attaching presentation: ' + error);
+        }
+    });
+}
+
+// Detach Presentation from Appointment
+function detachPresentation(presentationId) {
+    if (!confirm('Are you sure you want to remove this presentation?')) {
+        return;
+    }
+    
+    var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/detach_presentation',
+        type: 'POST',
+        data: {
+            appointment_id: appointmentId,
+            presentation_id: presentationId,
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                alert_float('success', 'Presentation removed successfully');
+                loadAttachedPresentations(); // Reload list
+            } else {
+                alert_float('danger', response.message || 'Failed to remove presentation');
+            }
+        },
+        error: function(xhr, status, error) {
+            alert_float('danger', 'Error removing presentation: ' + error);
+        }
+    });
+}
+
+// Load presentations on page load
+$(document).ready(function() {
+    loadAttachedPresentations();
+});
 
 </script>
 
