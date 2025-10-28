@@ -11,21 +11,16 @@ if (typeof Dropzone !== 'undefined') {
     Dropzone.autoDiscover = false;
 }
 
-// Track if Dropzone has been initialized (global flag)
-var attachmentDropzoneInitialized = false;
-
 $(document).ready(function() {
     // Load attachments when attachments tab is clicked
     $('a[href="#attachments-tab"]').on('click', function() {
         loadAttachments(true); // Force refresh when tab is clicked
     });
     
-    // Initialize Dropzone when upload modal is opened (lazy initialization)
+    // Initialize custom dropzone when upload modal is opened
     $('#attachmentUploadModal').on('shown.bs.modal', function() {
-        if (!attachmentDropzoneInitialized) {
-            initializeAttachmentDropzone();
-            attachmentDropzoneInitialized = true;
-        }
+        // Always reinitialize to ensure clean state
+        initializeAttachmentDropzone();
     });
     
     // Check if we're on attachments tab on page load (integrate with main tab system)
@@ -203,74 +198,276 @@ function deleteAttachment(attachmentId) {
 }
 
 /**
- * Initialize Dropzone for attachment uploads
- * Following the CRM pattern from projects and other modules
+ * CUSTOM DROPZONE FOR ATTACHMENT UPLOADS (BATCH UPLOAD)
+ * Replicates appointment modal dropzone behavior
+ * - Drag/drop and click to browse
+ * - Preview thumbnails
+ * - Remove files before upload
+ * - Batch upload (not immediate)
  */
+
+var attachmentViewFiles = []; // Store files in memory
+var MAX_ATTACHMENT_FILES = 10;
+
 function initializeAttachmentDropzone() {
-    var dropzoneElement = document.querySelector('#appointment-attachment-upload');
+    const dropZoneElement = document.querySelector("#attachmentViewDropzone");
+    const inputElement = document.querySelector("#attachment_files");
+    const thumbnailsContainer = document.querySelector("#attachmentViewThumbnails");
+    const promptElement = document.querySelector("#attachmentViewDropzone .drop-zone__prompt");
+    const uploadBtn = document.querySelector("#uploadAttachmentsBtn");
+    const fileCountBadge = document.querySelector("#fileCountBadge");
     
-    // Check if element exists
-    if (!dropzoneElement) {
+    if (!dropZoneElement || !inputElement) {
+        console.warn('Attachment dropzone elements not found');
+        return; // Elements not found, exit
+    }
+    
+    // Reset files array on initialization
+    attachmentViewFiles = [];
+    
+    // Click to browse
+    dropZoneElement.addEventListener("click", function(e) {
+        if (e.target === inputElement || e.target.closest('.removeimage')) {
+            return; // Don't trigger if clicking input or remove button
+        }
+        inputElement.click();
+    });
+    
+    // File selection via input
+    inputElement.addEventListener("change", function(e) {
+        if (inputElement.files.length > 0) {
+            handleAttachmentFiles(inputElement.files);
+        }
+    });
+    
+    // Drag & Drop events
+    dropZoneElement.addEventListener("dragover", function(e) {
+        e.preventDefault();
+        dropZoneElement.classList.add("drop-zone--over");
+    });
+    
+    ["dragleave", "dragend"].forEach(function(type) {
+        dropZoneElement.addEventListener(type, function(e) {
+            dropZoneElement.classList.remove("drop-zone--over");
+        });
+    });
+    
+    dropZoneElement.addEventListener("drop", function(e) {
+        e.preventDefault();
+        dropZoneElement.classList.remove("drop-zone--over");
+        
+        if (e.dataTransfer.files.length > 0) {
+            handleAttachmentFiles(e.dataTransfer.files);
+        }
+    });
+    
+    // Handle files (add to array and show preview)
+    function handleAttachmentFiles(files) {
+        const remainingSlots = MAX_ATTACHMENT_FILES - attachmentViewFiles.length;
+        
+        if (files.length > remainingSlots) {
+            alert_float('warning', 'You can only upload ' + remainingSlots + ' more file(s). Maximum is ' + MAX_ATTACHMENT_FILES + ' files.');
+            return;
+        }
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            
+            // Validate file size (50MB)
+            if (file.size > 50 * 1024 * 1024) {
+                alert_float('danger', 'File "' + file.name + '" is too large. Maximum size is 50MB.');
+                continue;
+            }
+            
+            // Add to array
+            attachmentViewFiles.push(file);
+            
+            // Create thumbnail
+            createAttachmentThumbnail(file, attachmentViewFiles.length - 1);
+        }
+        
+        updateAttachmentDropzoneUI();
+    }
+    
+    // Create thumbnail preview
+    function createAttachmentThumbnail(file, index) {
+        const thumbnailElement = document.createElement("div");
+        thumbnailElement.classList.add("drop-zone__thumb");
+        thumbnailElement.dataset.index = index;
+        
+        // File icon or image preview
+        if (file.type.startsWith("image/")) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function() {
+                thumbnailElement.style.backgroundImage = "url('" + reader.result + "')";
+                thumbnailElement.style.backgroundSize = "cover";
+            };
+        } else {
+            // Show file icon for non-images
+            const icon = getFileIconClass(file.type);
+            thumbnailElement.innerHTML = '<div style="text-align: center; padding: 20px;">' +
+                '<i class="' + icon + '" style="font-size: 48px; color: #666;"></i>' +
+                '</div>';
+        }
+        
+        // File name label
+        const fileNameDiv = document.createElement("div");
+        fileNameDiv.textContent = file.name;
+        fileNameDiv.className = "file-name-label";
+        thumbnailElement.appendChild(fileNameDiv);
+        
+        // Remove button
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.classList.add("removeimage");
+        removeBtn.innerHTML = "×";
+        removeBtn.onclick = function(e) {
+            e.stopPropagation();
+            removeAttachmentFile(index);
+        };
+        thumbnailElement.appendChild(removeBtn);
+        
+        thumbnailsContainer.appendChild(thumbnailElement);
+    }
+    
+    // Remove file from array
+    function removeAttachmentFile(index) {
+        attachmentViewFiles.splice(index, 1);
+        
+        // Clear and rebuild thumbnails
+        thumbnailsContainer.innerHTML = '';
+        attachmentViewFiles.forEach(function(file, idx) {
+            createAttachmentThumbnail(file, idx);
+        });
+        
+        updateAttachmentDropzoneUI();
+    }
+    
+    // Update UI based on file count
+    function updateAttachmentDropzoneUI() {
+        const fileCount = attachmentViewFiles.length;
+        
+        // Update badge
+        fileCountBadge.textContent = fileCount;
+        
+        // Enable/disable upload button
+        if (fileCount > 0) {
+            uploadBtn.disabled = false;
+            uploadBtn.classList.remove('btn-default');
+            uploadBtn.classList.add('btn-info');
+            promptElement.style.display = 'none';
+        } else {
+            uploadBtn.disabled = true;
+            uploadBtn.classList.add('btn-default');
+            uploadBtn.classList.remove('btn-info');
+            promptElement.style.display = 'block';
+        }
+        
+        // Update hidden count field
+        document.querySelector("#attachment_files_count").value = fileCount;
+    }
+    
+    // Get icon based on file type
+    function getFileIconClass(mimeType) {
+        if (mimeType.includes('pdf')) return 'fa fa-file-pdf-o';
+        if (mimeType.includes('word')) return 'fa fa-file-word-o';
+        if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'fa fa-file-excel-o';
+        if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'fa fa-file-powerpoint-o';
+        return 'fa fa-file-o';
+    }
+}
+
+// Upload button click handler
+$(document).on('click', '#uploadAttachmentsBtn', function() {
+    if (attachmentViewFiles.length === 0) {
+        alert_float('warning', 'Please select files to upload');
         return;
     }
     
-    // Check if Dropzone is already attached (prevent re-initialization)
-    if (dropzoneElement.dropzone) {
-        dropzoneElement.dropzone.destroy();
-    }
+    // Show progress
+    const $btn = $(this);
+    const originalText = $btn.html();
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Uploading...');
     
-    // Create new Dropzone instance
-    if ($('#appointment-attachment-upload').length > 0) {
-        new Dropzone('#appointment-attachment-upload', appCreateDropzoneOptions({
-            paramName: "file",
-            uploadMultiple: true,
-            parallelUploads: 10,
-            maxFiles: 20,
-            accept: function(file, done) {
-                // Additional client-side validation if needed
-                var allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp',
-                                    'application/pdf',
-                                    'application/msword',
-                                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                                    'application/vnd.ms-excel',
-                                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                                    'application/vnd.ms-powerpoint',
-                                    'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
+    // Create FormData and append all files
+    const formData = new FormData();
+    attachmentViewFiles.forEach(function(file, index) {
+        formData.append('file', file); // Append each file with same key name
+    });
+    
+    // Add CSRF token
+    formData.append(csrf_token_name, csrf_hash);
+    
+    // AJAX upload
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/upload_attachment/' + appointmentId,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                alert_float('success', response.message);
                 
-                if (allowedTypes.indexOf(file.type) === -1) {
-                    done('File type not allowed: ' + file.type);
-                } else {
-                    done();
+                // Clear files array and thumbnails
+                attachmentViewFiles = [];
+                const thumbnailsContainer = document.querySelector("#attachmentViewThumbnails");
+                if (thumbnailsContainer) {
+                    thumbnailsContainer.innerHTML = '';
                 }
-            },
-            init: function() {
-                this.on("queuecomplete", function() {
-                    // Reload attachments list after all uploads complete
-                    if (this.getUploadingFiles().length === 0 && this.getQueuedFiles().length === 0) {
-                        setTimeout(function() {
-                            // Force reload attachments
-                            loadAttachments(true);
-                            $('#attachmentUploadModal').modal('hide');
-                            alert_float('success', 'Files uploaded successfully');
-                        }, 300);
-                    }
-                });
+                const promptElement = document.querySelector("#attachmentViewDropzone .drop-zone__prompt");
+                if (promptElement) {
+                    promptElement.style.display = 'block';
+                }
                 
-                this.on("error", function(file, errorMessage) {
-                    alert_float('danger', 'Upload failed: ' + errorMessage);
-                });
+                // Reset button
+                $btn.removeClass('btn-info').addClass('btn-default');
+                $btn.prop('disabled', true).html(originalText);
+                const fileCountBadge = document.querySelector("#fileCountBadge");
+                if (fileCountBadge) {
+                    fileCountBadge.textContent = '0';
+                }
                 
-                this.on("success", function(file, response) {
-                    // Handle individual file success
-                });
-            },
-            sending: function(file, xhr, formData) {
-                // Add CSRF token to each upload request
-                formData.append(csrf_token_name, csrf_hash);
+                // Close modal
+                $('#attachmentUploadModal').modal('hide');
+                
+                // Reload attachments grid
+                if (typeof loadAttachments === 'function') {
+                    loadAttachments(true);
+                }
+            } else {
+                alert_float('danger', response.message || 'Upload failed');
+                $btn.prop('disabled', false).html(originalText);
             }
-        }));
+        },
+        error: function(xhr, status, error) {
+            alert_float('danger', 'Error uploading files: ' + error);
+            $btn.prop('disabled', false).html(originalText);
+        }
+    });
+});
+
+// Reset dropzone when modal is closed
+$('#attachmentUploadModal').on('hidden.bs.modal', function() {
+    attachmentViewFiles = [];
+    const thumbnailsContainer = document.querySelector("#attachmentViewThumbnails");
+    if (thumbnailsContainer) {
+        thumbnailsContainer.innerHTML = '';
     }
-}
+    const promptElement = document.querySelector("#attachmentViewDropzone .drop-zone__prompt");
+    if (promptElement) {
+        promptElement.style.display = 'block';
+    }
+    const uploadBtn = document.querySelector("#uploadAttachmentsBtn");
+    if (uploadBtn) {
+        uploadBtn.disabled = true;
+        uploadBtn.classList.remove('btn-info');
+        uploadBtn.classList.add('btn-default');
+        uploadBtn.innerHTML = '<i class="fa fa-upload"></i> Upload Files (<span id="fileCountBadge">0</span>)';
+    }
+});
 
 /**
  * Preview attachment file (PDF, PPT, PPTX)

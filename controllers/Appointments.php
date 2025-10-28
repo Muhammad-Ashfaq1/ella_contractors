@@ -1258,15 +1258,21 @@ class Appointments extends AdminController
 
             // Return response
             if (count($uploaded_files) > 0) {
+                $message = count($uploaded_files) . ' file(s) uploaded successfully';
+                if (count($errors) > 0) {
+                    $message .= ' (' . count($errors) . ' failed)';
+                }
                 echo json_encode([
                     'success' => true,
-                    'message' => count($uploaded_files) . ' file(s) uploaded successfully',
-                    'uploaded' => $uploaded_files
+                    'message' => $message,
+                    'uploaded' => $uploaded_files,
+                    'errors' => $errors
                 ]);
             } else {
                 echo json_encode([
                     'success' => false,
-                    'message' => 'No files uploaded. Errors: ' . implode(', ', $errors)
+                    'message' => 'Failed to upload files. ' . (count($errors) > 0 ? implode(', ', $errors) : 'Unknown error'),
+                    'errors' => $errors
                 ]);
             }
         } else {
