@@ -295,7 +295,7 @@ function openEditForm(noteId) {
     
     editForm += '<div class="text-right">';
     editForm += '<button class="btn btn-default btn-xs" onclick="cancelEditNote(' + noteId + ')" title="Cancel"><i class="fa fa-times"></i> Cancel</button> ';
-    editForm += '<button class="btn btn-primary btn-xs" onclick="updateNote(' + noteId + ')" title="Update"><i class="fa fa-check"></i> Update</button>';
+    editForm += '<button class="btn btn-info btn-xs" onclick="updateNote(' + noteId + ')" title="Update" style="background-color: #5bc0de !important; border-color: #46b8da !important; color: #fff !important;"><i class="fa fa-check"></i> Update</button>';
     editForm += '</div>';
     editForm += '</div>';
     editForm += '</div>';
