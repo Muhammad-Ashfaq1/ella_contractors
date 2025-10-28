@@ -1955,5 +1955,268 @@ startxref
         }
     }
     
+    /**
+     * Update reminder setting (AJAX)
+     * Updates send_reminder or reminder_48h fields for an appointment
+     */
+    public function update_reminder_setting()
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            ajax_access_denied();
+        }
+        
+        $appointment_id = $this->input->post('appointment_id');
+        $field = $this->input->post('field'); // 'send_reminder' or 'reminder_48h'
+        $value = $this->input->post('value'); // 0 or 1
+        
+        // Validate inputs
+        if (!$appointment_id || !$field) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Appointment ID and field are required'
+            ]);
+            return;
+        }
+        
+        // Validate field name for security
+        if (!in_array($field, ['send_reminder', 'reminder_48h'])) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid field name'
+            ]);
+            return;
+        }
+        
+        // Validate appointment exists
+        $appointment = $this->appointments_model->get_appointment($appointment_id);
+        if (!$appointment) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Appointment not found'
+            ]);
+            return;
+        }
+        
+        // Update the field
+        $update_data = [$field => $value ? 1 : 0];
+        $result = $this->appointments_model->update_appointment($appointment_id, $update_data);
+        
+        if ($result) {
+            // Log activity
+            $reminder_type = $field === 'send_reminder' ? 'Instant reminder' : '48-hour reminder';
+            $action = $value ? 'enabled' : 'disabled';
+            
+            $this->appointments_model->add_activity_log(
+                $appointment_id,
+                'REMINDER_SETTING',
+                $action,
+                [
+                    'reminder_type' => $reminder_type,
+                    'field' => $field,
+                    'value' => $value
+                ]
+            );
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Reminder setting updated successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to update reminder setting'
+            ]);
+        }
+    }
+    
+    /**
+     * Get attached presentations for an appointment (AJAX)
+     */
+    public function get_attached_presentations()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+        
+        $appointment_id = $this->input->get('appointment_id');
+        
+        if (!$appointment_id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Appointment ID is required'
+            ]);
+            return;
+        }
+        
+        // Query presentations attached to this appointment
+        $this->db->select('
+            media.id,
+            media.file_name,
+            media.original_name,
+            media.file_type,
+            media.file_size,
+            media.date_uploaded,
+            pivot.attached_at,
+            pivot.attached_by
+        ');
+        $this->db->from(db_prefix() . 'ella_appointment_presentations as pivot');
+        $this->db->join(db_prefix() . 'ella_contractor_media as media', 'media.id = pivot.presentation_id');
+        $this->db->where('pivot.appointment_id', $appointment_id);
+        $this->db->where('media.rel_type', 'presentation');
+        $this->db->where('media.active', 1);
+        $this->db->order_by('pivot.attached_at', 'DESC');
+        
+        $presentations = $this->db->get()->result_array();
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $presentations
+        ]);
+    }
+    
+    /**
+     * Attach presentation to appointment (AJAX)
+     */
+    public function attach_presentation()
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            ajax_access_denied();
+        }
+        
+        $appointment_id = $this->input->post('appointment_id');
+        $presentation_id = $this->input->post('presentation_id');
+        
+        // Validate inputs
+        if (!$appointment_id || !$presentation_id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Appointment ID and Presentation ID are required'
+            ]);
+            return;
+        }
+        
+        // Validate appointment exists
+        $appointment = $this->appointments_model->get_appointment($appointment_id);
+        if (!$appointment) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Appointment not found'
+            ]);
+            return;
+        }
+        
+        // Validate presentation exists
+        $this->load->model('ella_contractors/ella_media_model');
+        $presentation = $this->ella_media_model->get_file($presentation_id);
+        if (!$presentation || $presentation->rel_type !== 'presentation') {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Presentation not found'
+            ]);
+            return;
+        }
+        
+        // Check if already attached (UNIQUE constraint will prevent duplicates, but check anyway)
+        $this->db->where('appointment_id', $appointment_id);
+        $this->db->where('presentation_id', $presentation_id);
+        $existing = $this->db->get(db_prefix() . 'ella_appointment_presentations')->row();
+        
+        if ($existing) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'This presentation is already attached to this appointment'
+            ]);
+            return;
+        }
+        
+        // Create link in pivot table
+        $data = [
+            'appointment_id' => $appointment_id,
+            'presentation_id' => $presentation_id,
+            'attached_by' => get_staff_user_id(),
+            'attached_at' => date('Y-m-d H:i:s')
+        ];
+        
+        $this->db->insert(db_prefix() . 'ella_appointment_presentations', $data);
+        
+        if ($this->db->affected_rows() > 0) {
+            // Log activity
+            $this->appointments_model->add_activity_log(
+                $appointment_id,
+                'PRESENTATION',
+                'attached',
+                [
+                    'presentation_id' => $presentation_id,
+                    'presentation_name' => $presentation->original_name,
+                    'attached_by' => get_staff_user_id()
+                ]
+            );
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Presentation attached successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to attach presentation'
+            ]);
+        }
+    }
+    
+    /**
+     * Detach presentation from appointment (AJAX)
+     */
+    public function detach_presentation()
+    {
+        if (!has_permission('ella_contractors', '', 'delete')) {
+            ajax_access_denied();
+        }
+        
+        $appointment_id = $this->input->post('appointment_id');
+        $presentation_id = $this->input->post('presentation_id');
+        
+        // Validate inputs
+        if (!$appointment_id || !$presentation_id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Appointment ID and Presentation ID are required'
+            ]);
+            return;
+        }
+        
+        // Get presentation info before deleting for logging
+        $this->load->model('ella_contractors/ella_media_model');
+        $presentation = $this->ella_media_model->get_file($presentation_id);
+        
+        // Delete the link
+        $this->db->where('appointment_id', $appointment_id);
+        $this->db->where('presentation_id', $presentation_id);
+        $this->db->delete(db_prefix() . 'ella_appointment_presentations');
+        
+        if ($this->db->affected_rows() > 0) {
+            // Log activity
+            $this->appointments_model->add_activity_log(
+                $appointment_id,
+                'PRESENTATION',
+                'detached',
+                [
+                    'presentation_id' => $presentation_id,
+                    'presentation_name' => $presentation ? $presentation->original_name : 'Unknown',
+                    'detached_by' => get_staff_user_id()
+                ]
+            );
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Presentation removed successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to remove presentation or it was not attached'
+            ]);
+        }
+    }
 
 }

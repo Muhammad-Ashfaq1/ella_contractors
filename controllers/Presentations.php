@@ -364,5 +364,30 @@ startxref
 </html>';
         exit;
     }
+    
+    /**
+     * Get all active presentations (AJAX)
+     * Used by appointment view to populate presentation selection modal
+     */
+    public function get_all() {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+        
+        // Get all active presentations
+        $this->db->select('id, file_name, original_name, file_type, file_size, date_uploaded, is_default');
+        $this->db->from(db_prefix() . 'ella_contractor_media');
+        $this->db->where('rel_type', 'presentation');
+        $this->db->where('active', 1);
+        $this->db->order_by('is_default', 'DESC'); // Default presentations first
+        $this->db->order_by('date_uploaded', 'DESC');
+        
+        $presentations = $this->db->get()->result_array();
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $presentations
+        ]);
+    }
 }
 
