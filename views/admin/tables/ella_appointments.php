@@ -44,18 +44,21 @@ if (!$CI->db->field_exists('appointment_status', db_prefix() . 'appointly_appoin
 }
 
 $aColumns = [
-    db_prefix() . 'appointly_appointments.id as checkbox_id', // For checkbox selection
-    db_prefix() . 'appointly_appointments.id as id',
-    'COALESCE(' . db_prefix() . 'leads.name, "") as lead_name',
-    'COALESCE(' . db_prefix() . 'leads.id, "") as lead_id',
-    db_prefix() . 'appointly_appointments.subject as subject',
-    db_prefix() . 'appointly_appointments.date as date',
-    db_prefix() . 'appointly_appointments.start_hour as start_hour',
+    db_prefix() . 'appointly_appointments.id as checkbox_id', // 0: For checkbox selection
+    db_prefix() . 'appointly_appointments.id as id', // 1: ID column
+    db_prefix() . 'appointly_appointments.subject as subject', // 2: Appointment column
+    'COALESCE(' . db_prefix() . 'leads.name, "") as lead_name', // 3: Lead name column
+    // 4: Combined datetime for proper sorting - THIS MATCHES FRONTEND COLUMN 4
+    'CONCAT(' . db_prefix() . 'appointly_appointments.date, " ", COALESCE(' . db_prefix() . 'appointly_appointments.start_hour, "00:00:00")) as datetime_sort',
     // Use direct appointment_status column access
-    'COALESCE(' . db_prefix() . 'appointly_appointments.appointment_status, "scheduled") as status',
-    'COALESCE(measurement_counts.measurement_count, 0) as measurement_count',
-    'COALESCE(estimate_counts.estimate_count, 0) as estimate_count',
-    db_prefix() . 'appointly_appointments.id as options_id' // For options column
+    'COALESCE(' . db_prefix() . 'appointly_appointments.appointment_status, "scheduled") as status', // 5: Status column
+    'COALESCE(measurement_counts.measurement_count, 0) as measurement_count', // 6: Measurements column
+    'COALESCE(estimate_counts.estimate_count, 0) as estimate_count', // 7: Estimates column
+    db_prefix() . 'appointly_appointments.id as options_id', // 8: Options column
+    // Additional columns needed for display but not shown
+    'COALESCE(' . db_prefix() . 'leads.id, "") as lead_id',
+    db_prefix() . 'appointly_appointments.date as date',
+    db_prefix() . 'appointly_appointments.start_hour as start_hour'
 ];
 
 $join = [
@@ -191,7 +194,9 @@ try {
                         
         
         // Format date as "July 5th, 2025" with time underneath
+        // Use datetime_sort column for proper DataTables sorting
         $date_formatted = '';
+        
         if (!empty($aRow['date'])) {
             $date_obj = DateTime::createFromFormat('Y-m-d', $aRow['date']);
             if ($date_obj) {
@@ -217,8 +222,10 @@ try {
         
                 $date_formatted .= '<br><small class="">' . $time_formatted . '</small>';
             }
-        }        
-        $row[] = '<div class="text-center">' . $date_formatted . '</div>';
+        }
+        
+        // Use the datetime_sort column value for data-order attribute
+        $row[] = '<div class="text-center" data-order="' . htmlspecialchars($aRow['datetime_sort']) . '">' . $date_formatted . '</div>';
         
         // Status column with dropdown (similar to leads implementation)
         $status = isset($aRow['status']) ? $aRow['status'] : 'scheduled';

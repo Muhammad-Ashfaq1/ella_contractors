@@ -353,8 +353,10 @@ function init_combined_ajax_search(selector) {
 $(document).ready(function() {
     // Initialize DataTable for appointments
     // Sort by column 4 (Scheduled datetime - combined date+time for proper chronological sorting) descending by default
-    // Columns: 0=checkbox, 1=ID, 2=Lead, 3=Subject, 4=Scheduled(datetime), 5=Status, 6=Measurements, 7=Estimates, 8=Options
-    initDataTable('.table-ella_appointments', admin_url + 'ella_contractors/appointments/table', undefined, undefined, {}, [4, 'desc']);
+    // Columns: 0=checkbox, 1=ID, 2=Appointment, 3=Lead, 4=Scheduled(datetime), 5=Status, 6=Measurements, 7=Estimates, 8=Options
+    // Disable sorting on: column 0 (checkbox), column 8 (options)
+    // Backend column 4 now uses CONCAT(date, time) for proper server-side sorting
+    initDataTable('.table-ella_appointments', admin_url + 'ella_contractors/appointments/table', undefined, [0, 8], {}, [4, 'desc']);
     
     // Function to add bulk delete button to DataTable toolbar
     function addBulkDeleteButton() {
@@ -482,6 +484,9 @@ $(document).ready(function() {
         var filter = $(this).data('filter');
         var table = $('.table-ella_appointments').DataTable();
         
+        // Save current sort order
+        var currentOrder = table.order();
+        
         // Update dropdown button text
         $(this).closest('.dropdown-menu').prev('.dropdown-toggle').html('<i class="fa fa-filter"></i> ' + $(this).text() + ' <span class="caret"></span>');
         
@@ -508,9 +513,12 @@ $(document).ready(function() {
             filterUrl += '?' + params.join('&');
         }
         
-        // Update table URL and reload
+        // Update table URL and reload while maintaining sort order
         table.ajax.url(filterUrl);
-        table.ajax.reload();
+        table.ajax.reload(function() {
+            // Restore sort order after filter
+            table.order(currentOrder).draw(false);
+        });
     });
 });
 
@@ -861,6 +869,9 @@ function resetAppointmentModal() {
 
 function deleteAppointment(appointmentId) {
     if (confirm('Are you sure you want to delete this appointment?')) {
+        var table = $('.table-ella_appointments').DataTable();
+        var currentOrder = table.order();
+        
         $.ajax({
             url: admin_url + 'ella_contractors/appointments/delete_ajax',
             type: 'POST',
@@ -872,7 +883,10 @@ function deleteAppointment(appointmentId) {
             success: function(response) {
                 if (response.success) {
                     alert_float('success', response.message);
-                    $('.table-ella_appointments').DataTable().ajax.reload();
+                    // Reload table maintaining sort order
+                    table.ajax.reload(function() {
+                        table.order(currentOrder).draw(false);
+                    });
                 } else {
                     alert_float('danger', response.message);
                 }
@@ -962,7 +976,13 @@ $('#saveAppointment').on('click', function() {
                 alert_float('success', response.message);
                 $('#appointmentModal').modal('hide');
                 resetAppointmentModal();
-                $('.table-ella_appointments').DataTable().ajax.reload();
+                
+                // Reload table maintaining sort order
+                var table = $('.table-ella_appointments').DataTable();
+                var currentOrder = table.order();
+                table.ajax.reload(function() {
+                    table.order(currentOrder).draw(false);
+                });
             } else {
                 alert_float('danger', response.message);
             }
@@ -1095,6 +1115,9 @@ function updateAppointmentStatusInPlace(appointment_id, newStatus) {
         return;
     }
     
+    // Store current order before any updates
+    var currentOrder = table.order();
+    
     // Find the row with the matching appointment ID
     var rowIndex = -1;
     table.rows().every(function(rowIdx, data, node) {
@@ -1124,17 +1147,22 @@ function updateAppointmentStatusInPlace(appointment_id, newStatus) {
         // Generate new status HTML
         var statusHtml = generateStatusHtml(newStatus, appointment_id);
         
-        // Update the status cell directly in the DOM without re-drawing
-        // This preserves the current sort order and pagination
+        // Update the status cell directly in the DOM
         var statusCell = table.cell(rowIndex, 5).node();
         $(statusCell).html('<div class="text-center" data-order="' + statusLabel + '">' + statusHtml + '</div>');
+        
+        // Maintain the sort order - redraw without changing sort
+        table.order(currentOrder).draw(false);
         
         // Reinitialize tooltips for the updated status element
         $('[data-toggle="tooltip"]').tooltip();
     } else {
-        // Fallback: if row not found, reload the table without resetting pagination/sort
+        // Fallback: if row not found, reload the table maintaining current page and sort
         console.warn('Row not found for appointment ID:', appointment_id, 'reloading table...');
-        table.ajax.reload(null, false); // false = maintain current page
+        table.ajax.reload(function() {
+            // Restore sort order after reload
+            table.order(currentOrder).draw(false);
+        }, false); // false = maintain current page
     }
 }
 
@@ -1302,6 +1330,10 @@ $(document).ready(function() {
             return;
         }
         
+        // Save current sort order
+        var table = $('.table-ella_appointments').DataTable();
+        var currentOrder = table.order();
+        
         // Show loading state
         var $btn = $(this);
         var originalHtml = $btn.html();
@@ -1326,8 +1358,10 @@ $(document).ready(function() {
                     // Hide bulk delete button
                     $('#bulk-delete-appointments').addClass('hide');
                     
-                    // Reload table
-                    $('.table-ella_appointments').DataTable().ajax.reload();
+                    // Reload table maintaining sort order
+                    table.ajax.reload(function() {
+                        table.order(currentOrder).draw(false);
+                    });
                 } else {
                     alert_float('danger', response.message || 'Failed to delete appointments');
                 }
