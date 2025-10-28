@@ -1203,34 +1203,48 @@ class Appointments extends AdminController
         // Load models
         $this->load->model('ella_contractors/ella_media_model');
         
-        // Handle multiple file uploads from Dropzone
+        // Debug: Log received files
+        log_message('debug', 'Upload Attachment - FILES received: ' . json_encode(array_keys($_FILES)));
+        
+        // Handle multiple file uploads - check both 'file' and 'file[]' keys
+        $files_key = null;
         if (isset($_FILES['file']) && !empty($_FILES['file']['name'])) {
+            $files_key = 'file';
+        } elseif (isset($_FILES['file_']) && !empty($_FILES['file_']['name'])) {
+            // Some browsers/frameworks use 'file_' when 'file[]' is used
+            $files_key = 'file_';
+        }
+        
+        if ($files_key) {
             // Check if it's a single file or multiple files
-            if (!is_array($_FILES['file']['name'])) {
+            if (!is_array($_FILES[$files_key]['name'])) {
                 // Single file - convert to array format for uniform processing
-                $_FILES['file']['name'] = [$_FILES['file']['name']];
-                $_FILES['file']['type'] = [$_FILES['file']['type']];
-                $_FILES['file']['tmp_name'] = [$_FILES['file']['tmp_name']];
-                $_FILES['file']['error'] = [$_FILES['file']['error']];
-                $_FILES['file']['size'] = [$_FILES['file']['size']];
+                $_FILES[$files_key]['name'] = [$_FILES[$files_key]['name']];
+                $_FILES[$files_key]['type'] = [$_FILES[$files_key]['type']];
+                $_FILES[$files_key]['tmp_name'] = [$_FILES[$files_key]['tmp_name']];
+                $_FILES[$files_key]['error'] = [$_FILES[$files_key]['error']];
+                $_FILES[$files_key]['size'] = [$_FILES[$files_key]['size']];
             }
+            
+            log_message('debug', 'Upload Attachment - Processing ' . count($_FILES[$files_key]['name']) . ' file(s)');
 
             $uploaded_files = [];
             $errors = [];
 
             // Process each file
-            for ($i = 0; $i < count($_FILES['file']['name']); $i++) {
+            for ($i = 0; $i < count($_FILES[$files_key]['name']); $i++) {
                 // Skip if no file or error uploading
-                if (empty($_FILES['file']['tmp_name'][$i]) || $_FILES['file']['error'][$i] !== UPLOAD_ERR_OK) {
+                if (empty($_FILES[$files_key]['tmp_name'][$i]) || $_FILES[$files_key]['error'][$i] !== UPLOAD_ERR_OK) {
+                    $errors[] = 'File upload error for: ' . ($_FILES[$files_key]['name'][$i] ?? 'unknown');
                     continue;
                 }
 
                 $file_data = [
-                    'name' => $_FILES['file']['name'][$i],
-                    'type' => $_FILES['file']['type'][$i],
-                    'tmp_name' => $_FILES['file']['tmp_name'][$i],
-                    'error' => $_FILES['file']['error'][$i],
-                    'size' => $_FILES['file']['size'][$i]
+                    'name' => $_FILES[$files_key]['name'][$i],
+                    'type' => $_FILES[$files_key]['type'][$i],
+                    'tmp_name' => $_FILES[$files_key]['tmp_name'][$i],
+                    'error' => $_FILES[$files_key]['error'][$i],
+                    'size' => $_FILES[$files_key]['size'][$i]
                 ];
 
                 // Use existing handle_appointment_file_upload method

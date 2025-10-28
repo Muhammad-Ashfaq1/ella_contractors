@@ -408,14 +408,30 @@ $(document).on('click', '#uploadAttachmentsBtn', function() {
     const originalText = $btn.html();
     $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Uploading...');
     
-    // Create FormData and append all files
+    // Create FormData and append all files with array notation
     const formData = new FormData();
+    
+    // Debug: Log files being uploaded
+    console.log('Uploading ' + attachmentViewFiles.length + ' file(s):', attachmentViewFiles.map(f => f.name));
+    
+    // Append each file - PHP will receive them as $_FILES['file']['name'][0], $_FILES['file']['name'][1], etc.
     attachmentViewFiles.forEach(function(file, index) {
-        formData.append('file', file); // Append each file with same key name
+        formData.append('file[]', file); // Use array notation for multiple files
+        console.log('Appended file[' + index + ']:', file.name, '(' + file.size + ' bytes)');
     });
     
     // Add CSRF token
     formData.append(csrf_token_name, csrf_hash);
+    
+    // Debug: Log FormData entries
+    console.log('FormData entries:');
+    for (var pair of formData.entries()) {
+        if (pair[1] instanceof File) {
+            console.log('  ' + pair[0] + ': [File] ' + pair[1].name);
+        } else {
+            console.log('  ' + pair[0] + ': ' + pair[1]);
+        }
+    }
     
     // AJAX upload
     $.ajax({
