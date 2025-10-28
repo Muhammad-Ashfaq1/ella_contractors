@@ -125,6 +125,33 @@ button.delete-btn {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Placeholder styling - opaque grayish like standard inputs */
+#appointmentModal ::-webkit-input-placeholder {
+  color: #999 !important;
+  opacity: 1 !important;
+}
+
+#appointmentModal ::-moz-placeholder {
+  color: #999 !important;
+  opacity: 1 !important;
+}
+
+#appointmentModal :-ms-input-placeholder {
+  color: #999 !important;
+  opacity: 1 !important;
+}
+
+#appointmentModal ::placeholder {
+  color: #999 !important;
+  opacity: 1 !important;
+}
+
+/* Customer Notifications heading styling */
+#appointmentModal h5 {
+  font-weight: bold;
+  font-size: 16px; /* +2px from default 14px */
+}
 </style>
 
 <div class="modal fade" id="appointmentModal" tabindex="-1" role="dialog" aria-labelledby="appointmentModalLabel">
