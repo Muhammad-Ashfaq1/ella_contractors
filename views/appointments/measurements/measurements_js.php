@@ -82,10 +82,10 @@ function createMeasurementRow(tabId, rowIndex) {
         '</div>' +
         '<div class="col-md-2">' +
             '<div class="form-group" style="padding-top: 25px;">' +
-                '<button type="button" class="btn btn-info btn-sm add-row-btn" onclick="addMeasurementRow(\'' + tabId + '\')" title="Add Row" style="width: 35px; height: 35px; border-radius: 4px; padding: 0; display: inline-flex; align-items: center; justify-content: center; margin-right: 5px; background-color: #5bc0de !important; border-color: #46b8da !important;">' +
+                '<button type="button" class="btn btn-success btn-sm add-row-btn" onclick="addMeasurementRow(\'' + tabId + '\')" title="Add Row" style="width: 35px; height: 35px; border-radius: 4px; padding: 0; display: inline-flex; align-items: center; justify-content: center; margin-right: 5px;">' +
                         '<i class="fa fa-plus"></i>' +
                 '</button>' +
-                '<button type="button" class="btn btn-danger btn-sm remove-row-btn" onclick="removeMeasurementRow(this)" title="Remove Row" style="width: 35px; height: 35px; border-radius: 4px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background-color: #dc3545 !important; border-color: #dc3545 !important;">' +
+                '<button type="button" class="btn btn-danger btn-sm remove-row-btn" onclick="removeMeasurementRow(this)" title="Remove Row" style="width: 35px; height: 35px; border-radius: 4px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">' +
                         '<i class="fa fa-minus"></i>' +
                     '</button>' +
             '</div>' +
@@ -946,32 +946,45 @@ function deleteMeasurement(measurementId) {
     outline: none !important;
 }
 
-/* Add Row button (+ icon) styling */
-.add-row-btn.btn-info,
-.add-row-btn.btn-info:visited {
-    background-color: #5bc0de !important;
-    border-color: #46b8da !important;
+/* Add Row button (+ icon) styling - keep original green */
+.add-row-btn.btn-success,
+.add-row-btn.btn-success:visited {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
     color: #fff !important;
 }
 
-.add-row-btn.btn-info:hover {
-    background-color: #31b0d5 !important;
-    border-color: #269abc !important;
+.add-row-btn.btn-success:hover {
+    background-color: #218838 !important;
+    border-color: #1e7e34 !important;
     color: #fff !important;
 }
 
-.add-row-btn.btn-info:active,
-.add-row-btn.btn-info:focus,
-.add-row-btn.btn-info:active:focus,
-.add-row-btn.btn-info:active:hover {
-    background-color: #5bc0de !important;
-    border-color: #46b8da !important;
+.add-row-btn.btn-success:active,
+.add-row-btn.btn-success:focus,
+.add-row-btn.btn-success:active:focus,
+.add-row-btn.btn-success:active:hover {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
     color: #fff !important;
     box-shadow: none !important;
     outline: none !important;
 }
 
-/* Remove Row button (- icon) styling */
+/* Remove Row button (- icon) styling - keep original red */
+.remove-row-btn.btn-danger,
+.remove-row-btn.btn-danger:visited {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: #fff !important;
+}
+
+.remove-row-btn.btn-danger:hover {
+    background-color: #c82333 !important;
+    border-color: #bd2130 !important;
+    color: #fff !important;
+}
+
 .remove-row-btn.btn-danger:active,
 .remove-row-btn.btn-danger:focus,
 .remove-row-btn.btn-danger:active:focus,
