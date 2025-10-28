@@ -246,7 +246,7 @@ html {
                         <div class="row">
                             <div class="col-md-8">
                                 <h3 class="no-margin appointment-subject" title="<?php echo htmlspecialchars($appointment->subject); ?>">
-                                    (<?php echo $appointment->id; ?>) <?php echo $appointment->subject; ?>
+                                    <?php echo '<span class="text-muted">' . '(' . $appointment->id . ')' . '</span>'; ?> <?php echo $appointment->subject; ?>
                                 </h3>
                                 <p class="text-muted">
                                     <?php 
