@@ -307,10 +307,10 @@ function initializeAttachmentDropzone() {
                 thumbnailElement.style.backgroundSize = "cover";
             };
         } else {
-            // Show file icon for non-images
-            const icon = getFileIconClass(file.type);
+            // Show file icon for non-images with proper colors (matching appointment modal)
+            const iconData = getFileIconWithColor(file.type);
             thumbnailElement.innerHTML = '<div style="text-align: center; padding: 20px;">' +
-                '<i class="' + icon + '" style="font-size: 48px; color: #666;"></i>' +
+                '<i class="' + iconData.icon + '" style="font-size: 48px; color: ' + iconData.color + ';"></i>' +
                 '</div>';
         }
         
@@ -371,13 +371,21 @@ function initializeAttachmentDropzone() {
         document.querySelector("#attachment_files_count").value = fileCount;
     }
     
-    // Get icon based on file type
-    function getFileIconClass(mimeType) {
-        if (mimeType.includes('pdf')) return 'fa fa-file-pdf-o';
-        if (mimeType.includes('word')) return 'fa fa-file-word-o';
-        if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'fa fa-file-excel-o';
-        if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'fa fa-file-powerpoint-o';
-        return 'fa fa-file-o';
+    // Get icon and color based on file type (matching appointment modal)
+    function getFileIconWithColor(mimeType) {
+        if (mimeType.includes('pdf')) {
+            return { icon: 'fa fa-file-pdf-o', color: '#dc3545' }; // Red like Adobe PDF
+        }
+        if (mimeType.includes('word') || mimeType.includes('document')) {
+            return { icon: 'fa fa-file-word-o', color: '#2b579a' }; // Blue like Word
+        }
+        if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) {
+            return { icon: 'fa fa-file-excel-o', color: '#217346' }; // Green like Excel
+        }
+        if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) {
+            return { icon: 'fa fa-file-powerpoint-o', color: '#d24726' }; // Orange like PowerPoint
+        }
+        return { icon: 'fa fa-file-o', color: '#666' }; // Grey for unknown types
     }
 }
 

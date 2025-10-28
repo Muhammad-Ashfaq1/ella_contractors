@@ -120,7 +120,6 @@
                         <p class="text-muted">
                             Drop files here or click to select (Maximum 10 files)<br>
                             <small>Allowed file types: PDF, Word, Excel, PowerPoint, Images</small><br>
-                            <small>Maximum file size: 50MB per file</small>
                         </p>
                         
                         <!-- Custom Dropzone (same as appointment modal) -->
