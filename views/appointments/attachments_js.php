@@ -6,6 +6,9 @@
 ?>
 
 <script>
+// Define appointment ID for this file (available from parent view)
+var attachmentAppointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
+
 // Disable Dropzone auto-discovery to prevent automatic initialization
 if (typeof Dropzone !== 'undefined') {
     Dropzone.autoDiscover = false;
@@ -54,7 +57,7 @@ window.loadAttachments = function(forceRefresh = false) {
     }
     
     $.ajax({
-        url: admin_url + 'ella_contractors/appointments/get_appointment_attachments/' + <?php echo $appointment->id; ?>,
+        url: admin_url + 'ella_contractors/appointments/get_appointment_attachments/' + attachmentAppointmentId,
         type: 'GET',
         dataType: 'json',
         cache: false, // Prevent caching to ensure fresh data
@@ -385,6 +388,13 @@ $(document).on('click', '#uploadAttachmentsBtn', function() {
         return;
     }
     
+    // Verify appointment ID is available
+    if (!attachmentAppointmentId || attachmentAppointmentId === 0) {
+        alert_float('danger', 'Error: Appointment ID not found. Please refresh the page.');
+        console.error('attachmentAppointmentId is not defined or is 0');
+        return;
+    }
+    
     // Show progress
     const $btn = $(this);
     const originalText = $btn.html();
@@ -401,7 +411,7 @@ $(document).on('click', '#uploadAttachmentsBtn', function() {
     
     // AJAX upload
     $.ajax({
-        url: admin_url + 'ella_contractors/appointments/upload_attachment/' + appointmentId,
+        url: admin_url + 'ella_contractors/appointments/upload_attachment/' + attachmentAppointmentId,
         type: 'POST',
         data: formData,
         processData: false,
