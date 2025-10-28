@@ -740,7 +740,7 @@ function displayMeasurements(measurements) {
             }
             
             // Format measurements list: "Name | Value Unit"
-            var measurementsList = '';
+            var measurementsList = '<div style="line-height: 1.4; text-align: center;">';
             if (measurement.items && measurement.items.length > 0) {
                 measurement.items.forEach(function(item, itemIdx) {
                     if (itemIdx > 0) {
@@ -749,22 +749,21 @@ function displayMeasurements(measurements) {
                     var itemName = item.name || 'Unnamed';
                     var itemValue = parseFloat(item.value).toFixed(2);
                     var itemUnit = item.unit || '';
-                    measurementsList += `
-                                        <div style="text-align: center; white-space: nowrap; line-height: 1.3; margin: 2px 0;">
+                    measurementsList += `<span style="white-space: nowrap; display: inline-block;">
                                             <strong style="color: #495057;">${itemName}</strong>
                                             <span style="color: #6c757d;"> | </span>
                                             <span style="color: #212529;">${itemValue} ${itemUnit}</span>
-                                        </div>
-                                        `;
+                                        </span>`;
                                         
                 });
+                measurementsList += '</div>';
             } else {
                 measurementsList = '<span style="color: #999;">No measurements</span>';
             }
             
             html += '<tr ' + rowClass + '>';
             html += '<td style="text-align: center; padding: 12px;"><strong>' + (measurement.tab_name || 'Untitled') + '</strong></td>';
-            html += '<td style="text-align: left; padding: 12px;">' + measurementsList + '</td>';
+            html += '<td style="text-align: center; padding: 12px;">' + measurementsList + '</td>';
             html += '<td style="text-align: center; padding: 12px;">' + updatedInfo + '</td>';
             html += '<td style="text-align: center; padding: 12px; vertical-align: middle;">';
             html += '<div style="display: flex; flex-direction: row; gap: 4px; align-items: center; justify-content: center;">';
