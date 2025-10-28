@@ -417,16 +417,22 @@ html {
                                 <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 4px;">
                                     <h5 style="margin-top: 0;">Reminder Settings</h5>
                                     
-                                    <div class="checkbox">
-                                        <label>
-                                            <input type="checkbox" id="instant_reminder_toggle" <?php echo ($appointment->send_reminder == 1) ? 'checked' : ''; ?> onchange="updateReminderSetting('instant', this.checked)">
+                                    <div class="checkbox checkbox-primary">
+                                        <input type="checkbox" 
+                                               id="instant_reminder_toggle" 
+                                               data-appointment-id="<?php echo $appointment->id; ?>"
+                                               <?php echo (isset($appointment->send_reminder) && $appointment->send_reminder == 1) ? 'checked' : ''; ?>>
+                                        <label for="instant_reminder_toggle">
                                             <strong>Instant Reminder</strong> - Send immediately after creation
                                         </label>
                                     </div>
                                     
-                                    <div class="checkbox">
-                                        <label>
-                                            <input type="checkbox" id="reminder_48h_toggle" <?php echo ($appointment->reminder_48h == 1) ? 'checked' : ''; ?> onchange="updateReminderSetting('48h', this.checked)">
+                                    <div class="checkbox checkbox-primary">
+                                        <input type="checkbox" 
+                                               id="reminder_48h_toggle" 
+                                               data-appointment-id="<?php echo $appointment->id; ?>"
+                                               <?php echo (isset($appointment->reminder_48h) && $appointment->reminder_48h == 1) ? 'checked' : ''; ?>>
+                                        <label for="reminder_48h_toggle">
                                             <strong>48-Hour Reminder</strong> - Send 48 hours before appointment
                                         </label>
                                     </div>
@@ -893,47 +899,61 @@ function loadAttendeesDisplay(appointmentId) {
     });
 }
 
-// Update Reminder Setting
-function updateReminderSetting(type, enabled) {
-    var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
-    var field = type === 'instant' ? 'send_reminder' : 'reminder_48h';
-    
-    $.ajax({
-        url: admin_url + 'ella_contractors/appointments/update_reminder_setting',
-        type: 'POST',
-        data: {
-            appointment_id: appointmentId,
-            field: field,
-            value: enabled ? 1 : 0,
-            [csrf_token_name]: csrf_hash
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                var reminderType = type === 'instant' ? 'Instant reminder' : '48-hour reminder';
-                var action = enabled ? 'enabled' : 'disabled';
-                alert_float('success', reminderType + ' ' + action + ' successfully');
-            } else {
-                alert_float('danger', response.message || 'Failed to update reminder setting');
-                // Revert checkbox
-                if (type === 'instant') {
-                    $('#instant_reminder_toggle').prop('checked', !enabled);
-                } else {
-                    $('#reminder_48h_toggle').prop('checked', !enabled);
-                }
-            }
-        },
-        error: function(xhr, status, error) {
-            alert_float('danger', 'Error updating reminder setting: ' + error);
-            // Revert checkbox
-            if (type === 'instant') {
-                $('#instant_reminder_toggle').prop('checked', !enabled);
-            } else {
-                $('#reminder_48h_toggle').prop('checked', !enabled);
-            }
+// Handle reminder checkbox changes in real-time
+$(document).ready(function() {
+    // Bind change event to reminder checkboxes
+    $('#instant_reminder_toggle, #reminder_48h_toggle').on('change', function() {
+        var $checkbox = $(this);
+        var appointmentId = $checkbox.data('appointment-id');
+        var checkboxId = $checkbox.attr('id');
+        var isChecked = $checkbox.is(':checked');
+        
+        // Determine field name based on checkbox ID
+        var fieldName = '';
+        var reminderType = '';
+        if (checkboxId === 'instant_reminder_toggle') {
+            fieldName = 'send_reminder';
+            reminderType = 'Instant reminder';
+        } else if (checkboxId === 'reminder_48h_toggle') {
+            fieldName = 'reminder_48h';
+            reminderType = '48-hour reminder';
         }
+        
+        if (!appointmentId || !fieldName) {
+            alert_float('danger', 'Invalid checkbox configuration');
+            return;
+        }
+        
+        // Make AJAX call to update setting
+        $.ajax({
+            url: admin_url + 'ella_contractors/appointments/update_reminder_setting',
+            type: 'POST',
+            data: {
+                appointment_id: appointmentId,
+                field: fieldName,
+                value: isChecked ? 1 : 0,
+                [csrf_token_name]: csrf_hash
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    var action = isChecked ? 'enabled' : 'disabled';
+                    alert_float('success', reminderType + ' ' + action + ' successfully');
+                } else {
+                    alert_float('danger', response.message || 'Failed to update reminder setting');
+                    // Revert checkbox state on failure
+                    $checkbox.prop('checked', !isChecked);
+                }
+            },
+            error: function(xhr, status, error) {
+                alert_float('danger', 'Error updating reminder setting');
+                console.error('AJAX Error:', error);
+                // Revert checkbox state on error
+                $checkbox.prop('checked', !isChecked);
+            }
+        });
     });
-}
+});
 
 // Load Attached Presentations
 function loadAttachedPresentations() {
