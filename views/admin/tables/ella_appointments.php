@@ -167,8 +167,8 @@ try {
     foreach ($rResult as $aRow) {
         $row = [];
         
-        // Checkbox column - centered with proper structure for export functionality
-        $row[] = '<div class="text-center"><div class="checkbox"><input type="checkbox" value="' . htmlspecialchars($aRow['id']) . '"><label></label></div></div>';
+        // Checkbox column - using same structure as leads table
+        $row[] = '<div class="checkbox"><input type="checkbox" value="' . $aRow['id'] . '"><label></label></div>';
         
         $row[] = '<div class="text-center">' . htmlspecialchars($aRow['id']) . '</div>';
 
