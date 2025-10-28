@@ -8,6 +8,7 @@
   height: auto;
   padding: 25px;
   display: flex;
+  flex-direction: column;
   width: 100%;
   align-items: center;
   justify-content: center;
@@ -21,7 +22,6 @@
   border-radius: 10px;
   margin-top: 10px;
   position: relative;
-  flex-wrap: wrap;
   margin-bottom: 20px;
   transition: all 0.3s ease;
 }
@@ -92,6 +92,7 @@ button.delete-btn {
   gap: 10px;
   margin-top: 15px;
   width: 100%;
+  justify-content: center;
 }
 
 .drop-zone__prompt {
@@ -100,6 +101,8 @@ button.delete-btn {
   text-align: center;
   color: #666;
   font-size: 16px;
+  margin: auto;
+  line-height: 1.5;
 }
 
 .upload-message {
@@ -244,7 +247,7 @@ button.delete-btn {
                             <hr class="hr-panel-heading" />
                             <h5><?php echo _l('appointment_attachments'); ?></h5>                            
                             <div class="drop-zone" id="appointmentDropzone">
-                                <span class="drop-zone__prompt">Drop files here or click to select</span>
+                                <span class="drop-zone__prompt">Drop Files Here or Click to Select</span>
                                 <input type="file" name="appointment_files[]" class="drop-zone__input" id="appointment_files" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
                                 <div class="drop-zone__thumbnails" id="appointmentThumbnails"></div>
                             </div>
