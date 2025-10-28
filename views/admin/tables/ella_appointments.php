@@ -301,17 +301,17 @@ try {
             : '<div class="text-center"><a href="' . $estimate_url . '" class="text-muted" title="Click to add estimates"><i class="fa fa-file-text-o"></i> 0</a></div>';
         $row[] = $estimate_badge;
         
-        $options = '';
-
+        // Options column - buttons in a row (exactly matching notes structure)
+        $options = '<div class="text-right" style="white-space: nowrap;">';
         
-        // Show full options for all appointments
         if ($has_permission_edit) {
-            $options .= ' <a href="javascript:void(0)" class="btn btn-info btn-xs" onclick="editAppointment(' . $aRow['id'] . ')" title="Edit"><i class="fa fa-edit"></i></a>';
+            $options .= '<button class="btn btn-info btn-xs" style="display: inline-block; margin-right: 5px;" onclick="editAppointment(' . $aRow['id'] . ')" title="Edit"><i class="fa fa-edit"></i></button>';
         }
         if ($has_permission_delete) {
-            $options .= ' <a href="javascript:void(0)" class="btn btn-danger btn-xs" onclick="deleteAppointment(' . $aRow['id'] . ')" title="Delete"><i class="fa fa-trash"></i></a>';
+            $options .= '<button class="btn btn-danger btn-xs" style="display: inline-block;" onclick="deleteAppointment(' . $aRow['id'] . ')" title="Delete"><i class="fa fa-trash"></i></button>';
         }
         
+        $options .= '</div>';
         $row[] = $options;
         
         $output['aaData'][] = $row;
