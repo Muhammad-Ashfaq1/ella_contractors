@@ -82,10 +82,10 @@ function createMeasurementRow(tabId, rowIndex) {
         '</div>' +
         '<div class="col-md-2">' +
             '<div class="form-group" style="padding-top: 25px;">' +
-                '<button type="button" class="btn btn-success btn-sm" onclick="addMeasurementRow(\'' + tabId + '\')" title="Add Row" style="width: 35px; height: 35px; border-radius: 4px; padding: 0; display: inline-flex; align-items: center; justify-content: center; margin-right: 5px;">' +
+                '<button type="button" class="btn btn-info btn-sm add-row-btn" onclick="addMeasurementRow(\'' + tabId + '\')" title="Add Row" style="width: 35px; height: 35px; border-radius: 4px; padding: 0; display: inline-flex; align-items: center; justify-content: center; margin-right: 5px; background-color: #5bc0de !important; border-color: #46b8da !important;">' +
                         '<i class="fa fa-plus"></i>' +
                 '</button>' +
-                '<button type="button" class="btn btn-danger btn-sm remove-row-btn" onclick="removeMeasurementRow(this)" title="Remove Row" style="width: 35px; height: 35px; border-radius: 4px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">' +
+                '<button type="button" class="btn btn-danger btn-sm remove-row-btn" onclick="removeMeasurementRow(this)" title="Remove Row" style="width: 35px; height: 35px; border-radius: 4px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background-color: #dc3545 !important; border-color: #dc3545 !important;">' +
                         '<i class="fa fa-minus"></i>' +
                     '</button>' +
             '</div>' +
@@ -130,15 +130,28 @@ function removeMeasurementRow(button) {
 }
 
 /**
- * Update remove button visibility
+ * Update add/remove button visibility
+ * Logic: Only last row shows "+", all rows except first show "-" (if multiple rows)
  */
 function updateRemoveButtons(tabId) {
     var containerId = '#measurements-container-' + tabId;
-    var rowCount = $(containerId + ' .measurement-row').length;
+    var rows = $(containerId + ' .measurement-row');
+    var rowCount = rows.length;
     
+    // Hide all add buttons first
+    $(containerId + ' .add-row-btn').hide();
+    
+    // Show add button only on the last row
+    if (rowCount > 0) {
+        rows.last().find('.add-row-btn').show();
+    }
+    
+    // Handle remove buttons
     if (rowCount <= 1) {
+        // Only 1 row: hide remove button
         $(containerId + ' .remove-row-btn').hide();
     } else {
+        // Multiple rows: show remove button on all rows
         $(containerId + ' .remove-row-btn').show();
     }
 }
@@ -868,31 +881,106 @@ function deleteMeasurement(measurementId) {
     color: #3498db;
 }
 
-/* Add tab button styling */
-#addTabBtn {
-    background-color: #3498db;
-    border-color: #3498db;
-    color: white;
-    border-radius: 4px;
-    padding: 6px 12px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-#addTabBtn:hover {
-    background-color: #2980b9;
-    border-color: #2980b9;
-}
+/* Add tab button styling - already handled above with btn-info styles */
 
 /* Empty state styling */
 .text-center .fa-plus-circle {
     color: #bdc3c7 !important;
 }
 
-/* Save/Cancel button styling */
-.btn-success.btn-sm {
-    background-color: #27ae60;
-    border-color: #27ae60;
+/* Save/Cancel button styling - match module info theme */
+#saveMeasurement.btn-info,
+#saveMeasurement.btn-info:visited {
+    background-color: #5bc0de !important;
+    border-color: #46b8da !important;
+    color: #fff !important;
+}
+
+#saveMeasurement.btn-info:hover {
+    background-color: #31b0d5 !important;
+    border-color: #269abc !important;
+    color: #fff !important;
+}
+
+#saveMeasurement.btn-info:active,
+#saveMeasurement.btn-info:focus,
+#saveMeasurement.btn-info:active:focus,
+#saveMeasurement.btn-info:active:hover {
+    background-color: #5bc0de !important;
+    border-color: #46b8da !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+#saveMeasurement.btn-info:disabled,
+#saveMeasurement.btn-info[disabled] {
+    background-color: #5bc0de !important;
+    border-color: #46b8da !important;
+    color: #fff !important;
+    opacity: 0.8 !important;
+}
+
+/* Add Category button styling */
+#addTabBtn.btn-info,
+#addTabBtn.btn-info:visited {
+    background-color: #5bc0de !important;
+    border-color: #46b8da !important;
+    color: #fff !important;
+}
+
+#addTabBtn.btn-info:hover {
+    background-color: #31b0d5 !important;
+    border-color: #269abc !important;
+    color: #fff !important;
+}
+
+#addTabBtn.btn-info:active,
+#addTabBtn.btn-info:focus,
+#addTabBtn.btn-info:active:focus,
+#addTabBtn.btn-info:active:hover {
+    background-color: #5bc0de !important;
+    border-color: #46b8da !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Add Row button (+ icon) styling */
+.add-row-btn.btn-info,
+.add-row-btn.btn-info:visited {
+    background-color: #5bc0de !important;
+    border-color: #46b8da !important;
+    color: #fff !important;
+}
+
+.add-row-btn.btn-info:hover {
+    background-color: #31b0d5 !important;
+    border-color: #269abc !important;
+    color: #fff !important;
+}
+
+.add-row-btn.btn-info:active,
+.add-row-btn.btn-info:focus,
+.add-row-btn.btn-info:active:focus,
+.add-row-btn.btn-info:active:hover {
+    background-color: #5bc0de !important;
+    border-color: #46b8da !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Remove Row button (- icon) styling */
+.remove-row-btn.btn-danger:active,
+.remove-row-btn.btn-danger:focus,
+.remove-row-btn.btn-danger:active:focus,
+.remove-row-btn.btn-danger:active:hover {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    outline: none !important;
 }
 
 .btn-default.btn-sm {
@@ -900,9 +988,6 @@ function deleteMeasurement(measurementId) {
     border-color: #95a5a6;
     color: white;
 }
-
-/* Action button styling - using standard Perfex CRM classes */
-/* No custom styling needed - using btn-default btn-xs and btn-danger btn-xs */
 
 </style>
 

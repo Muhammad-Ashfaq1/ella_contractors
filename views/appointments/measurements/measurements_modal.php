@@ -26,7 +26,7 @@
                             </ul>
                         </div>
                         <div class="add-category-btn-container">
-                            <button type="button" class="btn btn-primary btn-sm" id="addTabBtn" onclick="addNewTab()" title="Add Category">
+                            <button type="button" class="btn btn-info btn-sm" id="addTabBtn" onclick="addNewTab()" title="Add Category" style="background-color: #5bc0de !important; border-color: #46b8da !important; color: #fff !important;">
                                 <i class="fa fa-plus"></i> Add Category
                             </button>
                         </div>
@@ -38,7 +38,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal" id="cancelMeasurement">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="saveMeasurement">Save</button>
+                    <button type="button" class="btn btn-info" id="saveMeasurement" style="background-color: #5bc0de !important; border-color: #46b8da !important; color: #fff !important;">Save</button>
                 </div>
             </form>
         </div>
