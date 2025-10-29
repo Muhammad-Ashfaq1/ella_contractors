@@ -144,20 +144,17 @@ function addNote() {
         return;
     }
     
-    var description = $('#appointment_note_description').val().trim();
+    var description = $('#js-appointment_note_description').val().trim();
     
     if (!description) {
         alert_float('warning', 'Please enter a note description');
-        $('#appointment_note_description').focus();
+        $('#js-appointment_note_description').focus();
         return;
     }
     
     // Show loading state - keep button color
-    var $noteBtn = $('#note-btn');
-    var originalHtml = $noteBtn.html();
-    $noteBtn.html('<i class="fa fa-spinner fa-spin"></i> Adding...')
-             .prop('disabled', true);
-    
+    var originalBtnHtml = $('#note-btn').html();
+    $('#note-btn').html('<i class="fa fa-spinner fa-spin"></i> Adding...');
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/add_note/' + appointmentId,
         type: 'POST',
@@ -168,26 +165,15 @@ function addNote() {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
-                // Clear the textarea
-                $('#appointment_note_description').val('');
-                
-                // Clear emoji wysiwyg editor if present
-                var emojiEditor = $('#appointment_note_description').closest('.emoji-picker-container').find('.emoji-wysiwyg-editor');
+                $('#js-appointment_note_description').val('');
+
+                var emojiEditor = $('#js-appointment_note_description')
+                            .closest('.emoji-picker-container')
+                            .find('.emoji-wysiwyg-editor');
                 if (emojiEditor.length) {
                     emojiEditor.html('');
                     emojiEditor.text('');
                 }
-                
-                // Also try to clear any contenteditable div
-                $('.emoji-wysiwyg-editor[contenteditable="true"]').each(function() {
-                    if ($(this).attr('data-text') === 'appointment_note_description' || 
-                        $(this).closest('.leadnotes').length > 0) {
-                        $(this).html('');
-                        $(this).text('');
-                    }
-                });
-                
-                // Reload notes
                 loadNotes();
                 alert_float('success', response.message || 'Note added successfully');
             } else {
@@ -198,9 +184,13 @@ function addNote() {
             alert_float('danger', 'Error adding note');
         },
         complete: function() {
-            // Restore button
-            $noteBtn.html(originalHtml)
-                   .prop('disabled', false);
+            // Restore button container and button
+            $('#note-btn-container').html('');
+            const notesBtn = `
+                <button type="button" class="btn btn-info btn-sm" onclick="addNote()" id="note-btn">
+                    <i class="fa fa-plus"></i> Add Note
+                </button>`;
+            $('#note-btn-container').html(notesBtn);
         }
     });
 }
