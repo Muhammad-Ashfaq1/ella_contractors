@@ -118,7 +118,7 @@
                 <div class="row">
                     <div class="col-md-12">
                         <p class="text-muted">
-                            Drop files here or click to select (Maximum 10 files)<br>
+                            Drop files here or click to select<br>
                             <small>Allowed file types: PDF, Word, Excel, PowerPoint, Images</small><br>
                         </p>
                         
