@@ -416,16 +416,7 @@ html {
                                 <!-- Reminder Settings Section -->
                                 <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 4px;">
                                     <h5 style="margin-top: 0;">Reminder Settings</h5>
-                                    
-                                    <div class="checkbox checkbox-primary">
-                                        <input type="checkbox" 
-                                               id="instant_reminder_toggle" 
-                                               data-appointment-id="<?php echo $appointment->id; ?>"
-                                               <?php echo (isset($appointment->send_reminder) && $appointment->send_reminder == 1) ? 'checked' : ''; ?>>
-                                        <label for="instant_reminder_toggle">
-                                            <strong>Instant Reminder</strong> - Send immediately after creation
-                                        </label>
-                                    </div>
+                                
                                     
                                     <div class="checkbox checkbox-primary">
                                         <input type="checkbox" 
@@ -902,35 +893,18 @@ function loadAttendeesDisplay(appointmentId) {
 // Handle reminder checkbox changes in real-time
 $(document).ready(function() {
     // Bind change event to reminder checkboxes
-    $('#instant_reminder_toggle, #reminder_48h_toggle').on('change', function() {
+    $('#reminder_48h_toggle').on('change', function() {
         var $checkbox = $(this);
         var appointmentId = $checkbox.data('appointment-id');
         var checkboxId = $checkbox.attr('id');
         var isChecked = $checkbox.is(':checked');
-        
-        // Determine field name based on checkbox ID
-        var fieldName = '';
-        var reminderType = '';
-        if (checkboxId === 'instant_reminder_toggle') {
-            fieldName = 'send_reminder';
-            reminderType = 'Instant reminder';
-        } else if (checkboxId === 'reminder_48h_toggle') {
-            fieldName = 'reminder_48h';
-            reminderType = '48-hour reminder';
-        }
-        
-        if (!appointmentId || !fieldName) {
-            alert_float('danger', 'Invalid checkbox configuration');
-            return;
-        }
-        
         // Make AJAX call to update setting
         $.ajax({
             url: admin_url + 'ella_contractors/appointments/update_reminder_setting',
             type: 'POST',
             data: {
                 appointment_id: appointmentId,
-                field: fieldName,
+                field: 'reminder_48h',
                 value: isChecked ? 1 : 0,
                 [csrf_token_name]: csrf_hash
             },
@@ -938,7 +912,7 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     var action = isChecked ? 'enabled' : 'disabled';
-                    alert_float('success', reminderType + ' ' + action + ' successfully');
+                    alert_float('success', '48 hours reminder' + ' ' + action + ' successfully');
                 } else {
                     alert_float('danger', response.message || 'Failed to update reminder setting');
                     // Revert checkbox state on failure
@@ -948,7 +922,6 @@ $(document).ready(function() {
             error: function(xhr, status, error) {
                 alert_float('danger', 'Error updating reminder setting');
                 console.error('AJAX Error:', error);
-                // Revert checkbox state on error
                 $checkbox.prop('checked', !isChecked);
             }
         });
