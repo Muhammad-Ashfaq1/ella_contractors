@@ -90,11 +90,24 @@ window.displayAttachments = function(attachments) {
             var uploadDate = new Date(attachment.date_uploaded).toLocaleDateString();
             var fileExt = getFileExtension(attachment.original_name);
             var canPreview = ['pdf', 'ppt', 'pptx'].indexOf(fileExt.toLowerCase()) !== -1;
+            var isImage = attachment.file_type.startsWith('image/');
             
             html += '<div class="col-md-4 col-sm-6 col-xs-12 mbot15">';
             html += '<div class="panel panel-default attachment-card">';
             html += '<div class="panel-body text-center">';
-            html += '<i class="fa ' + fileIcon + ' fa-3x text-muted mbot10"></i>';
+            
+            // Show actual image preview for images, icon for other files
+            if (isImage) {
+                var imageUrl = admin_url + 'ella_contractors/appointments/download_attachment/' + attachment.id;
+                html += '<div class="attachment-preview-container">';
+                html += '<img src="' + imageUrl + '" class="attachment-preview-image" alt="' + escapeHtml(attachment.original_name) + '" onclick="previewImageAttachment(\'' + imageUrl + '\', \'' + escapeHtml(attachment.original_name) + '\')" />';
+                html += '</div>';
+            } else {
+                html += '<div class="attachment-icon-container">';
+                html += '<i class="fa ' + fileIcon + ' fa-3x text-muted mbot10"></i>';
+                html += '</div>';
+            }
+            
             html += '<h5 class="text-ellipsis" title="' + attachment.original_name + '">' + attachment.original_name + '</h5>';
             html += '<p class="text-muted small">' + fileSize + ' • ' + uploadDate + '</p>';
             
@@ -108,9 +121,13 @@ window.displayAttachments = function(attachments) {
             html += '<button class="btn btn-danger btn-sm attachment-btn" onclick="deleteAttachment(' + attachment.id + ')" title="Delete File">';
             html += '<i class="fa fa-trash"></i></button>';
             
-            // Add Preview button for previewable files (PDF, PPT, PPTX)
+            // Add Preview button for previewable files (PDF, PPT, PPTX, Images)
             if (canPreview) {
                 html += '<button class="btn btn-info btn-sm attachment-btn" onclick="previewAttachment(' + attachment.id + ', \'' + escapeHtml(attachment.original_name) + '\', \'' + fileExt.toLowerCase() + '\')" title="Preview File">';
+                html += '<i class="fa fa-eye"></i></button>';
+            } else if (isImage) {
+                // For images, clicking preview shows full size in modal
+                html += '<button class="btn btn-info btn-sm attachment-btn" onclick="previewImageAttachment(\'' + admin_url + 'ella_contractors/appointments/download_attachment/' + attachment.id + '\', \'' + escapeHtml(attachment.original_name) + '\')" title="View Full Size">';
                 html += '<i class="fa fa-eye"></i></button>';
             }
             
@@ -269,7 +286,6 @@ function initializeAttachmentDropzone() {
         const remainingSlots = MAX_ATTACHMENT_FILES - attachmentViewFiles.length;
         
         if (files.length > remainingSlots) {
-            alert_float('warning', 'You can only upload ' + remainingSlots + ' more file(s). Maximum is ' + MAX_ATTACHMENT_FILES + ' files.');
             return;
         }
         
@@ -504,6 +520,36 @@ $('#attachmentUploadModal').on('hidden.bs.modal', function() {
 });
 
 /**
+ * Preview image attachment in modal
+ */
+function previewImageAttachment(imageUrl, fileName) {
+    // Set modal title
+    $('#attachmentPreviewModalLabel').text('Preview: ' + fileName);
+    
+    // Clear previous content
+    $('#attachmentPreviewContent').html('');
+    
+    // Show loading
+    $('#attachmentPreviewContent').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-3x"></i><br><br><p>Loading image...</p></div>');
+    
+    // Show modal
+    $('#attachmentPreviewModal').modal({show: true, backdrop: 'static', keyboard: false});
+    
+    // Set download link
+    $('#downloadAttachmentBtn').attr('href', imageUrl);
+    
+    // Show full-size image
+    var imagePreview = '<div class="text-center" style="padding: 20px;">' +
+        '<img src="' + imageUrl + '" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" alt="' + fileName + '" />' +
+        '</div>';
+    
+    // Set preview content after a short delay
+    setTimeout(function() {
+        $('#attachmentPreviewContent').html(imagePreview);
+    }, 300);
+}
+
+/**
  * Preview attachment file (PDF, PPT, PPTX)
  * Similar to presentations module preview functionality
  */
@@ -654,7 +700,7 @@ $(document).on('error', 'iframe', function() {
 
 /* Consistent card sizing */
 .attachment-card {
-    min-height: 200px !important;
+    min-height: 250px !important;
     display: flex !important;
     flex-direction: column !important;
 }
@@ -669,5 +715,40 @@ $(document).on('error', 'iframe', function() {
 
 .attachment-card .attachment-buttons {
     margin-top: auto !important;
+}
+
+/* Image preview styling */
+.attachment-preview-container {
+    width: 100%;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.attachment-preview-image {
+    max-width: 100%;
+    max-height: 150px;
+    object-fit: contain;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.attachment-preview-image:hover {
+    transform: scale(1.05);
+}
+
+/* Icon container for non-image files */
+.attachment-icon-container {
+    width: 100%;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
 }
 </style>
