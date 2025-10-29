@@ -206,17 +206,11 @@ function editNote(noteId) {
             return;
         }
         
-        // Close existing edit form by reloading notes, then open the new one
-        loadNotes();
-        
-        // Wait for notes to reload before opening the new edit form
-        setTimeout(function() {
-            openEditForm(noteId);
-        }, 500);
-        return;
+        // Close existing edit form first
+        cancelEditNote(existingNoteId);
     }
     
-    // No existing edit form, open directly
+    // Open the new edit form
     openEditForm(noteId);
 }
 
@@ -241,14 +235,13 @@ function openEditForm(noteId) {
     // Extract just the text content (remove HTML tags)
     var textContent = noteText ? noteText.replace(/<[^>]*>/g, '').trim() : '';
     
-    // Create edit form
-    var editForm = '<div class="timeline-record-wrapper" data-note-edit="' + noteId + '">';
-    editForm += '<div class="timeline-date-section">';
-    editForm += '<div class="date"><i class="fa fa-edit text-info"></i></div>';
-    editForm += '</div>';
-    editForm += '<div class="timeline-content-section">';
+    // Hide the action buttons (Edit/Delete) but keep the note visible
+    noteWrapper.find('.text-right').first().hide();
     
+    // Create edit form that appears BELOW the note display
+    var editForm = '<div class="edit-note-form-wrapper mtop10" data-note-edit="' + noteId + '" style="margin-left: 30px; padding-left: 15px; border-left: 3px solid #5bc0de;">';
     editForm += '<div class="form-group">';
+    editForm += '<label><i class="fa fa-edit"></i> Edit Note:</label>';
     editForm += '<div class="lead emoji-picker-container leadnotes">';
     editForm += '<textarea class="form-control" rows="3" id="edit-note-' + noteId + '" data-emojiable="true">' + textContent + '</textarea>';
     editForm += '</div>';
@@ -259,10 +252,12 @@ function openEditForm(noteId) {
     editForm += '<button class="btn btn-info btn-xs" onclick="updateNote(' + noteId + ')" title="Update" style="background-color: #5bc0de !important; border-color: #46b8da !important; color: #fff !important;"><i class="fa fa-check"></i> Update</button>';
     editForm += '</div>';
     editForm += '</div>';
-    editForm += '</div>';
     
-    // Replace the note with edit form
-    noteWrapper.replaceWith(editForm);
+    // Append the edit form AFTER the timeline content section (keep original display visible)
+    noteWrapper.find('.timeline-content-section').append(editForm);
+    
+    // Focus on the textarea
+    $('#edit-note-' + noteId).focus();
     
     // Re-initialize emoji picker for the new textarea
     if (typeof window.emojiPicker !== 'undefined') {
@@ -271,8 +266,11 @@ function openEditForm(noteId) {
 }
 
 function cancelEditNote(noteId) {
-    // Reload notes to restore original display
-    loadNotes();
+    // Remove the edit form
+    $('[data-note-edit="' + noteId + '"]').remove();
+    
+    // Show the action buttons again
+    $('button[onclick="editNote(' + noteId + ')"]').closest('.timeline-record-wrapper').find('.text-right').first().show();
 }
 
 function updateNote(noteId) {
