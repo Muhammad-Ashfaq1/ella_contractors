@@ -126,24 +126,24 @@ button.delete-btn {
   100% { transform: rotate(360deg); }
 }
 
-/* Placeholder styling - opaque grayish like standard inputs */
+/* Placeholder styling - more opaque (darker) for better visibility */
 #appointmentModal ::-webkit-input-placeholder {
-  color: #999 !important;
+  color: #555 !important;
   opacity: 1 !important;
 }
 
 #appointmentModal ::-moz-placeholder {
-  color: #999 !important;
+  color: #555 !important;
   opacity: 1 !important;
 }
 
 #appointmentModal :-ms-input-placeholder {
-  color: #999 !important;
+  color: #555 !important;
   opacity: 1 !important;
 }
 
 #appointmentModal ::placeholder {
-  color: #999 !important;
+  color: #555 !important;
   opacity: 1 !important;
 }
 
