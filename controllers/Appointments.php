@@ -577,11 +577,6 @@ class Appointments extends AdminController
         }
     }
 
-
-    // ==================== ESTIMATES REMOVED - NOW USING PROPOSALS ====================
-    // All estimate functionality has been moved to the Proposals module
-    // Create new estimates via: admin/proposals/proposal?rel_type=lead&rel_id={lead_id}&create_estimates=true
-
     /**
      * AJAX endpoint to get appointment types for global appointment creation
      */
