@@ -231,265 +231,6 @@ function ella_contractors_activate_module() {
         }
     }
     
-    // Create ella_contractor_line_item_groups table
-    if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_line_item_groups')) {
-        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractor_line_item_groups` (
-            `id` int(11) NOT NULL AUTO_INCREMENT,
-            `rel_type` varchar(50) DEFAULT NULL,
-            `rel_id` bigint unsigned DEFAULT NULL,
-            `org_id` bigint unsigned DEFAULT NULL,
-            `name` varchar(255) NOT NULL,
-            `description` text,
-            `is_active` tinyint(1) DEFAULT 1,
-            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (`id`),
-            KEY `idx_rel_type_id` (`rel_type`, `rel_id`),
-            KEY `idx_org_id` (`org_id`),
-            KEY `is_active` (`is_active`),
-            KEY `name` (`name`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
-    } else {
-        // Add rel_type, rel_id, org_id columns if they don't exist
-        if (!$CI->db->field_exists('rel_type', db_prefix() . 'ella_contractor_line_item_groups')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_item_groups` ADD COLUMN `rel_type` VARCHAR(50) NULL DEFAULT NULL AFTER `id`');
-        }
-        if (!$CI->db->field_exists('rel_id', db_prefix() . 'ella_contractor_line_item_groups')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_item_groups` ADD COLUMN `rel_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_type`');
-        }
-        if (!$CI->db->field_exists('org_id', db_prefix() . 'ella_contractor_line_item_groups')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_item_groups` ADD COLUMN `org_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_id`');
-        }
-        
-        // Add indexes if they don't exist (only for existing tables)
-        if ($CI->db->table_exists(db_prefix() . 'ella_contractor_line_item_groups')) {
-            // Check if indexes exist before adding them
-            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_line_item_groups` WHERE Key_name = 'idx_rel_type_id'")->result();
-            if (empty($indexes)) {
-                try {
-                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_item_groups` ADD INDEX `idx_rel_type_id` (`rel_type`, `rel_id`)');
-                } catch (Exception $e) {
-                    // Index might already exist, ignore error
-                }
-            }
-            
-            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_line_item_groups` WHERE Key_name = 'idx_org_id'")->result();
-            if (empty($indexes)) {
-                try {
-                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_item_groups` ADD INDEX `idx_org_id` (`org_id`)');
-                } catch (Exception $e) {
-                    // Index might already exist, ignore error
-                }
-            }
-        }
-    }
-    
-    // Create ella_contractor_line_items table
-    if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_line_items')) {
-        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractor_line_items` (
-            `id` int(11) NOT NULL AUTO_INCREMENT,
-            `rel_type` varchar(50) DEFAULT NULL,
-            `rel_id` bigint unsigned DEFAULT NULL,
-            `org_id` bigint unsigned DEFAULT NULL,
-            `name` varchar(255) NOT NULL,
-            `description` text,
-            `image` varchar(255) DEFAULT NULL,
-            `cost` decimal(10,2) DEFAULT NULL,
-            `quantity` decimal(10,2) DEFAULT 1.00,
-            `unit_type` varchar(50) NOT NULL,
-            `group_id` int(11) DEFAULT 0,
-            `is_active` tinyint(1) DEFAULT 1,
-            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (`id`),
-            KEY `idx_rel_type_id` (`rel_type`, `rel_id`),
-            KEY `idx_org_id` (`org_id`),
-            KEY `is_active` (`is_active`),
-            KEY `name` (`name`),
-            KEY `unit_type` (`unit_type`),
-            KEY `group_id` (`group_id`),
-            FOREIGN KEY (`group_id`) REFERENCES `' . db_prefix() . 'ella_contractor_line_item_groups`(`id`) ON DELETE SET NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
-    } else {
-        // Check if group_id column exists, if not add it
-        if (!$CI->db->field_exists('group_id', db_prefix() . 'ella_contractor_line_items')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD COLUMN `group_id` int(11) DEFAULT 0 AFTER `unit_type`');
-            try {
-                $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD KEY `group_id` (`group_id`)');
-            } catch (Exception $e) {
-                // Key might already exist, ignore error
-            }
-        }
-        
-        // Check if group_name column exists, if it does remove it
-        if ($CI->db->field_exists('group_name', db_prefix() . 'ella_contractor_line_items')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` DROP COLUMN `group_name`');
-        }
-        
-        // Add rel_type, rel_id, org_id columns if they don't exist
-        if (!$CI->db->field_exists('rel_type', db_prefix() . 'ella_contractor_line_items')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD COLUMN `rel_type` VARCHAR(50) NULL DEFAULT NULL AFTER `id`');
-        }
-        if (!$CI->db->field_exists('rel_id', db_prefix() . 'ella_contractor_line_items')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD COLUMN `rel_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_type`');
-        }
-        if (!$CI->db->field_exists('org_id', db_prefix() . 'ella_contractor_line_items')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD COLUMN `org_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_id`');
-        }
-        
-        // Add indexes if they don't exist (only for existing tables)
-        if ($CI->db->table_exists(db_prefix() . 'ella_contractor_line_items')) {
-            // Check if indexes exist before adding them
-            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_line_items` WHERE Key_name = 'idx_rel_type_id'")->result();
-            if (empty($indexes)) {
-                try {
-                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD INDEX `idx_rel_type_id` (`rel_type`, `rel_id`)');
-                } catch (Exception $e) {
-                    // Index might already exist, ignore error
-                }
-            }
-            
-            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_line_items` WHERE Key_name = 'idx_org_id'")->result();
-            if (empty($indexes)) {
-                try {
-                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_line_items` ADD INDEX `idx_org_id` (`org_id`)');
-                } catch (Exception $e) {
-                    // Index might already exist, ignore error
-                }
-            }
-        }
-    }
-    
-    // Create ella_contractor_estimates table
-    if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_estimates')) {
-        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractor_estimates` (
-            `id` int(11) NOT NULL AUTO_INCREMENT,
-            `rel_type` varchar(50) DEFAULT NULL,
-            `rel_id` bigint unsigned DEFAULT NULL,
-            `org_id` bigint unsigned DEFAULT NULL,
-            `estimate_name` varchar(255) NOT NULL,
-            `description` text,
-            `client_id` int(11) DEFAULT NULL,
-            `lead_id` int(11) DEFAULT NULL,
-            `appointment_id` int(11) DEFAULT NULL,
-            `status` enum(\'draft\',\'sent\',\'accepted\',\'rejected\',\'expired\') DEFAULT \'draft\',
-            `total_amount` decimal(10,2) DEFAULT 0.00,
-            `total_quantity` decimal(10,2) DEFAULT 0.00,
-            `line_items_count` int(11) DEFAULT 0,
-            `created_by` int(11) NOT NULL,
-            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (`id`),
-            KEY `idx_rel_type_id` (`rel_type`, `rel_id`),
-            KEY `idx_org_id` (`org_id`),
-            KEY `client_id` (`client_id`),
-            KEY `lead_id` (`lead_id`),
-            KEY `appointment_id` (`appointment_id`),
-            KEY `status` (`status`),
-            KEY `created_by` (`created_by`),
-            KEY `created_at` (`created_at`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
-    } else {
-        // Check if appointment_id column exists, if not add it
-        if (!$CI->db->field_exists('appointment_id', db_prefix() . 'ella_contractor_estimates')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD COLUMN `appointment_id` int(11) DEFAULT NULL AFTER `lead_id`');
-            try {
-                $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD KEY `appointment_id` (`appointment_id`)');
-            } catch (Exception $e) {
-                // Key might already exist, ignore error
-            }
-        }
-        
-        // Add rel_type, rel_id, org_id columns if they don't exist
-        if (!$CI->db->field_exists('rel_type', db_prefix() . 'ella_contractor_estimates')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD COLUMN `rel_type` VARCHAR(50) NULL DEFAULT NULL AFTER `id`');
-        }
-        if (!$CI->db->field_exists('rel_id', db_prefix() . 'ella_contractor_estimates')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD COLUMN `rel_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_type`');
-        }
-        if (!$CI->db->field_exists('org_id', db_prefix() . 'ella_contractor_estimates')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD COLUMN `org_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_id`');
-        }
-        
-        // Add indexes if they don't exist (only for existing tables)
-        if ($CI->db->table_exists(db_prefix() . 'ella_contractor_estimates')) {
-            // Check if indexes exist before adding them
-            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_estimates` WHERE Key_name = 'idx_rel_type_id'")->result();
-            if (empty($indexes)) {
-                try {
-                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD INDEX `idx_rel_type_id` (`rel_type`, `rel_id`)');
-                } catch (Exception $e) {
-                    // Index might already exist, ignore error
-                }
-            }
-            
-            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_estimates` WHERE Key_name = 'idx_org_id'")->result();
-            if (empty($indexes)) {
-                try {
-                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimates` ADD INDEX `idx_org_id` (`org_id`)');
-                } catch (Exception $e) {
-                    // Index might already exist, ignore error
-                }
-            }
-        }
-    }
-    
-    // Create ella_contractor_estimate_line_items table (pivot table)
-    if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_estimate_line_items')) {
-        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractor_estimate_line_items` (
-            `id` int(11) NOT NULL AUTO_INCREMENT,
-            `rel_type` varchar(50) DEFAULT NULL,
-            `rel_id` bigint unsigned DEFAULT NULL,
-            `org_id` bigint unsigned DEFAULT NULL,
-            `estimate_id` int(11) NOT NULL,
-            `line_item_id` int(11) NOT NULL,
-            `quantity` decimal(10,2) NOT NULL DEFAULT 1.00,
-            `unit_price` decimal(10,2) NOT NULL DEFAULT 0.00,
-            `total_price` decimal(10,2) NOT NULL DEFAULT 0.00,
-            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (`id`),
-            KEY `idx_rel_type_id` (`rel_type`, `rel_id`),
-            KEY `idx_org_id` (`org_id`),
-            KEY `estimate_id` (`estimate_id`),
-            KEY `line_item_id` (`line_item_id`),
-            UNIQUE KEY `unique_estimate_line_item` (`estimate_id`, `line_item_id`),
-            FOREIGN KEY (`estimate_id`) REFERENCES `' . db_prefix() . 'ella_contractor_estimates`(`id`) ON DELETE CASCADE,
-            FOREIGN KEY (`line_item_id`) REFERENCES `' . db_prefix() . 'ella_contractor_line_items`(`id`) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
-    } else {
-        // Add rel_type, rel_id, org_id columns if they don't exist
-        if (!$CI->db->field_exists('rel_type', db_prefix() . 'ella_contractor_estimate_line_items')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimate_line_items` ADD COLUMN `rel_type` VARCHAR(50) NULL DEFAULT NULL AFTER `id`');
-        }
-        if (!$CI->db->field_exists('rel_id', db_prefix() . 'ella_contractor_estimate_line_items')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimate_line_items` ADD COLUMN `rel_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_type`');
-        }
-        if (!$CI->db->field_exists('org_id', db_prefix() . 'ella_contractor_estimate_line_items')) {
-            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimate_line_items` ADD COLUMN `org_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_id`');
-        }
-        
-        // Add indexes if they don't exist (only for existing tables)
-        if ($CI->db->table_exists(db_prefix() . 'ella_contractor_estimate_line_items')) {
-            // Check if indexes exist before adding them
-            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_estimate_line_items` WHERE Key_name = 'idx_rel_type_id'")->result();
-            if (empty($indexes)) {
-                try {
-                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimate_line_items` ADD INDEX `idx_rel_type_id` (`rel_type`, `rel_id`)');
-                } catch (Exception $e) {
-                    // Index might already exist, ignore error
-                }
-            }
-            
-            $indexes = $CI->db->query("SHOW INDEX FROM `" . db_prefix() . "ella_contractor_estimate_line_items` WHERE Key_name = 'idx_org_id'")->result();
-            if (empty($indexes)) {
-                try {
-                    $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_estimate_line_items` ADD INDEX `idx_org_id` (`org_id`)');
-                } catch (Exception $e) {
-                    // Index might already exist, ignore error
-                }
-            }
-        }
-    }
 
     // Create ella_contractor_measurement_records table - New dynamic tab structure
     if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_measurement_records')) {
@@ -584,39 +325,6 @@ function ella_contractors_activate_module() {
     }
     
     // Create line items image upload directory
-    $line_items_path = FCPATH . 'uploads/ella_line_items/';
-    if (!is_dir($line_items_path)) {
-        if (!mkdir($line_items_path, 0755, true)) {
-            log_message('error', 'Failed to create directory: ' . $line_items_path);
-        }
-    }
-    
-    // Create index.html to prevent directory listing
-    if (!file_exists($line_items_path . 'index.html')) {
-        file_put_contents($line_items_path . 'index.html', '');
-    }
-    
-    // Create .htaccess to prevent direct access
-    if (!file_exists($line_items_path . '.htaccess')) {
-        file_put_contents($line_items_path . '.htaccess', 'Order Deny,Allow' . PHP_EOL . 'Deny from all');
-    }
-    
-    // Insert default groups
-    $default_groups = [
-        ['name' => 'Roofing', 'description' => 'Roofing materials and services'],
-        ['name' => 'Doors', 'description' => 'Door installation and materials'],
-        ['name' => 'Windows', 'description' => 'Window installation and materials'],
-        ['name' => 'Siding', 'description' => 'Siding materials and installation'],
-        ['name' => 'Walls', 'description' => 'Wall construction and finishing'],
-        ['name' => 'General', 'description' => 'General construction items']
-    ];
-    
-    $existing_groups = $CI->db->count_all_results(db_prefix() . 'ella_contractor_line_item_groups');
-    if ($existing_groups == 0) {
-        foreach ($default_groups as $group) {
-            $CI->db->insert(db_prefix() . 'ella_contractor_line_item_groups', $group);
-        }
-    }
     
         // Add appointment_status column to appointly_appointments table if it doesn't exist
         if ($CI->db->field_exists('appointment_status', db_prefix() . 'appointly_appointments')) {
@@ -726,7 +434,39 @@ function ella_contractors_activate_module() {
 function ella_contractors_deactivate_module() {
     $CI = &get_instance();
 
-    // ========================================
+    // remove ella_contractor_line_items table
+
+    $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_line_items`');
+    log_message('info', 'Ella Contractors - Removed ella_contractor_line_items table');
+
+    // remove ella_contractor_line_item_groups table
+    $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_line_item_groups`');
+    log_message('info', 'Ella Contractors - Removed ella_contractor_line_item_groups table');
+
+    // remove ella_contractor_estimates table
+    $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_estimates`');
+    log_message('info', 'Ella Contractors - Removed ella_contractor_estimates table');
+
+    // remove ella_contractor_estimate_line_items table
+    $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_estimate_line_items`');
+    log_message('info', 'Ella Contractors - Removed ella_contractor_estimate_line_items table');
+
+    // // remove ella_contractor_measurement_records table
+    // $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_measurement_records`');
+    // log_message('info', 'Ella Contractors - Removed ella_contractor_measurement_records table');
+
+    // // remove ella_contractor_measurement_items table
+    // $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_measurement_items`');
+    // log_message('info', 'Ella Contractors - Removed ella_contractor_measurement_items table');
+
+    // // remove ella_appointment_activity_log table
+    // $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_appointment_activity_log`');
+    // log_message('info', 'Ella Contractors - Removed ella_appointment_activity_log table');
+
+    // // remove ella_appointment_presentations table
+    // $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_appointment_presentations`');
+    // log_message('info', 'Ella Contractors - Removed ella_appointment_presentations table');
+
     // COLUMN DROPPING FUNCTIONALITY
     // ========================================
     // Uncomment the code below when you need to remove rel_type, rel_id, org_id columns
