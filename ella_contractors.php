@@ -466,11 +466,6 @@ function ella_contractors_deactivate_module() {
     // // remove ella_appointment_presentations table
     // $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_appointment_presentations`');
     // log_message('info', 'Ella Contractors - Removed ella_appointment_presentations table');
-
-    // COLUMN DROPPING FUNCTIONALITY
-    // ========================================
-    // Uncomment the code below when you need to remove rel_type, rel_id, org_id columns
-    // during module deactivation. This will clean up the database structure.
     
 }
 
