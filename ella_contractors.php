@@ -57,6 +57,13 @@ function ella_contractors_init_menu() {
                 'position' => 20,
             ],
             [
+                'slug' => 'ella_contractors_estimates',
+                'name' => 'Estimates',
+                'href' => admin_url('proposals'),
+                'icon' => 'fa fa-file-text-o',
+                'position' => 23,
+            ],
+            [
                 'slug' => 'ella_contractors_line_items',
                 'name' => 'Service Items',
                 'href' => admin_url('invoice_items?service_items=true'),
