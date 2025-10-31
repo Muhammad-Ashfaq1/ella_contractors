@@ -91,5 +91,98 @@ class Estimates extends AdminController
             'count' => $count
         ]);
     }
+
+    /**
+     * Send estimate via email and SMS (AJAX)
+     * Uses the same flow as Proposals controller send_proposal_sms_email method
+     * @param int $proposal_id
+     */
+    public function send_estimate($proposal_id)
+    {
+        // Check view permissions (same as Proposals controller)
+        $canView = user_can_view_proposal($proposal_id);
+        if (!$canView) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ]);
+            return;
+        }
+        
+        if (!has_permission('proposals', '', 'view') && !has_permission('proposals', '', 'view_own') && $canView == false) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ]);
+            return;
+        }
+
+        if (!$proposal_id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'No proposal ID provided'
+            ]);
+            return;
+        }
+
+        // Send proposal to email (exactly like send_proposal_sms_email method)
+        $success = $this->proposals_model->send_proposal_to_email($proposal_id);
+        
+        // Get proposal details for SMS
+        $getDetails = $this->proposals_model->get($proposal_id);
+        
+        // Also send SMS if phone number exists (exactly like proposal.php)
+        if(!empty($getDetails->phone)) {
+            $staff_id = get_staff_user_id();
+            $pro_text = get_sms_template($getDetails->rel_id, 'send_proposal_notification_to_customer');
+            $sms_body = replace_proposal_name_shortcodes($proposal_id, $pro_text);
+            $this->proposals_model->send_proposal_sms($getDetails->rel_id, $staff_id, $getDetails->phone, $sms_body, '', true); 
+        }
+        
+        if ($success) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Estimate sent successfully via Email & SMS'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to send estimate. Please check email configuration.'
+            ]);
+        }
+    }
+
+    /**
+     * Delete estimate (AJAX)
+     * @param int $proposal_id
+     */
+    public function delete_estimate($proposal_id)
+    {
+        if (!has_permission('proposals', '', 'delete')) {
+            ajax_access_denied();
+        }
+
+        if (!$proposal_id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'No proposal ID provided'
+            ]);
+            return;
+        }
+
+        $response = $this->proposals_model->delete($proposal_id);
+        
+        if ($response == true) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Estimate deleted successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to delete estimate'
+            ]);
+        }
+    }
 }
 
