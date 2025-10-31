@@ -1117,6 +1117,37 @@ $(document).ready(function() {
     loadAttachedPresentations();
 });
 
+// Delete appointment function for view page
+function deleteAppointment(appointmentId) {
+    if (confirm('Are you sure you want to delete this appointment? This action cannot be undone.')) {
+        // Show loading indicator
+        alert_float('info', 'Deleting appointment...');
+        
+        $.ajax({
+            url: admin_url + 'ella_contractors/appointments/delete_ajax',
+            type: 'POST',
+            data: {
+                id: appointmentId,
+                [csrf_token_name]: csrf_hash
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    // Redirect to appointments list after successful deletion
+                    window.location.href = admin_url + 'ella_contractors/appointments';
+                } else {
+                    alert_float('danger', response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                alert_float('danger', 'Error deleting appointment: ' + error);
+                console.error('Delete error:', error);
+            }
+        });
+    }
+}
+
 </script>
 
 <?php $this->load->view('appointments/modal'); ?>
