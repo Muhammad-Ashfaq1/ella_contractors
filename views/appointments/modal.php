@@ -126,25 +126,114 @@ button.delete-btn {
   100% { transform: rotate(360deg); }
 }
 
-/* Placeholder styling - more opaque (darker) for better visibility */
-#appointmentModal ::-webkit-input-placeholder {
-  color: #555 !important;
-  opacity: 1 !important;
+/* ========================================
+   PLACEHOLDER STYLING - Matching Measurements
+   Only affects EMPTY placeholders, not values
+   ======================================== */
+
+/* Standard input placeholders (text, email, tel, etc.) */
+#appointmentModal input::-webkit-input-placeholder {
+  color: #95a5a6 !important;
+  opacity: 0.7 !important;
+  font-style: italic;
 }
 
-#appointmentModal ::-moz-placeholder {
-  color: #555 !important;
-  opacity: 1 !important;
+#appointmentModal input::-moz-placeholder {
+  color: #95a5a6 !important;
+  opacity: 0.7 !important;
+  font-style: italic;
 }
 
-#appointmentModal :-ms-input-placeholder {
-  color: #555 !important;
-  opacity: 1 !important;
+#appointmentModal input:-ms-input-placeholder {
+  color: #95a5a6 !important;
+  opacity: 0.7 !important;
+  font-style: italic;
 }
 
-#appointmentModal ::placeholder {
-  color: #555 !important;
+#appointmentModal input::placeholder {
+  color: #95a5a6 !important;
+  opacity: 0.7 !important;
+  font-style: italic;
+}
+
+/* Textarea placeholders */
+#appointmentModal textarea::-webkit-input-placeholder {
+  color: #95a5a6 !important;
+  opacity: 0.7 !important;
+  font-style: italic;
+}
+
+#appointmentModal textarea::-moz-placeholder {
+  color: #95a5a6 !important;
+  opacity: 0.7 !important;
+  font-style: italic;
+}
+
+#appointmentModal textarea:-ms-input-placeholder {
+  color: #95a5a6 !important;
+  opacity: 0.7 !important;
+  font-style: italic;
+}
+
+#appointmentModal textarea::placeholder {
+  color: #95a5a6 !important;
+  opacity: 0.7 !important;
+  font-style: italic;
+}
+
+/* Native select placeholder option (for non-Select2/Bootstrap Select dropdowns) */
+#appointmentModal select option[value=""] {
+  color: #95a5a6 !important;
+  font-style: italic;
+}
+
+/* Bootstrap Select - Placeholder style ONLY for empty states */
+#appointmentModal button[title="Select Client/Lead"] .filter-option-inner-inner,
+#appointmentModal button[title="Nothing selected"] .filter-option-inner-inner,
+#appointmentModal button[title="Loading staff members..."] .filter-option-inner-inner {
+  color: #95a5a6 !important;
+  opacity: 0.7 !important;
+  font-style: italic !important;
+}
+
+/* ========================================
+   DATETIME-LOCAL INPUT STYLING
+   ======================================== */
+
+/* Style empty datetime-local inputs to show placeholder-like styling */
+#appointmentModal input[type="datetime-local"]:not(:focus):invalid {
+  color: #95a5a6 !important;
+  opacity: 0.7 !important;
+  font-style: italic;
+}
+
+/* When datetime has a value, show normally */
+#appointmentModal input[type="datetime-local"]:valid {
+  color: #333 !important;
   opacity: 1 !important;
+  font-style: normal !important;
+}
+
+/* Style the individual parts when empty */
+#appointmentModal input[type="datetime-local"]:invalid::-webkit-datetime-edit {
+  color: #95a5a6 !important;
+}
+
+/* ========================================
+   ENSURE FILLED VALUES REMAIN NORMAL
+   ======================================== */
+
+/* Any input with a value should display normally */
+#appointmentModal input:not(:placeholder-shown) {
+  color: #333 !important;
+  opacity: 1 !important;
+  font-style: normal !important;
+}
+
+#appointmentModal textarea:not(:placeholder-shown) {
+  color: #333 !important;
+  opacity: 1 !important;
+  font-style: normal !important;
 }
 
 /* Customer Notifications heading styling */
@@ -191,7 +280,7 @@ button.delete-btn {
                                 <label for="subject"> Appointment Name <span class="text-danger">*</span> 
                                     <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="Give this appointment a friendly name to remember"></i>
                                 </label>
-                                <input type="text" class="form-control" id="subject" name="subject" required>
+                                <input type="text" class="form-control" id="subject" name="subject" placeholder="Enter appointment name" required>
                             </div>
                         </div>
                     </div>
@@ -225,7 +314,7 @@ button.delete-btn {
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="email">Email</label>
-                                <input type="email" class="form-control" id="email" name="email">
+                                <input type="email" class="form-control" id="email" name="email" placeholder="Enter email address">
                             </div>
                         </div>
                     </div>
@@ -234,13 +323,13 @@ button.delete-btn {
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="phone">Phone</label>
-                                <input type="tel" class="form-control" id="phone" name="phone">
+                                <input type="tel" class="form-control" id="phone" name="phone" placeholder="Enter phone number">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="address">Address</label>
-                                <input type="text" class="form-control" id="address" name="address">
+                                <input type="text" class="form-control" id="address" name="address" placeholder="Enter address">
                             </div>
                         </div>
                     </div>
@@ -249,7 +338,7 @@ button.delete-btn {
                         <div class="col-md-12">
                             <div class="form-group">
                                 <label for="notes">Notes</label>
-                                <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Add any additional notes or instructions"></textarea>
                             </div>
                         </div>
                     </div>
@@ -292,4 +381,5 @@ button.delete-btn {
         </div>
     </div>
 </div>
+
 
