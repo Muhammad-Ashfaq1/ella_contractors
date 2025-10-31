@@ -529,7 +529,9 @@ function loadMeasurementData(measurementId) {
                         
                         // Set values
                         $('input[name="tab_measurements_' + tabId + '[' + rowIndex + '][name]"]').val(item.name);
-                        $('input[name="tab_measurements_' + tabId + '[' + rowIndex + '][value]"]').val(item.value);
+                        // Format value to 2 decimal places when displaying for edit
+                        var formattedValue = item.value ? parseFloat(item.value).toFixed(2) : '';
+                        $('input[name="tab_measurements_' + tabId + '[' + rowIndex + '][value]"]').val(formattedValue);
                         var selectElement = $('select[name="tab_measurements_' + tabId + '[' + rowIndex + '][unit]"]')[0];
                         selectElement.value = item.unit;
                         updateSelectPlaceholder(selectElement);
