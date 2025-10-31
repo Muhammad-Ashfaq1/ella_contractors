@@ -594,8 +594,10 @@ $('#saveMeasurement').on('click', function() {
 
                 alert_float('success', response.message || 'Measurement saved successfully');
                 
-                // Immediately reload measurements (like Notes and Attachments tabs)
+                // Prevent scroll on reload
+                var scrollPos = $(window).scrollTop();
                 loadMeasurements();
+                $(window).scrollTop(scrollPos);
                 
                 // Close modal - measurements already reloaded
                 $('#measurementModal').modal('hide');
@@ -666,7 +668,9 @@ $('#measurementModal').on('hidden.bs.modal', function() {
                 var currentTab = tabParam || 'measurements';
                 
                 if (currentTab === 'measurements') {
+                    var scrollPos = $(window).scrollTop();
                     loadMeasurements();
+                    $(window).scrollTop(scrollPos);
                 }
             }
             measurementSaved = false;
@@ -819,8 +823,10 @@ function deleteMeasurement(measurementId) {
             if (response.success) {
                 alert_float('success', response.message);
                 
-                // Immediately reload measurements
+                // Prevent scroll on reload
+                var scrollPos = $(window).scrollTop();
                 loadMeasurements();
+                $(window).scrollTop(scrollPos);
             } else {
                 alert_float('danger', response.message);
             }

@@ -174,7 +174,12 @@ function addNote() {
                     emojiEditor.html('');
                     emojiEditor.text('');
                 }
+                
+                // Prevent scroll on reload
+                var scrollPos = $(window).scrollTop();
                 loadNotes();
+                $(window).scrollTop(scrollPos);
+                
                 alert_float('success', response.message || 'Note added successfully');
             } else {
                 alert_float('danger', response.message || 'Failed to add note');
@@ -298,8 +303,12 @@ function updateNote(noteId) {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
-                alert_float('success', 'Note updated successfully!');
+                // Prevent scroll on reload
+                var scrollPos = $(window).scrollTop();
                 loadNotes(); // Reload notes
+                $(window).scrollTop(scrollPos);
+                
+                alert_float('success', 'Note updated successfully!');
             } else {
                 alert_float('danger', response.message || 'Failed to update note');
             }
@@ -321,8 +330,12 @@ function deleteNote(noteId) {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    alert_float('success', 'Note deleted successfully!');
+                    // Prevent scroll on reload
+                    var scrollPos = $(window).scrollTop();
                     loadNotes(); // Reload notes
+                    $(window).scrollTop(scrollPos);
+                    
+                    alert_float('success', 'Note deleted successfully!');
                 } else {
                     alert_float('danger', response.message || 'Failed to delete note');
                 }
@@ -351,8 +364,11 @@ $(document).ready(function() {
                     toggleNoteForm(); // Hide the form
                 }
                 
-                // Reload notes
+                // Reload notes - prevent scroll
+                var scrollPos = $(window).scrollTop();
                 loadNotes();
+                $(window).scrollTop(scrollPos);
+                
                 alert_float('success', 'Note added successfully!');
             } else {
                 alert_float('danger', response.message || 'Failed to add note');

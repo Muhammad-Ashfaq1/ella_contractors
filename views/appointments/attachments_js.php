@@ -205,7 +205,11 @@ function deleteAttachment(attachmentId) {
             success: function(response) {
                 if (response.success) {
                     alert_float('success', response.message);
+                    
+                    // Prevent scroll on reload
+                    var scrollPos = $(window).scrollTop();
                     loadAttachments(true); // Force reload attachments
+                    setTimeout(function() { $(window).scrollTop(scrollPos); }, 50);
                 } else {
                     alert_float('danger', response.message);
                 }
@@ -483,10 +487,12 @@ $(document).on('click', '#uploadAttachmentsBtn', function() {
                 // Close modal
                 $('#attachmentUploadModal').modal('hide');
                 
-                // Reload attachments grid
+                // Reload attachments grid - prevent scroll
+                var scrollPos = $(window).scrollTop();
                 if (typeof loadAttachments === 'function') {
                     loadAttachments(true);
                 }
+                setTimeout(function() { $(window).scrollTop(scrollPos); }, 50);
             } else {
                 alert_float('danger', response.message || 'Upload failed');
                 $btn.prop('disabled', false).html(originalText);
