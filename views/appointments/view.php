@@ -381,18 +381,7 @@ html {
 
                                 
                                 <!-- Action Buttons -->
-                                <div class="action-buttons-container" style="margin-top: 20px;">
-                                    <div class="btn-group connected-buttons" role="group">
-                                        <?php if (!empty($appointment->contact_id) && !empty($appointment->phone)): ?>
-                                            <a href="javascript:void(0)" class="btn btn-success connected-btn-left" onclick="openSMSModal(<?php echo $appointment->contact_id; ?>, '<?php echo $appointment->phone; ?>')">
-                                                <i class="fa fa-comment"></i> Send SMS
-                                            </a>
-                                         <?php endif; ?>
-                                        <a href="mailto:<?php echo $appointment->email; ?>" class="btn btn-primary btn-sm <?php echo (!empty($appointment->contact_id) && !empty($appointment->phone)) ? 'connected-btn-right' : 'connected-btn-left connected-btn-right'; ?>" title="<?php echo _l('email_client'); ?>" target="_blank" onclick="logEmailClick(<?php echo $appointment->id; ?>, '<?php echo $appointment->email; ?>')">
-                                            <i class="fa fa-envelope"></i> <?php echo _l('email_client'); ?>
-                                        </a>
-                                    </div>
-                                </div>
+                                
                     
                             </div>
                             
@@ -437,6 +426,18 @@ html {
                                             <i class="fa fa-edit"></i> Edit reminder templates and settings
                                         </a>
                                     </p>
+                                </div>
+                                <div class="action-buttons-container text-right" style="margin-top: 20px;">
+                                    <div class="btn-group connected-buttons" role="group">
+                                        <?php if (!empty($appointment->contact_id) && !empty($appointment->phone)): ?>
+                                            <a href="javascript:void(0)" class="btn btn-success connected-btn-left" onclick="openSMSModal(<?php echo $appointment->contact_id; ?>, '<?php echo $appointment->phone; ?>')">
+                                                <i class="fa fa-comment"></i> Send SMS
+                                            </a>
+                                         <?php endif; ?>
+                                        <a href="mailto:<?php echo $appointment->email; ?>" class="btn btn-primary btn-sm <?php echo (!empty($appointment->contact_id) && !empty($appointment->phone)) ? 'connected-btn-right' : 'connected-btn-left connected-btn-right'; ?>" title="<?php echo _l('email_client'); ?>" target="_blank" onclick="logEmailClick(<?php echo $appointment->id; ?>, '<?php echo $appointment->email; ?>')">
+                                            <i class="fa fa-envelope"></i> <?php echo _l('email_client'); ?>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
