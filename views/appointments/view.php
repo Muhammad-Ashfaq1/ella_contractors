@@ -1529,6 +1529,16 @@ $(document).ready(function() {
                             return;
                         }
                         
+                        // Auto-fill Appointment Name if empty
+                        if (!$('#subject').val()) {
+                            var contactName = data.to || '';
+                            if (contactName && contactName.trim() !== '') {
+                                $('#subject').val('Appointment with ' + contactName.trim());
+                            } else {
+                                $('#subject').val('Appointment with ' + relType.charAt(0).toUpperCase() + relType.slice(1) + ' ID: ' + relId);
+                            }
+                        }
+                        
                         // Only populate form fields if they are empty
                         if (!$('#email').val() && data.email) {
                             $('#email').val(data.email);
