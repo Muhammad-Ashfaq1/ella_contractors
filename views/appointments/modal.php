@@ -280,7 +280,7 @@ button.delete-btn {
                                 <label for="subject"> Appointment Name <span class="text-danger">*</span> 
                                     <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="Give this appointment a friendly name to remember"></i>
                                 </label>
-                                <input type="text" class="form-control" id="subject" name="subject" placeholder="Enter appointment name" required>
+                                <input type="text" class="form-control" id="subject" name="subject" required>
                             </div>
                         </div>
                     </div>
@@ -314,7 +314,7 @@ button.delete-btn {
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="email">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" placeholder="Enter email address">
+                                <input type="email" class="form-control" id="email" name="email">
                             </div>
                         </div>
                     </div>
@@ -323,13 +323,13 @@ button.delete-btn {
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="phone">Phone</label>
-                                <input type="tel" class="form-control" id="phone" name="phone" placeholder="Enter phone number">
+                                <input type="tel" class="form-control" id="phone" name="phone">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="address">Address</label>
-                                <input type="text" class="form-control" id="address" name="address" placeholder="Enter address">
+                                <input type="text" class="form-control" id="address" name="address">
                             </div>
                         </div>
                     </div>
@@ -338,7 +338,7 @@ button.delete-btn {
                         <div class="col-md-12">
                             <div class="form-group">
                                 <label for="notes">Notes</label>
-                                <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Add any additional notes or instructions"></textarea>
+                                <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
                             </div>
                         </div>
                     </div>
