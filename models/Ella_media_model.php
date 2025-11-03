@@ -80,4 +80,16 @@ class Ella_media_model extends App_Model
         $this->db->order_by('date_uploaded', 'DESC');
         return $this->db->get(db_prefix() . 'ella_contractor_media')->result_array();
     }
+
+    /**
+     * Delete presentation
+     * @param int $presentation_id
+     * @return bool
+     */
+    public function delete_presentation($presentation_id)
+    {
+        $this->db->where('id', $presentation_id);
+        $this->db->where('rel_type', 'presentation');
+        return $this->db->delete(db_prefix() . 'ella_contractor_media');
+    }
 }

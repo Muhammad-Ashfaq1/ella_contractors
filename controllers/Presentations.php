@@ -390,5 +390,68 @@ startxref
             'data' => $presentations
         ]);
     }
+
+    /**
+     * Delete presentation (AJAX)
+     */
+    public function delete() {
+        if (!has_permission('ella_contractors', '', 'delete')) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ]);
+            return;
+        }
+        
+        $presentation_id = $this->input->post('id');
+        
+        if (!$presentation_id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Presentation ID is required'
+            ]);
+            return;
+        }
+        
+        // Get presentation details before deleting
+        $presentation = $this->ella_media_model->get_file($presentation_id);
+        
+        if (!$presentation || $presentation->rel_type !== 'presentation') {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Presentation not found'
+            ]);
+            return;
+        }
+        
+        // Delete physical file
+        $folder = $presentation->is_default ? 'default' : 'general';
+        $file_path = FCPATH . 'uploads/ella_presentations/' . $folder . '/' . $presentation->file_name;
+        
+        if (file_exists($file_path)) {
+            @unlink($file_path);
+        }
+        
+        // Delete from database
+        $this->db->where('id', $presentation_id);
+        $this->db->where('rel_type', 'presentation');
+        $deleted = $this->db->delete(db_prefix() . 'ella_contractor_media');
+        
+        if ($deleted) {
+            // Also remove from appointment links
+            $this->db->where('presentation_id', $presentation_id);
+            $this->db->delete(db_prefix() . 'ella_appointment_presentations');
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Presentation deleted successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to delete presentation'
+            ]);
+        }
+    }
 }
 

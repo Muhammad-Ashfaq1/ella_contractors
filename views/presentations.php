@@ -54,17 +54,13 @@ if (!function_exists('formatBytes')) {
                                                 <label for="description">Description</label>
                                                 <textarea name="description" class="form-control" rows="3"></textarea>
                                             </div>
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="is_default" value="1">
-                                                    Is Default Presentation
-                                                </label>
+                                            <div class="checkbox checkbox-primary">
+                                                <input type="checkbox" name="is_default" id="is_default" value="1">
+                                                <label for="is_default">Is Default Presentation</label>
                                             </div>
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="active" value="1" checked>
-                                                    Active
-                                                </label>
+                                            <div class="checkbox checkbox-primary">
+                                                <input type="checkbox" name="active" id="active" value="1" checked>
+                                                <label for="active">Active</label>
                                             </div>
                                         </div>
                                         <div class="modal-footer">
@@ -104,7 +100,14 @@ if (!function_exists('formatBytes')) {
                                         <td><?= $file['active'] ? 'Yes' : 'No'; ?></td>
                                         <td><?= date('M d, Y', strtotime($file['date_uploaded'])); ?></td>
                                         <td>
-                                            <a href="#" class="btn btn-info btn-xs" onclick="previewFile(<?= $file['id']; ?>, '<?= addslashes($file['original_name']); ?>', '<?= strtolower(pathinfo($file['file_name'], PATHINFO_EXTENSION)); ?>', '<?= $publicUrl; ?>'); return false;">Preview</a>
+                                            <div class="text-right" style="white-space: nowrap;">
+                                                <button class="btn btn-info btn-xs" style="display: inline-block; margin-right: 5px;" onclick="previewFile(<?= $file['id']; ?>, '<?= addslashes($file['original_name']); ?>', '<?= strtolower(pathinfo($file['file_name'], PATHINFO_EXTENSION)); ?>', '<?= $publicUrl; ?>'); return false;" title="Preview">
+                                                    <i class="fa fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-danger btn-xs" style="display: inline-block;" onclick="deletePresentation(<?= $file['id']; ?>); return false;" title="Delete">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -216,4 +219,34 @@ $(document).on('load', 'iframe', function() {
     });
 });
 
+// Delete presentation
+function deletePresentation(presentationId) {
+    if (!confirm('Are you sure you want to delete this presentation? This action cannot be undone.')) {
+        return;
+    }
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/presentations/delete',
+        type: 'POST',
+        data: {
+            id: presentationId,
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                alert_float('success', 'Presentation deleted successfully');
+                location.reload(); // Reload page to refresh list
+            } else {
+                alert_float('danger', response.message || 'Failed to delete presentation');
+            }
+        },
+        error: function(xhr, status, error) {
+            alert_float('danger', 'Error deleting presentation: ' + error);
+        }
+    });
+}
+
+var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
+var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
 </script>
