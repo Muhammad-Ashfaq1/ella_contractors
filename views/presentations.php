@@ -9,12 +9,13 @@
                         <hr class="hr-panel-heading" />
                         
                         <!-- Upload Presentation Form -->
-                        <div class="row">
-                            <div class="col-md-12">
-                                <button type="button" class="btn btn-primary pull-right" data-toggle="modal" data-target="#uploadPresentationModal">
-                                    <i class="fa fa-upload"></i> Upload Presentation
-                                </button>
-                                <div class="clearfix"></div>
+                        <div class="_buttons">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <button type="button" class="btn btn-info" data-toggle="modal" data-target="#uploadPresentationModal">
+                                        <i class="fa fa-upload" style="margin-right: 2% !important;"></i> Upload Presentation
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         
