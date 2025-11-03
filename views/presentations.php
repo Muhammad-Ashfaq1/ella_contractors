@@ -87,7 +87,6 @@ if (!function_exists('formatBytes')) {
                                     <th>Is Default</th>
                                     <th>Active</th>
                                     <th>Upload Date</th>
-                                    <th>Public URL</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -104,11 +103,6 @@ if (!function_exists('formatBytes')) {
                                         <td><?= $file['is_default'] ? 'Yes' : 'No'; ?></td>
                                         <td><?= $file['active'] ? 'Yes' : 'No'; ?></td>
                                         <td><?= date('M d, Y', strtotime($file['date_uploaded'])); ?></td>
-                                        <td>
-                                            <a href="<?= $publicUrl; ?>" target="_blank" class="text-info" title="Open in new tab">
-                                                <i class="fa fa-external-link"></i> <?= $publicUrl; ?>
-                                            </a>
-                                        </td>
                                         <td>
                                             <a href="#" class="btn btn-info btn-xs" onclick="previewFile(<?= $file['id']; ?>, '<?= addslashes($file['original_name']); ?>', '<?= strtolower(pathinfo($file['file_name'], PATHINFO_EXTENSION)); ?>', '<?= $publicUrl; ?>'); return false;">Preview</a>
                                         </td>
