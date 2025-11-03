@@ -16,7 +16,7 @@ class Presentations extends AdminController
             access_denied('ella_contractors');
         }
         $data['title'] = 'Presentations';
-        $data['media'] = $this->ella_media_model->get_media();
+        $data['media'] = $this->ella_media_model->get_presentations();
         $this->load->view('ella_contractors/presentations', $data);
     }
 
@@ -57,7 +57,8 @@ class Presentations extends AdminController
             return;
         }
 
-        $uploaded = handle_ella_media_upload($is_default, $active);
+        // Upload as presentation with rel_type = 'presentation'
+        $uploaded = handle_ella_media_upload($is_default, $active, 'file', 'presentation', null);
 
         if ($uploaded && !empty($uploaded)) {
             // Update description if needed
@@ -65,9 +66,9 @@ class Presentations extends AdminController
                 $this->db->where('id', $id);
                 $this->db->update(db_prefix() . 'ella_contractor_media', ['description' => $description]);
             }
-            set_alert('success', 'File uploaded successfully');
+            set_alert('success', 'Presentation uploaded successfully');
         } else {
-            set_alert('warning', 'Failed to upload file. Please check the file format and try again.');
+            set_alert('warning', 'Failed to upload presentation. Please check the file format and try again.');
         }
         redirect(admin_url('ella_contractors/presentations'));
     }

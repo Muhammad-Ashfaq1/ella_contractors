@@ -334,3 +334,70 @@ if (!function_exists('get_appointments_by_staff')) {
     }
 }
 
+/**
+ * Generate shareable public link for appointment presentations
+ * Direct URL access like leads: /uploads/ella_presentations/general/{filename}
+ * 
+ * @param int $appointment_id
+ * @return string Public URLs (one per line)
+ */
+if (!function_exists('get_appointment_presentations_public_links')) {
+    function get_appointment_presentations_public_links($appointment_id) {
+        $CI = &get_instance();
+        
+        // Get attached presentations
+        $CI->db->select('media.*');
+        $CI->db->from(db_prefix() . 'ella_appointment_presentations as pivot');
+        $CI->db->join(db_prefix() . 'ella_contractor_media as media', 'media.id = pivot.presentation_id');
+        $CI->db->where('pivot.appointment_id', $appointment_id);
+        $CI->db->where('media.rel_type', 'presentation');
+        $CI->db->where('media.active', 1);
+        
+        $presentations = $CI->db->get()->result();
+        
+        if (empty($presentations)) {
+            return '';
+        }
+        
+        $links = [];
+        foreach ($presentations as $presentation) {
+            $url = get_ella_presentation_public_url($presentation);
+            if ($url) {
+                $links[] = $url;
+            }
+        }
+        
+        return implode("\n", $links);
+    }
+}
+
+/**
+ * Get formatted public links for SMS/Email
+ * 
+ * @param int $appointment_id
+ * @param string $format 'sms' or 'email'
+ * @return string Formatted message with links
+ */
+if (!function_exists('format_appointment_presentation_links')) {
+    function format_appointment_presentation_links($appointment_id, $format = 'sms') {
+        $links = get_appointment_presentations_public_links($appointment_id);
+        
+        if (empty($links)) {
+            return '';
+        }
+        
+        $links_array = explode("\n", $links);
+        
+        if ($format === 'sms') {
+            return "\n\nView Presentations:\n" . implode("\n", $links_array);
+        } else {
+            // Email format with HTML
+            $html = '<p><strong>View Presentations:</strong></p><ul>';
+            foreach ($links_array as $link) {
+                $html .= '<li><a href="' . $link . '" target="_blank">' . $link . '</a></li>';
+            }
+            $html .= '</ul>';
+            return $html;
+        }
+    }
+}

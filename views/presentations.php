@@ -87,11 +87,16 @@ if (!function_exists('formatBytes')) {
                                     <th>Is Default</th>
                                     <th>Active</th>
                                     <th>Upload Date</th>
+                                    <th>Public URL</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($media as $file): ?>
+                                    <?php 
+                                    $folder = $file['is_default'] ? 'default' : 'general';
+                                    $publicUrl = site_url('uploads/ella_presentations/' . $folder . '/' . $file['file_name']); 
+                                    ?>
                                     <tr>
                                         <td><?= $file['original_name']; ?></td>
                                         <td><?= strtoupper(pathinfo($file['file_name'], PATHINFO_EXTENSION)); ?></td>
@@ -100,7 +105,12 @@ if (!function_exists('formatBytes')) {
                                         <td><?= $file['active'] ? 'Yes' : 'No'; ?></td>
                                         <td><?= date('M d, Y', strtotime($file['date_uploaded'])); ?></td>
                                         <td>
-                                            <a href="#" class="btn btn-info btn-xs" onclick="previewFile(<?= $file['id']; ?>, '<?= $file['original_name']; ?>', '<?= strtolower(pathinfo($file['file_name'], PATHINFO_EXTENSION)); ?>', '<?= site_url('uploads/ella_presentations/' . ($file['is_default'] ? 'default/' : 'general/') . $file['file_name']); ?>'); return false;">Preview</a>
+                                            <a href="<?= $publicUrl; ?>" target="_blank" class="text-info" title="Open in new tab">
+                                                <i class="fa fa-external-link"></i> <?= $publicUrl; ?>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <a href="#" class="btn btn-info btn-xs" onclick="previewFile(<?= $file['id']; ?>, '<?= addslashes($file['original_name']); ?>', '<?= strtolower(pathinfo($file['file_name'], PATHINFO_EXTENSION)); ?>', '<?= $publicUrl; ?>'); return false;">Preview</a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -138,6 +148,8 @@ if (!function_exists('formatBytes')) {
         </div>
     </div>
 </div>
+
+<?php init_tail(); ?>
 
 <script>
 function previewFile(fileId, fileName, fileExt, fileUrl) {
@@ -209,6 +221,5 @@ $(document).on('load', 'iframe', function() {
             '</div>');
     });
 });
-</script>
 
-<?php init_tail(); ?>
+</script>

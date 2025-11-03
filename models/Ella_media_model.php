@@ -43,13 +43,13 @@ class Ella_media_model extends App_Model
     }
 
     /**
-     * Get appointment attachments
+     * Get appointment attachments (files uploaded to appointment)
      * @param int $appointment_id
      * @return array
      */
     public function get_appointment_attachments($appointment_id)
     {
-        $this->db->where('rel_type', 'appointment');
+        $this->db->where('rel_type', 'attachment');
         $this->db->where('rel_id', $appointment_id);
         $this->db->where('active', 1);
         $this->db->order_by('date_uploaded', 'DESC');
@@ -64,7 +64,20 @@ class Ella_media_model extends App_Model
     public function delete_appointment_attachment($attachment_id)
     {
         $this->db->where('id', $attachment_id);
-        $this->db->where('rel_type', 'appointment');
+        $this->db->where('rel_type', 'attachment');
         return $this->db->delete(db_prefix() . 'ella_contractor_media');
+    }
+    
+    /**
+     * Get presentations (standalone presentation files)
+     * @return array
+     */
+    public function get_presentations()
+    {
+        $this->db->where('rel_type', 'presentation');
+        $this->db->where('active', 1);
+        $this->db->order_by('is_default', 'DESC');
+        $this->db->order_by('date_uploaded', 'DESC');
+        return $this->db->get(db_prefix() . 'ella_contractor_media')->result_array();
     }
 }

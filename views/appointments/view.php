@@ -968,9 +968,13 @@ function renderAttachedPresentations(presentations) {
     if (presentations && presentations.length > 0) {
         html = '<ul class="list-unstyled">';
         presentations.forEach(function(presentation) {
+            // Generate public URL (like leads pattern - direct file access)
+            var folder = presentation.is_default == 1 ? 'default' : 'general';
+            var publicUrl = '<?php echo site_url("uploads/ella_presentations/"); ?>' + folder + '/' + presentation.file_name;
+            
             html += '<li style="margin-bottom: 8px;">';
             html += '<i class="fa fa-file-powerpoint-o" style="color: #e67e22;"></i> ';
-            html += '<a href="' + admin_url + 'ella_contractors/presentations/preview/' + presentation.id + '" target="_blank">';
+            html += '<a href="' + publicUrl + '" target="_blank" title="Public URL - Share with customer">';
             html += presentation.original_name || presentation.file_name;
             html += '</a>';
             html += ' <button class="btn btn-xs btn-danger" onclick="detachPresentation(' + presentation.id + ')" title="Remove">';

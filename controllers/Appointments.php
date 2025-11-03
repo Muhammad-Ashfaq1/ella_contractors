@@ -1307,7 +1307,7 @@ class Appointments extends AdminController
         // Get attachment info before deleting
         $attachment = $this->ella_media_model->get_file($attachment_id);
         
-        if (!$attachment || $attachment->rel_type !== 'appointment') {
+        if (!$attachment || $attachment->rel_type !== 'attachment') {
             echo json_encode([
                 'success' => false,
                 'message' => 'Attachment not found'
@@ -1671,7 +1671,7 @@ startxref
         $this->load->model('ella_contractors/ella_media_model');
         $attachment = $this->ella_media_model->get_file($attachment_id);
         
-        if (!$attachment || $attachment->rel_type !== 'appointment') {
+        if (!$attachment || $attachment->rel_type !== 'attachment') {
             show_404();
         }
 
@@ -1764,9 +1764,9 @@ startxref
 
         // Move uploaded file
         if (move_uploaded_file($file_data['tmp_name'], $file_path)) {
-            // Save to database
+            // Save to database - using 'attachment' rel_type (presentations are separate)
             $media_data = [
-                'rel_type' => 'appointment',
+                'rel_type' => 'attachment',
                 'rel_id' => $appointment_id,
                 'org_id' => null,
                 'file_name' => $unique_filename,
@@ -2050,6 +2050,7 @@ startxref
             media.original_name,
             media.file_type,
             media.file_size,
+            media.is_default,
             media.date_uploaded,
             pivot.attached_at,
             pivot.attached_by

@@ -433,6 +433,20 @@ function ella_contractors_activate_module() {
         log_message('info', 'Ella Appointments - Created ella_appointment_presentations pivot table');
     }
     
+    // ==================== DATA MIGRATION: Update rel_type for existing records ====================
+    
+    // Update existing media records that don't have rel_type set
+    // Default: records without rel_type or with rel_type='appointment' become 'attachment'
+    if ($CI->db->field_exists('rel_type', db_prefix() . 'ella_contractor_media')) {
+        // Fix records where rel_type is NULL or 'appointment' - these are attachments
+        $CI->db->where('rel_type IS NULL OR rel_type = "appointment"', NULL, FALSE);
+        $CI->db->update(db_prefix() . 'ella_contractor_media', ['rel_type' => 'attachment']);
+        
+        log_message('info', 'Ella Contractors - Updated existing media records: NULL/appointment -> attachment');
+    }
+    
+    // ==================== END DATA MIGRATION ====================
+    
     // Set module version
     update_option('ella_contractors_version', '1.0.0');
     
@@ -458,22 +472,6 @@ function ella_contractors_deactivate_module() {
     $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_estimate_line_items`');
     log_message('info', 'Ella Contractors - Removed ella_contractor_estimate_line_items table');
 
-    // // remove ella_contractor_measurement_records table
-    // $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_measurement_records`');
-    // log_message('info', 'Ella Contractors - Removed ella_contractor_measurement_records table');
-
-    // // remove ella_contractor_measurement_items table
-    // $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_measurement_items`');
-    // log_message('info', 'Ella Contractors - Removed ella_contractor_measurement_items table');
-
-    // // remove ella_appointment_activity_log table
-    // $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_appointment_activity_log`');
-    // log_message('info', 'Ella Contractors - Removed ella_appointment_activity_log table');
-
-    // // remove ella_appointment_presentations table
-    // $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_appointment_presentations`');
-    // log_message('info', 'Ella Contractors - Removed ella_appointment_presentations table');
-    
 }
 
 
