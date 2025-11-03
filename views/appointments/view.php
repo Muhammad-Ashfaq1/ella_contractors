@@ -434,7 +434,7 @@ html {
                                     
                                     <p class="text-muted" style="margin-top: 10px; margin-bottom: 0; font-size: 12px;">
                                         <a href="<?php echo admin_url('emails'); ?>" target="_blank" style="color: #7f8c8d;">
-                                            <i class="fa fa-edit"></i> Edit reminder templates and settings
+                                            <i class="fa fa-edit"></i> Edit Reminder Templates
                                         </a>
                                     </p>
                                 </div>
