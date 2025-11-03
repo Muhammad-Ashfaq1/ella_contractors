@@ -250,9 +250,29 @@ var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
 $(document).ready(function() {
     // Initialize DataTable for presentations
     // Sort by column 7 (Upload Date) descending by default
-    // Columns: 0=checkbox, 1=ID, 2=File Name, 3=Type, 4=Size, 5=Is Default, 6=Active, 7=Upload Date, 8=File Path, 9=Options
+    // Columns: 0=checkbox, 1=ID, 2=File Name, 3=Type, 4=Size, 5=Is Default, 6=Active, 7=Upload Date, 8=File Path (hidden), 9=Options
     // Disable sorting on: column 0 (checkbox), column 9 (options)
     initDataTable('.table-ella_presentations', admin_url + 'ella_contractors/presentations/table', undefined, [0, 9], {}, [7, 'desc']);
+    
+    // Hide File Path column (column 8) from display but keep it for export
+    // This column will be hidden in the listing but included in CSV/Excel/PDF exports
+    function hideFilePathColumn() {
+        var table = $('.table-ella_presentations').DataTable();
+        if (table) {
+            // Hide column 8 (File Path) from display
+            table.column(8).visible(false);
+        }
+    }
+    
+    // Hide column after table initialization
+    setTimeout(hideFilePathColumn, 500);
+    
+    // Re-hide column after table redraws (after delete, bulk delete, etc.)
+    if ($('.table-ella_presentations').length) {
+        $('.table-ella_presentations').on('draw.dt', function() {
+            setTimeout(hideFilePathColumn, 100);
+        });
+    }
     
     // Function to add bulk delete button to DataTable toolbar
     function addBulkDeleteButton() {

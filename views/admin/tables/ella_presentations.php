@@ -177,13 +177,14 @@ try {
         $date_formatted = date('M d, Y', strtotime($aRow['date_uploaded']));
         $row[] = '<div class="text-center">' . $date_formatted . '</div>';
         
-        // Generate public URL and file path
+        // Generate public URL and complete file path (for export only)
         $folder = $aRow['is_default'] ? 'default' : 'general';
         $publicUrl = site_url('uploads/ella_presentations/' . $folder . '/' . $aRow['internal_file_name']);
-        $filePath = 'uploads/ella_presentations/' . $folder . '/' . $aRow['internal_file_name'];
+        $completeFilePath = site_url('uploads/ella_presentations/' . $folder . '/' . $aRow['internal_file_name']);
         
-        // File Path column (for export)
-        $row[] = '<div class="text-center"><small>' . htmlspecialchars($filePath) . '</small></div>';
+        // File Path column (hidden from display via DataTables, but visible in export)
+        // Contains full URL path for export purposes
+        $row[] = '<div class="text-center">' . htmlspecialchars($completeFilePath) . '</div>';
         
         // Options column - buttons centered
         $options = '<div class="text-center" style="white-space: nowrap;">';
