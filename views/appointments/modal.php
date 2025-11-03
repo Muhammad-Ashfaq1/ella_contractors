@@ -241,6 +241,25 @@ button.delete-btn {
   font-weight: bold;
   font-size: 16px; /* +2px from default 14px */
 }
+
+/* Ensure native checkbox is hidden - fix for double checkbox display */
+#appointmentModal .checkbox input[type="checkbox"] {
+  position: absolute !important;
+  opacity: 0 !important;
+  z-index: 1 !important;
+  width: 17px !important;
+  height: 17px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+}
+
+/* Ensure checkbox label has proper positioning for custom styling */
+#appointmentModal .checkbox label {
+  position: relative !important;
+  padding-left: 5px !important;
+  cursor: pointer !important;
+}
 </style>
 
 <div class="modal fade" id="appointmentModal" tabindex="-1" role="dialog" aria-labelledby="appointmentModalLabel">
@@ -346,11 +365,11 @@ button.delete-btn {
                     <div class="row">
                         <div class="col-md-12">
                             <h5>Reminders</h5>
-                            <div class="checkbox">
+                            <div class="checkbox checkbox-primary">
                                 <input type="checkbox" name="send_reminder" id="send_reminder" value="1" checked>
                                 <label for="send_reminder">Instantly Send Appointment Date/Time to Customer</label>
                             </div>
-                            <div class="checkbox">
+                            <div class="checkbox checkbox-primary">
                                 <input type="checkbox" name="reminder_48h" id="reminder_48h" value="1" checked>
                                 <label for="reminder_48h">Send 48 Hour Reminder to Customer</label>
                             </div>
