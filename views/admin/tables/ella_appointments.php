@@ -68,7 +68,7 @@ $join = [
         SELECT 
             appointment_id, 
             COUNT(*) as measurement_count
-        FROM ' . db_prefix() . 'ella_contractors_measurements 
+        FROM ' . db_prefix() . 'ella_contractor_measurement_records 
         WHERE appointment_id IS NOT NULL 
         GROUP BY appointment_id
     ) measurement_counts ON measurement_counts.appointment_id = ' . db_prefix() . 'appointly_appointments.id',
