@@ -31,11 +31,15 @@ class Presentations extends AdminController
     }
 
     /**
-     * Upload presentation file
+     * Upload presentation file (AJAX)
      */
     public function upload() {
         if (!has_permission('ella_contractors', '', 'create')) {
-            access_denied('ella_contractors');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ]);
+            return;
         }
         
         $is_default = $this->input->post('is_default') ? 1 : 0;
@@ -44,16 +48,20 @@ class Presentations extends AdminController
 
         // Check if file was uploaded
         if (!isset($_FILES['file']) || $_FILES['file']['error'] == UPLOAD_ERR_NO_FILE) {
-            set_alert('warning', 'No file selected for upload');
-            redirect(admin_url('ella_contractors/presentations'));
+            echo json_encode([
+                'success' => false,
+                'message' => 'No file selected for upload'
+            ]);
             return;
         }
 
         // Check file size
         $max_size = 50 * 1024 * 1024; // 50MB
         if ($_FILES['file']['size'] > $max_size) {
-            set_alert('warning', 'File size exceeds maximum allowed size of 50MB');
-            redirect(admin_url('ella_contractors/presentations'));
+            echo json_encode([
+                'success' => false,
+                'message' => 'File size exceeds maximum allowed size of 50MB'
+            ]);
             return;
         }
 
@@ -62,8 +70,10 @@ class Presentations extends AdminController
         $allowed_extensions = ['pdf', 'ppt', 'pptx', 'html'];
         
         if (!in_array($extension, $allowed_extensions)) {
-            set_alert('warning', 'Invalid file type. Only PDF, PPT, PPTX, and HTML files are allowed.');
-            redirect(admin_url('ella_contractors/presentations'));
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid file type. Only PDF, PPT, PPTX, and HTML files are allowed.'
+            ]);
             return;
         }
 
@@ -76,11 +86,21 @@ class Presentations extends AdminController
                 $this->db->where('id', $id);
                 $this->db->update(db_prefix() . 'ella_contractor_media', ['description' => $description]);
             }
-            set_alert('success', 'Presentation uploaded successfully');
+            
+            // Log activity
+            log_activity('Presentation Uploaded [ID: ' . $id . ', File: ' . $_FILES['file']['name'] . ']');
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Presentation uploaded successfully',
+                'presentation_id' => $id
+            ]);
         } else {
-            set_alert('warning', 'Failed to upload presentation. Please check the file format and try again.');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to upload presentation. Please check the file format and try again.'
+            ]);
         }
-        redirect(admin_url('ella_contractors/presentations'));
     }
 
     /**

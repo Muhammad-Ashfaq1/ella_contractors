@@ -51,7 +51,7 @@
                         <div id="uploadPresentationModal" class="modal fade">
                             <div class="modal-dialog">
                                 <div class="modal-content">
-                                    <?php echo form_open_multipart(admin_url('ella_contractors/presentations/upload')); ?>
+                                    <form id="uploadPresentationForm" enctype="multipart/form-data">
                                         <div class="modal-header">
                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                                 <span aria-hidden="true">&times;</span>
@@ -61,12 +61,12 @@
                                         <div class="modal-body">
                                             <div class="form-group">
                                                 <label for="file">File (HTML/PDF/PPT/PPTX)</label>
-                                                <input type="file" name="file" class="form-control" accept=".html,.pdf,.ppt,.pptx" required>
+                                                <input type="file" name="file" id="presentation_file" class="form-control" accept=".html,.pdf,.ppt,.pptx" required>
                                                 <small class="text-muted">Supported formats: HTML, PDF, PPT, PPTX (Max size: 50MB)</small>
                                             </div>
                                             <div class="form-group">
                                                 <label for="description">Description</label>
-                                                <textarea name="description" class="form-control" rows="3"></textarea>
+                                                <textarea name="description" id="presentation_description" class="form-control" rows="3"></textarea>
                                             </div>
                                             <div class="checkbox checkbox-primary">
                                                 <input type="checkbox" name="is_default" id="is_default" value="1">
@@ -79,9 +79,9 @@
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                                            <button type="submit" class="btn btn-primary">Upload</button>
+                                            <button type="submit" class="btn btn-primary" id="uploadPresentationBtn">Upload</button>
                                         </div>
-                                    <?php echo form_close(); ?>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -406,6 +406,93 @@ $(document).ready(function() {
                 $btn.prop('disabled', false).html(originalHtml);
             }
         });
+    });
+    
+    // ========================================
+    // UPLOAD PRESENTATION FORM (AJAX)
+    // ========================================
+    
+    // Handle presentation upload form submission via AJAX
+    $('#uploadPresentationForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Client-side validation
+        if (!$('#presentation_file')[0].files.length) {
+            alert_float('danger', 'Please select a file to upload');
+            return;
+        }
+        
+        // Check file size (50MB max)
+        var file = $('#presentation_file')[0].files[0];
+        var maxSize = 50 * 1024 * 1024; // 50MB
+        if (file.size > maxSize) {
+            alert_float('danger', 'File size exceeds maximum allowed size of 50MB');
+            return;
+        }
+        
+        // Check file extension
+        var fileName = file.name;
+        var fileExt = fileName.split('.').pop().toLowerCase();
+        var allowedExts = ['pdf', 'ppt', 'pptx', 'html'];
+        if (allowedExts.indexOf(fileExt) === -1) {
+            alert_float('danger', 'Invalid file type. Only PDF, PPT, PPTX, and HTML files are allowed.');
+            return;
+        }
+        
+        // Show loader and disable button
+        var $uploadBtn = $('#uploadPresentationBtn');
+        var originalBtnText = $uploadBtn.text();
+        $uploadBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Uploading...');
+        
+        // Get form data using FormData to handle file uploads
+        var formData = new FormData(this);
+        
+        // Add CSRF token
+        formData.append(csrf_token_name, csrf_hash);
+        
+        $.ajax({
+            url: admin_url + 'ella_contractors/presentations/upload',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    
+                    // Close modal
+                    $('#uploadPresentationModal').modal('hide');
+                    
+                    // Reset form
+                    $('#uploadPresentationForm')[0].reset();
+                    
+                    // Reload table maintaining sort order
+                    var table = $('.table-ella_presentations').DataTable();
+                    var currentOrder = table.order();
+                    table.ajax.reload(function() {
+                        table.order(currentOrder).draw(false);
+                        // Re-hide File Path column after reload
+                        setTimeout(hideFilePathColumn, 100);
+                    });
+                } else {
+                    alert_float('danger', response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                alert_float('danger', 'Error uploading presentation: ' + error);
+                console.error('Upload error:', error);
+            },
+            complete: function() {
+                // Hide loader and re-enable button
+                $uploadBtn.prop('disabled', false).text(originalBtnText);
+            }
+        });
+    });
+    
+    // Reset form when modal is closed
+    $('#uploadPresentationModal').on('hidden.bs.modal', function () {
+        $('#uploadPresentationForm')[0].reset();
     });
     
     // ========================================
