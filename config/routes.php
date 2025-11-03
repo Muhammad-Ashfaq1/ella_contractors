@@ -33,35 +33,32 @@ $route[$module_name . '/measurements/get_appointment_measurements/(:num)'] = 'Me
 
 
 // Appointments routes
-$route[$module_name . '/appointments'] = 'Appointments/index';
-$route[$module_name . '/appointments/edit/(:num)'] = 'Appointments/edit/$1';
-$route[$module_name . '/appointments/view/(:num)'] = 'Appointments/view/$1';
-$route[$module_name . '/appointments/save'] = 'Appointments/save';
-$route[$module_name . '/appointments/delete/(:num)'] = 'Appointments/delete/$1';
-$route[$module_name . '/appointments/table'] = 'Appointments/table';
+$appointment_module = '/appointments';
+$route[$module_name . $appointment_module] = 'Appointments/index';
+$route[$module_name . $appointment_module . '/edit/(:num)'] = 'Appointments/edit/$1';
+$route[$module_name . $appointment_module . '/view/(:num)'] = 'Appointments/view/$1';
+$route[$module_name . $appointment_module . '/save'] = 'Appointments/save';
+$route[$module_name . $appointment_module . '/delete/(:num)'] = 'Appointments/delete/$1';
+$route[$module_name . $appointment_module . '/table'] = 'Appointments/table';
 
 // AJAX routes for modal operations
-$route[$module_name . '/appointments/get_appointment_data'] = 'Appointments/get_appointment_data';
-$route[$module_name . '/appointments/save_ajax'] = 'Appointments/save_ajax';
-$route[$module_name . '/appointments/delete_ajax'] = 'Appointments/delete_ajax';
-$route[$module_name . '/appointments/download_attachment/(:num)'] = 'Appointments/download_attachment/$1';
-$route[$module_name . '/appointments/get_appointment_attachments/(:num)'] = 'Appointments/get_appointment_attachments/$1';
-$route[$module_name . '/appointments/delete_appointment_attachment/(:num)'] = 'Appointments/delete_appointment_attachment/$1';
+$route[$module_name . $appointment_module . '/get_appointment_data'] = 'Appointments/get_appointment_data';
+$route[$module_name . $appointment_module . '/save_ajax'] = 'Appointments/save_ajax';
+$route[$module_name . $appointment_module . '/delete_ajax'] = 'Appointments/delete_ajax';
+$route[$module_name . $appointment_module . '/download_attachment/(:num)'] = 'Appointments/download_attachment/$1';
+$route[$module_name . $appointment_module . '/get_appointment_attachments/(:num)'] = 'Appointments/get_appointment_attachments/$1';
+$route[$module_name . $appointment_module . '/delete_appointment_attachment/(:num)'] = 'Appointments/delete_appointment_attachment/$1';
 
 // Appointment Measurements routes (using measurements controller) - moved to measurements controller
 
 // Appointment Notes routes
-$route[$module_name . '/appointments/get_notes/(:num)'] = 'Appointments/get_notes/$1';
-$route[$module_name . '/appointments/add_note/(:num)'] = 'Appointments/add_note/$1';
-$route[$module_name . '/appointments/add_note/(:num)/(:num)'] = 'Appointments/add_note/$1/$2';
-$route[$module_name . '/appointments/delete_note/(:num)'] = 'Appointments/delete_note/$1';
-
-// AJAX endpoints
-$route[$module_name . '/get_line_items_ajax'] = $module_name . '/get_line_items_ajax';
-
+$route[$module_name . $appointment_module . '/get_notes/(:num)'] = 'Appointments/get_notes/$1';
+$route[$module_name . $appointment_module . '/add_note/(:num)'] = 'Appointments/add_note/$1';
+$route[$module_name . $appointment_module . '/add_note/(:num)/(:num)'] = 'Appointments/add_note/$1/$2';
+$route[$module_name . $appointment_module . '/delete_note/(:num)'] = 'Appointments/delete_note/$1';
 // Global appointment AJAX endpoints
-$route[$module_name . '/appointments/get_types'] = 'Appointments/get_types';
-$route[$module_name . '/appointments/save_ajax'] = 'Appointments/save_ajax';
-$route[$module_name . '/appointments/send_sms'] = 'Appointments/send_sms';
-$route[$module_name . '/appointments/get_sms_logs'] = 'Appointments/get_sms_logs';
-$route[$module_name . '/appointments/upload_sms_media'] = 'Appointments/upload_sms_media';
+$route[$module_name . $appointment_module . '/get_types'] = 'Appointments/get_types';
+$route[$module_name . $appointment_module . '/save_ajax'] = 'Appointments/save_ajax';
+$route[$module_name . $appointment_module . '/send_sms'] = 'Appointments/send_sms';
+$route[$module_name . $appointment_module . '/get_sms_logs'] = 'Appointments/get_sms_logs';
+$route[$module_name . $appointment_module . '/upload_sms_media'] = 'Appointments/upload_sms_media';
