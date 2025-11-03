@@ -1,17 +1,4 @@
-<?php 
-init_head(); 
-// Helper function for file size formatting
-if (!function_exists('formatBytes')) {
-    function formatBytes($bytes, $decimals = 2) {
-        if ($bytes === 0) return '0 Bytes';
-        $k = 1024;
-        $dm = $decimals < 0 ? 0 : $decimals;
-        $sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-        $i = floor(log($bytes) / log($k));
-        return round($bytes / pow($k, $i), $dm) . ' ' . $sizes[$i];
-    }
-}
-?>
+<?php init_head(); ?>
 <div id="wrapper">
     <div class="content">
         <div class="row">
@@ -29,6 +16,32 @@ if (!function_exists('formatBytes')) {
                                 </button>
                                 <div class="clearfix"></div>
                             </div>
+                        </div>
+                        
+                        <hr class="hr-panel-heading" />
+                        
+                        <!-- Presentations DataTable -->
+                        <div class="table-responsive">
+                            <table class="table table-striped table-ella_presentations">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <span class="hide"> - </span><div class="checkbox mass_select_all_wrap"><input type="checkbox" id="mass_select_all" data-to-table="ella_presentations"><label></label></div>
+                                        </th>
+                                        <th class="text-center"><?php echo _l('id'); ?></th>
+                                        <th class="text-center">File Name</th>
+                                        <th class="text-center">Type</th>
+                                        <th class="text-center">Size</th>
+                                        <th class="text-center">Is Default</th>
+                                        <th class="text-center">Active</th>
+                                        <th class="text-center">Upload Date</th>
+                                        <th class="text-center" width="120px"><?php echo _l('options'); ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data will be loaded via AJAX -->
+                                </tbody>
+                            </table>
                         </div>
                         
                         <hr />
@@ -72,48 +85,6 @@ if (!function_exists('formatBytes')) {
                             </div>
                         </div>
                         
-                        <!-- Files List -->
-                        <h5>Uploaded Files</h5>
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>File Name</th>
-                                    <th>Type</th>
-                                    <th>Size</th>
-                                    <th>Is Default</th>
-                                    <th>Active</th>
-                                    <th>Upload Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($media as $file): ?>
-                                    <?php 
-                                    $folder = $file['is_default'] ? 'default' : 'general';
-                                    $publicUrl = site_url('uploads/ella_presentations/' . $folder . '/' . $file['file_name']); 
-                                    ?>
-                                    <tr>
-                                        <td><?= $file['original_name']; ?></td>
-                                        <td><?= strtoupper(pathinfo($file['file_name'], PATHINFO_EXTENSION)); ?></td>
-                                        <td><?= formatBytes($file['file_size']); ?></td>
-                                        <td><?= $file['is_default'] ? 'Yes' : 'No'; ?></td>
-                                        <td><?= $file['active'] ? 'Yes' : 'No'; ?></td>
-                                        <td><?= date('M d, Y', strtotime($file['date_uploaded'])); ?></td>
-                                        <td>
-                                            <div class="text-right" style="white-space: nowrap;">
-                                                <button class="btn btn-info btn-xs" style="display: inline-block; margin-right: 5px;" onclick="previewFile(<?= $file['id']; ?>, '<?= addslashes($file['original_name']); ?>', '<?= strtolower(pathinfo($file['file_name'], PATHINFO_EXTENSION)); ?>', '<?= $publicUrl; ?>'); return false;" title="Preview">
-                                                    <i class="fa fa-eye"></i>
-                                                </button>
-                                                <button class="btn btn-danger btn-xs" style="display: inline-block;" onclick="deletePresentation(<?= $file['id']; ?>); return false;" title="Delete">
-                                                    <i class="fa fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                        
                     </div>
                 </div>
             </div>
@@ -148,7 +119,212 @@ if (!function_exists('formatBytes')) {
 
 <?php init_tail(); ?>
 
+<style>
+/* Fix checkbox alignment - center the checkmark icon */
+.table-ella_presentations .checkbox label::after {
+    padding-left: 3.5px !important;
+    padding-top: 2px !important;
+}
+
+/* Ensure checkbox column width matches appointments table */
+.table-ella_presentations thead th:first-child,
+.table-ella_presentations tbody td:first-child {
+    width: 30px;
+    text-align: left;
+}
+
+/* Center align table headers */
+.table-ella_presentations th {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table-ella_presentations td {
+    vertical-align: middle;
+}
+
+/* Bulk delete button styling in DataTable toolbar */
+#bulk-delete-presentations {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 5px !important;
+}
+
+#bulk-delete-presentations.hide {
+    display: none !important;
+}
+
+/* Ensure button appears in same line as other DataTable controls */
+.dataTables_length, .dt-buttons, #bulk-delete-presentations {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 10px;
+}
+
+/* Match hover of Delete All button with listing delete button */
+#bulk-delete-presentations.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#bulk-delete-presentations.btn-danger:hover,
+.table-ella_presentations .btn-danger:hover {
+    background-color: #bb2d3b;
+    border-color: #b02a37;
+    color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+</style>
+
 <script>
+var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
+var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
+
+$(document).ready(function() {
+    // Initialize DataTable for presentations
+    // Sort by column 7 (Upload Date) descending by default
+    // Columns: 0=checkbox, 1=ID, 2=File Name, 3=Type, 4=Size, 5=Is Default, 6=Active, 7=Upload Date, 8=Options
+    // Disable sorting on: column 0 (checkbox), column 8 (options)
+    initDataTable('.table-ella_presentations', admin_url + 'ella_contractors/presentations/table', undefined, [0, 8], {}, [7, 'desc']);
+    
+    // Function to add bulk delete button to DataTable toolbar
+    function addBulkDeleteButton() {
+        if ($('.table-ella_presentations').length && $('#bulk-delete-presentations').length === 0) {
+            // Find the DataTable wrapper
+            var $wrapper = $('.table-ella_presentations').closest('.dataTables_wrapper');
+            
+            if ($wrapper.length) {
+                // Try to find the buttons container first (if Export button exists)
+                var $buttonsContainer = $wrapper.find('.dt-buttons');
+                
+                if ($buttonsContainer.length) {
+                    // Add bulk delete button after export button
+                    $buttonsContainer.append('<button type="button" class="btn btn-danger btn-xs hide" id="bulk-delete-presentations">' +
+                                            '<i class="fa fa-trash"></i> Delete All (<span id="selected-count">0</span>)' +
+                                         '</button>');
+                } else {
+                    // Fallback: add to the left side with length dropdown
+                    var $lengthContainer = $wrapper.find('.dataTables_length');
+                    if ($lengthContainer.length) {
+                        $lengthContainer.after('<button type="button" class="btn btn-danger btn-xs hide" id="bulk-delete-presentations" style="margin-left: 10px;">' +
+                            '<i class="fa fa-trash"></i> Delete (<span id="selected-count">0</span>)' +
+                        '</button>');
+                    }
+                }
+            }
+        }
+    }
+    
+    // Add bulk delete button to DataTable toolbar after initialization
+    setTimeout(addBulkDeleteButton, 800);
+    
+    // Re-add button after table draws (if needed)
+    if ($('.table-ella_presentations').length) {
+        $('.table-ella_presentations').on('draw.dt', function() {
+            setTimeout(addBulkDeleteButton, 100);
+        });
+    }
+    
+    // ========================================
+    // BULK DELETE FUNCTIONALITY
+    // ========================================
+    
+    // Handle individual checkbox changes
+    $(document).on('change', '.table-ella_presentations tbody input[type="checkbox"]', function() {
+        updateBulkDeleteButton();
+    });
+    
+    // Handle select all checkbox
+    $(document).on('change', '#mass_select_all', function() {
+        var isChecked = $(this).prop('checked');
+        $('.table-ella_presentations tbody input[type="checkbox"]').prop('checked', isChecked);
+        updateBulkDeleteButton();
+    });
+    
+    // Update bulk delete button visibility and count
+    function updateBulkDeleteButton() {
+        var selectedCount = $('.table-ella_presentations tbody input[type="checkbox"]:checked').length;
+        $('#selected-count').text(selectedCount);
+        
+        if (selectedCount > 0) {
+            $('#bulk-delete-presentations').removeClass('hide');
+        } else {
+            $('#bulk-delete-presentations').addClass('hide');
+        }
+    }
+    
+    // Handle bulk delete button click
+    $(document).on('click', '#bulk-delete-presentations', function() {
+        var selectedIds = [];
+        $('.table-ella_presentations tbody input[type="checkbox"]:checked').each(function() {
+            var presentationId = $(this).val();
+            if (presentationId) {
+                selectedIds.push(presentationId);
+            }
+        });
+        
+        if (selectedIds.length === 0) {
+            alert_float('warning', 'No presentations selected');
+            return;
+        }
+        
+        // Confirm deletion
+        var confirmMessage = 'Are you sure you want to delete ' + selectedIds.length + ' presentation(s)? This action cannot be undone.';
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+        
+        // Save current sort order
+        var table = $('.table-ella_presentations').DataTable();
+        var currentOrder = table.order();
+        
+        // Show loading state
+        var $btn = $(this);
+        var originalHtml = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Deleting...');
+        
+        // Send AJAX request
+        $.ajax({
+            url: admin_url + 'ella_contractors/presentations/bulk_delete',
+            type: 'POST',
+            data: {
+                ids: selectedIds,
+                [csrf_token_name]: csrf_hash
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert_float('success', response.message);
+                    
+                    // Uncheck mass select all
+                    $('#mass_select_all').prop('checked', false);
+                    
+                    // Hide bulk delete button
+                    $('#bulk-delete-presentations').addClass('hide');
+                    
+                    // Reload table maintaining sort order
+                    table.ajax.reload(function() {
+                        table.order(currentOrder).draw(false);
+                    });
+                } else {
+                    alert_float('danger', response.message || 'Failed to delete presentations');
+                }
+            },
+            error: function(xhr, status, error) {
+                alert_float('danger', 'Error deleting presentations: ' + error);
+                console.error('Bulk delete error:', error);
+            },
+            complete: function() {
+                // Restore button state
+                $btn.prop('disabled', false).html(originalHtml);
+            }
+        });
+    });
+});
+
+// Preview file function
 function previewFile(fileId, fileName, fileExt, fileUrl) {
     // Set modal title
     $('#filePreviewModalLabel').text('Preview: ' + fileName);
@@ -225,6 +401,9 @@ function deletePresentation(presentationId) {
         return;
     }
     
+    var table = $('.table-ella_presentations').DataTable();
+    var currentOrder = table.order();
+    
     $.ajax({
         url: admin_url + 'ella_contractors/presentations/delete',
         type: 'POST',
@@ -236,7 +415,10 @@ function deletePresentation(presentationId) {
         success: function(response) {
             if (response.success) {
                 alert_float('success', 'Presentation deleted successfully');
-                location.reload(); // Reload page to refresh list
+                // Reload table maintaining sort order
+                table.ajax.reload(function() {
+                    table.order(currentOrder).draw(false);
+                });
             } else {
                 alert_float('danger', response.message || 'Failed to delete presentation');
             }
@@ -246,7 +428,4 @@ function deletePresentation(presentationId) {
         }
     });
 }
-
-var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
-var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
 </script>

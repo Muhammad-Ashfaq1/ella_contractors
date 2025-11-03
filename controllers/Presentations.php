@@ -16,8 +16,18 @@ class Presentations extends AdminController
             access_denied('ella_contractors');
         }
         $data['title'] = 'Presentations';
-        $data['media'] = $this->ella_media_model->get_presentations();
         $this->load->view('ella_contractors/presentations', $data);
+    }
+    
+    /**
+     * DataTable server-side processing
+     */
+    public function table() {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $this->app->get_table_data(module_views_path('ella_contractors', 'admin/tables/ella_presentations'));
     }
 
     /**
@@ -450,6 +460,85 @@ startxref
             echo json_encode([
                 'success' => false,
                 'message' => 'Failed to delete presentation'
+            ]);
+        }
+    }
+    
+    /**
+     * Bulk delete presentations via AJAX
+     */
+    public function bulk_delete() {
+        if (!has_permission('ella_contractors', '', 'delete')) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ]);
+            return;
+        }
+
+        $ids = $this->input->post('ids');
+        
+        if (empty($ids) || !is_array($ids)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'No presentations selected'
+            ]);
+            return;
+        }
+
+        $deleted_count = 0;
+        $failed_count = 0;
+        
+        foreach ($ids as $id) {
+            // Get presentation details before deleting
+            $presentation = $this->ella_media_model->get_file($id);
+            
+            if ($presentation && $presentation->rel_type === 'presentation') {
+                // Delete physical file
+                $folder = $presentation->is_default ? 'default' : 'general';
+                $file_path = FCPATH . 'uploads/ella_presentations/' . $folder . '/' . $presentation->file_name;
+                
+                if (file_exists($file_path)) {
+                    @unlink($file_path);
+                }
+                
+                // Delete from database
+                $this->db->where('id', $id);
+                $this->db->where('rel_type', 'presentation');
+                $deleted = $this->db->delete(db_prefix() . 'ella_contractor_media');
+                
+                if ($deleted) {
+                    // Also remove from appointment links
+                    $this->db->where('presentation_id', $id);
+                    $this->db->delete(db_prefix() . 'ella_appointment_presentations');
+                    $deleted_count++;
+                } else {
+                    $failed_count++;
+                }
+            } else {
+                $failed_count++;
+            }
+        }
+
+        $total = count($ids);
+        
+        if ($deleted_count > 0) {
+            $message = $deleted_count . ' presentation(s) deleted successfully';
+            if ($failed_count > 0) {
+                $message .= ' (' . $failed_count . ' failed)';
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'message' => $message,
+                'deleted_count' => $deleted_count,
+                'failed_count' => $failed_count,
+                'total' => $total
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to delete presentations'
             ]);
         }
     }
