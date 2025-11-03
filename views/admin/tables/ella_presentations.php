@@ -173,8 +173,23 @@ try {
         $outputActive .= '</div>';
         $row[] = $outputActive;
         
-        // Upload Date column
-        $date_formatted = date('M d, Y', strtotime($aRow['date_uploaded']));
+        // Upload Date column - formatted like appointments (date + time)
+        $date_formatted = '';
+        
+        if (!empty($aRow['date_uploaded'])) {
+            $date_obj = DateTime::createFromFormat('Y-m-d H:i:s', $aRow['date_uploaded']);
+            if ($date_obj) {
+                $date_formatted = $date_obj->format('F jS, Y');
+                
+                // Add time underneath
+                $time_formatted = strtolower($date_obj->format('g:ia'));
+                $date_formatted .= '<br><small class="">' . $time_formatted . '</small>';
+            } else {
+                // Fallback if parsing fails
+                $date_formatted = date('M d, Y', strtotime($aRow['date_uploaded']));
+            }
+        }
+        
         $row[] = '<div class="text-center">' . $date_formatted . '</div>';
         
         // Generate public URL and complete file path (for export only)
