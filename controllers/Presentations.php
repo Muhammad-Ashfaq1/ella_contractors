@@ -465,6 +465,122 @@ startxref
     }
     
     /**
+     * Update Is Default status via AJAX
+     */
+    public function update_is_default() {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ]);
+            return;
+        }
+        
+        $presentation_id = $this->input->post('presentation_id');
+        $is_default = $this->input->post('is_default');
+        
+        if (!$presentation_id || !isset($is_default)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Presentation ID and Is Default value are required'
+            ]);
+            return;
+        }
+        
+        // Validate presentation exists
+        $presentation = $this->ella_media_model->get_file($presentation_id);
+        if (!$presentation || $presentation->rel_type !== 'presentation') {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Presentation not found'
+            ]);
+            return;
+        }
+        
+        // If setting to default, unset all other defaults first
+        if ($is_default == 1) {
+            $this->db->where('rel_type', 'presentation');
+            $this->db->update(db_prefix() . 'ella_contractor_media', ['is_default' => 0]);
+        }
+        
+        // Update the presentation
+        $this->db->where('id', $presentation_id);
+        $this->db->where('rel_type', 'presentation');
+        $updated = $this->db->update(db_prefix() . 'ella_contractor_media', ['is_default' => $is_default]);
+        
+        if ($updated || $this->db->affected_rows() >= 0) {
+            // Log activity
+            $action = $is_default == 1 ? 'set as default' : 'removed from default';
+            log_activity('Presentation Is Default Updated [ID: ' . $presentation_id . ', Action: ' . $action . ']');
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Is Default status updated successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to update Is Default status'
+            ]);
+        }
+    }
+    
+    /**
+     * Update Active status via AJAX
+     */
+    public function update_active() {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ]);
+            return;
+        }
+        
+        $presentation_id = $this->input->post('presentation_id');
+        $active = $this->input->post('active');
+        
+        if (!$presentation_id || !isset($active)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Presentation ID and Active value are required'
+            ]);
+            return;
+        }
+        
+        // Validate presentation exists
+        $presentation = $this->ella_media_model->get_file($presentation_id);
+        if (!$presentation || $presentation->rel_type !== 'presentation') {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Presentation not found'
+            ]);
+            return;
+        }
+        
+        // Update the presentation
+        $this->db->where('id', $presentation_id);
+        $this->db->where('rel_type', 'presentation');
+        $updated = $this->db->update(db_prefix() . 'ella_contractor_media', ['active' => $active]);
+        
+        if ($updated || $this->db->affected_rows() >= 0) {
+            // Log activity
+            $action = $active == 1 ? 'activated' : 'deactivated';
+            log_activity('Presentation Active Status Updated [ID: ' . $presentation_id . ', Action: ' . $action . ']');
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Active status updated successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to update Active status'
+            ]);
+        }
+    }
+    
+    /**
      * Bulk delete presentations via AJAX
      */
     public function bulk_delete() {
