@@ -194,8 +194,13 @@ try {
         
         // Generate public URL and complete file path (for export only)
         $folder = $aRow['is_default'] ? 'default' : 'general';
+        
+        // CRITICAL: Microsoft Office Online Viewer REQUIRES HTTPS URLs
+        // Force HTTPS for external viewer compatibility
         $publicUrl = site_url('uploads/ella_presentations/' . $folder . '/' . $aRow['internal_file_name']);
-        $completeFilePath = site_url('uploads/ella_presentations/' . $folder . '/' . $aRow['internal_file_name']);
+        $publicUrl = str_replace('http://', 'https://', $publicUrl);
+        
+        $completeFilePath = $publicUrl;
         
         // File Path column (hidden from display via DataTables, but visible in export)
         // Contains full URL path for export purposes
