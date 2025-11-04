@@ -46,8 +46,16 @@ class Presentations extends AdminController
         $active = $this->input->post('active') ? 1 : 0;
         $description = $this->input->post('description');
 
-        // Check if file was uploaded
-        if (!isset($_FILES['file']) || $_FILES['file']['error'] == UPLOAD_ERR_NO_FILE) {
+        // Handle multiple file uploads - check for presentation_files[] array or fallback to single file
+        $files_key = null;
+        if (isset($_FILES['presentation_files']) && !empty($_FILES['presentation_files']['name'])) {
+            $files_key = 'presentation_files';
+        } elseif (isset($_FILES['file']) && !empty($_FILES['file']['name'])) {
+            // Fallback to old single file upload for backward compatibility
+            $files_key = 'file';
+        }
+        
+        if (!$files_key) {
             echo json_encode([
                 'success' => false,
                 'message' => 'No file selected for upload'
@@ -55,50 +63,98 @@ class Presentations extends AdminController
             return;
         }
 
-        // Check file size
+        // Convert single file to array format for uniform processing
+        if (!is_array($_FILES[$files_key]['name'])) {
+            $_FILES[$files_key]['name'] = [$_FILES[$files_key]['name']];
+            $_FILES[$files_key]['type'] = [$_FILES[$files_key]['type']];
+            $_FILES[$files_key]['tmp_name'] = [$_FILES[$files_key]['tmp_name']];
+            $_FILES[$files_key]['error'] = [$_FILES[$files_key]['error']];
+            $_FILES[$files_key]['size'] = [$_FILES[$files_key]['size']];
+        }
+
+        $uploaded_files = [];
+        $errors = [];
         $max_size = 50 * 1024 * 1024; // 50MB
-        if ($_FILES['file']['size'] > $max_size) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'File size exceeds maximum allowed size of 50MB'
-            ]);
-            return;
-        }
-
-        // Check file type
-        $extension = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
         $allowed_extensions = ['pdf', 'ppt', 'pptx', 'html'];
-        
-        if (!in_array($extension, $allowed_extensions)) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Invalid file type. Only PDF, PPT, PPTX, and HTML files are allowed.'
-            ]);
-            return;
-        }
 
-        // Upload as presentation with rel_type = 'presentation'
-        $uploaded = handle_ella_media_upload($is_default, $active, 'file', 'presentation', null);
+        // Process each file
+        for ($i = 0; $i < count($_FILES[$files_key]['name']); $i++) {
+            // Skip if no file or error uploading
+            if (empty($_FILES[$files_key]['tmp_name'][$i]) || $_FILES[$files_key]['error'][$i] !== UPLOAD_ERR_OK) {
+                $errors[] = 'Upload error for: ' . ($_FILES[$files_key]['name'][$i] ?? 'unknown');
+                continue;
+            }
 
-        if ($uploaded && !empty($uploaded)) {
-            // Update description if needed
-            foreach ($uploaded as $id) {
-                $this->db->where('id', $id);
-                $this->db->update(db_prefix() . 'ella_contractor_media', ['description' => $description]);
+            $file_name = $_FILES[$files_key]['name'][$i];
+            $file_size = $_FILES[$files_key]['size'][$i];
+            
+            // Check file size
+            if ($file_size > $max_size) {
+                $errors[] = 'File "' . $file_name . '" exceeds maximum size of 50MB';
+                continue;
+            }
+
+            // Check file type
+            $extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+            if (!in_array($extension, $allowed_extensions)) {
+                $errors[] = 'Invalid file type for "' . $file_name . '". Only PDF, PPT, PPTX, and HTML allowed.';
+                continue;
+            }
+
+            // Create temporary $_FILES array for single file processing
+            $_FILES['temp_file'] = [
+                'name' => $_FILES[$files_key]['name'][$i],
+                'type' => $_FILES[$files_key]['type'][$i],
+                'tmp_name' => $_FILES[$files_key]['tmp_name'][$i],
+                'error' => $_FILES[$files_key]['error'][$i],
+                'size' => $_FILES[$files_key]['size'][$i]
+            ];
+
+            // Upload as presentation with rel_type = 'presentation'
+            $uploaded = handle_ella_media_upload($is_default, $active, 'temp_file', 'presentation', null);
+
+            if ($uploaded && !empty($uploaded)) {
+                foreach ($uploaded as $id) {
+                    // Update description if provided
+                    if (!empty($description)) {
+                        $this->db->where('id', $id);
+                        $this->db->update(db_prefix() . 'ella_contractor_media', ['description' => $description]);
+                    }
+                    
+                    $uploaded_files[] = [
+                        'id' => $id,
+                        'name' => $file_name
+                    ];
+                    
+                    // Log activity
+                    log_activity('Presentation Uploaded [ID: ' . $id . ', File: ' . $file_name . ']');
+                }
+            } else {
+                $errors[] = 'Failed to upload "' . $file_name . '"';
             }
             
-            // Log activity
-            log_activity('Presentation Uploaded [ID: ' . $id . ', File: ' . $_FILES['file']['name'] . ']');
+            // Clean up temp file entry
+            unset($_FILES['temp_file']);
+        }
+
+        // Return response
+        if (count($uploaded_files) > 0) {
+            $message = 'Presentations uploaded successfully';
+            if (count($errors) > 0) {
+                $message .= ' (some files failed)';
+            }
             
             echo json_encode([
                 'success' => true,
-                'message' => 'Presentation uploaded successfully',
-                'presentation_id' => $id
+                'message' => $message,
+                'uploaded' => $uploaded_files,
+                'errors' => $errors
             ]);
         } else {
             echo json_encode([
                 'success' => false,
-                'message' => 'Failed to upload presentation. Please check the file format and try again.'
+                'message' => 'Failed to upload presentations. ' . (count($errors) > 0 ? implode(', ', $errors) : 'Unknown error'),
+                'errors' => $errors
             ]);
         }
     }

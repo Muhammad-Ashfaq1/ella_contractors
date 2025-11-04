@@ -50,37 +50,63 @@
                         
                         <!-- Upload Modal -->
                         <div id="uploadPresentationModal" class="modal fade">
-                            <div class="modal-dialog">
+                            <div class="modal-dialog modal-lg">
                                 <div class="modal-content">
                                     <form id="uploadPresentationForm" enctype="multipart/form-data">
                                         <div class="modal-header">
                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                                 <span aria-hidden="true">&times;</span>
                                             </button>
-                                            <h4 class="modal-title">Upload Presentation</h4>
+                                            <h4 class="modal-title">
+                                                <i class="fa fa-upload"></i> Upload Presentations
+                                            </h4>
                                         </div>
                                         <div class="modal-body">
-                                            <div class="form-group">
-                                                <label for="file">File (HTML/PDF/PPT/PPTX)</label>
-                                                <input type="file" name="file" id="presentation_file" class="form-control" accept=".html,.pdf,.ppt,.pptx" required>
-                                                <small class="text-muted">Supported formats: HTML, PDF, PPT, PPTX (Max size: 50MB)</small>
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <p class="text-muted">
+                                                        Drop files here or click to select<br>
+                                                        <small>Allowed file types: PDF, PPT, PPTX, HTML (Max size: 50MB per file)</small>
+                                                    </p>
+                                                    
+                                                    <!-- Custom Dropzone (same as attachment modal) -->
+                                                    <div class="drop-zone" id="presentationDropzone">
+                                                        <span class="drop-zone__prompt">Drop Files Here or Click to Select</span>
+                                                        <input type="file" name="presentation_files[]" class="drop-zone__input" 
+                                                               id="presentation_files" multiple 
+                                                               accept=".html,.pdf,.ppt,.pptx">
+                                                        <div class="drop-zone__thumbnails" id="presentationThumbnails"></div>
+                                                    </div>
+                                                    
+                                                    <!-- Hidden field to track selected files (for validation) -->
+                                                    <input type="hidden" id="presentation_files_count" value="0">
+                                                </div>
                                             </div>
-                                            <div class="form-group">
-                                                <label for="description">Description</label>
-                                                <textarea name="description" id="presentation_description" class="form-control" rows="3"></textarea>
-                                            </div>
-                                            <div class="checkbox checkbox-primary">
-                                                <input type="checkbox" name="is_default" id="is_default" value="1">
-                                                <label for="is_default">Is Default Presentation</label>
-                                            </div>
-                                            <div class="checkbox checkbox-primary">
-                                                <input type="checkbox" name="active" id="active" value="1" checked>
-                                                <label for="active">Active</label>
+                                            
+                                            <hr>
+                                            
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group">
+                                                        <label for="description">Description (Optional)</label>
+                                                        <textarea name="description" id="presentation_description" class="form-control" rows="3" placeholder="Enter description for uploaded presentations..."></textarea>
+                                                    </div>
+                                                    <div class="checkbox checkbox-primary">
+                                                        <input type="checkbox" name="is_default" id="is_default" value="1">
+                                                        <label for="is_default">Set as Default Presentation</label>
+                                                    </div>
+                                                    <div class="checkbox checkbox-primary">
+                                                        <input type="checkbox" name="active" id="active" value="1" checked>
+                                                        <label for="active">Active</label>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                                            <button type="submit" class="btn btn-primary" id="uploadPresentationBtn">Upload</button>
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                            <button type="button" class="btn btn-default" id="uploadPresentationBtn" disabled>
+                                                <i class="fa fa-upload"></i> Upload Files
+                                            </button>
                                         </div>
                                     </form>
                                 </div>
@@ -241,6 +267,106 @@
     .table-export-exclude {
         display: none !important;
     }
+}
+
+/* Dropzone styles - match attachment modal */
+#presentationDropzone.drop-zone {
+    max-width: 100%;
+    min-height: 150px;
+    height: auto;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+    color: #666;
+    border: 2px dashed #009578;
+    border-radius: 10px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+#presentationDropzone.drop-zone:hover {
+    border-color: #007a5c;
+    background-color: #f8f9fa;
+}
+
+#presentationDropzone.drop-zone--over {
+    border-style: solid;
+    background-color: #e8f5e9;
+}
+
+#presentationDropzone .drop-zone__input {
+    display: none !important;
+}
+
+#presentationDropzone .drop-zone__thumb {
+    width: 150px;
+    height: 150px;
+    margin: 5px;
+    background-color: #fff;
+    background-size: cover;
+    position: relative;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+#presentationDropzone .drop-zone__thumbnails {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+    width: 100%;
+    justify-content: center;
+}
+
+#presentationDropzone .drop-zone__prompt {
+    display: block;
+    width: 100%;
+    text-align: center;
+    color: #666;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+#presentationDropzone .removeimage {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: red;
+    color: #fff;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    z-index: 99999;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    font-size: 18px;
+    line-height: 22px;
+}
+
+#presentationDropzone .removeimage:hover {
+    background: darkred;
+}
+
+#presentationDropzone .drop-zone__thumb .file-name-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 5px;
+    background: rgba(0,0,0,0.75);
+    color: white;
+    font-size: 12px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 </style>
 
@@ -410,47 +536,220 @@ $(document).ready(function() {
     });
     
     // ========================================
-    // UPLOAD PRESENTATION FORM (AJAX)
+    // CUSTOM DROPZONE FOR PRESENTATION UPLOADS (BATCH UPLOAD)
     // ========================================
     
-    // Handle presentation upload form submission via AJAX
-    $('#uploadPresentationForm').on('submit', function(e) {
-        e.preventDefault();
+    var presentationFiles = []; // Store files in memory
+    var MAX_PRESENTATION_FILES = 10;
+    
+    // Initialize dropzone when modal is opened
+    $('#uploadPresentationModal').on('shown.bs.modal', function() {
+        initializePresentationDropzone();
+    });
+    
+    function initializePresentationDropzone() {
+        const dropZoneElement = document.querySelector("#presentationDropzone");
+        const inputElement = document.querySelector("#presentation_files");
+        const thumbnailsContainer = document.querySelector("#presentationThumbnails");
+        const promptElement = document.querySelector("#presentationDropzone .drop-zone__prompt");
+        const uploadBtn = document.querySelector("#uploadPresentationBtn");
         
-        // Client-side validation
-        if (!$('#presentation_file')[0].files.length) {
-            alert_float('danger', 'Please select a file to upload');
+        if (!dropZoneElement || !inputElement) {
+            console.warn('Presentation dropzone elements not found');
             return;
         }
         
-        // Check file size (50MB max)
-        var file = $('#presentation_file')[0].files[0];
-        var maxSize = 50 * 1024 * 1024; // 50MB
-        if (file.size > maxSize) {
-            alert_float('danger', 'File size exceeds maximum allowed size of 50MB');
+        // Reset files array on initialization
+        presentationFiles = [];
+        
+        // Click to browse
+        dropZoneElement.addEventListener("click", function(e) {
+            if (e.target === inputElement || e.target.closest('.removeimage')) {
+                return;
+            }
+            inputElement.click();
+        });
+        
+        // File selection via input
+        inputElement.addEventListener("change", function(e) {
+            if (inputElement.files.length > 0) {
+                handlePresentationFiles(inputElement.files);
+            }
+        });
+        
+        // Drag & Drop events
+        dropZoneElement.addEventListener("dragover", function(e) {
+            e.preventDefault();
+            dropZoneElement.classList.add("drop-zone--over");
+        });
+        
+        ["dragleave", "dragend"].forEach(function(type) {
+            dropZoneElement.addEventListener(type, function(e) {
+                dropZoneElement.classList.remove("drop-zone--over");
+            });
+        });
+        
+        dropZoneElement.addEventListener("drop", function(e) {
+            e.preventDefault();
+            dropZoneElement.classList.remove("drop-zone--over");
+            
+            if (e.dataTransfer.files.length > 0) {
+                handlePresentationFiles(e.dataTransfer.files);
+            }
+        });
+        
+        // Handle files (add to array and show preview)
+        function handlePresentationFiles(files) {
+            const remainingSlots = MAX_PRESENTATION_FILES - presentationFiles.length;
+            
+            if (files.length > remainingSlots) {
+                alert_float('warning', 'You can only upload ' + MAX_PRESENTATION_FILES + ' files at once. ' + remainingSlots + ' slots remaining.');
+                return;
+            }
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // Validate file type
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                const allowedExts = ['pdf', 'ppt', 'pptx', 'html'];
+                if (allowedExts.indexOf(fileExt) === -1) {
+                    alert_float('danger', 'File "' + file.name + '" is invalid. Only PDF, PPT, PPTX, and HTML files are allowed.');
+                    continue;
+                }
+                
+                // Validate file size (50MB)
+                if (file.size > 50 * 1024 * 1024) {
+                    alert_float('danger', 'File "' + file.name + '" is too large. Maximum size is 50MB.');
+                    continue;
+                }
+                
+                // Add to array
+                presentationFiles.push(file);
+                
+                // Create thumbnail
+                createPresentationThumbnail(file, presentationFiles.length - 1);
+            }
+            
+            updatePresentationDropzoneUI();
+        }
+        
+        // Create thumbnail preview
+        function createPresentationThumbnail(file, index) {
+            const thumbnailElement = document.createElement("div");
+            thumbnailElement.classList.add("drop-zone__thumb");
+            thumbnailElement.dataset.index = index;
+            
+            // Show file icon (presentations are never images)
+            const iconData = getFileIconWithColor(file.name);
+            thumbnailElement.innerHTML = '<div style="text-align: center; padding: 20px;">' +
+                '<i class="' + iconData.icon + '" style="font-size: 48px; color: ' + iconData.color + ';"></i>' +
+                '</div>';
+            
+            // File name label
+            const fileNameDiv = document.createElement("div");
+            fileNameDiv.textContent = file.name;
+            fileNameDiv.className = "file-name-label";
+            thumbnailElement.appendChild(fileNameDiv);
+            
+            // Remove button
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.classList.add("removeimage");
+            removeBtn.innerHTML = "×";
+            removeBtn.onclick = function(e) {
+                e.stopPropagation();
+                removePresentationFile(index);
+            };
+            thumbnailElement.appendChild(removeBtn);
+            
+            thumbnailsContainer.appendChild(thumbnailElement);
+        }
+        
+        // Remove file from array
+        function removePresentationFile(index) {
+            presentationFiles.splice(index, 1);
+            
+            // Clear and rebuild thumbnails
+            thumbnailsContainer.innerHTML = '';
+            presentationFiles.forEach(function(file, idx) {
+                createPresentationThumbnail(file, idx);
+            });
+            
+            updatePresentationDropzoneUI();
+        }
+        
+        // Update UI based on file count
+        function updatePresentationDropzoneUI() {
+            const fileCount = presentationFiles.length;
+            
+            // Enable/disable upload button
+            if (fileCount > 0) {
+                uploadBtn.disabled = false;
+                uploadBtn.classList.remove('btn-default');
+                uploadBtn.classList.add('btn-info');
+                promptElement.style.display = 'none';
+            } else {
+                uploadBtn.disabled = true;
+                uploadBtn.classList.add('btn-default');
+                uploadBtn.classList.remove('btn-info');
+                promptElement.style.display = 'block';
+            }
+            
+            // Update hidden count field
+            document.querySelector("#presentation_files_count").value = fileCount;
+        }
+        
+        // Get icon and color based on file extension
+        function getFileIconWithColor(fileName) {
+            const ext = fileName.split('.').pop().toLowerCase();
+            
+            if (ext === 'pdf') {
+                return { icon: 'fa fa-file-pdf-o', color: '#dc3545' };
+            }
+            if (ext === 'ppt' || ext === 'pptx') {
+                return { icon: 'fa fa-file-powerpoint-o', color: '#d24726' };
+            }
+            if (ext === 'html') {
+                return { icon: 'fa fa-file-code-o', color: '#e67e22' };
+            }
+            return { icon: 'fa fa-file-o', color: '#666' };
+        }
+    }
+    
+    // Upload button click handler
+    $(document).on('click', '#uploadPresentationBtn', function() {
+        if (presentationFiles.length === 0) {
+            alert_float('warning', 'Please select files to upload');
             return;
         }
         
-        // Check file extension
-        var fileName = file.name;
-        var fileExt = fileName.split('.').pop().toLowerCase();
-        var allowedExts = ['pdf', 'ppt', 'pptx', 'html'];
-        if (allowedExts.indexOf(fileExt) === -1) {
-            alert_float('danger', 'Invalid file type. Only PDF, PPT, PPTX, and HTML files are allowed.');
-            return;
-        }
+        // Show progress
+        const $btn = $(this);
+        const originalText = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Uploading...');
         
-        // Show loader and disable button
-        var $uploadBtn = $('#uploadPresentationBtn');
-        var originalBtnText = $uploadBtn.text();
-        $uploadBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Uploading...');
+        // Create FormData and append all files
+        const formData = new FormData();
         
-        // Get form data using FormData to handle file uploads
-        var formData = new FormData(this);
+        // Debug: Log files being uploaded
+        console.log('Uploading ' + presentationFiles.length + ' file(s):', presentationFiles.map(f => f.name));
+        
+        // Append each file
+        presentationFiles.forEach(function(file, index) {
+            formData.append('presentation_files[]', file);
+            console.log('Appended presentation_files[' + index + ']:', file.name, '(' + file.size + ' bytes)');
+        });
+        
+        // Add form fields
+        formData.append('description', $('#presentation_description').val());
+        formData.append('is_default', $('#is_default').is(':checked') ? '1' : '0');
+        formData.append('active', $('#active').is(':checked') ? '1' : '0');
         
         // Add CSRF token
         formData.append(csrf_token_name, csrf_hash);
         
+        // AJAX upload
         $.ajax({
             url: admin_url + 'ella_contractors/presentations/upload',
             type: 'POST',
@@ -462,38 +761,73 @@ $(document).ready(function() {
                 if (response.success) {
                     alert_float('success', response.message);
                     
+                    // Clear files array and thumbnails
+                    presentationFiles = [];
+                    const thumbnailsContainer = document.querySelector("#presentationThumbnails");
+                    if (thumbnailsContainer) {
+                        thumbnailsContainer.innerHTML = '';
+                    }
+                    const promptElement = document.querySelector("#presentationDropzone .drop-zone__prompt");
+                    if (promptElement) {
+                        promptElement.style.display = 'block';
+                    }
+                    
+                    // Reset button
+                    $btn.removeClass('btn-info').addClass('btn-default');
+                    $btn.prop('disabled', true).html(originalText);
+                    
+                    // Reset form fields
+                    $('#presentation_description').val('');
+                    $('#is_default').prop('checked', false);
+                    $('#active').prop('checked', true);
+                    
                     // Close modal
                     $('#uploadPresentationModal').modal('hide');
-                    
-                    // Reset form
-                    $('#uploadPresentationForm')[0].reset();
                     
                     // Reload table maintaining sort order
                     var table = $('.table-ella_presentations').DataTable();
                     var currentOrder = table.order();
                     table.ajax.reload(function() {
                         table.order(currentOrder).draw(false);
-                        // Re-hide File Path column after reload
                         setTimeout(hideFilePathColumn, 100);
                     });
                 } else {
-                    alert_float('danger', response.message);
+                    alert_float('danger', response.message || 'Upload failed');
+                    $btn.prop('disabled', false).html(originalText);
                 }
             },
             error: function(xhr, status, error) {
-                alert_float('danger', 'Error uploading presentation: ' + error);
-                console.error('Upload error:', error);
-            },
-            complete: function() {
-                // Hide loader and re-enable button
-                $uploadBtn.prop('disabled', false).text(originalBtnText);
+                alert_float('danger', 'Error uploading files: ' + error);
+                console.error('Upload error:', xhr.responseText);
+                $btn.prop('disabled', false).html(originalText);
             }
         });
     });
     
-    // Reset form when modal is closed
-    $('#uploadPresentationModal').on('hidden.bs.modal', function () {
+    // Reset dropzone when modal is closed
+    $('#uploadPresentationModal').on('hidden.bs.modal', function() {
+        presentationFiles = [];
+        const thumbnailsContainer = document.querySelector("#presentationThumbnails");
+        if (thumbnailsContainer) {
+            thumbnailsContainer.innerHTML = '';
+        }
+        const promptElement = document.querySelector("#presentationDropzone .drop-zone__prompt");
+        if (promptElement) {
+            promptElement.style.display = 'block';
+        }
+        const uploadBtn = document.querySelector("#uploadPresentationBtn");
+        if (uploadBtn) {
+            uploadBtn.disabled = true;
+            uploadBtn.classList.remove('btn-info');
+            uploadBtn.classList.add('btn-default');
+            uploadBtn.innerHTML = '<i class="fa fa-upload"></i> Upload Files';
+        }
+        
+        // Reset form fields
         $('#uploadPresentationForm')[0].reset();
+        $('#presentation_description').val('');
+        $('#is_default').prop('checked', false);
+        $('#active').prop('checked', true);
     });
     
     // ========================================
