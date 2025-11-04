@@ -438,7 +438,7 @@ html {
                                     
                                     <p class="text-muted" style="margin-top: 10px; margin-bottom: 0; font-size: 12px;">
                                         <a href="<?php echo admin_url('emails/email_template/' . $reminder_template_id); ?>" target="_blank" style="color: #7f8c8d;">
-                                            <i class="fa fa-edit"></i> Edit Reminder Templates
+                                            <i class="fa fa-edit"></i> Edit Reminder Template
                                         </a>
                                     </p>
                                 </div>
@@ -937,59 +937,17 @@ $(document).ready(function() {
     });
 });
 
-// Load Attached Presentations
-function loadAttachedPresentations() {
+// Load Attached Presentations (local wrapper for view page - calls centralized function)
+function loadAttachedPresentationsLocal() {
     var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
     
-    $.ajax({
-        url: admin_url + 'ella_contractors/appointments/get_attached_presentations',
-        type: 'GET',
-        data: {
-            appointment_id: appointmentId,
-            [csrf_token_name]: csrf_hash
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                renderAttachedPresentations(response.data);
-            } else {
-                $('#attached-presentations-container').html('<p class="text-muted">No presentations attached</p>');
-            }
-        },
-        error: function(xhr, status, error) {
-            $('#attached-presentations-container').html('<p class="text-danger">Error loading presentations</p>');
-        }
-    });
-}
-
-function renderAttachedPresentations(presentations) {
-    var html = '';
-    
-    if (presentations && presentations.length > 0) {
-        html = '<ul class="list-unstyled">';
-        presentations.forEach(function(presentation) {
-            // Generate public URL (like leads pattern - direct file access)
-            var folder = presentation.is_default == 1 ? 'default' : 'general';
-            var publicUrl = '<?php echo site_url("uploads/ella_presentations/"); ?>' + folder + '/' + presentation.file_name;
-            
-            html += '<li style="margin-bottom: 8px;">';
-            html += '<i class="fa fa-file-powerpoint-o" style="color: #e67e22;"></i> ';
-            html += '<a href="' + publicUrl + '" target="_blank" title="Public URL - Share with customer">';
-            html += presentation.original_name || presentation.file_name;
-            html += '</a>';
-            html += ' <button class="btn btn-xs btn-danger" onclick="detachPresentation(' + presentation.id + ')" title="Remove">';
-            html += '<i class="fa fa-times"></i></button>';
-            html += '</li>';
-        });
-        html += '</ul>';
-    } else {
-        html = '<p class="text-muted">No presentations attached</p>';
+    // Use centralized function if available
+    if (typeof window.loadAttachedPresentations === 'function') {
+        window.loadAttachedPresentations(appointmentId, 'attached-presentations-container');
     }
-    
-    $('#attached-presentations-container').html(html);
 }
 
-// Open Attach Presentation Modal
+// Open Attach Presentation Modal (using centralized functions)
 function openAttachPresentationModal() {
     // Create modal dynamically
     var modalHtml = `
@@ -1003,14 +961,14 @@ function openAttachPresentationModal() {
                 <div class="modal-body">
                     <div class="form-group">
                         <label>Select Presentation</label>
-                        <select class="form-control selectpicker" id="presentation_select" data-live-search="true">
+                        <select class="form-control selectpicker" id="attach_modal_presentation_select" data-live-search="true">
                             <option value="">Loading presentations...</option>
                         </select>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="attachPresentation()">Attach</button>
+                    <button type="button" class="btn btn-primary" onclick="attachPresentationFromView()">Attach</button>
                 </div>
             </div>
         </div>
@@ -1022,74 +980,33 @@ function openAttachPresentationModal() {
     // Append to body
     $('body').append(modalHtml);
     
-    // Load available presentations
-    $.ajax({
-        url: admin_url + 'ella_contractors/presentations/get_all',
-        type: 'GET',
-        data: {
-            [csrf_token_name]: csrf_hash
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success && response.data && response.data.length > 0) {
-                var options = '<option value="">-- Select Presentation --</option>';
-                response.data.forEach(function(presentation) {
-                    options += '<option value="' + presentation.id + '">';
-                    options += presentation.original_name || presentation.file_name;
-                    options += '</option>';
-                });
-                $('#presentation_select').html(options);
-                $('#presentation_select').selectpicker('refresh');
-            } else {
-                $('#presentation_select').html('<option value="">No presentations available</option>');
-                $('#presentation_select').selectpicker('refresh');
-            }
-        },
-        error: function() {
-            $('#presentation_select').html('<option value="">Error loading presentations</option>');
-            $('#presentation_select').selectpicker('refresh');
-        }
-    });
-    
-    // Show modal
-    $('#attachPresentationModal').modal('show');
-}
-
-// Attach Presentation to Appointment
-function attachPresentation() {
-    var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
-    var presentationId = $('#presentation_select').val();
-    
-    if (!presentationId) {
-        alert_float('warning', 'Please select a presentation');
-        return;
+    // Load available presentations using centralized function
+    if (typeof loadPresentationsForDropdown === 'function') {
+        loadPresentationsForDropdown('attach_modal_presentation_select', function() {
+            $('#attachPresentationModal').modal('show');
+        });
+    } else {
+        // Fallback if centralized function not available
+        $('#attachPresentationModal').modal('show');
     }
-    
-    $.ajax({
-        url: admin_url + 'ella_contractors/appointments/attach_presentation',
-        type: 'POST',
-        data: {
-            appointment_id: appointmentId,
-            presentation_id: presentationId,
-            [csrf_token_name]: csrf_hash
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                alert_float('success', 'Presentation attached successfully');
-                $('#attachPresentationModal').modal('hide');
-                loadAttachedPresentations(); // Reload list
-            } else {
-                alert_float('danger', response.message || 'Failed to attach presentation');
-            }
-        },
-        error: function(xhr, status, error) {
-            alert_float('danger', 'Error attaching presentation: ' + error);
-        }
-    });
 }
 
-// Detach Presentation from Appointment
+// Attach Presentation to Appointment (wrapper for view page)
+function attachPresentationFromView() {
+    var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
+    var presentationId = $('#attach_modal_presentation_select').val();
+    
+    if (typeof attachPresentationToAppointment === 'function') {
+        attachPresentationToAppointment(appointmentId, presentationId, function(response) {
+            if (response.success) {
+                $('#attachPresentationModal').modal('hide');
+                loadAttachedPresentationsLocal(); // Reload list
+            }
+        });
+    }
+}
+
+// Detach Presentation from Appointment (wrapper for view page)
 function detachPresentation(presentationId) {
     if (!confirm('Are you sure you want to remove this presentation?')) {
         return;
@@ -1097,32 +1014,20 @@ function detachPresentation(presentationId) {
     
     var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
     
-    $.ajax({
-        url: admin_url + 'ella_contractors/appointments/detach_presentation',
-        type: 'POST',
-        data: {
-            appointment_id: appointmentId,
-            presentation_id: presentationId,
-            [csrf_token_name]: csrf_hash
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                alert_float('success', 'Presentation removed successfully');
-                loadAttachedPresentations(); // Reload list
-            } else {
-                alert_float('danger', response.message || 'Failed to remove presentation');
-            }
-        },
-        error: function(xhr, status, error) {
-            alert_float('danger', 'Error removing presentation: ' + error);
-        }
-    });
+    // Use centralized function if available
+    if (typeof window.detachPresentationFromAppointment === 'function') {
+        window.detachPresentationFromAppointment(presentationId, appointmentId, 'attached-presentations-container');
+    }
 }
 
-// Load presentations on page load
+// Load presentations on page load (using centralized function)
 $(document).ready(function() {
-    loadAttachedPresentations();
+    var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
+    if (typeof window.loadAttachedPresentations === 'function') {
+        window.loadAttachedPresentations(appointmentId, 'attached-presentations-container');
+    } else {
+        loadAttachedPresentationsLocal();
+    }
 });
 
 // Delete appointment function for view page
@@ -1232,6 +1137,18 @@ function resetAppointmentModal() {
     
     // Clear uploaded files using shared function
     clearAppointmentDropzone();
+    
+    // Clear presentation selections
+    if (typeof $('#presentation_select').selectpicker !== 'undefined') {
+        $('#presentation_select').selectpicker('deselectAll');
+    }
+    
+    // Clear presentation preview using centralized function
+    if (typeof clearPresentationSelectionPreview === 'function') {
+        clearPresentationSelectionPreview();
+    } else {
+        $('#modal-presentation-list').html('');
+    }
     
     // Reset reminder checkboxes to default (checked)
     $('#send_reminder').prop('checked', true);
@@ -1521,6 +1438,44 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 // Reload staff and set attendees using centralized function
                 reloadStaffAndSetAttendees(data.attendees);
                 
+                // Load presentations and attached presentations
+                if (typeof loadPresentationsForDropdown === 'function') {
+                    loadPresentationsForDropdown('presentation_select', function() {
+                        // After presentations dropdown is loaded, initialize preview
+                        if (typeof initPresentationSelectionPreview === 'function') {
+                            initPresentationSelectionPreview('presentation_select', 'modal-presentation-list');
+                        }
+                        
+                        // Load already attached presentations for this appointment
+                        if (typeof loadAttachedPresentations === 'function') {
+                            loadAttachedPresentations(appointmentId, null, function(response) {
+                                if (response.success && response.data && response.data.length > 0) {
+                                    // Update the global array with actual presentation details
+                                    if (typeof selectedPresentationsInModal !== 'undefined') {
+                                        selectedPresentationsInModal = response.data.map(function(p) {
+                                            return {
+                                                id: p.id.toString(),
+                                                name: p.original_name || p.file_name,
+                                                file_name: p.file_name,
+                                                is_default: p.is_default
+                                            };
+                                        });
+                                    }
+                                    
+                                    // Pre-select in dropdown
+                                    var selectedIds = response.data.map(function(p) { return p.id.toString(); });
+                                    $('#presentation_select').selectpicker('val', selectedIds);
+                                    
+                                    // Render preview
+                                    if (typeof renderPresentationSelectionPreview === 'function') {
+                                        renderPresentationSelectionPreview('modal-presentation-list');
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+                
                 // Update modal title and button text for editing
                 $('#appointmentModalLabel').text('Edit Appointment');
                 $('#saveAppointment').text('Save Appointment');
@@ -1708,6 +1663,9 @@ $(function () {
 
 <!-- Include shared appointment dropzone functionality -->
 <script src="<?php echo module_dir_url('ella_contractors', 'assets/js/appointment-dropzone.js'); ?>"></script>
+
+<!-- Include centralized appointment presentations functionality -->
+<script src="<?php echo module_dir_url('ella_contractors', 'assets/js/appointment-presentations.js'); ?>"></script>
 
 <?php $this->load->view('appointments/notes/notes_js'); ?>
 <?php $this->load->view('appointments/attachments_js.php'); ?>

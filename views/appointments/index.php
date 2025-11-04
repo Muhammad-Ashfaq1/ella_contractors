@@ -872,6 +872,19 @@ function resetAppointmentModal() {
     // Clear uploaded files using shared function
     clearAppointmentDropzone();
     
+    // Clear presentation selections
+    if (typeof $('#presentation_select').selectpicker !== 'undefined') {
+        $('#presentation_select').selectpicker('deselectAll');
+    }
+    $('#selected_presentation_ids').val('');
+    
+    // Clear presentation preview using centralized function
+    if (typeof clearPresentationSelectionPreview === 'function') {
+        clearPresentationSelectionPreview();
+    } else {
+        $('#modal-presentation-list').html('');
+    }
+    
     // Reset reminder checkboxes to default (checked)
     $('#send_reminder').prop('checked', true);
     $('#reminder_48h').prop('checked', true);
@@ -983,16 +996,49 @@ $('#saveAppointment').on('click', function() {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
-                alert_float('success', response.message);
-                $('#appointmentModal').modal('hide');
-                resetAppointmentModal();
+                var appointmentId = response.appointment_id || $('#appointment_id').val();
                 
-                // Reload table maintaining sort order
-                var table = $('.table-ella_appointments').DataTable();
-                var currentOrder = table.order();
-                table.ajax.reload(function() {
-                    table.order(currentOrder).draw(false);
-                });
+                // Handle presentations if selected and centralized function exists
+                if (typeof getSelectedPresentationIds === 'function' && typeof attachMultiplePresentationsToAppointment === 'function') {
+                    var selectedPresentationIds = getSelectedPresentationIds('presentation_select', 'selected_presentation_ids');
+                    if (selectedPresentationIds && selectedPresentationIds.length > 0 && appointmentId) {
+                        attachMultiplePresentationsToAppointment(appointmentId, selectedPresentationIds, function(attachResponse) {
+                            alert_float('success', response.message);
+                            
+                            $('#appointmentModal').modal('hide');
+                            resetAppointmentModal();
+                            
+                            // Reload table maintaining sort order
+                            var table = $('.table-ella_appointments').DataTable();
+                            var currentOrder = table.order();
+                            table.ajax.reload(function() {
+                                table.order(currentOrder).draw(false);
+                            });
+                        });
+                    } else {
+                        alert_float('success', response.message);
+                        $('#appointmentModal').modal('hide');
+                        resetAppointmentModal();
+                        
+                        // Reload table maintaining sort order
+                        var table = $('.table-ella_appointments').DataTable();
+                        var currentOrder = table.order();
+                        table.ajax.reload(function() {
+                            table.order(currentOrder).draw(false);
+                        });
+                    }
+                } else {
+                    alert_float('success', response.message);
+                    $('#appointmentModal').modal('hide');
+                    resetAppointmentModal();
+                    
+                    // Reload table maintaining sort order
+                    var table = $('.table-ella_appointments').DataTable();
+                    var currentOrder = table.order();
+                    table.ajax.reload(function() {
+                        table.order(currentOrder).draw(false);
+                    });
+                }
             } else {
                 alert_float('danger', response.message);
             }
@@ -1055,6 +1101,41 @@ $(document).ready(function() {
         
         // Initialize selectpickers
         $('.selectpicker').selectpicker('refresh');
+        
+        // Load presentations for dropdown if centralized function exists
+        if (typeof loadPresentationsForDropdown === 'function') {
+            loadPresentationsForDropdown('presentation_select', function() {
+                // Initialize presentation selection preview after dropdown is loaded
+                if (typeof initPresentationSelectionPreview === 'function') {
+                    initPresentationSelectionPreview('presentation_select', 'modal-presentation-list');
+                }
+            });
+        }
+        
+        // Load attached presentations if editing (appointment_id exists)
+        var appointmentId = $('#appointment_id').val();
+        if (appointmentId && appointmentId > 0 && typeof loadAttachedPresentations === 'function') {
+            loadAttachedPresentations(appointmentId, null, function(response) {
+                if (response.success && response.data && response.data.length > 0) {
+                    // Pre-select in dropdown (this will trigger the preview rendering)
+                    var selectedIds = response.data.map(function(p) { return p.id.toString(); });
+                    
+                    // Update the global array with actual presentation details
+                    selectedPresentationsInModal = response.data.map(function(p) {
+                        return {
+                            id: p.id.toString(),
+                            name: p.original_name || p.file_name
+                        };
+                    });
+                    
+                    // Set dropdown values and render preview
+                    $('#presentation_select').selectpicker('val', selectedIds);
+                    if (typeof renderPresentationSelectionPreview === 'function') {
+                        renderPresentationSelectionPreview('modal-presentation-list');
+                    }
+                }
+            });
+        }
     });
 });
 
@@ -1457,6 +1538,9 @@ $(document).ready(function() {
 
 <!-- Include centralized appointment attendees functionality -->
 <script src="<?php echo module_dir_url('ella_contractors', 'assets/js/appointment-attendees.js'); ?>"></script>
+
+<!-- Include centralized appointment presentations functionality -->
+<script src="<?php echo module_dir_url('ella_contractors', 'assets/js/appointment-presentations.js'); ?>"></script>
 
 <!-- Include global appointment.js for lead modal functionality -->
 <script src="<?php echo base_url('assets/js/global/appointment.js'); ?>"></script>
