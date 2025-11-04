@@ -352,8 +352,10 @@ button.delete-btn {
                         </div>
                     </div>
                     
+                    <!-- Reminders and Presentation in Same Row -->
                     <div class="row">
-                        <div class="col-md-12">
+                        <!-- Left Column: Reminders -->
+                        <div class="col-md-6">
                             <h5>Reminders</h5>
                             <div class="checkbox checkbox-primary">
                                 <input type="checkbox" name="send_reminder" id="send_reminder" value="1" checked>
@@ -364,16 +366,13 @@ button.delete-btn {
                                 <label for="reminder_48h">Send 48 Hour Reminder to Customer</label>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Presentation Selection Section -->
-                    <div class="row">
+                        
+                        <!-- Right Column: Presentation Selection -->
                         <div class="col-md-6">
-                            <hr class="hr-panel-heading" />
                             <h5>Choose Presentation (Optional)</h5>
                             <div class="form-group">
                                 <select class="form-control selectpicker" id="presentation_select" name="presentation_ids[]" multiple data-live-search="true">
-                                    <option value="">Loading presentations...</option>
+                                    <option value="">Nothing selected</option>
                                 </select>
                                 <small class="text-muted">You can select multiple presentations to attach to this appointment</small>
                             </div>
