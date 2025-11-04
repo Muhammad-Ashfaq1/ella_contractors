@@ -607,8 +607,13 @@ function previewAttachment(attachmentId, fileName, fileExt) {
         previewContent = '<iframe src="' + pdfUrl + '" width="100%" height="600px" frameborder="0" style="border: 1px solid #ddd; border-radius: 4px;"></iframe>';
     } else if (fileExt === 'ppt' || fileExt === 'pptx') {
         // PowerPoint: Use Microsoft Office Online Viewer (Free, No Dependencies Required)
-        // Uses download URL as source for external viewers
         var fileUrl = downloadUrl;
+        
+        // Force HTTPS if not already (Microsoft requires HTTPS)
+        if (fileUrl.indexOf('http://') === 0) {
+            fileUrl = fileUrl.replace('http://', 'https://');
+        }
+        
         var encodedUrl = encodeURIComponent(fileUrl);
         
         // Primary: Microsoft Office Online Viewer (Best Quality)
@@ -619,15 +624,12 @@ function previewAttachment(attachmentId, fileName, fileExt) {
         
         previewContent = '<div class="pptx-preview-container">' +
             '<iframe id="attachment-pptx-preview-iframe" src="' + officeViewerUrl + '" width="100%" height="600px" frameborder="0" style="border: 1px solid #ddd; border-radius: 4px;"></iframe>' +
-            '<div class="alert alert-info" style="margin-top: 15px;">' +
+            '<div class="text-center" style="margin-top: 15px;">' +
                 '<div class="btn-group btn-group-sm" role="group">' +
                     '<button type="button" class="btn btn-default" onclick="switchAttachmentViewer(\'microsoft\', \'' + encodedUrl + '\')"><i class="fa fa-windows"></i> Microsoft Viewer</button>' +
                     '<button type="button" class="btn btn-default" onclick="switchAttachmentViewer(\'google\', \'' + encodedUrl + '\')"><i class="fa fa-google"></i> Google Viewer</button>' +
-                    '<a href="' + downloadUrl + '" class="btn btn-primary" download><i class="fa fa-download"></i> Download Original</a>' +
+                    '<a href="' + downloadUrl + '" class="btn btn-primary" download><i class="fa fa-download"></i> Download</a>' +
                 '</div>' +
-                '<p style="margin-top: 10px; margin-bottom: 0; font-size: 12px;">' +
-                    '<i class="fa fa-info-circle"></i> If preview doesn\'t load, try switching viewers or download the file.' +
-                '</p>' +
             '</div>' +
         '</div>';
     } else {

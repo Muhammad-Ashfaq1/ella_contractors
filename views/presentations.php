@@ -1123,71 +1123,27 @@ function previewFile(fileId, fileName, fileExt, fileUrl) {
         // PowerPoint: Use Microsoft Office Online Viewer (Free, No Dependencies Required)
         // This renders PPT/PPTX natively with full animations and formatting
         
-        // CRITICAL: Force HTTPS if not already (Microsoft requires HTTPS)
+        // Force HTTPS if not already (Microsoft requires HTTPS)
         if (fileUrl.indexOf('http://') === 0) {
             fileUrl = fileUrl.replace('http://', 'https://');
-            console.warn('⚠️ Converted HTTP to HTTPS for external viewer compatibility');
         }
-        
-        // Detect local development domains (won't work with external viewers)
-        var isLocalDomain = fileUrl.match(/\.(test|local|dev)\//) || 
-                           fileUrl.indexOf('localhost') !== -1 || 
-                           fileUrl.indexOf('127.0.0.1') !== -1 ||
-                           fileUrl.indexOf('192.168.') !== -1 ||
-                           fileUrl.indexOf('10.0.') !== -1;
-        
-        // Debug logging
-        console.log('=== PPT/PPTX Preview Debug ===');
-        console.log('Original URL:', fileUrl);
-        console.log('Is HTTPS:', fileUrl.indexOf('https://') === 0);
-        console.log('Is Local Domain:', isLocalDomain);
-        console.log('File Extension:', fileExt);
         
         var encodedUrl = encodeURIComponent(fileUrl);
-        console.log('Encoded URL:', encodedUrl);
         
-        // Primary: Microsoft Office Online Viewer (Best Quality, like your Image 1)
+        // Primary: Microsoft Office Online Viewer (Best Quality)
         var officeViewerUrl = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodedUrl;
-        console.log('Microsoft Viewer URL:', officeViewerUrl);
         
-        // Fallback: Google Docs Viewer (if Microsoft fails)
+        // Fallback: Google Docs Viewer
         var googleViewerUrl = 'https://docs.google.com/gview?url=' + encodedUrl + '&embedded=true';
-        console.log('Google Viewer URL:', googleViewerUrl);
-        console.log('=============================');
-        
-        // Show warning for local domains
-        var localDomainWarning = '';
-        if (isLocalDomain) {
-            console.error('❌ LOCAL DOMAIN DETECTED - External viewers will NOT work!');
-            localDomainWarning = '<div class="alert alert-danger" style="margin-bottom: 15px;">' +
-                '<h5><i class="fa fa-exclamation-triangle"></i> <strong>Local Development Environment Detected</strong></h5>' +
-                '<p><strong>External viewers (Microsoft/Google) cannot access local domains like .test, .local, localhost, etc.</strong></p>' +
-                '<p><strong>Solutions:</strong></p>' +
-                '<ul style="text-align: left; margin-left: 20px;">' +
-                    '<li>✅ Deploy to production server (e.g., https://crm.allwetrade.com/) and test there</li>' +
-                    '<li>✅ Use ngrok to make local environment publicly accessible</li>' +
-                    '<li>✅ Click "Download" button below to view file locally in PowerPoint</li>' +
-                '</ul>' +
-                '<p style="margin-bottom: 0;"><em>The preview iframe below will show a loading/error state - this is expected on local domains.</em></p>' +
-            '</div>';
-        }
         
         previewContent = '<div class="pptx-preview-container">' +
-            localDomainWarning +
             '<iframe id="pptx-preview-iframe" src="' + officeViewerUrl + '" width="100%" height="600px" frameborder="0" style="border: 1px solid #ddd; border-radius: 4px;"></iframe>' +
-            '<div class="alert alert-info" style="margin-top: 15px;">' +
+            '<div class="text-center" style="margin-top: 15px;">' +
                 '<div class="btn-group btn-group-sm" role="group">' +
                     '<button type="button" class="btn btn-default" onclick="switchPPTViewer(\'microsoft\', \'' + encodedUrl + '\')"><i class="fa fa-windows"></i> Microsoft Viewer</button>' +
                     '<button type="button" class="btn btn-default" onclick="switchPPTViewer(\'google\', \'' + encodedUrl + '\')"><i class="fa fa-google"></i> Google Viewer</button>' +
-                    '<a href="' + fileUrl + '" class="btn btn-primary" target="_blank"><i class="fa fa-external-link"></i> Test File URL</a>' +
-                    '<a href="' + fileUrl + '" class="btn btn-success" download><i class="fa fa-download"></i> Download</a>' +
+                    '<a href="' + fileUrl + '" class="btn btn-primary" download><i class="fa fa-download"></i> Download</a>' +
                 '</div>' +
-                '<p style="margin-top: 10px; margin-bottom: 5px; font-size: 11px;">' +
-                    '<strong>File URL:</strong> <code style="font-size: 10px; word-break: break-all;">' + fileUrl + '</code>' +
-                '</p>' +
-                '<p style="margin-top: 5px; margin-bottom: 0; font-size: 12px;">' +
-                    '<i class="fa fa-info-circle"></i> <strong>Troubleshooting:</strong> Click "Test File URL" to verify file is publicly accessible. Check browser console (F12) for detailed logs.' +
-                '</p>' +
             '</div>' +
         '</div>';
     } else if (fileExt === 'html') {
@@ -1205,35 +1161,6 @@ function previewFile(fileId, fileName, fileExt, fileUrl) {
     
     // Set preview content
     $('#filePreviewContent').html(previewContent);
-    
-    // Add iframe load detection for PPT/PPTX
-    if (fileExt === 'ppt' || fileExt === 'pptx') {
-        setTimeout(function() {
-            var iframe = document.getElementById('pptx-preview-iframe');
-            if (iframe) {
-                iframe.onload = function() {
-                    console.log('✅ Iframe loaded successfully');
-                };
-                iframe.onerror = function() {
-                    console.error('❌ Iframe failed to load');
-                    alert('Preview failed to load. Please check:\n1. File URL is publicly accessible\n2. Your site uses HTTPS\n3. Try clicking "Test File URL" button\n4. Check browser console (F12) for errors');
-                };
-                
-                // Check if iframe is stuck loading after 10 seconds
-                setTimeout(function() {
-                    try {
-                        var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                        if (iframeDoc.readyState === 'loading') {
-                            console.warn('⚠️ Iframe still loading after 10 seconds - may indicate an issue');
-                        }
-                    } catch(e) {
-                        // CORS will prevent access, which is fine - it means the external viewer is working
-                        console.log('ℹ️ Iframe loaded (CORS prevents direct access check - this is normal)');
-                    }
-                }, 10000);
-            }
-        }, 100);
-    }
 }
 
 // Switch between Microsoft and Google viewers for PPT/PPTX

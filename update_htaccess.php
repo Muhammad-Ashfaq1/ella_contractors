@@ -4,7 +4,7 @@
  * This is needed for external viewers (Microsoft Office Online, Google Docs) to access PPT/PPTX files
  * 
  * Run this file once after updating the module:
- * URL: https://your-domain.com/modules/ella_contractors/update_htaccess.php
+ * URL: https://your-domain.com/modules/ella_contractors/update_htaccess.php?confirm=yes
  * OR via command line: php update_htaccess.php
  */
 
@@ -115,20 +115,11 @@ if (php_sapi_name() === 'cli') {
             .result.error { background: #f8d7da; border-color: #dc3545; color: #721c24; }
             .result.info { background: #d1ecf1; border-color: #17a2b8; color: #0c5460; }
             .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #7f8c8d; font-size: 14px; }
-            .warning { background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 15px; margin: 20px 0; }
-            .warning h3 { margin-top: 0; color: #856404; }
         </style>
     </head>
     <body>
         <div class="container">
             <h1>🔧 Ella Contractors .htaccess Update</h1>
-            
-            <div class="warning">
-                <h3>⚠️ Security Note</h3>
-                <p><strong>What this does:</strong> Updates .htaccess files to allow public access to presentation files.</p>
-                <p><strong>Why it's needed:</strong> Microsoft Office Online Viewer and Google Docs Viewer need direct HTTPS access to render PPT/PPTX files properly.</p>
-                <p><strong>Security:</strong> Only presentation files are made publicly accessible. Directory listing is still prevented.</p>
-            </div>
             
             <h2>Update Results:</h2>
             <?php foreach ($results as $result): ?>
@@ -148,7 +139,7 @@ if (php_sapi_name() === 'cli') {
             <div class="footer">
                 <p><strong>✅ Update Complete!</strong></p>
                 <p>Your presentation files should now be accessible to external viewers.</p>
-                <p><em>You can safely delete this file (update_htaccess.php) after running it.</em></p>
+                <p><em>You can delete this file after running it.</em></p>
             </div>
         </div>
     </body>
