@@ -305,13 +305,51 @@ function ella_contractors_activate_module() {
         }
     }
     
-    // Create upload directories
+    // Create upload directories for presentations
     $base_path = FCPATH . 'uploads/ella_presentations/';
     $directories = [
         $base_path,
         $base_path . 'default/',
         $base_path . 'general/',
     ];
+    
+    // Also setup appointments attachments directory
+    $appointments_base = FCPATH . 'uploads/ella_appointments/';
+    if (!is_dir($appointments_base)) {
+        mkdir($appointments_base, 0755, true);
+    }
+    
+    // Create .htaccess for appointments base directory (allows access to subdirectories)
+    $appointments_htaccess = $appointments_base . '.htaccess';
+    $htaccess_content = '# Allow public access to attachment files for external viewers' . PHP_EOL .
+                        'Order Allow,Deny' . PHP_EOL .
+                        'Allow from all' . PHP_EOL .
+                        '' . PHP_EOL .
+                        '# Prevent directory listing' . PHP_EOL .
+                        'Options -Indexes' . PHP_EOL .
+                        '' . PHP_EOL .
+                        '# Set correct MIME types for PowerPoint files' . PHP_EOL .
+                        'AddType application/vnd.ms-powerpoint .ppt' . PHP_EOL .
+                        'AddType application/vnd.openxmlformats-officedocument.presentationml.presentation .pptx' . PHP_EOL .
+                        'AddType application/pdf .pdf' . PHP_EOL .
+                        'AddType text/html .html';
+    
+    if (!file_exists($appointments_htaccess)) {
+        file_put_contents($appointments_htaccess, $htaccess_content);
+        log_message('info', 'Created .htaccess for ella_appointments directory');
+    } else {
+        // Update if it has restrictive rules
+        $existing = file_get_contents($appointments_htaccess);
+        if (strpos($existing, 'Deny from all') !== false) {
+            file_put_contents($appointments_htaccess, $htaccess_content);
+            log_message('info', 'Updated restrictive .htaccess in ella_appointments directory');
+        }
+    }
+    
+    // Create index.html to prevent directory listing
+    if (!file_exists($appointments_base . 'index.html')) {
+        file_put_contents($appointments_base . 'index.html', '');
+    }
 
     foreach ($directories as $dir) {
         if (!is_dir($dir)) {

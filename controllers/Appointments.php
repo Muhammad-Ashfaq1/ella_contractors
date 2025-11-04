@@ -1171,6 +1171,11 @@ class Appointments extends AdminController
         foreach ($attachments as &$attachment) {
             $attachment['file_path'] = 'uploads/ella_appointments/' . $appointment_id . '/' . $attachment['file_name'];
             $attachment['download_url'] = admin_url('ella_contractors/appointments/download_attachment/' . $attachment['id']);
+            
+            // Direct public URL for external viewers (Microsoft/Google)
+            $direct_url = site_url('uploads/ella_appointments/' . $appointment_id . '/' . $attachment['file_name']);
+            // Force HTTPS for external viewer compatibility
+            $attachment['public_url'] = str_replace('http://', 'https://', $direct_url);
         }
         
         echo json_encode([

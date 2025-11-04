@@ -32,11 +32,16 @@ if (!$allowed) {
 
 // Define paths
 $base_path = dirname(dirname(dirname(__FILE__))) . '/uploads/ella_presentations/';
+$appointments_base = dirname(dirname(dirname(__FILE__))) . '/uploads/ella_appointments/';
+
 $directories = [
+    // Presentations directories
     $base_path,
     $base_path . 'default/',
     $base_path . 'general/',
     $base_path . 'cache/',
+    // Appointments attachments directory (subdirectories are created dynamically per appointment)
+    $appointments_base,
 ];
 
 $new_htaccess_content = '# Allow public access to presentation files for external viewers

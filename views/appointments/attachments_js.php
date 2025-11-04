@@ -145,7 +145,9 @@ window.displayAttachments = function(attachments) {
             
             // Add Preview button for previewable files (PDF, PPT, PPTX, Images)
             if (canPreview) {
-                html += '<button class="btn btn-info btn-sm attachment-btn" onclick="previewAttachment(' + attachment.id + ', \'' + escapeHtml(attachment.original_name) + '\', \'' + fileExt.toLowerCase() + '\')" title="Preview File">';
+                // Pass public_url for PPT/PPTX external viewer compatibility
+                var publicUrl = attachment.public_url || '';
+                html += '<button class="btn btn-info btn-sm attachment-btn" onclick="previewAttachment(' + attachment.id + ', \'' + escapeHtml(attachment.original_name) + '\', \'' + fileExt.toLowerCase() + '\', \'' + publicUrl + '\')" title="Preview File">';
                 html += '<i class="fa fa-eye"></i></button>';
             } else if (isImage) {
                 // For images, clicking preview shows full size in modal
@@ -581,7 +583,7 @@ function previewImageAttachment(imageUrl, fileName) {
  * Preview attachment file (PDF, PPT, PPTX)
  * Similar to presentations module preview functionality
  */
-function previewAttachment(attachmentId, fileName, fileExt) {
+function previewAttachment(attachmentId, fileName, fileExt, publicUrl) {
     // Set modal title
     $('#attachmentPreviewModalLabel').text('Preview: ' + fileName);
     
@@ -598,6 +600,9 @@ function previewAttachment(attachmentId, fileName, fileExt) {
     var downloadUrl = admin_url + 'ella_contractors/appointments/download_attachment/' + attachmentId;
     $('#downloadAttachmentBtn').attr('href', downloadUrl);
     
+    // Store public URL for external viewer access
+    window.currentAttachmentPublicUrl = publicUrl || null;
+    
     // Generate preview content based on file type
     var previewContent = '';
     
@@ -607,7 +612,10 @@ function previewAttachment(attachmentId, fileName, fileExt) {
         previewContent = '<iframe src="' + pdfUrl + '" width="100%" height="600px" frameborder="0" style="border: 1px solid #ddd; border-radius: 4px;"></iframe>';
     } else if (fileExt === 'ppt' || fileExt === 'pptx') {
         // PowerPoint: Use Microsoft Office Online Viewer (Free, No Dependencies Required)
-        var fileUrl = downloadUrl;
+        // Use public_url if available (direct file access), otherwise fall back to downloadUrl
+        var fileUrl = (typeof window.currentAttachmentPublicUrl !== 'undefined' && window.currentAttachmentPublicUrl) 
+                      ? window.currentAttachmentPublicUrl 
+                      : downloadUrl;
         
         // Force HTTPS if not already (Microsoft requires HTTPS)
         if (fileUrl.indexOf('http://') === 0) {
