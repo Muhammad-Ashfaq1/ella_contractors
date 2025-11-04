@@ -133,57 +133,57 @@ button.delete-btn {
 
 /* Standard input placeholders (text, email, tel, etc.) */
 #appointmentModal input::-webkit-input-placeholder {
-  color: #95a5a6 !important;
-  opacity: 0.7 !important;
+  color: #778485 !important;
+  opacity: 0.85 !important;
 }
 
 #appointmentModal input::-moz-placeholder {
-  color: #95a5a6 !important;
-  opacity: 0.7 !important;
+  color: #778485 !important;
+  opacity: 0.85 !important;
 }
 
 #appointmentModal input:-ms-input-placeholder {
-  color: #95a5a6 !important;
-  opacity: 0.7 !important;
+  color: #778485 !important;
+  opacity: 0.85 !important;
 }
 
 #appointmentModal input::placeholder {
-  color: #95a5a6 !important;
-  opacity: 0.7 !important;
+  color: #778485 !important;
+  opacity: 0.85 !important;
 }
 
 /* Textarea placeholders */
 #appointmentModal textarea::-webkit-input-placeholder {
-  color: #95a5a6 !important;
-  opacity: 0.7 !important;
+  color: #778485 !important;
+  opacity: 0.85 !important;
 }
 
 #appointmentModal textarea::-moz-placeholder {
-  color: #95a5a6 !important;
-  opacity: 0.7 !important;
+  color: #778485 !important;
+  opacity: 0.85 !important;
 }
 
 #appointmentModal textarea:-ms-input-placeholder {
-  color: #95a5a6 !important;
-  opacity: 0.7 !important;
+  color: #778485 !important;
+  opacity: 0.85 !important;
 }
 
 #appointmentModal textarea::placeholder {
-  color: #95a5a6 !important;
-  opacity: 0.7 !important;
+  color: #778485 !important;
+  opacity: 0.85 !important;
 }
 
 /* Native select placeholder option (for non-Select2/Bootstrap Select dropdowns) */
 #appointmentModal select option[value=""] {
-  color: #95a5a6 !important;
+  color: #778485 !important;
 }
 
 /* Bootstrap Select - Placeholder style ONLY for empty states */
 #appointmentModal button[title="Select Client/Lead"] .filter-option-inner-inner,
 #appointmentModal button[title="Nothing selected"] .filter-option-inner-inner,
 #appointmentModal button[title="Loading staff members..."] .filter-option-inner-inner {
-  color:rgb(146, 161, 161) !important;
-  opacity: 0.7 !important;
+  color: #778485 !important;
+  opacity: 0.85 !important;
 }
 
 /* ========================================
@@ -192,8 +192,8 @@ button.delete-btn {
 
 /* Style empty datetime-local inputs to show placeholder-like styling */
 #appointmentModal input[type="datetime-local"]:not(:focus):invalid {
-  color: #95a5a6 !important;
-  opacity: 0.7 !important;
+  color: #778485 !important;
+  opacity: 0.85 !important;
 }
 
 /* When datetime has a value, show normally */
@@ -205,7 +205,7 @@ button.delete-btn {
 
 /* Style the individual parts when empty */
 #appointmentModal input[type="datetime-local"]:invalid::-webkit-datetime-edit {
-  color: #95a5a6 !important;
+  color: #778485 !important;
 }
 
 /* ========================================
