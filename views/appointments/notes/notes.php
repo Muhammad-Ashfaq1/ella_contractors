@@ -41,4 +41,42 @@
         border-color: #46b8da !important;
         color: #fff !important;
     }
+    
+    /* Smooth transitions for note operations */
+    .timeline-record-wrapper {
+        transition: opacity 0.3s ease;
+    }
+
+    .edit-note-form-wrapper {
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Disabled button state */
+    #note-btn:disabled,
+    .btn-info:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* Loading note wrapper */
+    .timeline-record-wrapper[style*="opacity: 0.5"] {
+        pointer-events: none;
+    }
+    
+    /* Better focus state for edit textarea */
+    .edit-note-form-wrapper textarea:focus {
+        border-color: #5bc0de;
+        box-shadow: 0 0 8px rgba(91, 192, 222, 0.3);
+    }
 </style>

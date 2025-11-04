@@ -954,32 +954,37 @@ class Appointments extends AdminController
      */
     public function add_note($rel_id, $note_id = null)
     {
+        // Set JSON header immediately
+        header('Content-Type: application/json');
+        
         if (!is_staff_member()) {
-            ajax_access_denied();
+            echo json_encode(['success' => false, 'message' => 'Access denied']);
+            exit;
         }
 
         if ($this->input->post()) {
             $data = $this->input->post();
 
             // Handle the note description
-            $data['description'] = isset($data['appointment_note_description']) ? $data['appointment_note_description'] : $data['description'];
+            $data['description'] = isset($data['appointment_note_description']) 
+                ? $data['appointment_note_description'] 
+                : (isset($data['description']) ? $data['description'] : '');
+            
             $data['description'] = replace_name_shortcodes($rel_id, $data['description']);
 
             if (isset($data['appointment_note_description'])) {
                 unset($data['appointment_note_description']);
             }
 
-            // Remove unnecessary fields that might cause issues
-            unset($data['contacted_indicator']);
-            unset($data['custom_contact_date']);
-            unset($data['date_contacted']);
+            // Remove unnecessary fields
+            unset($data['contacted_indicator'], $data['custom_contact_date'], $data['date_contacted']);
 
             if ($note_id) {
                 // Update existing note
                 $note = $this->db->get_where(db_prefix() . 'notes', ['id' => $note_id])->row();
                 if (!$note || ($note->addedfrom != get_staff_user_id() && !is_admin())) {
                     echo json_encode(['success' => false, 'message' => 'You do not have permission to edit this note']);
-                    return;
+                    exit;
                 }
 
                 $update_data = [
@@ -989,18 +994,17 @@ class Appointments extends AdminController
                 $success = $this->misc_model->edit_note($update_data, $note_id);
                 
                 if ($success) {
-                    // Log note update activity using unified method
+                    // Log activity
                     $this->appointments_model->add_activity_log(
                         $rel_id, 
                         'NOTES', 
                         'updated', 
                         [
                             'note_id' => $note_id,
-                            'content_preview' => substr(strip_tags($data['description']), 0, 100),
-                            'changes' => ['old' => $note->description, 'new' => $data['description']]
+                            'content_preview' => substr(strip_tags($data['description']), 0, 100)
                         ]
                     );
-                    echo json_encode(['success' => true, 'message' => 'Note updated successfully']);
+                    echo json_encode(['success' => true, 'message' => 'Note updated successfully', 'note_id' => $note_id]);
                 } else {
                     echo json_encode(['success' => false, 'message' => 'Failed to update note']);
                 }
@@ -1009,18 +1013,17 @@ class Appointments extends AdminController
                 $note_id = $this->misc_model->add_note($data, 'appointment', $rel_id);
                 
                 if ($note_id) {
-                    // Log note addition activity using unified method
+                    // Log activity
                     $this->appointments_model->add_activity_log(
                         $rel_id, 
                         'NOTES', 
                         'created', 
                         [
                             'note_id' => $note_id,
-                            'content_preview' => substr(strip_tags($data['description']), 0, 100),
-                            'added_by' => get_staff_user_id()
+                            'content_preview' => substr(strip_tags($data['description']), 0, 100)
                         ]
                     );
-                    echo json_encode(['success' => true, 'message' => 'Note added successfully']);
+                    echo json_encode(['success' => true, 'message' => 'Note added successfully', 'note_id' => $note_id]);
                 } else {
                     echo json_encode(['success' => false, 'message' => 'Failed to add note']);
                 }
@@ -1028,6 +1031,7 @@ class Appointments extends AdminController
         } else {
             echo json_encode(['success' => false, 'message' => 'No data received']);
         }
+        exit; // Ensure clean JSON response
     }
 
     /**
