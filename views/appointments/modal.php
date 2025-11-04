@@ -135,65 +135,55 @@ button.delete-btn {
 #appointmentModal input::-webkit-input-placeholder {
   color: #95a5a6 !important;
   opacity: 0.7 !important;
-  font-style: italic;
 }
 
 #appointmentModal input::-moz-placeholder {
   color: #95a5a6 !important;
   opacity: 0.7 !important;
-  font-style: italic;
 }
 
 #appointmentModal input:-ms-input-placeholder {
   color: #95a5a6 !important;
   opacity: 0.7 !important;
-  font-style: italic;
 }
 
 #appointmentModal input::placeholder {
   color: #95a5a6 !important;
   opacity: 0.7 !important;
-  font-style: italic;
 }
 
 /* Textarea placeholders */
 #appointmentModal textarea::-webkit-input-placeholder {
   color: #95a5a6 !important;
   opacity: 0.7 !important;
-  font-style: italic;
 }
 
 #appointmentModal textarea::-moz-placeholder {
   color: #95a5a6 !important;
   opacity: 0.7 !important;
-  font-style: italic;
 }
 
 #appointmentModal textarea:-ms-input-placeholder {
   color: #95a5a6 !important;
   opacity: 0.7 !important;
-  font-style: italic;
 }
 
 #appointmentModal textarea::placeholder {
   color: #95a5a6 !important;
   opacity: 0.7 !important;
-  font-style: italic;
 }
 
 /* Native select placeholder option (for non-Select2/Bootstrap Select dropdowns) */
 #appointmentModal select option[value=""] {
   color: #95a5a6 !important;
-  font-style: italic;
 }
 
 /* Bootstrap Select - Placeholder style ONLY for empty states */
 #appointmentModal button[title="Select Client/Lead"] .filter-option-inner-inner,
 #appointmentModal button[title="Nothing selected"] .filter-option-inner-inner,
 #appointmentModal button[title="Loading staff members..."] .filter-option-inner-inner {
-  color: #95a5a6 !important;
+  color:rgb(146, 161, 161) !important;
   opacity: 0.7 !important;
-  font-style: italic !important;
 }
 
 /* ========================================
@@ -204,7 +194,6 @@ button.delete-btn {
 #appointmentModal input[type="datetime-local"]:not(:focus):invalid {
   color: #95a5a6 !important;
   opacity: 0.7 !important;
-  font-style: italic;
 }
 
 /* When datetime has a value, show normally */
