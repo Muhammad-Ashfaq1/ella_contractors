@@ -1142,7 +1142,6 @@ function previewFile(fileId, fileName, fileExt, fileUrl) {
                 '<div class="btn-group btn-group-sm" role="group">' +
                     '<button type="button" class="btn btn-default" onclick="switchPPTViewer(\'microsoft\', \'' + encodedUrl + '\')"><i class="fa fa-windows"></i> Microsoft Viewer</button>' +
                     '<button type="button" class="btn btn-default" onclick="switchPPTViewer(\'google\', \'' + encodedUrl + '\')"><i class="fa fa-google"></i> Google Viewer</button>' +
-                    '<a href="' + fileUrl + '" class="btn btn-primary" download><i class="fa fa-download"></i> Download</a>' +
                 '</div>' +
             '</div>' +
         '</div>';

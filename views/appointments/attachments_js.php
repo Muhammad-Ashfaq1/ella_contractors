@@ -636,7 +636,6 @@ function previewAttachment(attachmentId, fileName, fileExt, publicUrl) {
                 '<div class="btn-group btn-group-sm" role="group">' +
                     '<button type="button" class="btn btn-default" onclick="switchAttachmentViewer(\'microsoft\', \'' + encodedUrl + '\')"><i class="fa fa-windows"></i> Microsoft Viewer</button>' +
                     '<button type="button" class="btn btn-default" onclick="switchAttachmentViewer(\'google\', \'' + encodedUrl + '\')"><i class="fa fa-google"></i> Google Viewer</button>' +
-                    '<a href="' + downloadUrl + '" class="btn btn-primary" download><i class="fa fa-download"></i> Download</a>' +
                 '</div>' +
             '</div>' +
         '</div>';
