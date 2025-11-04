@@ -15,9 +15,18 @@ if (typeof Dropzone !== 'undefined') {
 }
 
 $(document).ready(function() {
-    // Load attachments when attachments tab is clicked
+    // Load attachments when attachments tab is shown (Bootstrap tab event)
+    $('a[href="#attachments-tab"]').on('shown.bs.tab', function() {
+        console.log('Attachments tab shown - loading attachments for appointment ID:', attachmentAppointmentId);
+        loadAttachments(true); // Force refresh when tab is shown
+    });
+    
+    // Also handle click event as fallback
     $('a[href="#attachments-tab"]').on('click', function() {
-        loadAttachments(true); // Force refresh when tab is clicked
+        console.log('Attachments tab clicked - will load attachments');
+        setTimeout(function() {
+            loadAttachments(true);
+        }, 100);
     });
     
     // Initialize custom dropzone when upload modal is opened
@@ -33,16 +42,19 @@ $(document).ready(function() {
         
         // If attachments tab is active via URL parameter
         if (tabParam === 'attachments') {
+            console.log('Attachments tab active from URL parameter - loading');
             loadAttachments(true);
         }
         
         // Also check if attachments tab is currently visible/active
         if ($('#attachments-tab').hasClass('active') || $('#attachments-tab').is(':visible')) {
+            console.log('Attachments tab is active - loading');
             loadAttachments(true);
         }
         
         // Check if attachments tab link is active
         if ($('a[href="#attachments-tab"]').parent().hasClass('active')) {
+            console.log('Attachments tab link is active - loading');
             loadAttachments(true);
         }
     }, 800); // Slightly longer delay to ensure main tab system is initialized
@@ -50,27 +62,37 @@ $(document).ready(function() {
 
 // Global function for loading attachments
 window.loadAttachments = function(forceRefresh = false) {
+    console.log('loadAttachments called for appointment ID:', attachmentAppointmentId);
+    
     // Show loading indicator if not already showing content
     var currentContent = $('#attachments-container').html();
     if (forceRefresh || currentContent.includes('Loading attachments') || currentContent === '') {
         $('#attachments-container').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><br><br><p>Loading attachments...</p></div>');
     }
     
+    var ajaxUrl = admin_url + 'ella_contractors/appointments/get_appointment_attachments/' + attachmentAppointmentId;
+    console.log('Loading attachments from:', ajaxUrl);
+    
     $.ajax({
-        url: admin_url + 'ella_contractors/appointments/get_appointment_attachments/' + attachmentAppointmentId,
+        url: ajaxUrl,
         type: 'GET',
         dataType: 'json',
         cache: false, // Prevent caching to ensure fresh data
         success: function(response) {
+            console.log('Attachments response:', response);
             if (response.success) {
+                console.log('Found ' + response.attachments.length + ' attachment(s)');
                 displayAttachments(response.attachments);
             } else {
+                console.log('No attachments found or error in response');
                 $('#attachments-container').html('<div class="text-center text-muted"><p>No attachments found</p></div>');
             }
         },
         error: function(xhr, status, error) {
             console.error('Error loading attachments:', error);
-            $('#attachments-container').html('<div class="text-center text-danger"><p>Error loading attachments</p></div>');
+            console.error('XHR Status:', xhr.status);
+            console.error('Response:', xhr.responseText);
+            $('#attachments-container').html('<div class="text-center text-danger"><p>Error loading attachments: ' + error + '</p></div>');
         }
     });
 };

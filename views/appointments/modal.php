@@ -273,6 +273,7 @@ button.delete-btn {
                     <input type="hidden" id="phone_validated" name="phone_validated" value="">
                     <input type="hidden" id="type_id" name="type_id" value="">
                     <input type="hidden" id="status" name="status" value="scheduled">
+                    <input type="hidden" id="selected_presentation_ids" name="selected_presentation_ids" value="">
                     
                     <div class="row">
                         <div class="col-md-6">
@@ -361,6 +362,25 @@ button.delete-btn {
                             <div class="checkbox checkbox-primary">
                                 <input type="checkbox" name="reminder_48h" id="reminder_48h" value="1" checked>
                                 <label for="reminder_48h">Send 48 Hour Reminder to Customer</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Presentation Selection Section -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <hr class="hr-panel-heading" />
+                            <h5>Choose Presentation (Optional)</h5>
+                            <div class="form-group">
+                                <select class="form-control selectpicker" id="presentation_select" name="presentation_ids[]" multiple data-live-search="true">
+                                    <option value="">Loading presentations...</option>
+                                </select>
+                                <small class="text-muted">You can select multiple presentations to attach to this appointment</small>
+                            </div>
+                            
+                            <!-- Display selected presentations (shown immediately on selection) -->
+                            <div id="modal-presentation-list" style="margin-top: 10px;">
+                                <!-- Presentations will be shown here when selected -->
                             </div>
                         </div>
                     </div>
