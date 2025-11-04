@@ -604,11 +604,32 @@ function previewAttachment(attachmentId, fileName, fileExt) {
     if (fileExt === 'pdf') {
         // Direct PDF preview
         var pdfUrl = admin_url + 'ella_contractors/appointments/preview_attachment/' + attachmentId;
-        previewContent = '<iframe src="' + pdfUrl + '" width="100%" height="600px" frameborder="0" style="border: none;"></iframe>';
+        previewContent = '<iframe src="' + pdfUrl + '" width="100%" height="600px" frameborder="0" style="border: 1px solid #ddd; border-radius: 4px;"></iframe>';
     } else if (fileExt === 'ppt' || fileExt === 'pptx') {
-        // PPT/PPTX preview - use get_preview_pdf endpoint
-        var pptPreviewUrl = admin_url + 'ella_contractors/appointments/preview_attachment/' + attachmentId;
-        previewContent = '<iframe src="' + pptPreviewUrl + '" width="100%" height="600px" frameborder="0" style="border: none;"></iframe>';
+        // PowerPoint: Use Microsoft Office Online Viewer (Free, No Dependencies Required)
+        // Uses download URL as source for external viewers
+        var fileUrl = downloadUrl;
+        var encodedUrl = encodeURIComponent(fileUrl);
+        
+        // Primary: Microsoft Office Online Viewer (Best Quality)
+        var officeViewerUrl = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodedUrl;
+        
+        // Fallback: Google Docs Viewer
+        var googleViewerUrl = 'https://docs.google.com/gview?url=' + encodedUrl + '&embedded=true';
+        
+        previewContent = '<div class="pptx-preview-container">' +
+            '<iframe id="attachment-pptx-preview-iframe" src="' + officeViewerUrl + '" width="100%" height="600px" frameborder="0" style="border: 1px solid #ddd; border-radius: 4px;"></iframe>' +
+            '<div class="alert alert-info" style="margin-top: 15px;">' +
+                '<div class="btn-group btn-group-sm" role="group">' +
+                    '<button type="button" class="btn btn-default" onclick="switchAttachmentViewer(\'microsoft\', \'' + encodedUrl + '\')"><i class="fa fa-windows"></i> Microsoft Viewer</button>' +
+                    '<button type="button" class="btn btn-default" onclick="switchAttachmentViewer(\'google\', \'' + encodedUrl + '\')"><i class="fa fa-google"></i> Google Viewer</button>' +
+                    '<a href="' + downloadUrl + '" class="btn btn-primary" download><i class="fa fa-download"></i> Download Original</a>' +
+                '</div>' +
+                '<p style="margin-top: 10px; margin-bottom: 0; font-size: 12px;">' +
+                    '<i class="fa fa-info-circle"></i> If preview doesn\'t load, try switching viewers or download the file.' +
+                '</p>' +
+            '</div>' +
+        '</div>';
     } else {
         previewContent = '<div class="alert alert-info text-center">' +
             '<h5><i class="fa fa-info-circle"></i> Preview Not Available</h5>' +
@@ -630,6 +651,26 @@ function previewAttachment(attachmentId, fileName, fileExt) {
             loadAttachments(true);
         }, 100);
     });
+}
+
+// Switch between Microsoft and Google viewers for PPT/PPTX attachments
+function switchAttachmentViewer(viewerType, encodedUrl) {
+    var iframe = document.getElementById('attachment-pptx-preview-iframe');
+    if (!iframe) return;
+    
+    // Show loading state
+    iframe.style.opacity = '0.5';
+    
+    if (viewerType === 'microsoft') {
+        iframe.src = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodedUrl;
+    } else if (viewerType === 'google') {
+        iframe.src = 'https://docs.google.com/gview?url=' + encodedUrl + '&embedded=true';
+    }
+    
+    // Restore opacity after loading
+    setTimeout(function() {
+        iframe.style.opacity = '1';
+    }, 1000);
 }
 
 // Handle modal close events

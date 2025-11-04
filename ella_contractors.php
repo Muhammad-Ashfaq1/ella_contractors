@@ -325,9 +325,43 @@ function ella_contractors_activate_module() {
             file_put_contents($dir . 'index.html', '');
         }
         
-        // Create .htaccess to prevent direct access
+        // Create .htaccess to allow public access for external viewers (Microsoft Office Online, Google Docs)
+        // These viewers need direct HTTPS access to render PPT/PPTX files properly
         if (!file_exists($dir . '.htaccess')) {
-            file_put_contents($dir . '.htaccess', 'Order Deny,Allow' . PHP_EOL . 'Deny from all');
+            file_put_contents($dir . '.htaccess', 
+                '# Allow public access to presentation files for external viewers' . PHP_EOL .
+                'Order Allow,Deny' . PHP_EOL .
+                'Allow from all' . PHP_EOL .
+                '' . PHP_EOL .
+                '# Prevent directory listing' . PHP_EOL .
+                'Options -Indexes' . PHP_EOL .
+                '' . PHP_EOL .
+                '# Set correct MIME types for PowerPoint files' . PHP_EOL .
+                'AddType application/vnd.ms-powerpoint .ppt' . PHP_EOL .
+                'AddType application/vnd.openxmlformats-officedocument.presentationml.presentation .pptx' . PHP_EOL .
+                'AddType application/pdf .pdf' . PHP_EOL .
+                'AddType text/html .html'
+            );
+        } else {
+            // Update existing .htaccess if it has restrictive rules
+            $existing_htaccess = file_get_contents($dir . '.htaccess');
+            if (strpos($existing_htaccess, 'Deny from all') !== false) {
+                file_put_contents($dir . '.htaccess', 
+                    '# Allow public access to presentation files for external viewers' . PHP_EOL .
+                    'Order Allow,Deny' . PHP_EOL .
+                    'Allow from all' . PHP_EOL .
+                    '' . PHP_EOL .
+                    '# Prevent directory listing' . PHP_EOL .
+                    'Options -Indexes' . PHP_EOL .
+                    '' . PHP_EOL .
+                    '# Set correct MIME types for PowerPoint files' . PHP_EOL .
+                    'AddType application/vnd.ms-powerpoint .ppt' . PHP_EOL .
+                    'AddType application/vnd.openxmlformats-officedocument.presentationml.presentation .pptx' . PHP_EOL .
+                    'AddType application/pdf .pdf' . PHP_EOL .
+                    'AddType text/html .html'
+                );
+                log_message('info', 'Updated .htaccess in ' . $dir . ' to allow public access for external viewers');
+            }
         }
     }
     
