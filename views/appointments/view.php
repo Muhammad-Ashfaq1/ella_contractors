@@ -404,7 +404,7 @@ html {
                                 <div style="margin-top: 20px;">
                                     <h5>
                                         Attach Presentation
-                                        <a href="<?php echo admin_url('ella_contractors/presentations'); ?>" class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 2px 3px; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; margin-left: 6px; line-height: 1; min-width: auto;" title="Manage Presentations">
+                                        <a href="<?php echo admin_url('ella_contractors/presentations'); ?>" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 2px 4px; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; margin-left: 6px; text-decoration: none;" title="Manage Presentations">
                                             <i class="fa fa-cog" style="font-size: 10px;"></i>
                                         </a>
                                     </h5>
