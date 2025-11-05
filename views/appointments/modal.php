@@ -369,7 +369,7 @@ button.delete-btn {
                         
                         <!-- Right Column: Presentation Selection -->
                         <div class="col-md-6">
-                            <h5>Choose Presentation (Optional)</h5>
+                            <h5>Choose Presentation <span style="opacity: 0.7;">(Optional)</span></h5>
                             <div class="form-group">
                                 <select class="form-control selectpicker" id="presentation_select" name="presentation_ids[]" multiple data-live-search="true">
                                     <option value="">Nothing selected</option>
