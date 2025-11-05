@@ -31,7 +31,6 @@ class Ella_media_model extends App_Model
     {
         $this->db->where('rel_type', $rel_type);
         $this->db->where('rel_id', $rel_id);
-        $this->db->where('active', 1);
         $this->db->order_by('date_uploaded', 'DESC');
         return $this->db->get(db_prefix() . 'ella_contractor_media')->result_array();
     }
@@ -51,7 +50,6 @@ class Ella_media_model extends App_Model
     {
         $this->db->where('rel_type', 'attachment');
         $this->db->where('rel_id', $appointment_id);
-        $this->db->where('active', 1);
         $this->db->order_by('date_uploaded', 'DESC');
         return $this->db->get(db_prefix() . 'ella_contractor_media')->result_array();
     }
@@ -75,8 +73,6 @@ class Ella_media_model extends App_Model
     public function get_presentations()
     {
         $this->db->where('rel_type', 'presentation');
-        $this->db->where('active', 1);
-        $this->db->order_by('is_default', 'DESC');
         $this->db->order_by('date_uploaded', 'DESC');
         return $this->db->get(db_prefix() . 'ella_contractor_media')->result_array();
     }

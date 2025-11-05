@@ -185,7 +185,7 @@ function ella_contractors_activate_module() {
     if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_media')) {
         $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_contractor_media` (
             `id` int(11) NOT NULL AUTO_INCREMENT,
-            `rel_type` varchar(50) DEFAULT NULL COMMENT "Type: appointment, presentation",
+            `rel_type` varchar(50) DEFAULT NULL COMMENT "Type: attachment, presentation",
             `rel_id` bigint unsigned DEFAULT NULL COMMENT "Related entity ID",
             `org_id` bigint unsigned DEFAULT NULL,
             `file_name` varchar(255) NOT NULL,
@@ -193,14 +193,10 @@ function ella_contractors_activate_module() {
             `file_type` varchar(100) NOT NULL,
             `file_size` int(11) NOT NULL,
             `description` text,
-            `is_default` tinyint(1) DEFAULT 0 COMMENT "Default presentation flag",
-            `active` tinyint(1) DEFAULT 1,
             `date_uploaded` datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`),
             KEY `idx_rel_type_id` (`rel_type`, `rel_id`),
             KEY `idx_org_id` (`org_id`),
-            KEY `is_default` (`is_default`),
-            KEY `active` (`active`),
             KEY `file_type` (`file_type`)
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
     } else {
@@ -213,6 +209,23 @@ function ella_contractors_activate_module() {
         }
         if (!$CI->db->field_exists('org_id', db_prefix() . 'ella_contractor_media')) {
             $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_media` ADD COLUMN `org_id` BIGINT UNSIGNED NULL DEFAULT NULL AFTER `rel_id`');
+        }
+        
+        // Remove is_default and active columns if they exist (no longer needed)
+        if ($CI->db->field_exists('is_default', db_prefix() . 'ella_contractor_media')) {
+            try {
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_media` DROP COLUMN `is_default`');
+            } catch (Exception $e) {
+                // Column might not exist, ignore error
+            }
+        }
+        
+        if ($CI->db->field_exists('active', db_prefix() . 'ella_contractor_media')) {
+            try {
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_media` DROP COLUMN `active`');
+            } catch (Exception $e) {
+                // Column might not exist, ignore error
+            }
         }
         
         // Add indexes if they don't exist (only for existing tables)
@@ -258,8 +271,6 @@ function ella_contractors_activate_module() {
             KEY `idx_tab_name` (`tab_name`),
             KEY `idx_created_by` (`created_by`)
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
-        
-        log_message('info', 'Ella Contractors - Created ella_contractor_measurement_records table');
     }
     
     // Create ella_contractor_measurement_items table - Individual measurements within each record
@@ -277,8 +288,6 @@ function ella_contractors_activate_module() {
             KEY `idx_sort_order` (`sort_order`),
             FOREIGN KEY (`measurement_record_id`) REFERENCES `' . db_prefix() . 'ella_contractor_measurement_records`(`id`) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
-        
-        log_message('info', 'Ella Contractors - Created ella_contractor_measurement_items table');
     }
 
 
@@ -305,12 +314,10 @@ function ella_contractors_activate_module() {
         }
     }
     
-    // Create upload directories for presentations
+    // Create upload directory for presentations
     $base_path = FCPATH . 'uploads/ella_presentations/';
     $directories = [
         $base_path,
-        $base_path . 'default/',
-        $base_path . 'general/',
     ];
     
     // Also setup appointments attachments directory
@@ -336,13 +343,11 @@ function ella_contractors_activate_module() {
     
     if (!file_exists($appointments_htaccess)) {
         file_put_contents($appointments_htaccess, $htaccess_content);
-        log_message('info', 'Created .htaccess for ella_appointments directory');
     } else {
         // Update if it has restrictive rules
         $existing = file_get_contents($appointments_htaccess);
         if (strpos($existing, 'Deny from all') !== false) {
             file_put_contents($appointments_htaccess, $htaccess_content);
-            log_message('info', 'Updated restrictive .htaccess in ella_appointments directory');
         }
     }
     
@@ -380,85 +385,70 @@ function ella_contractors_activate_module() {
                 'AddType application/pdf .pdf' . PHP_EOL .
                 'AddType text/html .html'
             );
-        } else {
-            // Update existing .htaccess if it has restrictive rules
-            $existing_htaccess = file_get_contents($dir . '.htaccess');
-            if (strpos($existing_htaccess, 'Deny from all') !== false) {
-                file_put_contents($dir . '.htaccess', 
-                    '# Allow public access to presentation files for external viewers' . PHP_EOL .
-                    'Order Allow,Deny' . PHP_EOL .
-                    'Allow from all' . PHP_EOL .
-                    '' . PHP_EOL .
-                    '# Prevent directory listing' . PHP_EOL .
-                    'Options -Indexes' . PHP_EOL .
-                    '' . PHP_EOL .
-                    '# Set correct MIME types for PowerPoint files' . PHP_EOL .
-                    'AddType application/vnd.ms-powerpoint .ppt' . PHP_EOL .
-                    'AddType application/vnd.openxmlformats-officedocument.presentationml.presentation .pptx' . PHP_EOL .
-                    'AddType application/pdf .pdf' . PHP_EOL .
-                    'AddType text/html .html'
-                );
-                log_message('info', 'Updated .htaccess in ' . $dir . ' to allow public access for external viewers');
+            } else {
+                // Update existing .htaccess if it has restrictive rules
+                $existing_htaccess = file_get_contents($dir . '.htaccess');
+                if (strpos($existing_htaccess, 'Deny from all') !== false) {
+                    file_put_contents($dir . '.htaccess', 
+                        '# Allow public access to presentation files for external viewers' . PHP_EOL .
+                        'Order Allow,Deny' . PHP_EOL .
+                        'Allow from all' . PHP_EOL .
+                        '' . PHP_EOL .
+                        '# Prevent directory listing' . PHP_EOL .
+                        'Options -Indexes' . PHP_EOL .
+                        '' . PHP_EOL .
+                        '# Set correct MIME types for PowerPoint files' . PHP_EOL .
+                        'AddType application/vnd.ms-powerpoint .ppt' . PHP_EOL .
+                        'AddType application/vnd.openxmlformats-officedocument.presentationml.presentation .pptx' . PHP_EOL .
+                        'AddType application/pdf .pdf' . PHP_EOL .
+                        'AddType text/html .html'
+                    );
+                }
             }
-        }
     }
     
     // Create line items image upload directory
     
         // Add appointment_status column to appointly_appointments table if it doesn't exist
-        if ($CI->db->field_exists('appointment_status', db_prefix() . 'appointly_appointments')) {
-            log_message('info', 'appointment_status column already exists in appointly_appointments table');
-        } else {
+        if (!$CI->db->field_exists('appointment_status', db_prefix() . 'appointly_appointments')) {
             $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `appointment_status` ENUM(\'scheduled\',\'cancelled\',\'complete\') NULL DEFAULT \'scheduled\' AFTER `cancelled`');
-            log_message('info', 'Added appointment_status column to appointly_appointments table');
             
             // Update existing records based on old boolean fields
             $CI->db->query('UPDATE `' . db_prefix() . 'appointly_appointments` SET `appointment_status` = "cancelled" WHERE `cancelled` = 1');
             $CI->db->query('UPDATE `' . db_prefix() . 'appointly_appointments` SET `appointment_status` = "complete" WHERE `finished` = 1 OR `approved` = 1');
             $CI->db->query('UPDATE `' . db_prefix() . 'appointly_appointments` SET `appointment_status` = "scheduled" WHERE `appointment_status` IS NULL');
-            log_message('info', 'Updated existing appointment records with new status values');
         }
         
         // Add end_date and end_time columns to appointly_appointments table if they don't exist
         if (!$CI->db->field_exists('end_date', db_prefix() . 'appointly_appointments')) {
             try {
-                // Add end_date column
                 $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `end_date` DATE NULL AFTER `date`');
-                log_message('info', 'Ella Appointments - Created end_date column');
             } catch (Exception $e) {
-                log_message('error', 'Ella Appointments - Error creating end_date column: ' . $e->getMessage());
+                // Column might already exist, ignore error
             }
         }
         
         if (!$CI->db->field_exists('end_time', db_prefix() . 'appointly_appointments')) {
             try {
-                // Add end_time column
                 $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `end_time` TIME NULL AFTER `start_hour`');
-                log_message('info', 'Ella Appointments - Created end_time column');
             } catch (Exception $e) {
-                log_message('error', 'Ella Appointments - Error creating end_time column: ' . $e->getMessage());
+                // Column might already exist, ignore error
             }
         }
         
-        // Add send_reminder column to appointly_appointments table if it doesn't exist (used for instant reminder)
         if (!$CI->db->field_exists('send_reminder', db_prefix() . 'appointly_appointments')) {
             try {
-                // Add send_reminder column (default 1 for instant reminders)
                 $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `send_reminder` TINYINT(1) DEFAULT 1 AFTER `appointment_status`');
-                log_message('info', 'Ella Appointments - Created send_reminder column');
             } catch (Exception $e) {
-                log_message('error', 'Ella Appointments - Error creating send_reminder column: ' . $e->getMessage());
+                // Column might already exist, ignore error
             }
         }
         
-        // Add reminder_48h column to appointly_appointments table if it doesn't exist
         if (!$CI->db->field_exists('reminder_48h', db_prefix() . 'appointly_appointments')) {
             try {
-                // Add reminder_48h column
                 $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `reminder_48h` TINYINT(1) DEFAULT 1 AFTER `send_reminder`');
-                log_message('info', 'Ella Appointments - Created reminder_48h column');
             } catch (Exception $e) {
-                log_message('error', 'Ella Appointments - Error creating reminder_48h column: ' . $e->getMessage());
+                // Column might already exist, ignore error
             }
         }
     
@@ -483,8 +473,6 @@ function ella_contractors_activate_module() {
             KEY `idx_date` (`date`),
             KEY `idx_rel_id` (`rel_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
-        
-        log_message('info', 'Ella Appointments - Created ella_appointment_activity_log table');
     }
     
     // Create ella_appointment_presentations pivot table for linking appointments to presentations
@@ -501,8 +489,6 @@ function ella_contractors_activate_module() {
             KEY `idx_attached_by` (`attached_by`),
             UNIQUE KEY `unique_appointment_presentation` (`appointment_id`, `presentation_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
-        
-        log_message('info', 'Ella Appointments - Created ella_appointment_presentations pivot table');
     }
     
     // ==================== DATA MIGRATION: Update rel_type for existing records ====================
@@ -513,8 +499,6 @@ function ella_contractors_activate_module() {
         // Fix records where rel_type is NULL or 'appointment' - these are attachments
         $CI->db->where('rel_type IS NULL OR rel_type = "appointment"', NULL, FALSE);
         $CI->db->update(db_prefix() . 'ella_contractor_media', ['rel_type' => 'attachment']);
-        
-        log_message('info', 'Ella Contractors - Updated existing media records: NULL/appointment -> attachment');
     }
     
     // ==================== END DATA MIGRATION ====================
@@ -527,22 +511,11 @@ function ella_contractors_activate_module() {
 function ella_contractors_deactivate_module() {
     $CI = &get_instance();
 
-    // remove ella_contractor_line_items table
-
+    // Remove legacy tables
     $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_line_items`');
-    log_message('info', 'Ella Contractors - Removed ella_contractor_line_items table');
-
-    // remove ella_contractor_line_item_groups table
     $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_line_item_groups`');
-    log_message('info', 'Ella Contractors - Removed ella_contractor_line_item_groups table');
-
-    // remove ella_contractor_estimates table
     $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_estimates`');
-    log_message('info', 'Ella Contractors - Removed ella_contractor_estimates table');
-
-    // remove ella_contractor_estimate_line_items table
     $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_estimate_line_items`');
-    log_message('info', 'Ella Contractors - Removed ella_contractor_estimate_line_items table');
 
 }
 

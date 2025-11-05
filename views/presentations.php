@@ -33,8 +33,6 @@
                                         <th class="text-center">File Name</th>
                                         <th class="text-center">Type</th>
                                         <th class="text-center">Size</th>
-                                        <th class="text-center">Is Default</th>
-                                        <th class="text-center">Active</th>
                                         <th class="text-center">Upload Date</th>
                                         <th class="text-center">File Path</th>
                                         <th class="text-center" width="120px"><?php echo _l('options'); ?></th>
@@ -90,14 +88,6 @@
                                                     <div class="form-group">
                                                         <label for="description">Description (Optional)</label>
                                                         <textarea name="description" id="presentation_description" class="form-control" rows="3" placeholder="Enter description for uploaded presentations..."></textarea>
-                                                    </div>
-                                                    <div class="checkbox checkbox-primary">
-                                                        <input type="checkbox" name="is_default" id="is_default" value="1">
-                                                        <label for="is_default">Set as Default Presentation</label>
-                                                    </div>
-                                                    <div class="checkbox checkbox-primary">
-                                                        <input type="checkbox" name="active" id="active" value="1" checked>
-                                                        <label for="active">Active</label>
                                                     </div>
                                                 </div>
                                             </div>
@@ -376,29 +366,29 @@ var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
 
 $(document).ready(function() {
     // Initialize DataTable for presentations
-    // Sort by column 7 (Upload Date) descending by default
-    // Columns: 0=checkbox, 1=ID, 2=File Name, 3=Type, 4=Size, 5=Is Default, 6=Active, 7=Upload Date, 8=File Path (hidden), 9=Options
-    // Disable sorting on: column 0 (checkbox), column 9 (options)
+    // Sort by column 5 (Upload Date) descending by default
+    // Columns: 0=checkbox, 1=ID, 2=File Name, 3=Type, 4=Size, 5=Upload Date, 6=File Path (hidden), 7=Options
+    // Disable sorting on: column 0 (checkbox), column 7 (options)
     // Show table only AFTER data is loaded to prevent flash/glitch
-    initDataTable('.table-ella_presentations', admin_url + 'ella_contractors/presentations/table', undefined, [0, 9], {
+    initDataTable('.table-ella_presentations', admin_url + 'ella_contractors/presentations/table', undefined, [0, 7], {
         initComplete: function(settings, json) {
             // Show table only after first AJAX load completes
             $('#initial-presentations-table').show();
             
-            // Hide File Path column (column 8) from display but keep it for export
+            // Hide File Path column (column 6) from display but keep it for export
             var table = $('.table-ella_presentations').DataTable();
             if (table) {
-                table.column(8).visible(false);
+                table.column(6).visible(false);
             }
         }
-    }, [7, 'desc']);
+    }, [5, 'desc']);
     
     // Function to hide File Path column after table redraws
     function hideFilePathColumn() {
         var table = $('.table-ella_presentations').DataTable();
         if (table) {
-            // Hide column 8 (File Path) from display
-            table.column(8).visible(false);
+            // Hide column 6 (File Path) from display
+            table.column(6).visible(false);
         }
     }
     
@@ -751,8 +741,6 @@ $(document).ready(function() {
         
         // Add form fields
         formData.append('description', $('#presentation_description').val());
-        formData.append('is_default', $('#is_default').is(':checked') ? '1' : '0');
-        formData.append('active', $('#active').is(':checked') ? '1' : '0');
         
         // Add CSRF token
         formData.append(csrf_token_name, csrf_hash);
@@ -786,8 +774,6 @@ $(document).ready(function() {
                     
                     // Reset form fields
                     $('#presentation_description').val('');
-                    $('#is_default').prop('checked', false);
-                    $('#active').prop('checked', true);
                     
                     // Close modal
                     $('#uploadPresentationModal').modal('hide');
@@ -834,275 +820,9 @@ $(document).ready(function() {
         // Reset form fields
         $('#uploadPresentationForm')[0].reset();
         $('#presentation_description').val('');
-        $('#is_default').prop('checked', false);
-        $('#active').prop('checked', true);
-    });
-    
-    // ========================================
-    // INTERACTIVE STATUS DROPDOWN FUNCTIONALITY
-    // ========================================
-    
-    // Click handler for Is Default button
-    $(document).on('click', '[id^="is-default-btn-"]', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        var presentationId = $(this).attr('id').replace('is-default-btn-', '');
-        var $menu = $('#is-default-menu-' + presentationId);
-        
-        // Hide all other menus first
-        $('[id^="is-default-menu-"], [id^="active-menu-"]').not($menu).hide();
-        
-        // Toggle current menu
-        if ($menu.is(':visible')) {
-            $menu.hide();
-        } else {
-            $menu.show();
-        }
-    });
-    
-    // Click handler for Active button
-    $(document).on('click', '[id^="active-btn-"]', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        var presentationId = $(this).attr('id').replace('active-btn-', '');
-        var $menu = $('#active-menu-' + presentationId);
-        
-        // Hide all other menus first
-        $('[id^="is-default-menu-"], [id^="active-menu-"]').not($menu).hide();
-        
-        // Toggle current menu
-        if ($menu.is(':visible')) {
-            $menu.hide();
-        } else {
-            $menu.show();
-        }
-    });
-    
-    // Hide menus when clicking outside
-    $(document).on('click', function(e) {
-        if (!$(e.target).closest('.status-wrapper').length) {
-            $('[id^="is-default-menu-"], [id^="active-menu-"]').hide();
-        }
     });
 });
 
-// Update Is Default status function
-function updateIsDefault(value, presentationId) {
-    var data = {};
-    data.is_default = value;
-    data.presentation_id = presentationId;
-    
-    // Show loading indicator
-    var statusElement = $('#is-default-btn-' + presentationId);
-    var originalContent = statusElement.html();
-    statusElement.html('<i class="fa fa-spinner fa-spin"></i>');
-    
-    // Hide menu immediately
-    $('#is-default-menu-' + presentationId).hide();
-    
-    $.post(admin_url + 'ella_contractors/presentations/update_is_default', data)
-    .done(function (response) {
-        var result = JSON.parse(response);
-        
-        if (result.success) {
-            // Show success message
-            alert_float('success', result.message);
-            
-            // Update the display in place
-            updateIsDefaultInPlace(presentationId, value);
-        } else {
-            // Show error message
-            alert_float('danger', result.message);
-            
-            // Restore original content
-            statusElement.html(originalContent);
-        }
-    })
-    .fail(function (xhr, status, error) {
-        // Show error message
-        alert_float('danger', 'Failed to update Is Default status. Please try again.');
-        
-        // Restore original content
-        statusElement.html(originalContent);
-        
-        console.error('Is Default status update failed:', error);
-    });
-}
-
-// Update Active status function
-function updateActive(value, presentationId) {
-    var data = {};
-    data.active = value;
-    data.presentation_id = presentationId;
-    
-    // Show loading indicator
-    var statusElement = $('#active-btn-' + presentationId);
-    var originalContent = statusElement.html();
-    statusElement.html('<i class="fa fa-spinner fa-spin"></i>');
-    
-    // Hide menu immediately
-    $('#active-menu-' + presentationId).hide();
-    
-    $.post(admin_url + 'ella_contractors/presentations/update_active', data)
-    .done(function (response) {
-        var result = JSON.parse(response);
-        
-        if (result.success) {
-            // Show success message
-            alert_float('success', result.message);
-            
-            // Update the display in place
-            updateActiveInPlace(presentationId, value);
-        } else {
-            // Show error message
-            alert_float('danger', result.message);
-            
-            // Restore original content
-            statusElement.html(originalContent);
-        }
-    })
-    .fail(function (xhr, status, error) {
-        // Show error message
-        alert_float('danger', 'Failed to update Active status. Please try again.');
-        
-        // Restore original content
-        statusElement.html(originalContent);
-        
-        console.error('Active status update failed:', error);
-    });
-}
-
-// Update Is Default display in place without reloading the table
-function updateIsDefaultInPlace(presentationId, newValue) {
-    var table = $('.table-ella_presentations').DataTable();
-    var currentOrder = table.order();
-    
-    // Find the row
-    var rowIndex = -1;
-    table.rows().every(function(rowIdx, data, node) {
-        if (data[1].includes('>' + presentationId + '<')) {
-            rowIndex = rowIdx;
-            return false;
-        }
-    });
-    
-    if (rowIndex !== -1) {
-        // Generate new HTML
-        var newLabel = newValue == 1 ? 'YES' : 'NO';
-        var badgeClass = newValue == 1 ? 'label-success' : 'label-default';
-        var statusHtml = generateIsDefaultHtml(newValue, presentationId, newLabel, badgeClass);
-        
-        // Update cell (column 5 is Is Default)
-        var cell = table.cell(rowIndex, 5).node();
-        $(cell).html('<div class="text-center" data-order="' + newLabel + '">' + statusHtml + '</div>');
-        
-        table.order(currentOrder).draw(false);
-    } else {
-        // Fallback: reload table
-        table.ajax.reload(function() {
-            table.order(currentOrder).draw(false);
-        }, false);
-    }
-}
-
-// Update Active display in place without reloading the table
-function updateActiveInPlace(presentationId, newValue) {
-    var table = $('.table-ella_presentations').DataTable();
-    var currentOrder = table.order();
-    
-    // Find the row
-    var rowIndex = -1;
-    table.rows().every(function(rowIdx, data, node) {
-        if (data[1].includes('>' + presentationId + '<')) {
-            rowIndex = rowIdx;
-            return false;
-        }
-    });
-    
-    if (rowIndex !== -1) {
-        // Generate new HTML
-        var newLabel = newValue == 1 ? 'YES' : 'NO';
-        var badgeClass = newValue == 1 ? 'label-success' : 'label-danger';
-        var statusHtml = generateActiveHtml(newValue, presentationId, newLabel, badgeClass);
-        
-        // Update cell (column 6 is Active)
-        var cell = table.cell(rowIndex, 6).node();
-        $(cell).html('<div class="text-center" data-order="' + newLabel + '">' + statusHtml + '</div>');
-        
-        table.order(currentOrder).draw(false);
-    } else {
-        // Fallback: reload table
-        table.ajax.reload(function() {
-            table.order(currentOrder).draw(false);
-        }, false);
-    }
-}
-
-// Generate Is Default HTML
-function generateIsDefaultHtml(value, presentationId, label, badgeClass) {
-    var hasPermission = <?php echo has_permission('ella_contractors', '', 'edit') ? 'true' : 'false'; ?>;
-    
-    var html = '<div class="status-wrapper" style="position: relative; display: inline-block;">';
-    html += '<span class="status-button label ' + badgeClass + '" id="is-default-btn-' + presentationId + '" style="cursor: pointer !important;">';
-    html += label;
-    html += '</span>';
-    
-    if (hasPermission) {
-        html += '<div id="is-default-menu-' + presentationId + '" class="status-dropdown table-export-exclude" style="display: none; position: absolute; top: 0; right: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 100px;">';
-        
-        var options = [
-            {value: 1, label: 'YES'},
-            {value: 0, label: 'NO'}
-        ];
-        
-        for (var i = 0; i < options.length; i++) {
-            if (value != options[i].value) {
-                html += '<div class="status-option table-export-exclude" onclick="updateIsDefault(' + options[i].value + ', ' + presentationId + '); return false;" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;">';
-                html += options[i].label;
-                html += '</div>';
-            }
-        }
-        
-        html += '</div>';
-    }
-    
-    html += '</div>';
-    return html;
-}
-
-// Generate Active HTML
-function generateActiveHtml(value, presentationId, label, badgeClass) {
-    var hasPermission = <?php echo has_permission('ella_contractors', '', 'edit') ? 'true' : 'false'; ?>;
-    
-    var html = '<div class="status-wrapper" style="position: relative; display: inline-block;">';
-    html += '<span class="status-button label ' + badgeClass + '" id="active-btn-' + presentationId + '" style="cursor: pointer !important;">';
-    html += label;
-    html += '</span>';
-    
-    if (hasPermission) {
-        html += '<div id="active-menu-' + presentationId + '" class="status-dropdown table-export-exclude" style="display: none; position: absolute; top: 0; right: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 100px;">';
-        
-        var options = [
-            {value: 1, label: 'YES'},
-            {value: 0, label: 'NO'}
-        ];
-        
-        for (var i = 0; i < options.length; i++) {
-            if (value != options[i].value) {
-                html += '<div class="status-option table-export-exclude" onclick="updateActive(' + options[i].value + ', ' + presentationId + '); return false;" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;">';
-                html += options[i].label;
-                html += '</div>';
-            }
-        }
-        
-        html += '</div>';
-    }
-    
-    html += '</div>';
-    return html;
-}
 
 // Preview file function
 function previewFile(fileId, fileName, fileExt, fileUrl) {

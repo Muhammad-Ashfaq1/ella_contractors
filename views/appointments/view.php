@@ -1456,8 +1456,7 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                                             return {
                                                 id: p.id.toString(),
                                                 name: p.original_name || p.file_name,
-                                                file_name: p.file_name,
-                                                is_default: p.is_default
+                                                file_name: p.file_name
                                             };
                                         });
                                     }

@@ -42,8 +42,6 @@ class Presentations extends AdminController
             return;
         }
         
-        $is_default = $this->input->post('is_default') ? 1 : 0;
-        $active = $this->input->post('active') ? 1 : 0;
         $description = $this->input->post('description');
 
         // Handle multiple file uploads - check for presentation_files[] array or fallback to single file
@@ -111,7 +109,7 @@ class Presentations extends AdminController
             ];
 
             // Upload as presentation with rel_type = 'presentation'
-            $uploaded = handle_ella_media_upload($is_default, $active, 'temp_file', 'presentation', null);
+            $uploaded = handle_ella_media_upload(0, 1, 'temp_file', 'presentation', null);
 
             if ($uploaded && !empty($uploaded)) {
                 foreach ($uploaded as $id) {
@@ -173,9 +171,7 @@ class Presentations extends AdminController
         
         // If it's already a PDF, serve it directly
         if ($ext === 'pdf') {
-            $file_path = FCPATH . 'uploads/ella_presentations/' . 
-                        ($file->is_default ? 'default/' : 'general/') . 
-                        $file->file_name;
+            $file_path = FCPATH . 'uploads/ella_presentations/' . $file->file_name;
             
             if (file_exists($file_path)) {
                 header('Content-Type: application/pdf');
@@ -200,9 +196,7 @@ class Presentations extends AdminController
      */
     private function convert_ppt_to_pdf($file) {
         $ext = strtolower(pathinfo($file->file_name, PATHINFO_EXTENSION));
-        $original_path = FCPATH . 'uploads/ella_presentations/' . 
-                        ($file->is_default ? 'default/' : 'general/') . 
-                        $file->file_name;
+        $original_path = FCPATH . 'uploads/ella_presentations/' . $file->file_name;
         
         // Create a cache directory for converted PDFs
         $cache_dir = FCPATH . 'uploads/ella_presentations/cache/';
@@ -411,9 +405,7 @@ startxref
      */
     private function show_conversion_error($file) {
         $ext = strtolower(pathinfo($file->file_name, PATHINFO_EXTENSION));
-        $original_url = site_url('uploads/ella_presentations/' . 
-                        ($file->is_default ? 'default/' : 'general/') . 
-                        $file->file_name);
+        $original_url = site_url('uploads/ella_presentations/' . $file->file_name);
         
         echo '<!DOCTYPE html>
 <html>
@@ -453,7 +445,7 @@ startxref
     }
     
     /**
-     * Get all active presentations (AJAX)
+     * Get all presentations (AJAX)
      * Used by appointment view to populate presentation selection modal
      */
     public function get_all() {
@@ -461,12 +453,10 @@ startxref
             ajax_access_denied();
         }
         
-        // Get all active presentations
-        $this->db->select('id, file_name, original_name, file_type, file_size, date_uploaded, is_default');
+        // Get all presentations
+        $this->db->select('id, file_name, original_name, file_type, file_size, date_uploaded');
         $this->db->from(db_prefix() . 'ella_contractor_media');
         $this->db->where('rel_type', 'presentation');
-        $this->db->where('active', 1);
-        $this->db->order_by('is_default', 'DESC'); // Default presentations first
         $this->db->order_by('date_uploaded', 'DESC');
         
         $presentations = $this->db->get()->result_array();
@@ -511,8 +501,7 @@ startxref
         }
         
         // Delete physical file
-        $folder = $presentation->is_default ? 'default' : 'general';
-        $file_path = FCPATH . 'uploads/ella_presentations/' . $folder . '/' . $presentation->file_name;
+        $file_path = FCPATH . 'uploads/ella_presentations/' . $presentation->file_name;
         
         if (file_exists($file_path)) {
             @unlink($file_path);
@@ -536,122 +525,6 @@ startxref
             echo json_encode([
                 'success' => false,
                 'message' => 'Failed to delete presentation'
-            ]);
-        }
-    }
-    
-    /**
-     * Update Is Default status via AJAX
-     */
-    public function update_is_default() {
-        if (!has_permission('ella_contractors', '', 'edit')) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Access denied'
-            ]);
-            return;
-        }
-        
-        $presentation_id = $this->input->post('presentation_id');
-        $is_default = $this->input->post('is_default');
-        
-        if (!$presentation_id || !isset($is_default)) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Presentation ID and Is Default value are required'
-            ]);
-            return;
-        }
-        
-        // Validate presentation exists
-        $presentation = $this->ella_media_model->get_file($presentation_id);
-        if (!$presentation || $presentation->rel_type !== 'presentation') {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Presentation not found'
-            ]);
-            return;
-        }
-        
-        // If setting to default, unset all other defaults first
-        if ($is_default == 1) {
-            $this->db->where('rel_type', 'presentation');
-            $this->db->update(db_prefix() . 'ella_contractor_media', ['is_default' => 0]);
-        }
-        
-        // Update the presentation
-        $this->db->where('id', $presentation_id);
-        $this->db->where('rel_type', 'presentation');
-        $updated = $this->db->update(db_prefix() . 'ella_contractor_media', ['is_default' => $is_default]);
-        
-        if ($updated || $this->db->affected_rows() >= 0) {
-            // Log activity
-            $action = $is_default == 1 ? 'set as default' : 'removed from default';
-            log_activity('Presentation Is Default Updated [ID: ' . $presentation_id . ', Action: ' . $action . ']');
-            
-            echo json_encode([
-                'success' => true,
-                'message' => 'Is Default status updated successfully'
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Failed to update Is Default status'
-            ]);
-        }
-    }
-    
-    /**
-     * Update Active status via AJAX
-     */
-    public function update_active() {
-        if (!has_permission('ella_contractors', '', 'edit')) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Access denied'
-            ]);
-            return;
-        }
-        
-        $presentation_id = $this->input->post('presentation_id');
-        $active = $this->input->post('active');
-        
-        if (!$presentation_id || !isset($active)) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Presentation ID and Active value are required'
-            ]);
-            return;
-        }
-        
-        // Validate presentation exists
-        $presentation = $this->ella_media_model->get_file($presentation_id);
-        if (!$presentation || $presentation->rel_type !== 'presentation') {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Presentation not found'
-            ]);
-            return;
-        }
-        
-        // Update the presentation
-        $this->db->where('id', $presentation_id);
-        $this->db->where('rel_type', 'presentation');
-        $updated = $this->db->update(db_prefix() . 'ella_contractor_media', ['active' => $active]);
-        
-        if ($updated || $this->db->affected_rows() >= 0) {
-            // Log activity
-            $action = $active == 1 ? 'activated' : 'deactivated';
-            log_activity('Presentation Active Status Updated [ID: ' . $presentation_id . ', Action: ' . $action . ']');
-            
-            echo json_encode([
-                'success' => true,
-                'message' => 'Active status updated successfully'
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Failed to update Active status'
             ]);
         }
     }
@@ -687,8 +560,7 @@ startxref
             
             if ($presentation && $presentation->rel_type === 'presentation') {
                 // Delete physical file
-                $folder = $presentation->is_default ? 'default' : 'general';
-                $file_path = FCPATH . 'uploads/ella_presentations/' . $folder . '/' . $presentation->file_name;
+                $file_path = FCPATH . 'uploads/ella_presentations/' . $presentation->file_name;
                 
                 if (file_exists($file_path)) {
                     @unlink($file_path);

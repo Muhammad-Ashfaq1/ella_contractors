@@ -72,8 +72,7 @@ function loadPresentationsForDropdown(selectId, callback) {
                 
                 response.data.forEach(function(presentation) {
                     var presentationName = presentation.original_name || presentation.file_name;
-                    var isDefault = presentation.is_default == 1 ? ' (Default)' : '';
-                    options += '<option value="' + presentation.id + '">' + presentationName + isDefault + '</option>';
+                    options += '<option value="' + presentation.id + '">' + presentationName + '</option>';
                     
                     // Cache presentation data including file info
                     allPresentationsCache[presentation.id] = presentation;
@@ -157,9 +156,8 @@ function renderAttachedPresentations(presentations, containerId) {
     if (presentations && presentations.length > 0) {
         html = '<ul class="list-unstyled" style="margin-top: 10px;">';
         presentations.forEach(function(presentation) {
-            // Generate public URL
-            var folder = presentation.is_default == 1 ? 'default' : 'general';
-            var publicUrl = siteUrl + 'uploads/ella_presentations/' + folder + '/' + presentation.file_name;
+            // Generate public URL - all presentations in single folder
+            var publicUrl = siteUrl + 'uploads/ella_presentations/' + presentation.file_name;
             
             html += '<li style="margin-bottom: 8px; padding: 8px; background-color: #f8f9fa; border-radius: 4px;">';
             html += '<i class="fa fa-file-powerpoint-o" style="color: #e67e22; margin-right: 8px;"></i> ';
@@ -374,8 +372,7 @@ function initPresentationSelectionPreview(selectId, previewContainerId) {
                 selectedPresentationsInModal.push({
                     id: presentationId,
                     name: cachedPresentation.original_name || cachedPresentation.file_name,
-                    file_name: cachedPresentation.file_name,
-                    is_default: cachedPresentation.is_default
+                    file_name: cachedPresentation.file_name
                 });
             } else {
                 // Fallback if cache not available
@@ -413,9 +410,8 @@ function renderPresentationSelectionPreview(containerId) {
         html = '<strong>Selected Presentations:</strong>';
         html += '<ul class="list-unstyled" style="margin-top: 10px;">';
         selectedPresentationsInModal.forEach(function(presentation) {
-            // Generate public URL (same as view page)
-            var folder = presentation.is_default == 1 ? 'default' : 'general';
-            var publicUrl = siteUrl + 'uploads/ella_presentations/' + folder + '/' + presentation.file_name;
+            // Generate public URL - all presentations in single folder
+            var publicUrl = siteUrl + 'uploads/ella_presentations/' + presentation.file_name;
             
             html += '<li style="margin-bottom: 8px; padding: 8px; background-color: #f8f9fa; border-radius: 4px; display: flex; align-items: center; justify-content: space-between;">';
             html += '<div>';

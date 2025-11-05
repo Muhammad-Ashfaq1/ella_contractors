@@ -1783,8 +1783,6 @@ startxref
                 'file_type' => $file_data['type'],
                 'file_size' => $file_data['size'],
                 'description' => 'Appointment attachment',
-                'is_default' => 0,
-                'active' => 1,
                 'date_uploaded' => date('Y-m-d H:i:s')
             ];
 
@@ -2059,7 +2057,6 @@ startxref
             media.original_name,
             media.file_type,
             media.file_size,
-            media.is_default,
             media.date_uploaded,
             pivot.attached_at,
             pivot.attached_by
@@ -2068,7 +2065,6 @@ startxref
         $this->db->join(db_prefix() . 'ella_contractor_media as media', 'media.id = pivot.presentation_id');
         $this->db->where('pivot.appointment_id', $appointment_id);
         $this->db->where('media.rel_type', 'presentation');
-        $this->db->where('media.active', 1);
         $this->db->order_by('pivot.attached_at', 'DESC');
         
         $presentations = $this->db->get()->result_array();

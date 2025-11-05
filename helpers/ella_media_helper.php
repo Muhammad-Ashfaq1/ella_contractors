@@ -5,23 +5,22 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /**
  * Handle Ella Media Upload - Supports both Presentations and Attachments
  * 
+ * @param int    $legacy1       Legacy parameter (unused, kept for backward compatibility)
+ * @param int    $legacy2       Legacy parameter (unused, kept for backward compatibility)
+ * @param string $index_name    $_FILES array key
  * @param string $rel_type      'presentation' or 'attachment' (default: 'presentation')
  * @param int    $rel_id        Related entity ID (e.g., appointment_id)
- * @param int    $is_default    Is default presentation flag (for presentations only)
- * @param int    $active        Active status
- * @param string $index_name    $_FILES array key
  * @return array|false          Array of uploaded file IDs or false on failure
  */
 if (!function_exists('handle_ella_media_upload')) {
-    function handle_ella_media_upload($is_default = 0, $active = 1, $index_name = 'file', $rel_type = 'presentation', $rel_id = null) {
+    function handle_ella_media_upload($legacy1 = 0, $legacy2 = 1, $index_name = 'file', $rel_type = 'presentation', $rel_id = null) {
         $CI = &get_instance();
         $uploaded_files = [];
         
         // Determine upload path based on rel_type
         if ($rel_type === 'presentation') {
-            // Presentations: /uploads/ella_presentations/default/ or /general/
-            $base_path = FCPATH . 'uploads/ella_presentations/';
-            $path = $is_default ? $base_path . 'default/' : $base_path . 'general/';
+            // Presentations: /uploads/ella_presentations/
+            $path = FCPATH . 'uploads/ella_presentations/';
             $allowed_extensions = ['pdf', 'ppt', 'pptx', 'html'];
         } elseif ($rel_type === 'attachment') {
             // Attachments: /uploads/ella_appointments/{appointment_id}/
@@ -96,8 +95,6 @@ if (!function_exists('handle_ella_media_upload')) {
                         'original_name' => $originalName,
                         'file_type' => $_FILES[$index_name]['type'][$i],
                         'file_size' => $_FILES[$index_name]['size'][$i],
-                        'is_default' => ($rel_type === 'presentation') ? $is_default : 0,
-                        'active' => $active,
                         'date_uploaded' => date('Y-m-d H:i:s')
                     ];
                     
@@ -124,7 +121,7 @@ if (!function_exists('handle_ella_media_upload')) {
 
 /**
  * Get public URL for presentation file
- * Direct URL access like leads: /uploads/ella_presentations/general/{filename}
+ * Direct URL access: /uploads/ella_presentations/{filename}
  * 
  * @param object $media Media record from database
  * @return string Public URL
@@ -135,8 +132,7 @@ if (!function_exists('get_ella_presentation_public_url')) {
             return '';
         }
         
-        $folder = $media->is_default ? 'default' : 'general';
-        return site_url('uploads/ella_presentations/' . $folder . '/' . $media->file_name);
+        return site_url('uploads/ella_presentations/' . $media->file_name);
     }
 }
 
