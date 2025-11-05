@@ -359,7 +359,7 @@ button.delete-btn {
                             <h5>Reminders</h5>
                             <div class="checkbox checkbox-primary">
                                 <input type="checkbox" name="send_reminder" id="send_reminder" value="1" checked>
-                                <label for="send_reminder">Instantly Send Appointment Date/Time to Customer</label>
+                                <label for="send_reminder">Instantly Send Appointment Date/Time to Client</label>
                             </div>
                             <div class="checkbox checkbox-primary">
                                 <input type="checkbox" name="reminder_48h" id="reminder_48h" value="1" checked>
