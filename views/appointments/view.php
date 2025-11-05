@@ -1124,20 +1124,8 @@ function updatePresentationsForAppointment() {
             // All done
             $btn.prop('disabled', false).html(originalHtml);
             
-            // Build success message
-            var messages = [];
-            if (attachCount > 0) {
-                messages.push(attachCount + ' attached');
-            }
-            if (detachCount > 0) {
-                messages.push(detachCount + ' removed');
-            }
-            
-            if (messages.length > 0) {
-                alert_float('success', 'Presentations updated: ' + messages.join(', '));
-            } else {
-                alert_float('info', 'No changes made');
-            }
+            // Simple success message
+            alert_float('success', 'Presentations updated');
             
             $('#attachPresentationModal').modal('hide');
             loadAttachedPresentationsLocal(); // Reload list
