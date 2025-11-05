@@ -947,28 +947,38 @@ function loadAttachedPresentationsLocal() {
     }
 }
 
+// Store originally attached presentation IDs for comparison
+var originallyAttachedPresentationIds = [];
+
 // Open Attach Presentation Modal (using centralized functions)
 function openAttachPresentationModal() {
-    // Create modal dynamically
+    var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
+    
+    // Create modal dynamically with multiple selection support
     var modalHtml = `
     <div class="modal fade" id="attachPresentationModal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Attach Presentation</h4>
+                    <h4 class="modal-title">Attach Presentation(s)</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label>Select Presentation</label>
-                        <select class="form-control selectpicker" id="attach_modal_presentation_select" data-live-search="true">
+                        <label>Select Presentation(s) <small class="text-muted">(You can select multiple)</small></label>
+                        <select class="form-control selectpicker" id="attach_modal_presentation_select" 
+                                data-live-search="true" 
+                                data-selected-text-format="count > 2"
+                                multiple>
                             <option value="">Loading presentations...</option>
                         </select>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="attachPresentationFromView()">Attach</button>
+                    <button type="button" class="btn btn-primary" onclick="updatePresentationsForAppointment()">
+                        <i class="fa fa-refresh"></i> Update Presentations
+                    </button>
                 </div>
             </div>
         </div>
@@ -983,27 +993,156 @@ function openAttachPresentationModal() {
     // Load available presentations using centralized function
     if (typeof loadPresentationsForDropdown === 'function') {
         loadPresentationsForDropdown('attach_modal_presentation_select', function() {
-            $('#attachPresentationModal').modal('show');
+            // After loading all presentations, load and pre-select already attached ones
+            if (typeof loadAttachedPresentations === 'function') {
+                loadAttachedPresentations(appointmentId, null, function(response) {
+                    if (response.success && response.data && response.data.length > 0) {
+                        // Store originally attached IDs for comparison
+                        originallyAttachedPresentationIds = response.data.map(function(p) { return p.id.toString(); });
+                        
+                        // Pre-select already attached presentations
+                        $('#attach_modal_presentation_select').selectpicker('val', originallyAttachedPresentationIds);
+                    } else {
+                        originallyAttachedPresentationIds = [];
+                    }
+                    
+                    // Show modal after pre-selection
+                    $('#attachPresentationModal').modal('show');
+                    $('#attach_modal_presentation_select').selectpicker('refresh');
+                });
+            } else {
+                // No pre-selection available, just show modal
+                originallyAttachedPresentationIds = [];
+                $('#attachPresentationModal').modal('show');
+                $('#attach_modal_presentation_select').selectpicker('refresh');
+            }
         });
     } else {
         // Fallback if centralized function not available
+        originallyAttachedPresentationIds = [];
         $('#attachPresentationModal').modal('show');
+        $('#attach_modal_presentation_select').selectpicker('refresh');
     }
 }
 
-// Attach Presentation to Appointment (wrapper for view page)
-function attachPresentationFromView() {
+// Update Presentations for Appointment (sync mode - add/remove as needed)
+function updatePresentationsForAppointment() {
     var appointmentId = <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
-    var presentationId = $('#attach_modal_presentation_select').val();
+    var selectedPresentations = $('#attach_modal_presentation_select').val() || [];
     
-    if (typeof attachPresentationToAppointment === 'function') {
-        attachPresentationToAppointment(appointmentId, presentationId, function(response) {
-            if (response.success) {
-                $('#attachPresentationModal').modal('hide');
-                loadAttachedPresentationsLocal(); // Reload list
+    // Convert to array if not already
+    var currentlySelected = Array.isArray(selectedPresentations) ? selectedPresentations : [selectedPresentations];
+    
+    // Show loading state
+    var $btn = $('#attachPresentationModal .btn-primary');
+    var originalHtml = $btn.html();
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Updating...');
+    
+    // Determine what to add and what to remove
+    var toAttach = currentlySelected.filter(function(id) {
+        return originallyAttachedPresentationIds.indexOf(id) === -1; // Not previously attached
+    });
+    
+    var toDetach = originallyAttachedPresentationIds.filter(function(id) {
+        return currentlySelected.indexOf(id) === -1; // No longer selected
+    });
+    
+    var attachCount = 0;
+    var detachCount = 0;
+    
+    // Step 1: Detach presentations that are no longer selected
+    function detachPresentations(callback) {
+        if (toDetach.length === 0) {
+            callback();
+            return;
+        }
+        
+        var detachIndex = 0;
+        
+        function detachNext() {
+            if (detachIndex >= toDetach.length) {
+                callback();
+                return;
             }
-        });
+            
+            var presentationId = toDetach[detachIndex];
+            
+            if (typeof window.detachPresentationFromAppointment === 'function') {
+                window.detachPresentationFromAppointment(presentationId, appointmentId, null, function(response) {
+                    if (response && response.success) {
+                        detachCount++;
+                    }
+                    detachIndex++;
+                    detachNext();
+                });
+            } else {
+                detachIndex++;
+                detachNext();
+            }
+        }
+        
+        detachNext();
     }
+    
+    // Step 2: Attach new presentations
+    function attachPresentations(callback) {
+        if (toAttach.length === 0) {
+            callback();
+            return;
+        }
+        
+        var attachIndex = 0;
+        
+        function attachNext() {
+            if (attachIndex >= toAttach.length) {
+                callback();
+                return;
+            }
+            
+            var presentationId = toAttach[attachIndex];
+            
+            if (typeof attachPresentationToAppointment === 'function') {
+                attachPresentationToAppointment(appointmentId, presentationId, function(response) {
+                    if (response.success) {
+                        attachCount++;
+                    }
+                    attachIndex++;
+                    attachNext();
+                });
+            } else {
+                attachIndex++;
+                attachNext();
+            }
+        }
+        
+        attachNext();
+    }
+    
+    // Execute: First detach, then attach
+    detachPresentations(function() {
+        attachPresentations(function() {
+            // All done
+            $btn.prop('disabled', false).html(originalHtml);
+            
+            // Build success message
+            var messages = [];
+            if (attachCount > 0) {
+                messages.push(attachCount + ' attached');
+            }
+            if (detachCount > 0) {
+                messages.push(detachCount + ' removed');
+            }
+            
+            if (messages.length > 0) {
+                alert_float('success', 'Presentations updated: ' + messages.join(', '));
+            } else {
+                alert_float('info', 'No changes made');
+            }
+            
+            $('#attachPresentationModal').modal('hide');
+            loadAttachedPresentationsLocal(); // Reload list
+        });
+    });
 }
 
 // Detach Presentation from Appointment (wrapper for view page)
