@@ -225,7 +225,7 @@ button.delete-btn {
   font-style: normal !important;
 }
 
-/* Customer Notifications heading styling */
+/* Client Notifications heading styling */
 #appointmentModal h5 {
   font-weight: bold;
   font-size: 16px; /* +2px from default 14px */
@@ -356,14 +356,14 @@ button.delete-btn {
                     <div class="row">
                         <!-- Left Column: Reminders -->
                         <div class="col-md-6">
-                            <h5>Reminders</h5>
+                            <h5>Client Reminders</h5>
                             <div class="checkbox checkbox-primary">
                                 <input type="checkbox" name="send_reminder" id="send_reminder" value="1" checked>
                                 <label for="send_reminder">Instantly Send Appointment Date/Time to Client</label>
                             </div>
                             <div class="checkbox checkbox-primary">
                                 <input type="checkbox" name="reminder_48h" id="reminder_48h" value="1" checked>
-                                <label for="reminder_48h">Send 48 Hour Reminder to Customer</label>
+                                <label for="reminder_48h">Send 48 Hour Reminder to Client</label>
                             </div>
                         </div>
                         
