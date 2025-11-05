@@ -5,15 +5,15 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /**
  * Handle Ella Media Upload - Supports both Presentations and Attachments
  * 
- * @param int    $legacy1       Legacy parameter (unused, kept for backward compatibility)
- * @param int    $legacy2       Legacy parameter (unused, kept for backward compatibility)
+ * @param string $custom_name   Custom name for presentation (used as file_name in DB)
+ * @param string $description   Description for the file
  * @param string $index_name    $_FILES array key
  * @param string $rel_type      'presentation' or 'attachment' (default: 'presentation')
  * @param int    $rel_id        Related entity ID (e.g., appointment_id)
  * @return array|false          Array of uploaded file IDs or false on failure
  */
 if (!function_exists('handle_ella_media_upload')) {
-    function handle_ella_media_upload($legacy1 = 0, $legacy2 = 1, $index_name = 'file', $rel_type = 'presentation', $rel_id = null) {
+    function handle_ella_media_upload($custom_name = '', $description = '', $index_name = 'file', $rel_type = 'presentation', $rel_id = null) {
         $CI = &get_instance();
         $uploaded_files = [];
         
@@ -88,13 +88,18 @@ if (!function_exists('handle_ella_media_upload')) {
                 // Move uploaded file
                 if (move_uploaded_file($tmpFilePath, $newFilePath)) {
                     // Prepare database record
+                    // For presentations: use custom_name as file_name (what user entered)
+                    // For attachments: use original filename as file_name
+                    $display_name = ($rel_type === 'presentation' && !empty($custom_name)) ? $custom_name : $originalName;
+                    
                     $data = [
                         'rel_type' => $rel_type,
                         'rel_id' => $rel_id,
-                        'file_name' => $filename,
-                        'original_name' => $originalName,
+                        'file_name' => $filename,  // Unique physical filename on disk
+                        'original_name' => $display_name,  // User's custom name or original filename
                         'file_type' => $_FILES[$index_name]['type'][$i],
                         'file_size' => $_FILES[$index_name]['size'][$i],
+                        'description' => $description,
                         'date_uploaded' => date('Y-m-d H:i:s')
                     ];
                     

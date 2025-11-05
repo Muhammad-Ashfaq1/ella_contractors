@@ -60,6 +60,25 @@
                                             </h4>
                                         </div>
                                         <div class="modal-body">
+                                            <!-- Presentation Name and Description in Same Row -->
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label for="presentation_name">Presentation Name <span class="text-danger">*</span></label>
+                                                        <input type="text" name="presentation_name" id="presentation_name" class="form-control" placeholder="e.g., Appointment Presentation" required>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label for="description">Description (Optional)</label>
+                                                        <input type="text" name="description" id="presentation_description" class="form-control" placeholder="Brief description...">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <hr>
+                                            
+                                            <!-- Dropzone Section -->
                                             <div class="row">
                                                 <div class="col-md-12">
                                                     <p class="text-muted">
@@ -78,17 +97,6 @@
                                                     
                                                     <!-- Hidden field to track selected files (for validation) -->
                                                     <input type="hidden" id="presentation_files_count" value="0">
-                                                </div>
-                                            </div>
-                                            
-                                            <hr>
-                                            
-                                            <div class="row">
-                                                <div class="col-md-12">
-                                                    <div class="form-group">
-                                                        <label for="description">Description (Optional)</label>
-                                                        <textarea name="description" id="presentation_description" class="form-control" rows="3" placeholder="Enter description for uploaded presentations..."></textarea>
-                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -717,6 +725,14 @@ $(document).ready(function() {
     
     // Upload button click handler
     $(document).on('click', '#uploadPresentationBtn', function() {
+        // Validate presentation name
+        var presentationName = $('#presentation_name').val().trim();
+        if (!presentationName) {
+            alert_float('warning', 'Please enter a presentation name');
+            $('#presentation_name').focus();
+            return;
+        }
+        
         if (presentationFiles.length === 0) {
             alert_float('warning', 'Please select files to upload');
             return;
@@ -740,6 +756,7 @@ $(document).ready(function() {
         });
         
         // Add form fields
+        formData.append('presentation_name', $('#presentation_name').val().trim());
         formData.append('description', $('#presentation_description').val());
         
         // Add CSRF token
@@ -773,6 +790,7 @@ $(document).ready(function() {
                     $btn.prop('disabled', true).html(originalText);
                     
                     // Reset form fields
+                    $('#presentation_name').val('');
                     $('#presentation_description').val('');
                     
                     // Close modal
@@ -819,6 +837,7 @@ $(document).ready(function() {
         
         // Reset form fields
         $('#uploadPresentationForm')[0].reset();
+        $('#presentation_name').val('');
         $('#presentation_description').val('');
     });
 });

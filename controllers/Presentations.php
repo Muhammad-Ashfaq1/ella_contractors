@@ -42,7 +42,17 @@ class Presentations extends AdminController
             return;
         }
         
+        $presentation_name = trim($this->input->post('presentation_name'));
         $description = $this->input->post('description');
+        
+        // Validate presentation name is provided
+        if (empty($presentation_name)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Presentation name is required'
+            ]);
+            return;
+        }
 
         // Handle multiple file uploads - check for presentation_files[] array or fallback to single file
         $files_key = null;
@@ -109,23 +119,18 @@ class Presentations extends AdminController
             ];
 
             // Upload as presentation with rel_type = 'presentation'
-            $uploaded = handle_ella_media_upload(0, 1, 'temp_file', 'presentation', null);
+            // Pass the user's custom name to be stored in database
+            $uploaded = handle_ella_media_upload($presentation_name, $description, 'temp_file', 'presentation', null);
 
             if ($uploaded && !empty($uploaded)) {
                 foreach ($uploaded as $id) {
-                    // Update description if provided
-                    if (!empty($description)) {
-                        $this->db->where('id', $id);
-                        $this->db->update(db_prefix() . 'ella_contractor_media', ['description' => $description]);
-                    }
-                    
                     $uploaded_files[] = [
                         'id' => $id,
-                        'name' => $file_name
+                        'name' => $presentation_name
                     ];
                     
                     // Log activity
-                    log_activity('Presentation Uploaded [ID: ' . $id . ', File: ' . $file_name . ']');
+                    log_activity('Presentation Uploaded [ID: ' . $id . ', Name: ' . $presentation_name . ', File: ' . $file_name . ']');
                 }
             } else {
                 $errors[] = 'Failed to upload "' . $file_name . '"';
