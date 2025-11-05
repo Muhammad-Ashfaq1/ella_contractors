@@ -22,7 +22,7 @@
                         <hr class="hr-panel-heading" />
                         
                         <!-- Presentations DataTable -->
-                        <div class="table-responsive">
+                        <div class="table-responsive" id="initial-presentations-table" style="display: none;">
                             <table class="table table-striped table-ella_presentations">
                                 <thead>
                                     <tr>
@@ -379,10 +379,21 @@ $(document).ready(function() {
     // Sort by column 7 (Upload Date) descending by default
     // Columns: 0=checkbox, 1=ID, 2=File Name, 3=Type, 4=Size, 5=Is Default, 6=Active, 7=Upload Date, 8=File Path (hidden), 9=Options
     // Disable sorting on: column 0 (checkbox), column 9 (options)
-    initDataTable('.table-ella_presentations', admin_url + 'ella_contractors/presentations/table', undefined, [0, 9], {}, [7, 'desc']);
+    // Show table only AFTER data is loaded to prevent flash/glitch
+    initDataTable('.table-ella_presentations', admin_url + 'ella_contractors/presentations/table', undefined, [0, 9], {
+        initComplete: function(settings, json) {
+            // Show table only after first AJAX load completes
+            $('#initial-presentations-table').show();
+            
+            // Hide File Path column (column 8) from display but keep it for export
+            var table = $('.table-ella_presentations').DataTable();
+            if (table) {
+                table.column(8).visible(false);
+            }
+        }
+    }, [7, 'desc']);
     
-    // Hide File Path column (column 8) from display but keep it for export
-    // This column will be hidden in the listing but included in CSV/Excel/PDF exports
+    // Function to hide File Path column after table redraws
     function hideFilePathColumn() {
         var table = $('.table-ella_presentations').DataTable();
         if (table) {
@@ -390,9 +401,6 @@ $(document).ready(function() {
             table.column(8).visible(false);
         }
     }
-    
-    // Hide column after table initialization
-    setTimeout(hideFilePathColumn, 500);
     
     // Re-hide column after table redraws (after delete, bulk delete, etc.)
     if ($('.table-ella_presentations').length) {

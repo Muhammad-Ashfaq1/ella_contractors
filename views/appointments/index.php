@@ -41,7 +41,7 @@
                         <div class="clearfix"></div>
                         <hr class="hr-panel-heading" />
                         
-                        <div class="table-responsive">
+                        <div class="table-responsive" id="initial-appointments-table" style="display: none;">
                             <table class="table table-striped table-ella_appointments">
                                 <thead>
                                     <tr>
@@ -356,7 +356,13 @@ $(document).ready(function() {
     // Columns: 0=checkbox, 1=ID, 2=Appointment, 3=Lead, 4=Scheduled(datetime), 5=Status, 6=Measurements, 7=Estimates, 8=Options
     // Disable sorting on: column 0 (checkbox), column 8 (options)
     // Backend column 4 now uses CONCAT(date, time) for proper server-side sorting
-    initDataTable('.table-ella_appointments', admin_url + 'ella_contractors/appointments/table', undefined, [0, 8], {}, [4, 'desc']);
+    // Show table only AFTER data is loaded to prevent flash/glitch
+    initDataTable('.table-ella_appointments', admin_url + 'ella_contractors/appointments/table', undefined, [0, 8], {
+        initComplete: function(settings, json) {
+            // Show table only after first AJAX load completes
+            $('#initial-appointments-table').show();
+        }
+    }, [4, 'desc']);
     
     // Function to add bulk delete button to DataTable toolbar
     function addBulkDeleteButton() {
