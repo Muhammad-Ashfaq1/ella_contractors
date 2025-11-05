@@ -267,6 +267,16 @@
     }
 }
 
+/* Pencil icon hover effect */
+.edit-name-icon {
+    transition: opacity 0.2s ease;
+}
+
+.presentation-name:hover + .edit-name-icon,
+.edit-name-icon:hover {
+    opacity: 1 !important;
+}
+
 /* Dropzone styles - match attachment modal */
 #presentationDropzone.drop-zone {
     max-width: 100%;
@@ -957,6 +967,84 @@ $(document).on('load', 'iframe', function() {
             '</div>');
     });
 });
+
+// Edit presentation name inline
+function editPresentationName(presentationId, currentName) {
+    var nameSpan = $('.presentation-name[data-id="' + presentationId + '"]');
+    var parentDiv = nameSpan.parent();
+    
+    // Replace with input and small icon buttons
+    parentDiv.html(
+        '<input type="text" class="form-control" id="edit-name-' + presentationId + '" value="' + currentName + '" style="display: inline-block; width: 200px; padding: 4px 8px; font-size: 13px;" onkeypress="if(event.key===\'Enter\'){savePresentationName(' + presentationId + ', \'' + currentName + '\');}">' +
+        '<i class="fa fa-check" onclick="savePresentationName(' + presentationId + ', \'' + currentName + '\')" style="font-size: 11px; margin-left: 6px; cursor: pointer; color: #28a745;" title="Save"></i>' +
+        '<i class="fa fa-times" onclick="cancelEditPresentationName(' + presentationId + ', \'' + currentName + '\')" style="font-size: 11px; margin-left: 6px; cursor: pointer; color: #6c757d;" title="Cancel"></i>'
+    );
+    
+    // Focus and select
+    setTimeout(function() {
+        $('#edit-name-' + presentationId).focus().select();
+    }, 100);
+}
+
+// Save presentation name
+function savePresentationName(presentationId, oldName) {
+    var newName = $('#edit-name-' + presentationId).val().trim();
+    
+    if (!newName) {
+        alert_float('warning', 'Please enter a name');
+        $('#edit-name-' + presentationId).focus();
+        return;
+    }
+    
+    if (newName === oldName) {
+        cancelEditPresentationName(presentationId, oldName);
+        return;
+    }
+    
+    var table = $('.table-ella_presentations').DataTable();
+    var currentOrder = table.order();
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/presentations/update_name',
+        type: 'POST',
+        data: {
+            id: presentationId,
+            name: newName,
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                alert_float('success', 'Name updated successfully');
+                // Reload table maintaining sort order
+                table.ajax.reload(function() {
+                    table.order(currentOrder).draw(false);
+                });
+            } else {
+                alert_float('danger', response.message || 'Failed to update name');
+                cancelEditPresentationName(presentationId, oldName);
+            }
+        },
+        error: function(xhr, status, error) {
+            alert_float('danger', 'Error updating name: ' + error);
+            cancelEditPresentationName(presentationId, oldName);
+        }
+    });
+}
+
+// Cancel edit presentation name
+function cancelEditPresentationName(presentationId, originalName) {
+    var parentDiv = $('.presentation-name[data-id="' + presentationId + '"]').parent();
+    if (!parentDiv.length) {
+        parentDiv = $('#edit-name-' + presentationId).parent();
+    }
+    
+    // Restore original display with small pencil icon
+    parentDiv.html(
+        '<span class="presentation-name" data-id="' + presentationId + '">' + originalName + '</span>' +
+        '<i class="fa fa-pencil edit-name-icon" onclick="editPresentationName(' + presentationId + ', \'' + originalName.replace(/'/g, "\\'") + '\'); event.stopPropagation();" style="font-size: 11px; margin-left: 6px; opacity: 0.5; cursor: pointer; color: #3498db;" title="Edit name"></i>'
+    );
+}
 
 // Delete presentation
 function deletePresentation(presentationId) {

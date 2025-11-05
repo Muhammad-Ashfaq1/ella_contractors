@@ -535,6 +535,68 @@ startxref
     }
     
     /**
+     * Update presentation name (AJAX inline edit)
+     */
+    public function update_name() {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied'
+            ]);
+            return;
+        }
+        
+        $presentation_id = $this->input->post('id');
+        $new_name = trim($this->input->post('name'));
+        
+        if (!$presentation_id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Presentation ID is required'
+            ]);
+            return;
+        }
+        
+        if (empty($new_name)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Name cannot be empty'
+            ]);
+            return;
+        }
+        
+        // Verify presentation exists
+        $presentation = $this->ella_media_model->get_file($presentation_id);
+        
+        if (!$presentation || $presentation->rel_type !== 'presentation') {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Presentation not found'
+            ]);
+            return;
+        }
+        
+        // Update name in database
+        $this->db->where('id', $presentation_id);
+        $this->db->where('rel_type', 'presentation');
+        $updated = $this->db->update(db_prefix() . 'ella_contractor_media', [
+            'original_name' => $new_name
+        ]);
+        
+        if ($updated) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Name updated successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to update name'
+            ]);
+        }
+    }
+    
+    /**
      * Bulk delete presentations via AJAX
      */
     public function bulk_delete() {

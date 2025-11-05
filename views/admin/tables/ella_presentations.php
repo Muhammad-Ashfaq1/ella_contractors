@@ -85,8 +85,11 @@ try {
         // ID column
         $row[] = '<div class="text-center">' . htmlspecialchars($aRow['id']) . '</div>';
         
-        // File Name column
-        $row[] = '<div class="text-center">' . htmlspecialchars($aRow['file_name']) . '</div>';
+        // File Name column - with inline edit pencil icon
+        $row[] = '<div class="text-center">
+                    <span class="presentation-name" data-id="' . $aRow['id'] . '">' . htmlspecialchars($aRow['file_name']) . '</span>
+                    <i class="fa fa-pencil edit-name-icon" onclick="editPresentationName(' . $aRow['id'] . ', \'' . addslashes($aRow['file_name']) . '\'); event.stopPropagation();" style="font-size: 11px; margin-left: 6px; opacity: 0.5; cursor: pointer; color: #3498db;" title="Edit name"></i>
+                  </div>';
         
         // Type column
         $ext = strtoupper(pathinfo($aRow['internal_file_name'], PATHINFO_EXTENSION));
