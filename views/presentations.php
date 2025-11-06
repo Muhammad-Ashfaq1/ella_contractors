@@ -386,10 +386,11 @@ var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
 $(document).ready(function() {
     // Initialize DataTable for presentations
     // Sort by column 5 (Upload Date) descending by default
-    // Columns: 0=checkbox, 1=ID, 2=File Name, 3=Type, 4=Size, 5=Upload Date, 6=Published By, 7=File Path (hidden), 8=Options
-    // Disable sorting on: column 0 (checkbox), column 6 (Published By), column 8 (options)
+    // Columns: 0=checkbox, 1=ID, 2=File Name, 3=Type, 4=Size, 5=Upload Date, 6=Published By (SORTABLE), 7=File Path (hidden), 8=Options
+    // Disable sorting on: column 0 (checkbox), column 8 (options)
+    // Published By (column 6) is NOW SORTABLE by staff full name
     // Show table only AFTER data is loaded to prevent flash/glitch
-    initDataTable('.table-ella_presentations', admin_url + 'ella_contractors/presentations/table', undefined, [0, 6, 8], {
+    initDataTable('.table-ella_presentations', admin_url + 'ella_contractors/presentations/table', undefined, [0, 8], {
         initComplete: function(settings, json) {
             // Show table only after first AJAX load completes
             $('#initial-presentations-table').show();

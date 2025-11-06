@@ -40,11 +40,12 @@ $aColumns = [
     db_prefix() . 'ella_contractor_media.file_name as internal_file_name', // 3: Internal file name for extension
     db_prefix() . 'ella_contractor_media.file_size as file_size',    // 4: Size
     db_prefix() . 'ella_contractor_media.date_uploaded as date_uploaded', // 5: Upload Date
-    db_prefix() . 'ella_contractor_media.uploaded_by as uploaded_by', // 6: Published By (staff ID)
-    db_prefix() . 'staff.firstname as staff_firstname',               // 7: Staff first name
-    db_prefix() . 'staff.lastname as staff_lastname',                 // 8: Staff last name
-    db_prefix() . 'ella_contractor_media.id as file_path_id',         // 9: File Path (hidden column)
-    db_prefix() . 'ella_contractor_media.id as options_id',           // 10: Options column
+    'CONCAT(' . db_prefix() . 'staff.firstname, " ", ' . db_prefix() . 'staff.lastname) as staff_full_name', // 6: Published By (sortable by full name)
+    db_prefix() . 'ella_contractor_media.uploaded_by as uploaded_by', // 7: Staff ID for avatar
+    db_prefix() . 'staff.firstname as staff_firstname',               // 8: Staff first name
+    db_prefix() . 'staff.lastname as staff_lastname',                 // 9: Staff last name
+    db_prefix() . 'ella_contractor_media.id as file_path_id',         // 10: File Path (hidden column)
+    db_prefix() . 'ella_contractor_media.id as options_id',           // 11: Options column
 ];
 
 $join = [
@@ -124,6 +125,7 @@ try {
         $row[] = '<div class="text-center">' . $date_formatted . '</div>';
         
         // Published By column - Staff avatar with tooltip (like leads table)
+        // Column 6 (staff_full_name) is used for sorting, we just display the avatar here
         $publishedByOutput = '';
         if (!empty($aRow['uploaded_by'])) {
             $full_name = $aRow['staff_firstname'] . ' ' . $aRow['staff_lastname'];
@@ -132,6 +134,8 @@ try {
                     staff_profile_image($aRow['uploaded_by'], ['staff-profile-image-small']) . 
                 '</a>
             </div>';
+            // Add hidden full name for export
+            $publishedByOutput .= '<span class="hide">' . htmlspecialchars($full_name) . '</span>';
         } else {
             $publishedByOutput = '<div class="text-center"><span class="text-muted">—</span></div>';
         }
