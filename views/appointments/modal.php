@@ -352,9 +352,9 @@ button.delete-btn {
                         </div>
                     </div>
                     
-                    <!-- Reminders and Presentation in Same Row -->
+                    <!-- Reminders Row: Client Reminders (Left) and My Reminder (Right) -->
                     <div class="row">
-                        <!-- Left Column: Reminders -->
+                        <!-- Left Column: Client Reminders -->
                         <div class="col-md-6">
                             <h5>Client Reminders</h5>
                             <div class="checkbox checkbox-primary">
@@ -367,8 +367,21 @@ button.delete-btn {
                             </div>
                         </div>
                         
-                        <!-- Right Column: Presentation Selection -->
+                        <!-- Right Column: My Reminder (Staff) -->
                         <div class="col-md-6">
+                            <h5>My Reminder</h5>
+                            <div class="checkbox checkbox-success">
+                                <input type="checkbox" name="staff_reminder_48h" id="staff_reminder_48h" value="1" checked>
+                                <label for="staff_reminder_48h">My Reminder (48 hours before)</label>
+                            </div>
+                            <small class="text-muted" style="display: block; margin-top: 5px;">You will receive an email reminder 48 hours before this appointment</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Presentation Selection Row (Full Width) -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <hr style="margin: 20px 0; border-top: 1px solid #e9ecef;">
                             <h5>Choose Presentation <span style="opacity: 0.7;">(Optional)</span></h5>
                             <div class="form-group">
                                 <select class="form-control selectpicker" id="presentation_select" name="presentation_ids[]" multiple data-live-search="true">

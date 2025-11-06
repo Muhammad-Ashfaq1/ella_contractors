@@ -442,6 +442,46 @@ html {
                                         </a>
                                     </p>
                                 </div>
+                                
+                                <!-- ICS Calendar Download Section -->
+                                <div style="margin-top: 20px; padding: 15px; background-color: #e8f5e9; border-radius: 4px; border: 1px solid #c8e6c9;">
+                                    <h5 style="margin-top: 0; color: #2e7d32;">
+                                        <i class="fa fa-calendar"></i> Calendar Downloads
+                                    </h5>
+                                    <p class="text-muted" style="font-size: 13px; margin-bottom: 12px;">
+                                        Download calendar invitations (.ics files) to add this appointment to your calendar app
+                                    </p>
+                                    
+                                    <div class="btn-group" role="group" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                        <?php if (isset($appointment->send_reminder) && $appointment->send_reminder == 1 || 
+                                                  isset($appointment->reminder_48h) && $appointment->reminder_48h == 1): ?>
+                                            <a href="<?php echo admin_url('ella_contractors/appointments/download_ics/' . $appointment->id . '/client'); ?>" 
+                                               class="btn btn-sm btn-info" 
+                                               title="Download calendar invitation for client"
+                                               style="flex: 1; min-width: 140px;">
+                                                <i class="fa fa-calendar"></i> Client ICS
+                                            </a>
+                                        <?php endif; ?>
+                                        
+                                        <?php if (isset($appointment->staff_reminder_48h) && $appointment->staff_reminder_48h == 1): ?>
+                                            <a href="<?php echo admin_url('ella_contractors/appointments/download_ics/' . $appointment->id . '/staff'); ?>" 
+                                               class="btn btn-sm btn-success" 
+                                               title="Download calendar invitation for yourself"
+                                               style="flex: 1; min-width: 140px;">
+                                                <i class="fa fa-calendar-check-o"></i> My ICS
+                                            </a>
+                                        <?php endif; ?>
+                                        
+                                        <?php if ((!isset($appointment->send_reminder) || $appointment->send_reminder != 1) && 
+                                                  (!isset($appointment->reminder_48h) || $appointment->reminder_48h != 1) &&
+                                                  (!isset($appointment->staff_reminder_48h) || $appointment->staff_reminder_48h != 1)): ?>
+                                            <p class="text-muted" style="margin: 0; font-size: 13px;">
+                                                <i class="fa fa-info-circle"></i> No reminders enabled for this appointment. 
+                                                <a href="javascript:void(0)" onclick="editAppointment(<?php echo $appointment->id; ?>)">Edit appointment</a> to enable reminders and download calendar files.
+                                            </p>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
                             
                             </div>
                         </div>

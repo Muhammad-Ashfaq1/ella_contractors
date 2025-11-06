@@ -396,7 +396,8 @@ class Appointments extends AdminController
             'appointment_status' => $this->input->post('status') ?: 'scheduled',
             'source' => 'ella_contractor',
             'send_reminder' => $this->input->post('send_reminder') ? 1 : 0,
-            'reminder_48h' => $this->input->post('reminder_48h') ? 1 : 0
+            'reminder_48h' => $this->input->post('reminder_48h') ? 1 : 0,
+            'staff_reminder_48h' => $this->input->post('staff_reminder_48h') ? 1 : 0
         ];
         
         $appointment_id = $this->input->post('appointment_id');
@@ -418,6 +419,13 @@ class Appointments extends AdminController
                     }
                     // Handle file uploads for update
                     $this->handle_appointment_file_uploads($appointment_id);
+                    
+                    // Schedule/re-schedule reminders (emails & ICS files)
+                    if (!function_exists('ella_schedule_reminders')) {
+                        require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
+                    }
+                    ella_schedule_reminders($appointment_id);
+                    
                     echo json_encode([
                         'success' => true,
                         'message' => 'Appointment updated successfully'
@@ -452,6 +460,13 @@ class Appointments extends AdminController
                     }
                     // Handle file uploads for creation
                     $this->handle_appointment_file_uploads($appointment_id);
+                    
+                    // Schedule reminders (emails & ICS files)
+                    if (!function_exists('ella_schedule_reminders')) {
+                        require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
+                    }
+                    ella_schedule_reminders($appointment_id);
+                    
                     echo json_encode([
                         'success' => true,
                         'message' => 'Appointment created successfully',
@@ -2217,6 +2232,44 @@ startxref
                 'success' => false,
                 'message' => 'Failed to remove presentation or it was not attached'
             ]);
+        }
+    }
+
+    /**
+     * Download ICS calendar file for appointment
+     * Allows staff to download calendar invitations for client or themselves
+     * 
+     * @param int $appointment_id Appointment ID
+     * @param string $type 'client' or 'staff'
+     */
+    public function download_ics($appointment_id, $type = 'client')
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            access_denied('ella_contractors');
+        }
+        
+        // Validate type parameter
+        if (!in_array($type, ['client', 'staff'])) {
+            show_404();
+        }
+        
+        // Load helper
+        if (!function_exists('ella_generate_ics')) {
+            require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
+        }
+        
+        // Generate ICS file
+        $ics_file = ella_generate_ics($appointment_id, $type);
+        
+        if ($ics_file && file_exists($ics_file)) {
+            // Force download
+            $this->load->helper('download');
+            $filename = $type . '_appointment_' . $appointment_id . '.ics';
+            force_download($filename, file_get_contents($ics_file));
+        } else {
+            // Failed to generate ICS file
+            set_alert('danger', 'Failed to generate calendar file. Please try again.');
+            redirect(admin_url('ella_contractors/appointments/view/' . $appointment_id));
         }
     }
 

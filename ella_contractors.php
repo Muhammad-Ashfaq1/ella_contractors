@@ -157,6 +157,12 @@ function ella_contractors_load_helpers() {
     
     // Load appointments helper
     $CI->load->helper('ella_contractors/ella_appointments_helper');
+    
+    // Load reminder helper manually (for ICS generation and email scheduling)
+    $reminder_helper_path = module_dir_path(ELLA_CONTRACTORS_MODULE_NAME, 'helpers/ella_reminder_helper.php');
+    if (file_exists($reminder_helper_path)) {
+        require_once($reminder_helper_path);
+    }
 }
 
 function ella_contractors_activate_module() {
@@ -458,6 +464,44 @@ function ella_contractors_activate_module() {
                 $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `reminder_48h` TINYINT(1) DEFAULT 1 AFTER `send_reminder`');
             } catch (Exception $e) {
                 // Column might already exist, ignore error
+            }
+        }
+        
+        // Add staff_reminder_48h column for staff reminders (NEW - My Reminder feature)
+        if (!$CI->db->field_exists('staff_reminder_48h', db_prefix() . 'appointly_appointments')) {
+            try {
+                // Add column with DEFAULT 1 (checked by default) to match UI behavior
+                // TINYINT(1) NULL allows for compatibility with existing records
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `staff_reminder_48h` TINYINT(1) NULL DEFAULT 1 AFTER `reminder_48h`');
+                
+                // Add index for faster queries when filtering by this field
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD INDEX `idx_staff_reminder_48h` (`staff_reminder_48h`)');
+                
+                // Update existing ella_contractor appointments to have staff reminder enabled by default
+                // This only affects appointments with source='ella_contractor', not appointly's own appointments
+                $CI->db->query('UPDATE `' . db_prefix() . 'appointly_appointments` SET `staff_reminder_48h` = 1 WHERE `source` = "ella_contractor" AND `staff_reminder_48h` IS NULL');
+                
+                log_message('info', 'EllaContractors: staff_reminder_48h column added successfully');
+            } catch (Exception $e) {
+                // Column might already exist or error occurred - log but don't break activation
+                log_message('error', 'EllaContractors: Failed to add staff_reminder_48h column - ' . $e->getMessage());
+            }
+        }
+        
+        // Create ICS upload directory for calendar file storage
+        $ics_dir = FCPATH . 'uploads/ella_appointments/ics/';
+        if (!is_dir($ics_dir)) {
+            try {
+                mkdir($ics_dir, 0755, true);
+                
+                // Create index.html to prevent directory listing
+                if (!file_exists($ics_dir . 'index.html')) {
+                    file_put_contents($ics_dir . 'index.html', '');
+                }
+                
+                log_message('info', 'EllaContractors: ICS directory created successfully');
+            } catch (Exception $e) {
+                log_message('error', 'EllaContractors: Failed to create ICS directory - ' . $e->getMessage());
             }
         }
     
