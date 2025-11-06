@@ -251,6 +251,15 @@ function ella_contractors_activate_module() {
         }
     }
     
+    // Add uploaded_by column to track who published presentations
+    if (!$CI->db->field_exists('uploaded_by', db_prefix() . 'ella_contractor_media')) {
+        $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_media` ADD COLUMN `uploaded_by` INT(11) DEFAULT NULL AFTER `date_uploaded`');
+        try {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'ella_contractor_media` ADD KEY `idx_uploaded_by` (`uploaded_by`)');
+        } catch (Exception $e) {
+            // Key might already exist, ignore error
+        }
+    }
 
     // Create ella_contractor_measurement_records table - New dynamic tab structure
     if (!$CI->db->table_exists(db_prefix() . 'ella_contractor_measurement_records')) {

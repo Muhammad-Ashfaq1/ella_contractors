@@ -100,7 +100,8 @@ if (!function_exists('handle_ella_media_upload')) {
                         'file_type' => $_FILES[$index_name]['type'][$i],
                         'file_size' => $_FILES[$index_name]['size'][$i],
                         'description' => $description,
-                        'date_uploaded' => date('Y-m-d H:i:s')
+                        'date_uploaded' => date('Y-m-d H:i:s'),
+                        'uploaded_by' => get_staff_user_id()  // Track who published the presentation
                     ];
                     
                     // Insert to database

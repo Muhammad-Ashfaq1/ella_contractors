@@ -34,6 +34,7 @@
                                         <th class="text-center">Type</th>
                                         <th class="text-center">Size</th>
                                         <th class="text-center">Upload Date</th>
+                                        <th class="text-center">Published By</th>
                                         <th class="text-center">File Path</th>
                                         <th class="text-center" width="120px"><?php echo _l('options'); ?></th>
                                     </tr>
@@ -385,18 +386,18 @@ var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
 $(document).ready(function() {
     // Initialize DataTable for presentations
     // Sort by column 5 (Upload Date) descending by default
-    // Columns: 0=checkbox, 1=ID, 2=File Name, 3=Type, 4=Size, 5=Upload Date, 6=File Path (hidden), 7=Options
-    // Disable sorting on: column 0 (checkbox), column 7 (options)
+    // Columns: 0=checkbox, 1=ID, 2=File Name, 3=Type, 4=Size, 5=Upload Date, 6=Published By, 7=File Path (hidden), 8=Options
+    // Disable sorting on: column 0 (checkbox), column 6 (Published By), column 8 (options)
     // Show table only AFTER data is loaded to prevent flash/glitch
-    initDataTable('.table-ella_presentations', admin_url + 'ella_contractors/presentations/table', undefined, [0, 7], {
+    initDataTable('.table-ella_presentations', admin_url + 'ella_contractors/presentations/table', undefined, [0, 6, 8], {
         initComplete: function(settings, json) {
             // Show table only after first AJAX load completes
             $('#initial-presentations-table').show();
             
-            // Hide File Path column (column 6) from display but keep it for export
+            // Hide File Path column (column 7) from display but keep it for export
             var table = $('.table-ella_presentations').DataTable();
             if (table) {
-                table.column(6).visible(false);
+                table.column(7).visible(false);
             }
         }
     }, [5, 'desc']);
@@ -405,8 +406,8 @@ $(document).ready(function() {
     function hideFilePathColumn() {
         var table = $('.table-ella_presentations').DataTable();
         if (table) {
-            // Hide column 6 (File Path) from display
-            table.column(6).visible(false);
+            // Hide column 7 (File Path) from display
+            table.column(7).visible(false);
         }
     }
     
@@ -811,7 +812,10 @@ $(document).ready(function() {
                     var currentOrder = table.order();
                     table.ajax.reload(function() {
                         table.order(currentOrder).draw(false);
-                        setTimeout(hideFilePathColumn, 100);
+                        setTimeout(function() {
+                            // Hide File Path column (column 7)
+                            table.column(7).visible(false);
+                        }, 100);
                     });
                 } else {
                     alert_float('danger', response.message || 'Upload failed');
