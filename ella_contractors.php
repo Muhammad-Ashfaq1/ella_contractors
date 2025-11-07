@@ -158,6 +158,12 @@ function ella_contractors_load_helpers() {
     // Load appointments helper
     $CI->load->helper('ella_contractors/ella_appointments_helper');
     
+    // Load email templates helper (for appointment reminder emails)
+    $email_templates_path = module_dir_path(ELLA_CONTRACTORS_MODULE_NAME, 'helpers/ella_email_templates_helper.php');
+    if (file_exists($email_templates_path)) {
+        require_once($email_templates_path);
+    }
+    
     // Load reminder helper manually (for ICS generation and email scheduling)
     $reminder_helper_path = module_dir_path(ELLA_CONTRACTORS_MODULE_NAME, 'helpers/ella_reminder_helper.php');
     if (file_exists($reminder_helper_path)) {

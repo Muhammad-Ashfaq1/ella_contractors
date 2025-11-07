@@ -313,7 +313,7 @@ function ella_send_appointment_email($appointment_id, $type = 'client')
 /**
  * Parse email template with appointment data (replace merge fields)
  * 
- * @param string $template_name Template key from language file
+ * @param string $template_name Template name: 'client_appointment_reminder' or 'staff_appointment_reminder'
  * @param object $appointment Appointment object
  * @param string $type 'client' or 'staff'
  * @return string Parsed email body
@@ -322,19 +322,23 @@ function ella_parse_email_template($template_name, $appointment, $type)
 {
     $CI =& get_instance();
     
-    // Load language file from module - use manual include for safety
-    $lang_file = module_dir_path('ella_contractors', 'language/english/ella_contractors_lang.php');
-    if (file_exists($lang_file)) {
-        include($lang_file);
+    // Load email templates helper
+    $templates_helper = module_dir_path('ella_contractors', 'helpers/ella_email_templates_helper.php');
+    if (!function_exists('ella_get_client_reminder_template')) {
+        require_once($templates_helper);
     }
     
-    // Get template from language array
-    $template = isset($lang[$template_name]) ? $lang[$template_name] : null;
+    // Get template based on type
+    if ($template_name === 'staff_appointment_reminder' || $type === 'staff') {
+        $template = ella_get_staff_reminder_template();
+    } else {
+        $template = ella_get_client_reminder_template();
+    }
     
-    // Fallback template if not found in language file
+    // Fallback template if function doesn't exist
     if (empty($template)) {
         $template = '<html><body><h2>Appointment Reminder</h2><p>You have an upcoming appointment.</p></body></html>';
-        log_message('error', 'EllaContractors: Email template not found - ' . $template_name . ' in file: ' . $lang_file);
+        log_message('error', 'EllaContractors: Email template function not found - ' . $template_name);
     }
     
     // Prepare replacement data
@@ -354,17 +358,150 @@ function ella_parse_email_template($template_name, $appointment, $type)
         '{appointment_notes}' => !empty($appointment->notes) ? nl2br(htmlspecialchars($appointment->notes)) : 'No additional notes',
     ];
     
-    // Replace all merge fields
     foreach ($replacements as $key => $value) {
         $template = str_replace($key, $value, $template);
     }
+
+    if (!function_exists('format_appointment_presentation_links')) {
+        $CI->load->helper('ella_contractors/ella_appointments_helper');
+    }
+    $presentationsHtml = '';
+    if (function_exists('format_appointment_presentation_links')) {
+        $presentationsHtml = format_appointment_presentation_links($appointment->id, 'email');
+    }
+
+    $notesHtml = '';
+    if (!empty($appointment->notes)) {
+        $notesHtml = '<h3 style="font-size:16px;margin:20px 0 10px;color:#161c2d;">Notes</h3>'
+            . '<div style="font-size:14px;line-height:22px;color:#4a4a4a;">'
+            . nl2br(htmlspecialchars($appointment->notes)) . '</div>';
+    }
+
+    $greetingName = $type === 'staff' ? get_staff_full_name($appointment->created_by) : $replacements['{client_name}'];
+    $introLine = $type === 'staff'
+        ? 'Here are the latest details for the scheduled appointment.'
+        : 'This is a quick reminder about your upcoming appointment.';
+
+    $crmLink = '';
+    if (!empty($replacements['{crm_link}'])) {
+        $crmLink = '<p style="margin:18px 0 0;font-size:14px;">'
+            . '<a href="' . htmlspecialchars($replacements['{crm_link}']) . '" style="color:#1b5f8c;text-decoration:none;">'
+            . 'View appointment in CRM</a></p>';
+    }
+
+    $detailsTable = '
+        <table style="width:100%;border-collapse:collapse;margin:15px 0 5px;">
+            <tbody>
+                <tr>
+                    <td style="padding:10px 12px;background:#f7f9fc;border:1px solid #e6e9ef;font-size:13px;font-weight:600;color:#161c2d;width:35%;">Appointment</td>
+                    <td style="padding:10px 12px;border:1px solid #e6e9ef;font-size:13px;color:#161c2d;">' . $replacements['{appointment_subject}'] . '</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px 12px;background:#f7f9fc;border:1px solid #e6e9ef;font-size:13px;font-weight:600;color:#161c2d;">Date</td>
+                    <td style="padding:10px 12px;border:1px solid #e6e9ef;font-size:13px;color:#161c2d;">' . $replacements['{appointment_date}'] . '</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px 12px;background:#f7f9fc;border:1px solid #e6e9ef;font-size:13px;font-weight:600;color:#161c2d;">Time</td>
+                    <td style="padding:10px 12px;border:1px solid #e6e9ef;font-size:13px;color:#161c2d;">' . $replacements['{appointment_time}'] . '</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px 12px;background:#f7f9fc;border:1px solid #e6e9ef;font-size:13px;font-weight:600;color:#161c2d;">Location</td>
+                    <td style="padding:10px 12px;border:1px solid #e6e9ef;font-size:13px;color:#161c2d;">' . $replacements['{appointment_location}'] . '</td>
+                </tr>
+            </tbody>
+        </table>';
+
+    $messageBody = '<div style="font-family:Helvetica,Arial,sans-serif;color:#161c2d;font-size:14px;line-height:22px;">'
+        . '<p style="margin:0 0 12px;">Hello ' . htmlspecialchars($greetingName) . ',</p>'
+        . '<p style="margin:0 0 15px;">' . $introLine . '</p>'
+        . $detailsTable
+        . $notesHtml
+        . $crmLink
+        . (!empty($presentationsHtml) ? $presentationsHtml : '')
+        . '<p style="margin:22px 0 0;">Thank you,<br>' . htmlspecialchars($replacements['{company_name}']) . '</p>'
+        . '</div>';
+
+    $header = get_option('email_header') ?: '';
+    $footer = get_option('email_footer') ?: '';
+
+    return $header . $messageBody . $footer;
+}
+
+/**
+ * Send appointment reminder SMS with ICS link
+ * Uses existing CRM SMS functionality via leads_model
+ * 
+ * @param int $appointment_id Appointment ID
+ * @param string $type 'client' or 'staff'
+ * @return bool Success status
+ */
+function ella_send_appointment_sms($appointment_id, $type = 'client')
+{
+    $CI =& get_instance();
+    $CI->load->model('ella_contractors/ella_appointments_model');
+    $CI->load->model('leads_model');
     
-    return $template;
+    $appointment = $CI->ella_appointments_model->get_appointment($appointment_id);
+    if (!$appointment) {
+        log_message('error', 'EllaContractors: Cannot send SMS - Appointment not found: ' . $appointment_id);
+        return false;
+    }
+    
+    // ========== TESTING MODE - HARDCODED VALUES ==========
+    $to_phone = '+923158600761';  // Hardcoded test phone
+    $lead_id = $appointment->contact_id ?: 0;  // Use actual lead_id if available
+    $staff_id = get_staff_user_id();
+    
+    // Build SMS message
+    if ($type === 'staff') {
+        $client_name = $appointment->lead_name ?: ($appointment->client_name ?: 'Client');
+        $sms_body = "Appointment Reminder: {$appointment->subject} with {$client_name} on " . 
+                    date('M j, Y', strtotime($appointment->date)) . " at " . 
+                    date('g:i A', strtotime($appointment->start_hour));
+        log_message('info', 'EllaContractors: [TEST MODE] Sending STAFF SMS to ' . $to_phone);
+    } else {
+        $sms_body = "Appointment Confirmation: {$appointment->subject} on " . 
+                    date('M j, Y', strtotime($appointment->date)) . " at " . 
+                    date('g:i A', strtotime($appointment->start_hour)) . 
+                    ". Location: " . ($appointment->address ?: 'Online/Phone');
+        log_message('info', 'EllaContractors: [TEST MODE] Sending CLIENT SMS to ' . $to_phone);
+    }
+    
+    // Generate ICS URL (optional - for SMS link)
+    $ics_url = '';
+    
+    // Send SMS using CRM's existing method (same as Appointments controller line 672)
+    $media_url = '';
+    $tcpa = false;  // Disable TCPA for ella_contractors
+    $dnc_validation = false;  // Disable DNC validation for ella_contractors
+    
+    $response = $CI->leads_model->send_sms($lead_id, $staff_id, $to_phone, $sms_body, $media_url, $tcpa, $dnc_validation, $ics_url);
+    
+    if ($response['success']) {
+        log_message('info', 'EllaContractors: SMS sent successfully to ' . $to_phone . ' for appointment ' . $appointment_id);
+        
+        // Log SMS activity to appointment timeline
+        $CI->ella_appointments_model->add_activity_log(
+            $appointment_id,
+            'SMS',
+            'sent',
+            [
+                'phone_number' => $to_phone,
+                'sms_content' => substr($sms_body, 0, 100),
+                'sms_type' => $type === 'staff' ? 'staff_reminder' : 'client_reminder'
+            ]
+        );
+        return true;
+    } else {
+        log_message('error', 'EllaContractors: Failed to send SMS to ' . $to_phone . ' - ' . ($response['message'] ?? 'Unknown error'));
+        return false;
+    }
 }
 
 /**
  * Schedule all reminders for an appointment (called after save)
  * This is the main entry point called from the controller
+ * Sends both EMAIL and SMS reminders
  * 
  * @param int $appointment_id Appointment ID
  * @return bool Success status
@@ -380,42 +517,59 @@ function ella_schedule_reminders($appointment_id)
         return false;
     }
     
-    // ========== TESTING MODE ACTIVE ==========
-    log_message('info', '========================================');
-    log_message('info', 'EllaContractors: [TEST MODE] Scheduling reminders for Appointment #' . $appointment_id);
-    log_message('info', 'Test Email: mitf19e032@gmail.com | Test Phone: +923157364689');
-    log_message('info', '========================================');
-    // ==========================================
-    
     $results = [];
     $scheduled_reminders = [];
     
-    // 1. Client Instant Reminder (send immediately)
+    // 1. Client Instant Reminder (EMAIL + SMS - send immediately)
     if (isset($appointment->send_reminder) && $appointment->send_reminder == 1) {
-        $result = ella_send_appointment_email($appointment_id, 'client');
-        $results[] = $result;
-        if ($result) {
-            $scheduled_reminders[] = 'Client Instant';
+        // Send Email
+        $email_result = ella_send_appointment_email($appointment_id, 'client');
+        $results[] = $email_result;
+        if ($email_result) {
+            $scheduled_reminders[] = 'Client Instant Email';
+        }
+        
+        // Send SMS
+        $sms_result = ella_send_appointment_sms($appointment_id, 'client');
+        $results[] = $sms_result;
+        if ($sms_result) {
+            $scheduled_reminders[] = 'Client Instant SMS';
         }
     }
     
-    // 2. Client 48h Reminder (send immediately for testing)
+    // 2. Client 48h Reminder (EMAIL + SMS - send immediately for testing)
     // NOTE: In production, you may want to schedule this via cron job
     if (isset($appointment->reminder_48h) && $appointment->reminder_48h == 1) {
-        $result = ella_send_appointment_email($appointment_id, 'client');
-        $results[] = $result;
-        if ($result) {
-            $scheduled_reminders[] = 'Client 48h';
+        // Send Email
+        $email_result = ella_send_appointment_email($appointment_id, 'client');
+        $results[] = $email_result;
+        if ($email_result) {
+            $scheduled_reminders[] = 'Client 48h Email';
+        }
+        
+        // Send SMS
+        $sms_result = ella_send_appointment_sms($appointment_id, 'client');
+        $results[] = $sms_result;
+        if ($sms_result) {
+            $scheduled_reminders[] = 'Client 48h SMS';
         }
     }
     
-    // 3. Staff 48h Reminder (send immediately for testing) - NEW
+    // 3. Staff 48h Reminder (EMAIL + SMS - send immediately for testing) - NEW
     // NOTE: In production, you may want to schedule this via cron job
     if (isset($appointment->staff_reminder_48h) && $appointment->staff_reminder_48h == 1) {
-        $result = ella_send_appointment_email($appointment_id, 'staff');
-        $results[] = $result;
-        if ($result) {
-            $scheduled_reminders[] = 'Staff 48h';
+        // Send Email
+        $email_result = ella_send_appointment_email($appointment_id, 'staff');
+        $results[] = $email_result;
+        if ($email_result) {
+            $scheduled_reminders[] = 'Staff 48h Email';
+        }
+        
+        // Send SMS
+        $sms_result = ella_send_appointment_sms($appointment_id, 'staff');
+        $results[] = $sms_result;
+        if ($sms_result) {
+            $scheduled_reminders[] = 'Staff 48h SMS';
         }
     }
     

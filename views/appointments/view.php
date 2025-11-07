@@ -443,7 +443,7 @@ html {
                                     </p>
                                 </div>
                                 
-                                <!-- ICS Calendar Download Section -->
+                                <!-- ICS Calendar Download Section
                                 <div style="margin-top: 20px; padding: 15px; background-color: #e8f5e9; border-radius: 4px; border: 1px solid #c8e6c9;">
                                     <h5 style="margin-top: 0; color: #2e7d32;">
                                         <i class="fa fa-calendar"></i> Calendar Downloads
@@ -481,7 +481,7 @@ html {
                                             </p>
                                         <?php endif; ?>
                                     </div>
-                                </div>
+                                </div> -->
                             
                             </div>
                         </div>
