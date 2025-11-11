@@ -465,6 +465,15 @@ startxref
         $this->db->order_by('date_uploaded', 'DESC');
         
         $presentations = $this->db->get()->result_array();
+
+        if (!empty($presentations)) {
+            foreach ($presentations as &$presentation) {
+                $public_url = site_url('uploads/ella_presentations/' . $presentation['file_name']);
+                $public_url = str_replace('http://', 'https://', $public_url);
+                $presentation['public_url'] = $public_url;
+            }
+            unset($presentation);
+        }
         
         echo json_encode([
             'success' => true,

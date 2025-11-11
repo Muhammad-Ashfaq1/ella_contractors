@@ -156,14 +156,20 @@ function renderAttachedPresentations(presentations, containerId) {
     if (presentations && presentations.length > 0) {
         html = '<ul class="list-unstyled" style="margin-top: 10px;">';
         presentations.forEach(function(presentation) {
-            // Generate public URL - all presentations in single folder
-            var publicUrl = siteUrl + 'uploads/ella_presentations/' + presentation.file_name;
+            var publicUrl = presentation.public_url;
+            if (!publicUrl && presentation.file_name) {
+                publicUrl = siteUrl + 'uploads/ella_presentations/' + presentation.file_name;
+            }
             
             html += '<li style="margin-bottom: 8px; padding: 8px; background-color: #f8f9fa; border-radius: 4px;">';
             html += '<i class="fa fa-file-powerpoint-o" style="color: #e67e22; margin-right: 8px;"></i> ';
-            html += '<a href="' + publicUrl + '" target="_blank" title="Public URL - Share with customer">';
-            html += presentation.original_name || presentation.file_name;
-            html += '</a>';
+            if (publicUrl) {
+                html += '<a href="' + publicUrl + '" target="_blank" title="Public URL - Share with customer">';
+                html += presentation.original_name || presentation.file_name || ('Presentation #' + presentation.id);
+                html += '</a>';
+            } else {
+                html += presentation.original_name || presentation.file_name || ('Presentation #' + presentation.id);
+            }
             html += ' <button class="btn btn-xs btn-danger pull-right" onclick="detachPresentationFromAppointment(' + presentation.id + ')" title="Remove" style="margin-left: 10px;">';
             html += '<i class="fa fa-times"></i></button>';
             html += '</li>';
@@ -372,14 +378,17 @@ function initPresentationSelectionPreview(selectId, previewContainerId) {
                 selectedPresentationsInModal.push({
                     id: presentationId,
                     name: cachedPresentation.original_name || cachedPresentation.file_name,
-                    file_name: cachedPresentation.file_name
+                    file_name: cachedPresentation.file_name,
+                    public_url: cachedPresentation.public_url || ''
                 });
             } else {
                 // Fallback if cache not available
                 var optionText = $('#' + selectId + ' option[value="' + presentationId + '"]').text();
                 selectedPresentationsInModal.push({
                     id: presentationId,
-                    name: optionText
+                    name: optionText,
+                    file_name: '',
+                    public_url: ''
                 });
             }
         });
@@ -410,13 +419,19 @@ function renderPresentationSelectionPreview(containerId) {
         html = '<strong>Selected Presentations:</strong>';
         html += '<ul class="list-unstyled" style="margin-top: 10px;">';
         selectedPresentationsInModal.forEach(function(presentation) {
-            // Generate public URL - all presentations in single folder
-            var publicUrl = siteUrl + 'uploads/ella_presentations/' + presentation.file_name;
+            var publicUrl = presentation.public_url;
+            if (!publicUrl && presentation.file_name) {
+                publicUrl = siteUrl + 'uploads/ella_presentations/' + presentation.file_name;
+            }
             
             html += '<li style="margin-bottom: 8px; padding: 8px; background-color: #f8f9fa; border-radius: 4px; display: flex; align-items: center; justify-content: space-between;">';
             html += '<div>';
             html += '<i class="fa fa-file-powerpoint-o" style="color: #e67e22; margin-right: 8px;"></i> ';
-            html += '<a href="' + publicUrl + '" target="_blank" style="color: #007bff; text-decoration: none;" title="Click to view in new tab">' + presentation.name + '</a>';
+            if (publicUrl) {
+                html += '<a href="' + publicUrl + '" target="_blank" style="color: #007bff; text-decoration: none;" title="Click to view in new tab">' + (presentation.name || ('Presentation #' + presentation.id)) + '</a>';
+            } else {
+                html += presentation.name || ('Presentation #' + presentation.id);
+            }
             html += '</div>';
             html += '<button class="btn btn-xs btn-danger" onclick="removePresentationFromPreview(' + presentation.id + ')" title="Remove" type="button">';
             html += '<i class="fa fa-times"></i>';

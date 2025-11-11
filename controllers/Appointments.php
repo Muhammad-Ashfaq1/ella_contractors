@@ -2098,6 +2098,14 @@ startxref
         $this->db->order_by('pivot.attached_at', 'DESC');
         
         $presentations = $this->db->get()->result_array();
+
+        if (!empty($presentations)) {
+            foreach ($presentations as &$presentation) {
+                $public_url = site_url('uploads/ella_presentations/' . $presentation['file_name']);
+                $presentation['public_url'] = str_replace('http://', 'https://', $public_url);
+            }
+            unset($presentation);
+        }
         
         echo json_encode([
             'success' => true,
