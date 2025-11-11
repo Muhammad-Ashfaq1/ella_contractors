@@ -97,6 +97,8 @@ function ella_get_client_reminder_template()
                 </p>
             </div>
             
+            {presentation_block}
+            
             <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6; color: #333333;">
                 A calendar invitation (.ics file) is attached to this email. You can add it to your calendar application (Google Calendar, Outlook, Apple Calendar, etc.).
             </p>
@@ -221,6 +223,8 @@ function ella_get_staff_reminder_template()
                     {appointment_notes}
                 </p>
             </div>
+            
+            {presentation_block}
             
             <!-- CTA Button -->
             <div style="text-align: center; margin-bottom: 25px;">

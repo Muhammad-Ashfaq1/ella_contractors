@@ -209,6 +209,10 @@ function ella_send_appointment_email($appointment_id, $type = 'client', $context
     
     // Generate ICS file
     $ics_file = ella_generate_ics($appointment_id, $type);
+
+    // Prepare presentation links block
+    $presentations_for_email = ella_get_presentation_links_for_email($appointment_id);
+    $appointment->presentation_block = ella_build_presentation_block_html($presentations_for_email);
     
     if ($type === 'staff') {
         // Send reminder to the staff member who created the appointment
@@ -422,6 +426,84 @@ function ella_process_48h_reminders_cron()
 
 
 /**
+ * Fetch presentations attached to the appointment with public URLs.
+ *
+ * @param int $appointment_id
+ * @return array
+ */
+function ella_get_presentation_links_for_email($appointment_id)
+{
+    $CI =& get_instance();
+
+    $CI->db->select('media.id, media.original_name, media.file_name');
+    $CI->db->from(db_prefix() . 'ella_appointment_presentations as pivot');
+    $CI->db->join(db_prefix() . 'ella_contractor_media as media', 'media.id = pivot.presentation_id');
+    $CI->db->where('pivot.appointment_id', $appointment_id);
+    $CI->db->where('media.rel_type', 'presentation');
+    $CI->db->order_by('media.original_name', 'ASC');
+
+    $presentations = $CI->db->get()->result_array();
+
+    if (empty($presentations)) {
+        return [];
+    }
+
+    $results = [];
+    foreach ($presentations as $presentation) {
+        $fileName = $presentation['file_name'];
+        if (!$fileName) {
+            continue;
+        }
+        $publicUrl = site_url('uploads/ella_presentations/' . $fileName);
+        $publicUrl = str_replace('http://', 'https://', $publicUrl);
+        $results[] = [
+            'name' => $presentation['original_name'] ?: $fileName,
+            'url'  => $publicUrl,
+        ];
+    }
+
+    return $results;
+}
+
+/**
+ * Build HTML block for presentation links.
+ *
+ * @param array $presentations
+ * @return string
+ */
+function ella_build_presentation_block_html($presentations)
+{
+    if (empty($presentations)) {
+        return '';
+    }
+
+    $items = '';
+    foreach ($presentations as $presentation) {
+        $name = htmlspecialchars($presentation['name'], ENT_QUOTES, 'UTF-8');
+        $url  = htmlspecialchars($presentation['url'], ENT_QUOTES, 'UTF-8');
+
+        if (!empty($url)) {
+            $items .= '<li style="margin-bottom: 8px;"><a href="' . $url . '" target="_blank" style="color: #007bff; text-decoration: none;">' . $name . '</a></li>';
+        } else {
+            $items .= '<li style="margin-bottom: 8px;">' . $name . '</li>';
+        }
+    }
+
+    if ($items === '') {
+        return '';
+    }
+
+    return '
+        <div style="margin-bottom: 25px;">
+            <h3 style="margin: 0 0 12px; font-size: 18px; color: #333333;">Included Presentations</h3>
+            <ul style="padding-left: 18px; margin: 0; color: #333333;">
+                ' . $items . '
+            </ul>
+        </div>';
+}
+
+
+/**
  * Parse email template with appointment data (replace merge fields)
  *
  * @param string $template_name Template name: 'client_appointment_reminder' or 'staff_appointment_reminder'
@@ -468,6 +550,7 @@ function ella_parse_email_template($template_name, $appointment, $type)
         '{company_email}'       => get_option('company_email') ?: '',
         '{crm_link}'            => $type === 'staff' ? admin_url('ella_contractors/appointments/view/' . $appointment->id) : '',
         '{appointment_notes}'   => !empty($appointment->notes) ? nl2br(htmlspecialchars($appointment->notes)) : 'No additional notes',
+        '{presentation_block}'  => isset($appointment->presentation_block) ? $appointment->presentation_block : '',
     ];
 
     foreach ($replacements as $key => $value) {
