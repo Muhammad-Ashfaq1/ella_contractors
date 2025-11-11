@@ -607,6 +607,8 @@ function loadAppointmentData(appointmentId) {
                 // Handle reminder checkboxes
                 $('#send_reminder').prop('checked', data.send_reminder == 1);
                 $('#reminder_48h').prop('checked', data.reminder_48h == 1);
+                var reminderChannel = data.reminder_channel || 'both';
+                $('input[name="reminder_channel"][value="' + reminderChannel + '"]').prop('checked', true);
                 
                 // Set status dropdown
                 var status = data.appointment_status || 'scheduled';
@@ -894,6 +896,7 @@ function resetAppointmentModal() {
     // Reset reminder checkboxes to default (checked)
     $('#send_reminder').prop('checked', true);
     $('#reminder_48h').prop('checked', true);
+    $('#reminder_channel_both').prop('checked', true);
 }
 
 function deleteAppointment(appointmentId) {

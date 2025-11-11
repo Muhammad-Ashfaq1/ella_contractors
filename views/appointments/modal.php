@@ -213,7 +213,7 @@ button.delete-btn {
    ======================================== */
 
 /* Any input with a value should display normally */
-#appointmentModal input:not(:placeholder-shown) {
+#appointmentModal input:not([type="radio"]):not([type="checkbox"]):not(:placeholder-shown) {
   color: #333 !important;
   opacity: 1 !important;
   font-style: normal !important;
@@ -372,6 +372,23 @@ button.delete-btn {
                                         <label for="staff_reminder_48h">My Reminder (48 hours before)</label>
                                     </div>
                                     <p class="text-muted">You will receive an email reminder 48 hours before this appointment</p>
+                                </div>
+                                <div class="col-sm-12">
+                                    <h5>Reminder Channel</h5>
+                                    <div class="form-group no-mbot">
+                                        <div class="radio radio-primary radio-inline">
+                                            <input type="radio" name="reminder_channel" id="reminder_channel_sms" value="sms">
+                                            <label for="reminder_channel_sms">SMS Only</label>
+                                        </div>
+                                        <div class="radio radio-primary radio-inline">
+                                            <input type="radio" name="reminder_channel" id="reminder_channel_email" value="email">
+                                            <label for="reminder_channel_email">Email Only</label>
+                                        </div>
+                                        <div class="radio radio-primary radio-inline">
+                                            <input type="radio" name="reminder_channel" id="reminder_channel_both" value="both" checked>
+                                            <label for="reminder_channel_both">SMS &amp; Email</label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

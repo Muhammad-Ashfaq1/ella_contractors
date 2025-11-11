@@ -158,6 +158,12 @@ function ella_contractors_load_helpers() {
     // Load appointments helper
     $CI->load->helper('ella_contractors/ella_appointments_helper');
     
+    // Load email templates helper (for appointment reminder emails)
+    $email_templates_path = module_dir_path(ELLA_CONTRACTORS_MODULE_NAME, 'helpers/ella_email_templates_helper.php');
+    if (file_exists($email_templates_path)) {
+        require_once($email_templates_path);
+    }
+    
     // Load reminder helper manually (for ICS generation and email scheduling)
     $reminder_helper_path = module_dir_path(ELLA_CONTRACTORS_MODULE_NAME, 'helpers/ella_reminder_helper.php');
     if (file_exists($reminder_helper_path)) {
@@ -485,6 +491,18 @@ function ella_contractors_activate_module() {
             } catch (Exception $e) {
                 // Column might already exist or error occurred - log but don't break activation
                 log_message('error', 'EllaContractors: Failed to add staff_reminder_48h column - ' . $e->getMessage());
+            }
+        }
+
+        if (!$CI->db->field_exists('reminder_channel', db_prefix() . 'appointly_appointments')) {
+            try {
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `reminder_channel` ENUM(\'sms\',\'email\',\'both\') NOT NULL DEFAULT \'both\' AFTER `staff_reminder_48h`');
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD INDEX `idx_reminder_channel` (`reminder_channel`)');
+                // Ensure existing Ella appointments default to both
+                $CI->db->query('UPDATE `' . db_prefix() . 'appointly_appointments` SET `reminder_channel` = \'both\' WHERE `source` = "ella_contractor" OR `reminder_channel` IS NULL');
+                log_message('info', 'EllaContractors: reminder_channel column added successfully');
+            } catch (Exception $e) {
+                log_message('error', 'EllaContractors: Failed to add reminder_channel column - ' . $e->getMessage());
             }
         }
         

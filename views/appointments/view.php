@@ -444,7 +444,7 @@ html {
                                 </div>
                                 
                                 <!-- ICS Calendar Download Section -->
-                                <div style="margin-top: 20px; padding: 15px; background-color: #e8f5e9; border-radius: 4px; border: 1px solid #c8e6c9;">
+                                <!-- <div style="margin-top: 20px; padding: 15px; background-color: #e8f5e9; border-radius: 4px; border: 1px solid #c8e6c9;">
                                     <h5 style="margin-top: 0; color: #2e7d32;">
                                         <i class="fa fa-calendar"></i> Calendar Downloads
                                     </h5>
@@ -481,7 +481,7 @@ html {
                                             </p>
                                         <?php endif; ?>
                                     </div>
-                                </div>
+                                </div> -->
                             
                             </div>
                         </div>
@@ -1320,6 +1320,7 @@ function resetAppointmentModal() {
     // Reset reminder checkboxes to default (checked)
     $('#send_reminder').prop('checked', true);
     $('#reminder_48h').prop('checked', true);
+    $('#reminder_channel_both').prop('checked', true);
 }
 
 // Global functions for modal operations
@@ -1387,6 +1388,8 @@ function loadAppointmentData(appointmentId) {
                 // Handle reminder checkboxes
                 $('#send_reminder').prop('checked', data.send_reminder == 1);
                 $('#reminder_48h').prop('checked', data.reminder_48h == 1);
+                var reminderChannel = data.reminder_channel || 'both';
+                $('input[name="reminder_channel"][value="' + reminderChannel + '"]').prop('checked', true);
                 
                 // Set status dropdown
                 var status = data.appointment_status || 'scheduled';
