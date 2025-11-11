@@ -564,6 +564,28 @@ function ella_contractors_activate_module() {
             UNIQUE KEY `unique_appointment_presentation` (`appointment_id`, `presentation_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
     }
+
+    // Create appointment_reminder table to track reminder statuses
+    if (!$CI->db->table_exists(db_prefix() . 'appointment_reminder')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'appointment_reminder` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `appointment_id` int(11) NOT NULL,
+            `client_instant_remind` TINYINT(1) NOT NULL DEFAULT 0,
+            `client_48_hours` TINYINT(1) NOT NULL DEFAULT 0,
+            `client_sms_reminder` TINYINT(1) NOT NULL DEFAULT 0,
+            `sms_send` TINYINT(1) NOT NULL DEFAULT 0,
+            `email_send` TINYINT(1) NOT NULL DEFAULT 0,
+            `rel_type` varchar(50) DEFAULT NULL,
+            `rel_id` int(11) DEFAULT NULL,
+            `org_id` int(11) DEFAULT NULL,
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `idx_appointment_id` (`appointment_id`),
+            KEY `idx_rel_type_rel_id` (`rel_type`, `rel_id`),
+            KEY `idx_org_id` (`org_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+    }
     
     // ==================== DATA MIGRATION: Update rel_type for existing records ====================
     
@@ -608,6 +630,7 @@ function ella_contractors_deactivate_module() {
     $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_line_item_groups`');
     $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_estimates`');
     $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_estimate_line_items`');
+    $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'appointment_reminder`');
 
 }
 
