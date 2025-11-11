@@ -668,15 +668,28 @@ class Appointments extends AdminController
             $dnc_validation = false;
             $tcpa = false;
             
-            // Call the method to send SMS
-            $response = $this->leads_model->send_sms($lead_id, $staff_id, $number, $sms_body, $media_url, $tcpa, $dnc_validation, $ics_url);
+            if (!function_exists('ella_dispatch_sms')) {
+                require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
+            }
+
+            // Dispatch SMS via module helper (uses Telnyx configuration)
+            $response = ella_dispatch_sms(
+                $number,
+                $sms_body,
+                [
+                    'lead_id'        => !empty($lead_id) ? (int) $lead_id : 0,
+                    'staff_id'       => (int) $staff_id,
+                    'appointment_id' => $this->input->post('appointment_id') ?: null,
+                    'ics_url'        => $ics_url,
+                    'media_url'      => $media_url,
+                ]
+            );
             
-            // Update lead last contact and log activity
+            // Update log activity hooks
             if ($response['success']) {
-                update_lead_last_contact($lead_id, get_staff_user_id(), "SMS");
-                log_staff_status_activity('Added SMS Activity from Appointment Lead# [' . $lead_id . ']');
-                // Mark all SMS as read
-                $this->leads_model->updated_sms_log_status($lead_id, 'lead_id', '0');
+                if (!empty($lead_id)) {
+                    log_staff_status_activity('Added SMS Activity from Appointment Lead# [' . $lead_id . ']');
+                }
                 
                 // Log SMS sent activity for appointment timeline
                 $appointment_id = $this->input->post('appointment_id');
@@ -789,32 +802,6 @@ class Appointments extends AdminController
         echo json_encode($response, true);
     }
     
-    /**
-     * Send test SMS - matching leads functionality
-     */
-    public function send_test_sms()
-    {
-        if (!has_permission('ella_contractors', '', 'edit')) {
-            ajax_access_denied();
-        }
-        
-        $response = array();
-        $test_number = $this->input->post('test_number');
-        $test_sms_body = $this->input->post('test_sms_body');
-        
-        if (empty($test_number) || empty($test_sms_body)) {
-            $response['message'] = 'Please provide both phone number and message';
-            $response['success'] = false;
-        } else {
-            // Load leads model
-            $this->load->model('leads_model');
-            
-            // Send test SMS using the same method as leads
-            $response = $this->leads_model->send_sms(0, get_staff_user_id(), $test_number, $test_sms_body, '', false, false, '');
-        }
-        
-        echo json_encode($response, true);
-    }
     
     public function upload_sms_media()
     {

@@ -351,37 +351,31 @@ button.delete-btn {
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Reminders Row: Client Reminders (Left) and My Reminder (Right) -->
                     <div class="row">
-                        <!-- Left Column: Client Reminders -->
                         <div class="col-md-6">
-                            <h5>Client Reminders</h5>
-                            <div class="checkbox checkbox-primary">
-                                <input type="checkbox" name="send_reminder" id="send_reminder" value="1" checked>
-                                <label for="send_reminder">Instantly Send Appointment Date/Time to Client</label>
-                            </div>
-                            <div class="checkbox checkbox-primary">
-                                <input type="checkbox" name="reminder_48h" id="reminder_48h" value="1" checked>
-                                <label for="reminder_48h">Send 48 Hour Reminder to Client</label>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <h5>Client Reminders</h5>
+                                    <div class="checkbox checkbox-primary">
+                                        <input type="checkbox" name="send_reminder" id="send_reminder" value="1" checked>
+                                        <label for="send_reminder">Instantly Send Appointment Date/Time to Client</label>
+                                    </div>
+                                    <div class="checkbox checkbox-primary">
+                                        <input type="checkbox" name="reminder_48h" id="reminder_48h" value="1" checked>
+                                        <label for="reminder_48h">Send 48 Hour Reminder to Client</label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-12">
+                                    <h5>My Reminder</h5>
+                                    <div class="checkbox checkbox-success">
+                                        <input type="checkbox" name="staff_reminder_48h" id="staff_reminder_48h" value="1" checked>
+                                        <label for="staff_reminder_48h">My Reminder (48 hours before)</label>
+                                    </div>
+                                    <p class="text-muted">You will receive an email reminder 48 hours before this appointment</p>
+                                </div>
                             </div>
                         </div>
-                        
-                        <!-- Right Column: My Reminder (Staff) -->
                         <div class="col-md-6">
-                            <h5>My Reminder</h5>
-                            <div class="checkbox checkbox-success">
-                                <input type="checkbox" name="staff_reminder_48h" id="staff_reminder_48h" value="1" checked>
-                                <label for="staff_reminder_48h">My Reminder (48 hours before)</label>
-                            </div>
-                            <small class="text-muted" style="display: block; margin-top: 5px;">You will receive an email reminder 48 hours before this appointment</small>
-                        </div>
-                    </div>
-                    
-                    <!-- Presentation Selection Row (Full Width) -->
-                    <div class="row">
-                        <div class="col-md-12">
-                            <hr style="margin: 20px 0; border-top: 1px solid #e9ecef;">
                             <h5>Choose Presentation <span style="opacity: 0.7;">(Optional)</span></h5>
                             <div class="form-group">
                                 <select class="form-control selectpicker" id="presentation_select" name="presentation_ids[]" multiple data-live-search="true">
@@ -389,9 +383,7 @@ button.delete-btn {
                                 </select>
                                 <small class="text-muted">You can select multiple presentations to attach to this appointment</small>
                             </div>
-                            
-                            <!-- Display selected presentations (shown immediately on selection) -->
-                            <div id="modal-presentation-list" style="margin-top: 10px;">
+                            <div id="modal-presentation-list">
                                 <!-- Presentations will be shown here when selected -->
                             </div>
                         </div>
