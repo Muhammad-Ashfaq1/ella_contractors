@@ -426,7 +426,11 @@ function ella_get_pending_48h_reminders()
     $CI->db->join(db_prefix() . 'appointment_reminder as rem', 'rem.appointment_id = app.id', 'inner');
     $CI->db->where('app.source', 'ella_contractor');
     $CI->db->where('(app.appointment_status IS NULL OR app.appointment_status NOT IN ("cancelled","complete"))', null, false);
-    $CI->db->where('(rem.client_48_hours = 1 AND rem.client_48_hours_sent = 0) OR (rem.staff_48_hours = 1 AND rem.staff_48_hours_sent = 0)', null, false);
+    $CI->db->where('(
+        (rem.client_48_hours = 1 AND (rem.client_48_hours_sent = 0 OR (rem.client_sms_reminder = 1 AND rem.client_sms_48_hours_sent = 0)))
+        OR
+        (rem.staff_48_hours = 1 AND (rem.staff_48_hours_sent = 0 OR (rem.client_sms_reminder = 1 AND rem.staff_sms_48_hours_sent = 0)))
+    )', null, false);
     $CI->db->where('CONCAT(app.date, " ", COALESCE(app.start_hour, "00:00:00")) >= DATE_SUB(NOW(), INTERVAL 1 HOUR)', null, false);
     $CI->db->where('CONCAT(app.date, " ", COALESCE(app.start_hour, "00:00:00")) <= DATE_ADD(NOW(), INTERVAL 2 DAY)', null, false);
     $CI->db->group_by('app.id');
@@ -606,17 +610,92 @@ function ella_parse_email_template($template_name, $appointment, $type)
  */
 function ella_send_appointment_sms($appointment_id, $type = 'client')
 {
-    log_message('info', 'EllaContractors: SMS sending disabled for appointment ' . $appointment_id . ' [' . $type . ']');
-    return false;
-
-    /*
-    // Original implementation retained for future use.
     $CI =& get_instance();
     $CI->load->model('ella_contractors/ella_appointments_model');
     $CI->load->model('leads_model');
     $CI->load->model('clients_model');
-    // ... existing SMS dispatch logic ...
-    */
+
+    $appointment = $CI->ella_appointments_model->get_appointment($appointment_id);
+    if (!$appointment) {
+        log_message('error', 'EllaContractors: Cannot send SMS - Appointment not found: ' . $appointment_id);
+        return false;
+    }
+
+    $context = $context ?: ($type === 'staff' ? 'staff_48h' : 'client_48h');
+
+    if ($type === 'staff') {
+        $staff = $CI->db->select('firstname, lastname, phonenumber')
+                        ->where('staffid', $appointment->created_by)
+                        ->get(db_prefix() . 'staff')
+                        ->row();
+
+        if (!$staff || empty($staff->phonenumber)) {
+            log_message('error', 'EllaContractors: Staff SMS skipped - no phone number [Appointment ' . $appointment_id . ']');
+            return false;
+        }
+
+        $normalized = ella_normalize_phone($staff->phonenumber);
+        if (strpos($normalized, '+1') !== 0) {
+            log_message('info', 'EllaContractors: Staff SMS skipped (non-USA number) [Appointment ' . $appointment_id . ']');
+            return false;
+        }
+
+        $message = 'Reminder: ' . $appointment->subject . ' on ' . date('F j, Y g:i A', strtotime($appointment->date . ' ' . $appointment->start_hour));
+        $dispatch = ella_dispatch_sms($normalized, $message, [
+            'appointment_id' => $appointment_id,
+            'staff_id'       => $appointment->created_by,
+            'stage'          => $context,
+        ]);
+
+        if (!$dispatch['success']) {
+            log_message('error', 'EllaContractors: Staff SMS failed for appointment ' . $appointment_id . ' - ' . $dispatch['message']);
+        }
+
+        return $dispatch['success'];
+    }
+
+    // Client SMS logic
+    $phoneNumber = $appointment->phone;
+    $leadId = 0;
+
+    if (empty($phoneNumber) && !empty($appointment->contact_id)) {
+        if (!empty($appointment->lead_name)) {
+            $lead = $CI->leads_model->get($appointment->contact_id);
+            if ($lead && !empty($lead->phonenumber)) {
+                $phoneNumber = $lead->phonenumber;
+                $leadId = $lead->id;
+            }
+        } else {
+            $client = $CI->clients_model->get($appointment->contact_id);
+            if ($client && !empty($client->phonenumber)) {
+                $phoneNumber = $client->phonenumber;
+            }
+        }
+    }
+
+    if (empty($phoneNumber)) {
+        log_message('error', 'EllaContractors: Client SMS skipped - no phone number [Appointment ' . $appointment_id . ']');
+        return false;
+    }
+
+    $normalized = ella_normalize_phone($phoneNumber);
+    if (empty($normalized)) {
+        log_message('error', 'EllaContractors: Client SMS skipped - invalid phone number [Appointment ' . $appointment_id . ']');
+        return false;
+    }
+
+    $message = 'Reminder: ' . $appointment->subject . ' on ' . date('F j, Y g:i A', strtotime($appointment->date . ' ' . $appointment->start_hour));
+    $dispatch = ella_dispatch_sms($normalized, $message, [
+        'appointment_id' => $appointment_id,
+        'lead_id'        => $leadId,
+        'stage'          => $context,
+    ]);
+
+    if (!$dispatch['success']) {
+        log_message('error', 'EllaContractors: Client SMS failed for appointment ' . $appointment_id . ' - ' . $dispatch['message']);
+    }
+
+    return $dispatch['success'];
 }
 
 /**
@@ -682,13 +761,6 @@ function ella_dispatch_sms($phoneNumber, $message, $options = [])
         ];
     }
 
-    $intended_number = $phoneNumber;
-    // Temporary override: ensure SMS always goes to test number during QA
-    $phoneNumber = '+923157364689';
-    $appointmentRef = isset($options['appointment_id']) ? ' (Appointment #' . $options['appointment_id'] . ')' : '';
-    $intended_number_log = $intended_number ?: '[unknown]';
-    log_message('info', 'EllaContractors: SMS intended for ' . $intended_number_log . ' routed to test number ' . $phoneNumber . $appointmentRef);
-
     $payload = [
         'from' => $fromNumber,
         'to'   => $phoneNumber,
@@ -704,16 +776,27 @@ function ella_dispatch_sms($phoneNumber, $message, $options = [])
         $payload['media_urls'] = [$mediaUrl];
     }
 
-    try {
-        \Telnyx\Telnyx::setApiKey($apiKey);
-        $response = \Telnyx\Message::create($payload);
-    } catch (\Telnyx\Exception\ApiErrorException $e) {
-        return ['success' => false, 'message' => $e->getMessage()];
-    } catch (\Exception $e) {
-        return ['success' => false, 'message' => $e->getMessage()];
+    $ch = curl_init('https://api.telnyx.com/v2/messages');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $apiKey,
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+
+    $responseBody = curl_exec($ch);
+    $curlError    = curl_error($ch);
+    $httpCode     = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($responseBody === false || $httpCode < 200 || $httpCode >= 300) {
+        $errorMessage = $curlError ?: 'HTTP ' . $httpCode . ' ' . $responseBody;
+        return ['success' => false, 'message' => $errorMessage];
     }
 
-    $sid = isset($response->id) ? trim($response->id) : '';
+    $response = json_decode($responseBody, true);
+    $sid = isset($response['data']['id']) ? trim($response['data']['id']) : '';
 
     $logData = [
         'lead_id'     => $options['lead_id'] ?? 0,
@@ -884,7 +967,9 @@ function ella_schedule_reminders($appointment_id, $stages = ['client_instant', '
         }
     }
     
-    // 2. Client 48h Reminder (EMAIL) - send when within 48 hours
+    $clientSmsEnabled = (int) $reminderRow->client_sms_reminder === 1;
+
+    // 2. Client 48h Reminder (EMAIL/SMS) - send when within 48 hours
     if ($allow_email && in_array('client_48h', $stages, true) && (int) $reminderRow->client_48_hours === 1) {
         if ((int) $reminderRow->client_48_hours_sent === 0) {
             if ($hours_until !== null && $hours_until <= 48 && $hours_until >= 0) {
@@ -893,6 +978,7 @@ function ella_schedule_reminders($appointment_id, $stages = ['client_instant', '
                 if ($email_result) {
                     $CI->appointment_reminder_model->mark_email_stage_sent($appointment_id, 'client_48h');
                     $scheduled_reminders[] = 'Client 48h Email';
+                    $reminderRow->client_48_hours_sent = 1;
                 } else {
                     log_message('error', 'EllaContractors: Failed to send client 48h reminder for appointment ' . $appointment_id);
                 }
@@ -901,6 +987,18 @@ function ella_schedule_reminders($appointment_id, $stages = ['client_instant', '
             }
         } else {
             log_message('info', 'EllaContractors: Client 48h reminder already sent for appointment ' . $appointment_id);
+        }
+
+        if ($clientSmsEnabled && (int) ($reminderRow->client_sms_48_hours_sent ?? 0) === 0 && $hours_until !== null && $hours_until <= 48 && $hours_until >= 0) {
+            $sms_result = ella_send_appointment_sms($appointment_id, 'client', 'client_48h');
+            $results[] = $sms_result;
+            if ($sms_result) {
+                $CI->appointment_reminder_model->mark_sms_stage_sent($appointment_id, 'client_48h');
+                $scheduled_reminders[] = 'Client 48h SMS';
+                $reminderRow->client_sms_48_hours_sent = 1;
+            } else {
+                log_message('error', 'EllaContractors: Client 48h SMS reminder failed for appointment ' . $appointment_id);
+            }
         }
     }
     
@@ -913,6 +1011,7 @@ function ella_schedule_reminders($appointment_id, $stages = ['client_instant', '
                 if ($email_result) {
                     $CI->appointment_reminder_model->mark_email_stage_sent($appointment_id, 'staff_48h');
                     $scheduled_reminders[] = 'Staff 48h Email';
+                    $reminderRow->staff_48_hours_sent = 1;
                 } else {
                     log_message('error', 'EllaContractors: Failed to send staff 48h reminder for appointment ' . $appointment_id);
                 }
@@ -921,6 +1020,18 @@ function ella_schedule_reminders($appointment_id, $stages = ['client_instant', '
             }
         } else {
             log_message('info', 'EllaContractors: Staff 48h reminder already sent for appointment ' . $appointment_id);
+        }
+
+        if ($clientSmsEnabled && (int) ($reminderRow->staff_sms_48_hours_sent ?? 0) === 0 && $hours_until !== null && $hours_until <= 48 && $hours_until >= 0) {
+            $sms_result = ella_send_appointment_sms($appointment_id, 'staff', 'staff_48h');
+            $results[] = $sms_result;
+            if ($sms_result) {
+                $CI->appointment_reminder_model->mark_sms_stage_sent($appointment_id, 'staff_48h');
+                $scheduled_reminders[] = 'Staff 48h SMS';
+                $reminderRow->staff_sms_48_hours_sent = 1;
+            } else {
+                log_message('error', 'EllaContractors: Staff 48h SMS reminder failed for appointment ' . $appointment_id);
+            }
         }
     }
     

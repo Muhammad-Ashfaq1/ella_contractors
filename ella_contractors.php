@@ -579,6 +579,8 @@ function ella_contractors_activate_module() {
             `client_instant_sent` TINYINT(1) NOT NULL DEFAULT 0,
             `client_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
             `staff_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
+            `client_sms_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
+            `staff_sms_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
             `last_email_sent_at` datetime DEFAULT NULL,
             `last_sms_sent_at` datetime DEFAULT NULL,
             `rel_type` varchar(50) DEFAULT NULL,
@@ -591,6 +593,25 @@ function ella_contractors_activate_module() {
             KEY `idx_rel_type_rel_id` (`rel_type`, `rel_id`),
             KEY `idx_org_id` (`org_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+    } else {
+        $table = db_prefix() . 'appointment_reminder';
+
+        $fieldsToAdd = [
+            'staff_48_hours'            => 'ALTER TABLE `' . $table . '` ADD COLUMN `staff_48_hours` TINYINT(1) NOT NULL DEFAULT 0 AFTER `client_48_hours`',
+            'client_instant_sent'       => 'ALTER TABLE `' . $table . '` ADD COLUMN `client_instant_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `email_send`',
+            'client_48_hours_sent'      => 'ALTER TABLE `' . $table . '` ADD COLUMN `client_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `client_instant_sent`',
+            'staff_48_hours_sent'       => 'ALTER TABLE `' . $table . '` ADD COLUMN `staff_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `client_48_hours_sent`',
+            'client_sms_48_hours_sent'  => 'ALTER TABLE `' . $table . '` ADD COLUMN `client_sms_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `staff_48_hours_sent`',
+            'staff_sms_48_hours_sent'   => 'ALTER TABLE `' . $table . '` ADD COLUMN `staff_sms_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `client_sms_48_hours_sent`',
+            'last_email_sent_at'        => 'ALTER TABLE `' . $table . '` ADD COLUMN `last_email_sent_at` DATETIME DEFAULT NULL AFTER `staff_sms_48_hours_sent`',
+            'last_sms_sent_at'          => 'ALTER TABLE `' . $table . '` ADD COLUMN `last_sms_sent_at` DATETIME DEFAULT NULL AFTER `last_email_sent_at`',
+        ];
+
+        foreach ($fieldsToAdd as $field => $statement) {
+            if (!$CI->db->field_exists($field, $table)) {
+                $CI->db->query($statement);
+            }
+        }
     }
     
     // ==================== DATA MIGRATION: Update rel_type for existing records ====================

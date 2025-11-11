@@ -59,16 +59,21 @@ class Appointment_reminder_model extends App_Model
         }
 
         $data = [
-            'appointment_id'        => (int) $appointment_id,
-            'client_instant_remind' => 0,
-            'client_48_hours'       => 0,
-            'staff_48_hours'        => 0,
-            'client_sms_reminder'   => 0,
-            'sms_send'              => 0,
-            'email_send'            => 0,
-            'rel_type'              => 'appointment',
-            'rel_id'                => (int) $appointment_id,
-            'org_id'                => null,
+            'appointment_id'           => (int) $appointment_id,
+            'client_instant_remind'    => 0,
+            'client_48_hours'          => 0,
+            'staff_48_hours'           => 0,
+            'client_sms_reminder'      => 0,
+            'sms_send'                 => 0,
+            'email_send'               => 0,
+            'client_instant_sent'      => 0,
+            'client_48_hours_sent'     => 0,
+            'staff_48_hours_sent'      => 0,
+            'client_sms_48_hours_sent' => 0,
+            'staff_sms_48_hours_sent'  => 0,
+            'rel_type'                 => 'appointment',
+            'rel_id'                   => (int) $appointment_id,
+            'org_id'                   => null,
         ];
 
         $insertId = $this->create($data);
@@ -103,9 +108,14 @@ class Appointment_reminder_model extends App_Model
             return $this->update($existing->id, $flags);
         }
 
-        $flags['appointment_id'] = $appointment_id;
-        $flags['sms_send']       = 0;
-        $flags['email_send']     = 0;
+        $flags['appointment_id']           = $appointment_id;
+        $flags['sms_send']                 = 0;
+        $flags['email_send']               = 0;
+        $flags['client_instant_sent']      = 0;
+        $flags['client_48_hours_sent']     = 0;
+        $flags['staff_48_hours_sent']      = 0;
+        $flags['client_sms_48_hours_sent'] = 0;
+        $flags['staff_sms_48_hours_sent']  = 0;
 
         return $this->create($flags);
     }
@@ -162,6 +172,38 @@ class Appointment_reminder_model extends App_Model
                 break;
             default:
                 // leave only generic flags
+                break;
+        }
+
+        return $this->update_by_appointment($appointment_id, $data);
+    }
+
+    /**
+     * Mark an SMS reminder stage as sent.
+     *
+     * @param int    $appointment_id
+     * @param string $stage          client_48h | staff_48h
+     * @return bool
+     */
+    public function mark_sms_stage_sent($appointment_id, $stage)
+    {
+        $stage = strtolower($stage);
+
+        $data = [
+            'sms_send'        => 1,
+            'last_sms_sent_at'=> date('Y-m-d H:i:s'),
+        ];
+
+        switch ($stage) {
+            case 'client_48h':
+            case 'client_48_hours':
+                $data['client_sms_48_hours_sent'] = 1;
+                break;
+            case 'staff_48h':
+            case 'staff_48_hours':
+                $data['staff_sms_48_hours_sent'] = 1;
+                break;
+            default:
                 break;
         }
 
