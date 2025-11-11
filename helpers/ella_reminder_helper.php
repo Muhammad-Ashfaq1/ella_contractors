@@ -324,69 +324,57 @@ function ella_send_appointment_email($appointment_id, $type = 'client')
 
 /**
  * Parse email template with appointment data (replace merge fields)
- * 
+ *
  * @param string $template_name Template name: 'client_appointment_reminder' or 'staff_appointment_reminder'
- * @param string $template_name Template name: 'client_appointment_reminder' or 'staff_appointment_reminder'
- * @param object $appointment Appointment object
- * @param string $type 'client' or 'staff'
+ * @param object $appointment   Appointment object
+ * @param string $type          'client' or 'staff'
+ *
  * @return string Parsed email body
  */
 function ella_parse_email_template($template_name, $appointment, $type)
 {
     $CI =& get_instance();
-    
-    // Load email templates helper
-    $templates_helper = module_dir_path('ella_contractors', 'helpers/ella_email_templates_helper.php');
-    if (!function_exists('ella_get_client_reminder_template')) {
-        require_once($templates_helper);
-    // Load email templates helper
+
+    // Load email templates helper if not already loaded
     $templates_helper = module_dir_path('ella_contractors', 'helpers/ella_email_templates_helper.php');
     if (!function_exists('ella_get_client_reminder_template')) {
         require_once($templates_helper);
     }
-    
-    // Get template based on type
+
+    // Get template based on reminder type
     if ($template_name === 'staff_appointment_reminder' || $type === 'staff') {
         $template = ella_get_staff_reminder_template();
     } else {
         $template = ella_get_client_reminder_template();
     }
-    // Get template based on type
-    if ($template_name === 'staff_appointment_reminder' || $type === 'staff') {
-        $template = ella_get_staff_reminder_template();
-    } else {
-        $template = ella_get_client_reminder_template();
-    }
-    
-    // Fallback template if function doesn't exist
-    // Fallback template if function doesn't exist
+
+    // Fallback template if lookup failed
     if (empty($template)) {
         $template = '<html><body><h2>Appointment Reminder</h2><p>You have an upcoming appointment.</p></body></html>';
         log_message('error', 'EllaContractors: Email template function not found - ' . $template_name);
-        log_message('error', 'EllaContractors: Email template function not found - ' . $template_name);
     }
-    
-    // Prepare replacement data
+
+    // Merge appointment data into template
     $client_or_lead_name = $appointment->lead_name ?: ($appointment->client_name ?: 'Valued Customer');
-    
+
     $replacements = [
         '{appointment_subject}' => htmlspecialchars($appointment->subject),
-        '{appointment_date}' => date('F j, Y', strtotime($appointment->date)),
-        '{appointment_time}' => date('g:i A', strtotime($appointment->start_hour)),
+        '{appointment_date}'    => date('F j, Y', strtotime($appointment->date)),
+        '{appointment_time}'    => date('g:i A', strtotime($appointment->start_hour)),
         '{appointment_location}' => htmlspecialchars($appointment->address ?: 'Online/Phone Call'),
-        '{client_name}' => htmlspecialchars($client_or_lead_name),
-        '{staff_name}' => get_staff_full_name($appointment->created_by),
-        '{company_name}' => get_option('companyname') ?: 'Our Company',
-        '{company_phone}' => get_option('company_phone_number') ?: '',
-        '{company_email}' => get_option('company_email') ?: '',
-        '{crm_link}' => $type === 'staff' ? admin_url('ella_contractors/appointments/view/' . $appointment->id) : '',
-        '{appointment_notes}' => !empty($appointment->notes) ? nl2br(htmlspecialchars($appointment->notes)) : 'No additional notes',
+        '{client_name}'         => htmlspecialchars($client_or_lead_name),
+        '{staff_name}'          => get_staff_full_name($appointment->created_by),
+        '{company_name}'        => get_option('companyname') ?: 'Our Company',
+        '{company_phone}'       => get_option('company_phone_number') ?: '',
+        '{company_email}'       => get_option('company_email') ?: '',
+        '{crm_link}'            => $type === 'staff' ? admin_url('ella_contractors/appointments/view/' . $appointment->id) : '',
+        '{appointment_notes}'   => !empty($appointment->notes) ? nl2br(htmlspecialchars($appointment->notes)) : 'No additional notes',
     ];
-    
+
     foreach ($replacements as $key => $value) {
         $template = str_replace($key, $value, $template);
     }
-    
+
     return $template;
 }
 
@@ -796,4 +784,3 @@ function ella_schedule_reminders($appointment_id)
     
     return !empty($results);
 }
-
