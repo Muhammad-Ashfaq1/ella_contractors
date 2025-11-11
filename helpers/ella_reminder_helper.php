@@ -463,7 +463,7 @@ function ella_get_presentation_links_for_email($appointment_id)
 {
     $CI =& get_instance();
 
-    $CI->db->select('media.id, media.original_name, media.file_name');
+    $CI->db->select('media.id, media.original_name, media.file_name, media.file_type, media.file_size, pivot.attached_at');
     $CI->db->from(db_prefix() . 'ella_appointment_presentations as pivot');
     $CI->db->join(db_prefix() . 'ella_contractor_media as media', 'media.id = pivot.presentation_id');
     $CI->db->where('pivot.appointment_id', $appointment_id);
@@ -485,8 +485,13 @@ function ella_get_presentation_links_for_email($appointment_id)
         $publicUrl = site_url('uploads/ella_presentations/' . $fileName);
         $publicUrl = str_replace('http://', 'https://', $publicUrl);
         $results[] = [
-            'name' => $presentation['original_name'] ?: $fileName,
-            'url'  => $publicUrl,
+            'name'         => $presentation['original_name'] ?: $fileName,
+            'display_name' => $presentation['original_name'] ?: $fileName,
+            'url'          => $publicUrl,
+            'public_url'   => $publicUrl,
+            'file_type'    => $presentation['file_type'] ?? null,
+            'file_size'    => $presentation['file_size'] ?? null,
+            'attached_at'  => $presentation['attached_at'] ?? null,
         ];
     }
 
@@ -507,8 +512,11 @@ function ella_build_presentation_block_html($presentations)
 
     $items = '';
     foreach ($presentations as $presentation) {
-        $name = htmlspecialchars($presentation['name'], ENT_QUOTES, 'UTF-8');
-        $url  = htmlspecialchars($presentation['url'], ENT_QUOTES, 'UTF-8');
+        $displayName = $presentation['display_name'] ?? $presentation['name'] ?? '';
+        $link = $presentation['public_url'] ?? $presentation['url'] ?? '';
+
+        $name = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
+        $url  = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
 
         if (!empty($url)) {
             $items .= '<li style="margin-bottom: 8px;"><a href="' . $url . '" target="_blank" style="color: #007bff; text-decoration: none;">' . $name . '</a></li>';
