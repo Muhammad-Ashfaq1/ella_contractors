@@ -423,10 +423,10 @@ class Appointments extends AdminController
                     $this->handle_appointment_file_uploads($appointment_id);
                     
                     // Schedule/re-schedule reminders (emails & ICS files)
-                    // if (!function_exists('ella_schedule_reminders')) {
-                    //     require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
-                    // }
-                    // ella_schedule_reminders($appointment_id);
+                    if (!function_exists('ella_schedule_reminders')) {
+                        require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
+                    }
+                    ella_schedule_reminders($appointment_id);
                     
                     echo json_encode([
                         'success' => true,
@@ -464,10 +464,10 @@ class Appointments extends AdminController
                     $this->handle_appointment_file_uploads($appointment_id);
                     
                     // Schedule reminders (emails & ICS files)
-                    // if (!function_exists('ella_schedule_reminders')) {
-                    //     require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
-                    // }
-                    // ella_schedule_reminders($appointment_id);
+                    if (!function_exists('ella_schedule_reminders')) {
+                        require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
+                    }
+                    ella_schedule_reminders($appointment_id);
                     
                     echo json_encode([
                         'success' => true,
@@ -620,6 +620,15 @@ class Appointments extends AdminController
         if (!has_permission('ella_contractors', '', 'edit')) {
             ajax_access_denied();
         }
+
+        // Temporarily disabled: SMS sending is turned off in QA mode.
+        echo json_encode([
+            'success' => false,
+            'message' => 'SMS sending is temporarily disabled. Please use email instead.'
+        ]);
+        return;
+        
+        /*
         
         $response = array();
         
@@ -706,6 +715,7 @@ class Appointments extends AdminController
         
         // Return the json response
         echo json_encode($response, true);
+        */
     }
 
     /**

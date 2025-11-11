@@ -22,6 +22,9 @@ hooks()->add_action('app_admin_head', 'ella_contractors_load_global_css');
 // Load timeline helper
 hooks()->add_action('init', 'ella_contractors_load_helpers');
 
+// Register cron processing
+hooks()->add_action('after_cron_run', 'ella_contractors_after_cron_run');
+
 // Register activation and deactivation hooks
 register_activation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_activate_module');
 register_deactivation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_deactivate_module');
@@ -577,6 +580,24 @@ function ella_contractors_activate_module() {
     // Set module version
     update_option('ella_contractors_version', '1.0.0');
     
+}
+
+/**
+ * Cron callback for Ella Contractors reminders.
+ *
+ * @param bool $manually
+ * @return void
+ */
+function ella_contractors_after_cron_run($manually)
+{
+    $reminder_helper_path = module_dir_path(ELLA_CONTRACTORS_MODULE_NAME, 'helpers/ella_reminder_helper.php');
+    if (file_exists($reminder_helper_path) && !function_exists('ella_process_48h_reminders_cron')) {
+        require_once($reminder_helper_path);
+    }
+
+    if (function_exists('ella_process_48h_reminders_cron')) {
+        ella_process_48h_reminders_cron();
+    }
 }
 
 function ella_contractors_deactivate_module() {
