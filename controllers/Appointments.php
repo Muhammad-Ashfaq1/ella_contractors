@@ -6,6 +6,7 @@ class Appointments extends AdminController
     {
         parent::__construct();
         $this->load->model('ella_contractors/Ella_appointments_model', 'appointments_model');
+        $this->load->model('ella_contractors/Appointment_reminder_model', 'appointment_reminder_model');
         $this->load->model('staff_model');
         $this->load->model('clients_model');
         $this->load->model('leads_model');
@@ -427,6 +428,9 @@ class Appointments extends AdminController
                         require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
                     }
                     ella_schedule_reminders($appointment_id);
+
+                    // Update reminder tracking record
+                    $this->appointment_reminder_model->sync_from_appointment($appointment_id, $data);
                     
                     echo json_encode([
                         'success' => true,
@@ -468,6 +472,9 @@ class Appointments extends AdminController
                         require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
                     }
                     ella_schedule_reminders($appointment_id);
+
+                    // Create reminder tracking record
+                    $this->appointment_reminder_model->sync_from_appointment($appointment_id, $data);
                     
                     echo json_encode([
                         'success' => true,
@@ -2296,4 +2303,6 @@ startxref
         }
     }
 
+
+    
 }
