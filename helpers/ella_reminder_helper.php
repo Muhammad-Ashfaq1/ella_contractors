@@ -260,16 +260,14 @@ function ella_send_appointment_email($appointment_id, $type = 'client', $context
         $template = 'client_appointment_reminder';
     }
 
-    // Capture intended recipient for future reference
-    $intended_email = $to_email;
-    // Temporary override: route all appointment emails to test inbox (intended recipient stored in $intended_email)
-    $to_email = 'mitf19e032@gmail.com';
-    $to_name  = $to_name ?? 'Test Recipient';
-    $intended_email_log = $intended_email ?: '[unknown]';
-    log_message('info', 'EllaContractors: Email intended for ' . $intended_email_log . ' routed to test inbox: ' . $to_email);
-    
     // Build email body from template
     $email_body = ella_parse_email_template($template, $appointment, $type);
+
+    // Ensure presentation links are visible even if template lacks placeholder
+    if (!empty($appointment->presentation_block)
+        && strpos($email_body, $appointment->presentation_block) === false) {
+        $email_body .= $appointment->presentation_block;
+    }
     
     // Get from email with fallback (use smtp_email like the rest of CRM)
     $from_email = get_option('smtp_email');
