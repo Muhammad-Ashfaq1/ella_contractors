@@ -419,28 +419,38 @@ function ella_hours_until_appointment($appointment)
  *
  * @return void
  */
-function ella_process_48h_reminders_cron()
+function ella_get_pending_48h_reminders()
 {
     $CI =& get_instance();
-    $CI->load->model('ella_contractors/ella_appointments_model');
 
-    $CI->db->select('id');
-    $CI->db->from(db_prefix() . 'appointly_appointments');
-    $CI->db->where('source', 'ella_contractor');
-    $CI->db->where('reminder_48h', 1);
-    $CI->db->where('(appointment_status IS NULL OR appointment_status != "cancelled")', null, false);
-    $CI->db->where('(appointment_status IS NULL OR appointment_status != "complete")', null, false);
-    $CI->db->where('DATE_SUB(CONCAT(date, " ", COALESCE(start_hour, "00:00:00")), INTERVAL 48 HOUR) <= NOW()', null, false);
-    $CI->db->where('CONCAT(date, " ", COALESCE(start_hour, "00:00:00")) >= NOW()', null, false);
+    $CI->db->select('app.id');
+    $CI->db->from(db_prefix() . 'appointly_appointments as app');
+    $CI->db->join(db_prefix() . 'appointment_reminder as rem', 'rem.appointment_id = app.id', 'inner');
+    $CI->db->where('app.source', 'ella_contractor');
+    $CI->db->where('(app.appointment_status IS NULL OR app.appointment_status NOT IN ("cancelled","complete"))', null, false);
+    $CI->db->where('(rem.client_48_hours = 1 AND rem.client_48_hours_sent = 0) OR (rem.staff_48_hours = 1 AND rem.staff_48_hours_sent = 0)', null, false);
+    $CI->db->where('CONCAT(app.date, " ", COALESCE(app.start_hour, "00:00:00")) >= DATE_SUB(NOW(), INTERVAL 1 HOUR)', null, false);
+    $CI->db->where('CONCAT(app.date, " ", COALESCE(app.start_hour, "00:00:00")) <= DATE_ADD(NOW(), INTERVAL 2 DAY)', null, false);
+    $CI->db->group_by('app.id');
 
-    $appointments = $CI->db->get()->result();
+    return $CI->db->get()->result();
+}
+
+/**
+ * Cron processor for 48-hour reminders.
+ *
+ * @return void
+ */
+function ella_process_48h_reminders_cron()
+{
+    $appointments = ella_get_pending_48h_reminders();
 
     if (!$appointments) {
         return;
     }
 
     foreach ($appointments as $appointment) {
-        ella_schedule_reminders($appointment->id);
+        ella_schedule_reminders($appointment->id, ['client_48h', 'staff_48h']);
     }
 }
 
@@ -790,7 +800,7 @@ function ella_get_ics_public_url($appointment_id, $type = 'client')
  * @param int $appointment_id Appointment ID
  * @return bool Success status
  */
-function ella_schedule_reminders($appointment_id)
+function ella_schedule_reminders($appointment_id, $stages = ['client_instant', 'client_48h', 'staff_48h'])
 {
     $CI =& get_instance();
     $CI->load->model('ella_contractors/ella_appointments_model');
@@ -807,6 +817,11 @@ function ella_schedule_reminders($appointment_id)
         log_message('error', 'EllaContractors: Unable to ensure reminder tracking record for appointment ' . $appointment_id);
         return false;
     }
+
+    if (!is_array($stages) || empty($stages)) {
+        $stages = ['client_instant', 'client_48h', 'staff_48h'];
+    }
+    $stages = array_map('strtolower', $stages);
 
     // Keep tracking flags in sync with appointment configuration
     $clientInstantEnabled = isset($appointment->send_reminder) ? (int) $appointment->send_reminder : 0;
@@ -848,7 +863,7 @@ function ella_schedule_reminders($appointment_id)
     $hours_until = ella_hours_until_appointment($appointment);
     
     // 1. Client Instant Reminder (EMAIL)
-    if ($allow_email && (int) $reminderRow->client_instant_remind === 1) {
+    if ($allow_email && in_array('client_instant', $stages, true) && (int) $reminderRow->client_instant_remind === 1) {
         if ((int) $reminderRow->client_instant_sent === 0) {
             $email_result = ella_send_appointment_email($appointment_id, 'client', 'client_instant');
             $results[] = $email_result;
@@ -864,7 +879,7 @@ function ella_schedule_reminders($appointment_id)
     }
     
     // 2. Client 48h Reminder (EMAIL) - send when within 48 hours
-    if ($allow_email && (int) $reminderRow->client_48_hours === 1) {
+    if ($allow_email && in_array('client_48h', $stages, true) && (int) $reminderRow->client_48_hours === 1) {
         if ((int) $reminderRow->client_48_hours_sent === 0) {
             if ($hours_until !== null && $hours_until <= 48 && $hours_until >= 0) {
                 $email_result = ella_send_appointment_email($appointment_id, 'client', 'client_48h');
@@ -884,7 +899,7 @@ function ella_schedule_reminders($appointment_id)
     }
     
     // 3. Staff 48h Reminder (EMAIL) - optional
-    if ($allow_email && (int) $reminderRow->staff_48_hours === 1) {
+    if ($allow_email && in_array('staff_48h', $stages, true) && (int) $reminderRow->staff_48_hours === 1) {
         if ((int) $reminderRow->staff_48_hours_sent === 0) {
             if ($hours_until !== null && $hours_until <= 48 && $hours_until >= 0) {
                 $email_result = ella_send_appointment_email($appointment_id, 'staff', 'staff_48h');

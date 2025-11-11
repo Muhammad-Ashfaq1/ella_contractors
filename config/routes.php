@@ -64,3 +64,6 @@ $route[$module_name . $appointment_module . '/save_ajax'] = 'Appointments/save_a
 $route[$module_name . $appointment_module . '/send_sms'] = 'Appointments/send_sms';
 $route[$module_name . $appointment_module . '/get_sms_logs'] = 'Appointments/get_sms_logs';
 $route[$module_name . $appointment_module . '/upload_sms_media'] = 'Appointments/upload_sms_media';
+
+// Reminder cron endpoint
+$route[$module_name . '/reminders/cron'] = 'Reminders/cron';

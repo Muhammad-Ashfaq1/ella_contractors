@@ -427,7 +427,7 @@ class Appointments extends AdminController
                     if (!function_exists('ella_schedule_reminders')) {
                         require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
                     }
-                    ella_schedule_reminders($appointment_id);
+                    ella_schedule_reminders($appointment_id, ['client_instant']);
 
                     // Update reminder tracking record
                     $this->appointment_reminder_model->sync_from_appointment($appointment_id, $data);
@@ -471,7 +471,7 @@ class Appointments extends AdminController
                     if (!function_exists('ella_schedule_reminders')) {
                         require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
                     }
-                    ella_schedule_reminders($appointment_id);
+                    ella_schedule_reminders($appointment_id, ['client_instant']);
 
                     // Create reminder tracking record
                     $this->appointment_reminder_model->sync_from_appointment($appointment_id, $data);
