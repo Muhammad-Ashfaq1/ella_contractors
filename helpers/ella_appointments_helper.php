@@ -351,7 +351,6 @@ if (!function_exists('get_appointment_presentations_public_links')) {
         $CI->db->join(db_prefix() . 'ella_contractor_media as media', 'media.id = pivot.presentation_id');
         $CI->db->where('pivot.appointment_id', $appointment_id);
         $CI->db->where('media.rel_type', 'presentation');
-        $CI->db->where('media.active', 1);
         
         $presentations = $CI->db->get()->result();
         

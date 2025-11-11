@@ -326,6 +326,7 @@ function ella_send_appointment_email($appointment_id, $type = 'client')
  * Parse email template with appointment data (replace merge fields)
  * 
  * @param string $template_name Template name: 'client_appointment_reminder' or 'staff_appointment_reminder'
+ * @param string $template_name Template name: 'client_appointment_reminder' or 'staff_appointment_reminder'
  * @param object $appointment Appointment object
  * @param string $type 'client' or 'staff'
  * @return string Parsed email body
@@ -338,6 +339,10 @@ function ella_parse_email_template($template_name, $appointment, $type)
     $templates_helper = module_dir_path('ella_contractors', 'helpers/ella_email_templates_helper.php');
     if (!function_exists('ella_get_client_reminder_template')) {
         require_once($templates_helper);
+    // Load email templates helper
+    $templates_helper = module_dir_path('ella_contractors', 'helpers/ella_email_templates_helper.php');
+    if (!function_exists('ella_get_client_reminder_template')) {
+        require_once($templates_helper);
     }
     
     // Get template based on type
@@ -346,10 +351,18 @@ function ella_parse_email_template($template_name, $appointment, $type)
     } else {
         $template = ella_get_client_reminder_template();
     }
+    // Get template based on type
+    if ($template_name === 'staff_appointment_reminder' || $type === 'staff') {
+        $template = ella_get_staff_reminder_template();
+    } else {
+        $template = ella_get_client_reminder_template();
+    }
     
+    // Fallback template if function doesn't exist
     // Fallback template if function doesn't exist
     if (empty($template)) {
         $template = '<html><body><h2>Appointment Reminder</h2><p>You have an upcoming appointment.</p></body></html>';
+        log_message('error', 'EllaContractors: Email template function not found - ' . $template_name);
         log_message('error', 'EllaContractors: Email template function not found - ' . $template_name);
     }
     
@@ -370,7 +383,6 @@ function ella_parse_email_template($template_name, $appointment, $type)
         '{appointment_notes}' => !empty($appointment->notes) ? nl2br(htmlspecialchars($appointment->notes)) : 'No additional notes',
     ];
     
-    // Replace all merge fields
     foreach ($replacements as $key => $value) {
         $template = str_replace($key, $value, $template);
     }
@@ -662,6 +674,7 @@ function ella_get_ics_public_url($appointment_id, $type = 'client')
  * Schedule all reminders for an appointment (called after save)
  * This is the main entry point called from the controller
  * Sends both EMAIL and SMS reminders
+ * Sends both EMAIL and SMS reminders
  * 
  * @param int $appointment_id Appointment ID
  * @return bool Success status
@@ -687,6 +700,7 @@ function ella_schedule_reminders($appointment_id)
     $results = [];
     $scheduled_reminders = [];
     
+    // 1. Client Instant Reminder (EMAIL + SMS - send immediately)
     // 1. Client Instant Reminder (EMAIL + SMS - send immediately)
     if (isset($appointment->send_reminder) && $appointment->send_reminder == 1) {
         // Send Email
