@@ -318,6 +318,7 @@ class Appointments extends AdminController
             // Convert object to array
             $appointment_data = (array) $appointment;
             $appointment_data['attendees'] = $this->appointments_model->get_appointment_attendees($id);
+            $appointment_data['reminder_channel'] = $this->normalize_reminder_channel($appointment->reminder_channel ?? 'both');
             
             // Determine contact type and prepare contact data for dropdown
             if ($appointment->client_name) {
@@ -397,7 +398,8 @@ class Appointments extends AdminController
             'source' => 'ella_contractor',
             'send_reminder' => $this->input->post('send_reminder') ? 1 : 0,
             'reminder_48h' => $this->input->post('reminder_48h') ? 1 : 0,
-            'staff_reminder_48h' => $this->input->post('staff_reminder_48h') ? 1 : 0
+            'staff_reminder_48h' => $this->input->post('staff_reminder_48h') ? 1 : 0,
+            'reminder_channel' => $this->normalize_reminder_channel($this->input->post('reminder_channel'))
         ];
         
         $appointment_id = $this->input->post('appointment_id');
@@ -704,6 +706,22 @@ class Appointments extends AdminController
         
         // Return the json response
         echo json_encode($response, true);
+    }
+
+    /**
+     * Normalize reminder channel input to supported values.
+     *
+     * @param string|null $value
+     * @return string
+     */
+    private function normalize_reminder_channel($value)
+    {
+        $allowed = ['sms', 'email', 'both'];
+        $value = is_string($value) ? strtolower(trim($value)) : '';
+        if (!in_array($value, $allowed, true)) {
+            $value = 'both';
+        }
+        return $value;
     }
     
     /**

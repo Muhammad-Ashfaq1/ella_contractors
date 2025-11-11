@@ -142,7 +142,7 @@ class Ella_appointments_model extends App_Model
         
         // Track changes
         $changes = [];
-        $fields_to_track = ['subject', 'date', 'start_hour', 'end_time', 'description', 'location', 'appointment_status'];
+        $fields_to_track = ['subject', 'date', 'start_hour', 'end_time', 'description', 'location', 'appointment_status', 'reminder_channel'];
         
         foreach ($fields_to_track as $field) {
             if (isset($data[$field]) && $data[$field] != $original->$field) {
