@@ -640,12 +640,12 @@ function ella_contractors_activate_module() {
 function ella_contractors_after_cron_run($manually)
 {
     $reminder_helper_path = module_dir_path(ELLA_CONTRACTORS_MODULE_NAME, 'helpers/ella_reminder_helper.php');
-    if (file_exists($reminder_helper_path) && !function_exists('ella_process_48h_reminders_cron')) {
+    if (file_exists($reminder_helper_path) && !function_exists('ella_run_reminder_dispatch')) {
         require_once($reminder_helper_path);
     }
 
-    if (function_exists('ella_process_48h_reminders_cron')) {
-        ella_process_48h_reminders_cron();
+    if (function_exists('ella_run_reminder_dispatch')) {
+        ella_run_reminder_dispatch();
     }
 }
 

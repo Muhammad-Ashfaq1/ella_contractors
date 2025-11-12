@@ -20,18 +20,17 @@ class Reminders extends App_Controller
             exit('Invalid cron key.');
         }
 
-        if (!function_exists('ella_process_48h_reminders_cron')) {
+        if (!function_exists('ella_run_reminder_dispatch')) {
             require_once module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php');
         }
 
-        ella_process_48h_reminders_cron();
+        $result = ella_run_reminder_dispatch();
 
         $this->output
             ->set_content_type('application/json')
-            ->set_output(json_encode([
+            ->set_output(json_encode(array_merge([
                 'success' => true,
-                'message' => 'Ella Contractors reminder cron executed.',
-            ]));
+            ], $result)));
     }
 }
 

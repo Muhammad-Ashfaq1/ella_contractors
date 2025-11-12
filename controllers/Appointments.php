@@ -462,10 +462,10 @@ class Appointments extends AdminController
                     $this->handle_appointment_file_uploads($appointment_id);
                     
                     // Schedule reminders (emails & ICS files)
-                    if (!function_exists('ella_schedule_reminders')) {
-                        require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
-                    }
-                    ella_schedule_reminders($appointment_id, ['client_instant']);
+                    // if (!function_exists('ella_schedule_reminders')) {
+                    //     require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
+                    // }
+                    // ella_schedule_reminders($appointment_id, ['client_instant']);
 
                     // Create reminder tracking record
                     $this->appointment_reminder_model->sync_from_appointment($appointment_id, $data);
