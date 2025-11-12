@@ -1384,16 +1384,10 @@ function loadAppointmentData(appointmentId) {
                                         return;
                                     }
                                     
-                                    // Only populate form fields if they are empty
-                                    if (!$('#email').val() && data.email) {
-                                        $('#email').val(data.email);
-                                    }
-                                    if (!$('#phone').val() && data.phone) {
-                                        $('#phone').val(data.phone);
-                                    }
-                                    if (!$('#address').val() && data.address) {
-                                        $('#address').val(data.address);
-                                    }
+                                    // Populate form fields with the selected relation data
+                                    $('#email').val(data.email || '');
+                                    $('#phone').val(data.phone || '');
+                                    $('#address').val(data.address || '');
                                     
                                     // Store validation status in hidden fields
                                     if (typeof data.emailValidaionStatus !== 'undefined') {
@@ -1523,16 +1517,10 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                                         return;
                                     }
                                     
-                                    // Only populate form fields if they are empty
-                                    if (!$('#email').val() && data.email) {
-                                        $('#email').val(data.email);
-                                    }
-                                    if (!$('#phone').val() && data.phone) {
-                                        $('#phone').val(data.phone);
-                                    }
-                                    if (!$('#address').val() && data.address) {
-                                        $('#address').val(data.address);
-                                    }
+                                    // Populate form fields with the selected relation data
+                                    $('#email').val(data.email || '');
+                                    $('#phone').val(data.phone || '');
+                                    $('#address').val(data.address || '');
                                     
                                     // Store validation status in hidden fields
                                     if (typeof data.emailValidaionStatus !== 'undefined') {
@@ -1662,16 +1650,10 @@ $(document).ready(function() {
                             }
                         }
                         
-                        // Only populate form fields if they are empty
-                        if (!$('#email').val() && data.email) {
-                            $('#email').val(data.email);
-                        }
-                        if (!$('#phone').val() && data.phone) {
-                            $('#phone').val(data.phone);
-                        }
-                        if (!$('#address').val() && data.address) {
-                            $('#address').val(data.address);
-                        }
+                        // Populate form fields with the selected relation data
+                        $('#email').val(data.email || '');
+                        $('#phone').val(data.phone || '');
+                        $('#address').val(data.address || '');
                         
                         // Store validation status in hidden fields
                         if (typeof data.emailValidaionStatus !== 'undefined') {
