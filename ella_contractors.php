@@ -626,6 +626,37 @@ function ella_contractors_activate_module() {
     
     // ==================== END DATA MIGRATION ====================
     
+    // Ensure email templates exist for reminders
+    $email_helper_path = module_dir_path(ELLA_CONTRACTORS_MODULE_NAME, 'helpers/ella_email_templates_helper.php');
+    if (file_exists($email_helper_path)) {
+        require_once $email_helper_path;
+    }
+    if (!function_exists('create_email_template')) {
+        $CI->load->helper('email_templates');
+    }
+    $client_slug = 'ella-appointment-client-reminder';
+    if (function_exists('ella_get_client_reminder_template') && total_rows(db_prefix() . 'emailtemplates', ['slug' => $client_slug]) === 0) {
+        create_email_template(
+            'Appointment Reminder: {appointment_subject}',
+            ella_get_client_reminder_template(),
+            'ella_contractors',
+            'Ella Contractors Appointment Reminder (Client)',
+            $client_slug,
+            1
+        );
+    }
+    $staff_slug = 'ella-appointment-staff-reminder';
+    if (function_exists('ella_get_staff_reminder_template') && total_rows(db_prefix() . 'emailtemplates', ['slug' => $staff_slug]) === 0) {
+        create_email_template(
+            'Appointment Reminder (Staff): {appointment_subject}',
+            ella_get_staff_reminder_template(),
+            'ella_contractors',
+            'Ella Contractors Appointment Reminder (Staff)',
+            $staff_slug,
+            1
+        );
+    }
+    
     // Set module version
     update_option('ella_contractors_version', '1.0.0');
     

@@ -189,13 +189,80 @@ function ella_escape_ics_text($text)
  * @param string $type 'client' or 'staff'
  * @return bool Success status
  */
+function ella_prepare_email_merge_fields($appointment, $type)
+{
+    $clientName = $appointment->client_name ?? $appointment->lead_name ?? 'Valued Customer';
+    $notes = $appointment->notes ?? '';
+    $location = $appointment->address ?? 'Online/Phone Call';
+    $companyName = get_option('companyname') ?: 'Our Company';
+    $companyPhone = get_option('company_phone_number') ?: '';
+    $companyEmail = get_option('company_email') ?: '';
+
+    $merge = [
+        '{appointment_subject}'  => html_escape($appointment->subject ?? ''),
+        '{appointment_date}'     => !empty($appointment->date) ? date('F j, Y', strtotime($appointment->date)) : '',
+        '{appointment_time}'     => !empty($appointment->start_hour) ? date('g:i A', strtotime($appointment->start_hour)) : '',
+        '{appointment_location}' => html_escape($location),
+        '{appointment_notes}'    => $notes !== '' ? nl2br(html_escape($notes)) : 'No additional notes',
+        '{client_name}'          => html_escape($clientName),
+        '{company_name}'         => html_escape($companyName),
+        '{company_phone}'        => html_escape($companyPhone),
+        '{company_email}'        => html_escape($companyEmail),
+        '{presentation_block}'   => $appointment->presentation_block ?? '',
+    ];
+
+    if ($type === 'staff') {
+        $merge['{staff_name}'] = html_escape($appointment->staff_name ?? '');
+        $merge['{crm_link}']   = admin_url('ella_contractors/appointments/view/' . $appointment->id);
+    }
+
+    return $merge;
+}
+
+function ella_ensure_email_templates_exist()
+{
+    $CI =& get_instance();
+
+    $email_helper_path = module_dir_path(ELLA_CONTRACTORS_MODULE_NAME, 'helpers/ella_email_templates_helper.php');
+    if (file_exists($email_helper_path)) {
+        require_once $email_helper_path;
+    }
+
+    if (!function_exists('create_email_template')) {
+        $CI->load->helper('email_templates');
+    }
+
+    $client_slug = 'ella-appointment-client-reminder';
+    if (function_exists('ella_get_client_reminder_template') && total_rows(db_prefix() . 'emailtemplates', ['slug' => $client_slug]) === 0) {
+        create_email_template(
+            'Appointment Reminder: {appointment_subject}',
+            ella_get_client_reminder_template(),
+            'ella_contractors',
+            'Ella Contractors Appointment Reminder (Client)',
+            $client_slug,
+            1
+        );
+    }
+
+    $staff_slug = 'ella-appointment-staff-reminder';
+    if (function_exists('ella_get_staff_reminder_template') && total_rows(db_prefix() . 'emailtemplates', ['slug' => $staff_slug]) === 0) {
+        create_email_template(
+            'Appointment Reminder (Staff): {appointment_subject}',
+            ella_get_staff_reminder_template(),
+            'ella_contractors',
+            'Ella Contractors Appointment Reminder (Staff)',
+            $staff_slug,
+            1
+        );
+    }
+}
+
 function ella_send_reminder_email($appointment_id, $stage)
 {
     $CI =& get_instance();
     $CI->load->model('ella_contractors/ella_appointments_model');
     $CI->load->model('leads_model');
     $CI->load->model('clients_model');
-    $CI->load->library('email');
     
     $appointment = $CI->ella_appointments_model->get_appointment($appointment_id);
     if (!$appointment) {
@@ -203,19 +270,13 @@ function ella_send_reminder_email($appointment_id, $stage)
         return false;
     }
     
+    $original_subject = $appointment->subject ?? '';
     $stage = strtolower($stage);
     $type  = $stage === 'staff_48h' ? 'staff' : 'client';
     $context = $stage;
-    
-    // Generate ICS file
-    $ics_file = ella_generate_ics($appointment_id, $type);
 
-    // Prepare presentation links block
-    $presentations_for_email = ella_get_presentation_links_for_email($appointment_id);
-    $appointment->presentation_block = ella_build_presentation_block_html($presentations_for_email);
-    
+    // Determine recipient email and names
     if ($type === 'staff') {
-        // Send reminder to the staff member who created the appointment
         $staff = $CI->db->select('firstname, lastname, email')
                         ->where('staffid', $appointment->created_by)
                         ->get(db_prefix() . 'staff')
@@ -224,110 +285,78 @@ function ella_send_reminder_email($appointment_id, $stage)
             log_message('error', 'EllaContractors: Cannot send staff email - Staff not found or missing email for appointment ' . $appointment_id);
             return false;
         }
-        
-        $to_email = $staff->email;
-        $to_name = trim($staff->firstname . ' ' . $staff->lastname);
-        $subject_prefix = 'Your Appointment Reminder: ';
-        $subject = $subject_prefix . $appointment->subject;
-        $template = 'staff_appointment_reminder';
+        $appointment->email = $staff->email;
+        $appointment->staff_name = trim(($staff->firstname ?? '') . ' ' . ($staff->lastname ?? ''));
     } else {
-        // Default to the email stored on the appointment
-        $to_email = $appointment->email;
-        $to_name = $appointment->lead_name ?: ($appointment->client_name ?: 'Valued Customer');
-        
-        // Fallback: try to load email from the related lead/client record
-        if (empty($to_email) && !empty($appointment->contact_id)) {
+        $appointment->email = $appointment->email ?? '';
+        $appointment->client_name = $appointment->client_name ?? $appointment->lead_name ?? 'Valued Customer';
+
+        if (empty($appointment->email) && !empty($appointment->contact_id)) {
             if (!empty($appointment->lead_name)) {
                 $lead = $CI->leads_model->get($appointment->contact_id);
                 if ($lead && !empty($lead->email)) {
-                    $to_email = $lead->email;
-                    $to_name = $lead->name;
+                    $appointment->email = $lead->email;
+                    $appointment->client_name = $lead->name;
                 }
             } else {
                 $client = $CI->clients_model->get($appointment->contact_id);
                 if ($client && !empty($client->email)) {
-                    $to_email = $client->email;
-                    $to_name = $client->company ?: trim(($client->firstname ?? '') . ' ' . ($client->lastname ?? ''));
+                    $appointment->email = $client->email;
+                    $appointment->client_name = $client->company ?: trim(($client->firstname ?? '') . ' ' . ($client->lastname ?? ''));
                 }
             }
         }
-        
-        if (empty($to_email)) {
+
+        if (empty($appointment->email)) {
             log_message('error', 'EllaContractors: Cannot send client email - No recipient email address for appointment ' . $appointment_id);
             return false;
         }
+    }
+    
+    // Generate ICS file and presentation block
+    $ics_file = ella_generate_ics($appointment_id, $type);
+    $presentations_for_email = ella_get_presentation_links_for_email($appointment_id);
+    $appointment->presentation_block = ella_build_presentation_block_html($presentations_for_email);
+    
+    $merge_fields = ella_prepare_email_merge_fields($appointment, $type);
 
-        $subject_prefix = 'Appointment Reminder: ';
-        if ($stage === 'client_instant') {
-            $subject_prefix = 'Appointment Confirmation: ';
-        }
-        $subject = $subject_prefix . $appointment->subject;
-        $template = 'client_appointment_reminder';
+    // Select appropriate mail template
+    $templateClass = $type === 'staff'
+        ? 'ella_appointment_staff_reminder'
+        : 'ella_appointment_client_reminder';
+
+    ella_ensure_email_templates_exist();
+
+    if (!function_exists('mail_template')) {
+        $CI->load->helper('email_templates');
     }
 
-    // Build email body from template
-    $email_body = ella_parse_email_template($template, $appointment, $type);
+    $template = mail_template($templateClass, 'ella_contractors', $appointment, $merge_fields, $ics_file);
+    if (!$template) {
+        log_message('error', 'EllaContractors: Failed to load mail template [' . $templateClass . ']');
+        return false;
+    }
 
-    // Ensure presentation links are visible even if template lacks placeholder
-    if (!empty($appointment->presentation_block)
-        && strpos($email_body, $appointment->presentation_block) === false) {
-        $email_body .= $appointment->presentation_block;
-    }
-    
-    // Get from email with fallback (use smtp_email like the rest of CRM)
-    $from_email = get_option('smtp_email');
-    if (empty($from_email)) {
-        $from_email = get_option('company_email');
-    }
-    
-    $from_name = get_option('companyname');
-    
-    // Fallback if email not set or invalid
-    if (empty($from_email) || !filter_var($from_email, FILTER_VALIDATE_EMAIL)) {
-        // Use test email for testing mode
-        $from_email = 'mitf19e032@gmail.com';
-        log_message('warning', 'EllaContractors: SMTP email not configured, using test email: ' . $from_email);
-    }
-    
-    if (empty($from_name)) {
-        $from_name = 'EllaContractors CRM';
-    }
-    
-    log_message('info', 'EllaContractors: Sending email FROM: ' . $from_email . ' (' . $from_name . ') TO: ' . $to_email);
-    
-    // Send email using CRM's email system (same pattern as send_reminder_ajax)
-    $CI->email->clear();
-    $CI->email->from($from_email, $from_name);
-    $CI->email->to($to_email);
-    $CI->email->subject($subject);
-    $CI->email->message($email_body);
-    
-    // Attach ICS file if generated successfully
-    if ($ics_file && file_exists($ics_file)) {
-        $CI->email->attach($ics_file);
-    }
-    
-    // Send email (App_Email library handles queuing automatically if enabled in settings)
-    $result = $CI->email->send();
-    
+    $result = $template->send();
+
     if ($result) {
-        log_message('info', 'EllaContractors: Email sent successfully to ' . $to_email . ' for appointment ' . $appointment_id);
-        
+        log_message('info', 'EllaContractors: Email sent successfully to ' . $appointment->email . ' for appointment ' . $appointment_id);
+
         // Log email activity to appointment timeline
         $CI->ella_appointments_model->add_activity_log(
             $appointment_id,
             'EMAIL',
             'sent',
             [
-                'email_address' => $to_email,
-                'subject' => $subject,
+                'email_address' => $appointment->email,
+                'subject' => $original_subject,
                 'email_type' => $context,
                 'reminder_stage' => $context,
                 'has_ics_attachment' => $ics_file ? true : false
             ]
         );
     } else {
-        log_message('error', 'EllaContractors: Failed to send email to ' . $to_email . ' - ' . $CI->email->print_debugger());
+        log_message('error', 'EllaContractors: Failed to send email to ' . $appointment->email . ' for appointment ' . $appointment_id);
     }
     
     return $result;
