@@ -650,15 +650,7 @@ function ella_contractors_after_cron_run($manually)
 }
 
 function ella_contractors_deactivate_module() {
-    $CI = &get_instance();
-
-    // Remove legacy tables
-    $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_line_items`');
-    $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_line_item_groups`');
-    $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_estimates`');
-    $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_estimate_line_items`');
-    $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'appointment_reminder`');
-
+    //revert if you want 
 }
 
 
