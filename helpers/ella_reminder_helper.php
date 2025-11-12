@@ -873,83 +873,90 @@ function ella_run_reminder_dispatch()
     $CI->load->model('ella_contractors/Appointment_reminder_model', 'appointment_reminder_model');
     $CI->load->model('ella_contractors/Ella_appointments_model', 'appointments_model');
 
-    $appointments = $CI->db->select('app.*, rem.id AS reminder_row_id, rem.client_instant_remind, rem.client_48_hours, rem.staff_48_hours, rem.client_sms_reminder, rem.client_instant_sent, rem.client_48_hours_sent, rem.staff_48_hours_sent, rem.client_sms_48_hours_sent, rem.staff_sms_48_hours_sent')
-        ->from(db_prefix() . 'appointment_reminder as rem')
-        ->join(db_prefix() . 'appointly_appointments as app', 'app.id = rem.appointment_id', 'inner')
+    $query = $CI->db->select([
+            'rem.*',
+            'app.id AS appointment_id',
+            'app.subject',
+            'app.date',
+            'app.start_hour',
+            'app.end_date',
+            'app.end_time',
+            'app.email',
+            'app.phone',
+            'app.reminder_channel',
+            'app.send_reminder',
+            'app.reminder_48h',
+            'app.staff_reminder_48h',
+            'app.appointment_status',
+            'app.source',
+        ])
+        ->from(db_prefix() . 'appointment_reminder AS rem')
+        ->join(db_prefix() . 'appointly_appointments AS app', 'app.id = rem.appointment_id', 'inner')
         ->where('app.source', 'ella_contractor')
-        ->group_start()
-            ->where('rem.client_instant_remind', 1)
-            ->or_where('rem.client_48_hours', 1)
-            ->or_where('rem.staff_48_hours', 1)
-            ->or_where('rem.client_sms_reminder', 1)
-        ->group_end()
         ->where('(app.appointment_status IS NULL OR app.appointment_status NOT IN ("cancelled","complete"))', null, false)
-        ->get()
-        ->result();
+        ->get();
 
-        // die(print_r($appointments, true));
-
-    $processed = 0;
+    $rows = $query->result();
+    $processed = count($rows);
     $notificationsSent = 0;
 
-    foreach ($appointments as $appointment) {
-        $processed++;
+    foreach ($rows as $row) {
+        $channel = strtolower($row->reminder_channel ?? 'both');
+        $sendEmail = in_array($channel, ['email', 'both'], true);
+        $sendSms   = in_array($channel, ['sms', 'both'], true);
 
-        $expectedFlags = [
-            'client_instant_remind' => (int) ($appointment->send_reminder ?? 0) === 1 ? 1 : 0,
-            'client_48_hours'       => (int) ($appointment->reminder_48h ?? 0) === 1 ? 1 : 0,
-            'staff_48_hours'        => (int) ($appointment->staff_reminder_48h ?? 0) === 1 ? 1 : 0,
-            'client_sms_reminder'   => in_array(strtolower($appointment->reminder_channel ?? 'both'), ['sms', 'both'], true) ? 1 : 0,
-        ];
-
-        $needsSync = false;
-        foreach ($expectedFlags as $column => $value) {
-            if ((int) ($appointment->{$column} ?? 0) !== $value) {
-                $needsSync = true;
-                $appointment->{$column} = $value;
-            }
-        }
-
-        if ($needsSync && !empty($appointment->reminder_row_id)) {
-            $CI->appointment_reminder_model->update((int) $appointment->reminder_row_id, $expectedFlags);
-        }
-
-        $hoursUntil = ella_hours_until_appointment($appointment);
+        $hoursUntil = ella_hours_until_appointment($row);
         $within48Hours = $hoursUntil !== null && $hoursUntil <= 48 && $hoursUntil >= 0;
-        $sendClientSms = (int) ($appointment->client_sms_reminder ?? 0) === 1;
 
-        if ((int) ($appointment->client_instant_remind ?? 0) === 1
-            && (int) ($appointment->client_instant_sent ?? 0) === 0
+        // Client instant confirmation (email only, no time restriction other than not past start)
+        if ((int)$row->client_instant_remind === 1
+            && (int)$row->client_instant_sent === 0
+            && (int)$row->send_reminder === 1
             && ($hoursUntil === null || $hoursUntil >= 0)
         ) {
-            if (ella_send_reminder_email($appointment->id, 'client_instant')) {
-                $CI->appointment_reminder_model->mark_email_stage_sent($appointment->id, 'client_instant');
+            if ($sendEmail && ella_send_reminder_email($row->appointment_id, 'client_instant')) {
+                $CI->appointment_reminder_model->mark_email_stage_sent($row->appointment_id, 'client_instant');
                 $notificationsSent++;
             }
         }
 
-        if ((int) ($appointment->client_48_hours ?? 0) === 1 && $within48Hours) {
-            if ((int) ($appointment->client_48_hours_sent ?? 0) === 0
-                && ella_send_reminder_email($appointment->id, 'client_48h')
-            ) {
-                $CI->appointment_reminder_model->mark_email_stage_sent($appointment->id, 'client_48h');
+        // Client 48-hour reminder
+        if ((int)$row->client_48_hours === 1
+            && (int)$row->client_48_hours_sent === 0
+            && (int)$row->reminder_48h === 1
+            && $within48Hours
+        ) {
+            if ($sendEmail && ella_send_reminder_email($row->appointment_id, 'client_48h')) {
+                $CI->appointment_reminder_model->mark_email_stage_sent($row->appointment_id, 'client_48h');
                 $notificationsSent++;
             }
 
-            if ($sendClientSms
-                && (int) ($appointment->client_sms_48_hours_sent ?? 0) === 0
-                && ella_send_reminder_sms($appointment->id, 'client_48h')
+            if ($sendSms
+                && (int)$row->client_sms_reminder === 1
+                && (int)$row->client_sms_48_hours_sent === 0
+                && ella_send_reminder_sms($row->appointment_id, 'client_48h')
             ) {
-                $CI->appointment_reminder_model->mark_sms_stage_sent($appointment->id, 'client_48h');
+                $CI->appointment_reminder_model->mark_sms_stage_sent($row->appointment_id, 'client_48h');
                 $notificationsSent++;
             }
         }
 
-        if ((int) ($appointment->staff_48_hours ?? 0) === 1 && $within48Hours) {
-            if ((int) ($appointment->staff_48_hours_sent ?? 0) === 0
-                && ella_send_reminder_email($appointment->id, 'staff_48h')
+        // Staff 48-hour reminder (uses same channel selections)
+        if ((int)$row->staff_48_hours === 1
+            && (int)$row->staff_48_hours_sent === 0
+            && (int)$row->staff_reminder_48h === 1
+            && $within48Hours
+        ) {
+            if ($sendEmail && ella_send_reminder_email($row->appointment_id, 'staff_48h')) {
+                $CI->appointment_reminder_model->mark_email_stage_sent($row->appointment_id, 'staff_48h');
+                $notificationsSent++;
+            }
+
+            if ($sendSms
+                && (int)$row->staff_sms_48_hours_sent === 0
+                && ella_send_reminder_sms($row->appointment_id, 'staff_48h')
             ) {
-                $CI->appointment_reminder_model->mark_email_stage_sent($appointment->id, 'staff_48h');
+                $CI->appointment_reminder_model->mark_sms_stage_sent($row->appointment_id, 'staff_48h');
                 $notificationsSent++;
             }
         }
