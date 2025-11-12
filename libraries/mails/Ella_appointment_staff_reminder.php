@@ -8,7 +8,7 @@ class Ella_appointment_staff_reminder extends App_mail_template
     public $slug   = 'ella-appointment-staff-reminder';
 
     protected $appointment;
-    protected $merge_fields;
+    public $merge_fields;
     protected $ics_path;
 
     public function __construct($appointment, $merge_fields = [], $ics_path = null)
