@@ -351,6 +351,52 @@ class Ella_appointments_model extends App_Model
         return $this->get_appointments($where);
     }
     
+    /**
+     * Retrieve appointments for a specific staff member so they can be shown in the calendar
+     *
+     * @param int         $staff_id
+     * @param string|null $start_date ISO date (Y-m-d)
+     * @param string|null $end_date   ISO date (Y-m-d)
+     *
+     * @return array
+     */
+    public function get_staff_calendar_appointments($staff_id, $start_date = null, $end_date = null)
+    {
+        $staff_id = (int) $staff_id;
+
+        $this->db->select('a.id, a.subject, a.date, a.start_hour, a.end_date, a.end_time, a.appointment_status, a.address');
+        $this->db->from(db_prefix() . 'appointly_appointments a');
+        $this->db->join(db_prefix() . 'appointly_attendees att', 'att.appointment_id = a.id', 'left');
+        $this->db->where('a.source', 'ella_contractor');
+        $this->db->group_start();
+        $this->db->where('a.created_by', $staff_id);
+        $this->db->or_where('att.staff_id', $staff_id);
+        $this->db->group_end();
+
+        // Exclude cancelled appointments from the calendar
+        $this->db->group_start();
+        $this->db->where('a.appointment_status IS NULL', null, false);
+        $this->db->or_where('a.appointment_status !=', 'cancelled');
+        $this->db->group_end();
+
+        if ($start_date) {
+            $this->db->group_start();
+            $this->db->where('a.date >=', $start_date);
+            if ($end_date) {
+                $this->db->where('a.date <=', $end_date);
+            }
+            $this->db->group_end();
+        } elseif ($end_date) {
+            $this->db->where('a.date <=', $end_date);
+        }
+
+        $this->db->group_by('a.id');
+        $this->db->order_by('a.date', 'ASC');
+        $this->db->order_by('a.start_hour', 'ASC');
+
+        return $this->db->get()->result_array();
+    }
+    
     
     
     /**

@@ -612,6 +612,76 @@ class Appointments extends AdminController
         ]);
     }
 
+    /**
+     * Calendar events feed for the logged-in staff member
+     */
+    public function calendar_events()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $startParam = $this->input->get('start');
+        $endParam   = $this->input->get('end');
+
+        $startDate = $this->normalize_calendar_date($startParam);
+        $endDate   = $this->normalize_calendar_date($endParam);
+
+        $appointments = $this->appointments_model->get_staff_calendar_appointments(
+            get_staff_user_id(),
+            $startDate,
+            $endDate
+        );
+
+        $events = [];
+        foreach ($appointments as $appointment) {
+            $startDateTime = $this->combine_calendar_datetime($appointment['date'] ?? null, $appointment['start_hour'] ?? null);
+
+            if (!$startDateTime) {
+                continue;
+            }
+
+            $endDateValue = !empty($appointment['end_date']) ? $appointment['end_date'] : $appointment['date'];
+            $endTimeValue = !empty($appointment['end_time']) ? $appointment['end_time'] : ($appointment['start_hour'] ?? null);
+
+            $endDateTime = $this->combine_calendar_datetime($endDateValue, $endTimeValue);
+
+            if (!$endDateTime) {
+                $endDateTime = clone $startDateTime;
+                $endDateTime->modify('+1 hour');
+            } else {
+                if (empty($appointment['end_time'])) {
+                    $endDateTime->modify('+1 hour');
+                }
+
+                if ($endDateTime <= $startDateTime) {
+                    $endDateTime = clone $startDateTime;
+                    $endDateTime->modify('+1 hour');
+                }
+            }
+
+            $status = !empty($appointment['appointment_status']) ? strtolower($appointment['appointment_status']) : 'scheduled';
+
+            $events[] = [
+                'id'        => (int) $appointment['id'],
+                'title'     => $appointment['subject'],
+                'start'     => $startDateTime->format(DateTime::ATOM),
+                'end'       => $endDateTime->format(DateTime::ATOM),
+                'url'       => admin_url('ella_contractors/appointments/view/' . $appointment['id']),
+                'status'    => $status,
+                'location'  => $appointment['address'] ?? '',
+                'allDay'    => false,
+                'className' => ['status-' . $status],
+            ];
+        }
+
+        echo json_encode([
+            'success'    => true,
+            'data'       => $events,
+            'csrf_token' => $this->security->get_csrf_hash(),
+        ]);
+    }
+
 
     /**
      * Send SMS to lead from appointment
@@ -733,6 +803,50 @@ class Appointments extends AdminController
             $value = 'both';
         }
         return $value;
+    }
+
+    /**
+     * Normalize calendar date parameters to Y-m-d or return null on failure
+     *
+     * @param string|null $value
+     * @return string|null
+     */
+    private function normalize_calendar_date($value)
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        try {
+            return (new DateTime($value))->format('Y-m-d');
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Combine date and time into a DateTime instance (UTC unaffected)
+     *
+     * @param string|null $date
+     * @param string|null $time
+     * @return DateTime|null
+     */
+    private function combine_calendar_datetime($date, $time)
+    {
+        if (empty($date)) {
+            return null;
+        }
+
+        $time = $time ?: '00:00:00';
+        if (strlen($time) === 5) {
+            $time .= ':00';
+        }
+
+        try {
+            return new DateTime(trim($date . ' ' . $time));
+        } catch (Exception $e) {
+            return null;
+        }
     }
     
     /**

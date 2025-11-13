@@ -19,6 +19,11 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group pull-right">
+                                        <div class="btn-group" role="group" style="margin-right:5px;">
+                                            <button type="button" class="btn btn-default" id="open-calendar-modal" data-toggle="tooltip" data-placement="top" title="View Calendar">
+                                                <i class="fa fa-calendar"></i>
+                                            </button>
+                                        </div>
                                         <div class="btn-group" role="group">
                                             <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                 <i class="fa fa-filter"></i> All Appointments <span class="caret"></span>
@@ -79,10 +84,64 @@ $data['appointment_types'] = $this->appointments_model->get_appointment_types();
 $this->load->view('appointments/modal', $data);
 ?>
 
+<!-- Calendar Modal -->
+<div class="modal fade" id="appointmentCalendarModal" tabindex="-1" role="dialog" aria-labelledby="appointmentCalendarModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="appointmentCalendarModalLabel"><i class="fa fa-calendar"></i> My Appointment Calendar</h4>
+            </div>
+            <div class="modal-body">
+                <div id="ella-calendar-loading" class="text-center" style="display:none;margin-bottom:15px;">
+                    <i class="fa fa-spinner fa-spin fa-2x"></i>
+                    <p style="margin-top:10px;">Loading calendar...</p>
+                </div>
+                <div id="ella-appointment-calendar"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal"><?php echo _l('close'); ?></button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php init_tail(); ?>
 
+<link rel="stylesheet" href="<?php echo base_url('assets/plugins/fullcalendar/fullcalendar.min.css'); ?>">
+<script src="<?php echo base_url('assets/plugins/fullcalendar/lib/moment.min.js'); ?>"></script>
+<script src="<?php echo base_url('assets/plugins/fullcalendar/fullcalendar.min.js'); ?>"></script>
 
 <style>
+
+/* Calendar modal styling */
+#ella-appointment-calendar {
+    min-height: 520px;
+}
+
+#ella-calendar-loading p {
+    color: #555;
+}
+
+.fc-event.status-cancelled {
+    background-color: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.fc-event.status-complete {
+    background-color: #2ecc71;
+    border-color: #2ecc71;
+}
+
+.fc-event.status-scheduled {
+    background-color: #03a9f4;
+    border-color: #03a9f4;
+}
+
+.fc-event.status-pending {
+    background-color: #f39c12;
+    border-color: #f39c12;
+}
 
 /* Fix checkbox alignment - center the checkmark icon */
 .table-ella_appointments .checkbox label::after {
@@ -296,6 +355,7 @@ $this->load->view('appointments/modal', $data);
 <script>
 var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
 var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
+var ellaCalendarInitialized = false;
 
 // Custom function to initialize combined AJAX search for leads and clients
 function init_combined_ajax_search(selector) {
@@ -530,6 +590,88 @@ $(document).ready(function() {
             table.order(currentOrder).draw(false);
         });
     });
+});
+
+function initEllaCalendar() {
+    var $calendar = $('#ella-appointment-calendar');
+
+    if ($calendar.length === 0 || typeof $calendar.fullCalendar !== 'function') {
+        console.warn('FullCalendar is not available or calendar element missing.');
+        return;
+    }
+
+    $calendar.fullCalendar({
+        height: 600,
+        header: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'month,agendaWeek,agendaDay'
+        },
+        eventLimit: true,
+        navLinks: true,
+        editable: false,
+        timezone: false,
+        events: function(start, end, timezone, callback) {
+            $('#ella-calendar-loading').show();
+            $.ajax({
+                url: admin_url + 'ella_contractors/appointments/calendar_events',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    start: start.format(),
+                    end: end.format(),
+                    [csrf_token_name]: csrf_hash
+                }
+            }).done(function(response) {
+                if (response && response.csrf_token) {
+                    csrf_hash = response.csrf_token;
+                }
+                var events = (response && response.data) ? response.data : [];
+                callback(events);
+            }).fail(function(xhr) {
+                console.error('Failed to load calendar events', xhr);
+                alert_float('danger', 'Unable to load calendar events at this time.');
+                callback([]);
+            }).always(function() {
+                $('#ella-calendar-loading').hide();
+            });
+        },
+        eventRender: function(event, element) {
+            if (event.status) {
+                element.addClass('status-' + event.status);
+            }
+
+            if (event.location) {
+                element.attr('data-toggle', 'tooltip');
+                element.attr('title', event.location);
+            }
+        },
+        eventClick: function(event) {
+            if (event.url) {
+                window.open(event.url, '_blank');
+                return false;
+            }
+        }
+    });
+
+    ellaCalendarInitialized = true;
+}
+
+$('#open-calendar-modal').on('click', function() {
+    $('#appointmentCalendarModal').modal('show');
+});
+
+$('#appointmentCalendarModal').on('shown.bs.modal', function() {
+    if (!ellaCalendarInitialized) {
+        initEllaCalendar();
+    } else {
+        $('#ella-appointment-calendar').fullCalendar('refetchEvents');
+        $('#ella-appointment-calendar').fullCalendar('render');
+    }
+});
+
+$('#appointmentCalendarModal').on('hidden.bs.modal', function() {
+    $('#ella-calendar-loading').hide();
 });
 
 // Global functions for modal operations

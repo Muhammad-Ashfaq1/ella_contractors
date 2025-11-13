@@ -50,6 +50,7 @@ $route[$module_name . $appointment_module . '/delete_ajax'] = 'Appointments/dele
 $route[$module_name . $appointment_module . '/download_attachment/(:num)'] = 'Appointments/download_attachment/$1';
 $route[$module_name . $appointment_module . '/get_appointment_attachments/(:num)'] = 'Appointments/get_appointment_attachments/$1';
 $route[$module_name . $appointment_module . '/delete_appointment_attachment/(:num)'] = 'Appointments/delete_appointment_attachment/$1';
+$route[$module_name . $appointment_module . '/calendar_events'] = 'Appointments/calendar_events';
 
 // Appointment Measurements routes (using measurements controller) - moved to measurements controller
 
