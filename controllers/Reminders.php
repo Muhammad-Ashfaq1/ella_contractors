@@ -80,5 +80,68 @@ class Reminders extends App_Controller
 
         return null;
     }
+
+    /**
+     * Temporary test endpoint to verify SMTP delivery.
+     * Usage (HTTP): /ella_contractors/reminders/test_email?key=APP_CRON_KEY
+     * Usage (CLI):  php index.php ella_contractors reminders test_email --key=APP_CRON_KEY
+     */
+    public function test_email()
+    {
+        $key = $this->input->get('key', true);
+        if ($this->input->is_cli_request()) {
+            $key = $this->resolve_cli_key($key);
+        }
+
+        if (defined('APP_CRON_KEY') && APP_CRON_KEY !== '' && APP_CRON_KEY !== $key) {
+            header('HTTP/1.0 401 Unauthorized');
+            exit('Invalid cron key.');
+        }
+
+        $CI =& get_instance();
+        $CI->load->library('email');
+
+        $to        = 'mashfaq86861@gmail.com';
+        $fromEmail = get_option('smtp_email');
+        $fromName  = get_option('companyname') ?: 'Ella Contractors CRM';
+
+        if (empty($fromEmail) || !filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
+            $fromEmail = 'noreply@ellasbubbles.com';
+        }
+
+        $subject = 'Ella Contractors Reminder SMTP Test (' . date('Y-m-d H:i:s') . ')';
+        $message = '<p>This is a live SMTP test sent from the Ella Contractors reminder cron environment.</p>'
+                 . '<p>Timestamp: ' . date('c') . '</p>';
+
+        $CI->email->clear(true);
+        $CI->email->from($fromEmail, $fromName);
+        $CI->email->to($to);
+        $CI->email->subject($subject);
+        $CI->email->message($message);
+        $CI->email->SMTPDebug = 2;
+        $CI->email->set_debug_output('error_log');
+
+        $sent  = $CI->email->send();
+        $debug = $CI->email->print_debugger(['headers', 'subject', 'body']);
+
+        if (!$sent) {
+            log_message('error', 'EllaContractors Test Email failed: ' . $debug);
+        }
+
+        $response = [
+            'success'   => (bool) $sent,
+            'sent_to'   => $to,
+            'timestamp' => date('c'),
+            'debug'     => $debug,
+        ];
+
+        if ($this->input->is_cli_request()) {
+            echo json_encode($response) . PHP_EOL;
+        } else {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode($response));
+        }
+    }
 }
 
