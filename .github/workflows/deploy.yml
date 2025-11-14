@@ -4,7 +4,8 @@ on:
   push:
     branches:
       # - main
-      - feature/calender-integration
+      # - feature/calender-integration
+        - feature/cron-job
     paths:
       - '**'
 

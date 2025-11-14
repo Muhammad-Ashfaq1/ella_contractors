@@ -22,6 +22,9 @@ hooks()->add_action('app_admin_head', 'ella_contractors_load_global_css');
 // Load timeline helper
 hooks()->add_action('init', 'ella_contractors_load_helpers');
 
+// Register merge fields
+register_merge_fields('ella_contractors/merge_fields/ella_contractors_merge_fields');
+
 // Register cron processing
 hooks()->add_action('after_cron_run', 'ella_contractors_after_cron_run');
 
@@ -171,6 +174,10 @@ function ella_contractors_load_helpers() {
     $reminder_helper_path = module_dir_path(ELLA_CONTRACTORS_MODULE_NAME, 'helpers/ella_reminder_helper.php');
     if (file_exists($reminder_helper_path)) {
         require_once($reminder_helper_path);
+    }
+
+    if (function_exists('ella_contractors_maybe_create_email_templates')) {
+        ella_contractors_maybe_create_email_templates();
     }
 }
 
@@ -525,6 +532,8 @@ function ella_contractors_activate_module() {
                 log_message('error', 'EllaContractors: Failed to create ICS directory - ' . $e->getMessage());
             }
         }
+        
+        ella_contractors_maybe_create_email_templates();
     
     // Create ella_appointment_activity_log table for timeline tracking
     if (!$CI->db->table_exists(db_prefix() . 'ella_appointment_activity_log')) {
@@ -651,6 +660,46 @@ function ella_contractors_after_cron_run($manually)
 
 function ella_contractors_deactivate_module() {
     //revert if you want 
+}
+
+if (!function_exists('ella_contractors_maybe_create_email_templates')) {
+    function ella_contractors_maybe_create_email_templates()
+    {
+        $clientSlug = 'ella-appointment-reminder-client';
+        $staffSlug  = 'ella-appointment-reminder-staff';
+
+        if (total_rows(db_prefix() . 'emailtemplates', ['slug' => $clientSlug]) === 0) {
+            create_email_template(
+                'Appointment Reminder: {ella_appointment_subject}',
+                '<p>Hi {ella_recipient_name},</p>'
+                . '<p>This is a friendly reminder for your appointment <strong>{ella_appointment_subject}</strong> scheduled on {ella_appointment_date} at {ella_appointment_time}.</p>'
+                . '<p><strong>Location:</strong> {ella_appointment_address}</p>'
+                . '<p>{ella_presentation_block}</p>'
+                . '<p>If you need to make changes, please contact us any time.</p>'
+                . '<p>Thanks,<br>{companyname}</p>',
+                'ella_contractors',
+                'Ella Contractors Appointment Reminder (Client)',
+                $clientSlug,
+                1
+            );
+        }
+
+        if (total_rows(db_prefix() . 'emailtemplates', ['slug' => $staffSlug]) === 0) {
+            create_email_template(
+                'Upcoming Appointment: {ella_appointment_subject}',
+                '<p>Hello {ella_recipient_name},</p>'
+                . '<p>You have an upcoming appointment scheduled on {ella_appointment_date} at {ella_appointment_time}.</p>'
+                . '<p><strong>Client:</strong> {ella_client_name}<br>'
+                . '<strong>Location:</strong> {ella_appointment_address}</p>'
+                . '<p>Status: {ella_appointment_status}</p>'
+                . '<p><a href="{ella_appointment_url}">View appointment in CRM</a></p>',
+                'ella_contractors',
+                'Ella Contractors Appointment Reminder (Staff)',
+                $staffSlug,
+                1
+            );
+        }
+    }
 }
 
 
