@@ -110,6 +110,7 @@ $this->load->view('appointments/modal', $data);
 
 <link rel="stylesheet" href="<?php echo base_url('assets/plugins/fullcalendar/fullcalendar.min.css'); ?>">
 <script src="<?php echo base_url('assets/plugins/fullcalendar/lib/moment.min.js'); ?>"></script>
+<script src="<?php echo base_url('assets/plugins/moment-timezone/moment-timezone-with-data-2012-2022.js'); ?>"></script>
 <script src="<?php echo base_url('assets/plugins/fullcalendar/fullcalendar.min.js'); ?>"></script>
 
 <style>
