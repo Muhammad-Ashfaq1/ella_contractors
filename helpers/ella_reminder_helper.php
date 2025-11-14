@@ -296,11 +296,13 @@ function ella_send_reminder_email($appointment_id, $stage)
     log_message('info', 'EllaContractors: Sending email FROM: ' . $from_email . ' (' . $from_name . ') TO: ' . $to_email);
     
     // Send email using CRM's email system (same pattern as send_reminder_ajax)
-    $CI->email->clear();
+    $CI->email->clear(true);
     $CI->email->from($from_email, $from_name);
     $CI->email->to($to_email);
     $CI->email->subject($subject);
     $CI->email->message($email_body);
+    $CI->email->SMTPDebug = 2;
+    $CI->email->set_debug_output('error_log');
     
     // Attach ICS file if generated successfully
     if ($ics_file && file_exists($ics_file)) {
@@ -931,14 +933,15 @@ function ella_run_reminder_dispatch()
                 $notificationsSent++;
             }
 
-            if ($sendSms
-                && (int)$row->client_sms_reminder === 1
-                && (int)$row->client_sms_48_hours_sent === 0
-                && ella_send_reminder_sms($row->appointment_id, 'client_48h')
-            ) {
-                $CI->appointment_reminder_model->mark_sms_stage_sent($row->appointment_id, 'client_48h');
-                $notificationsSent++;
-            }
+            // SMS dispatch temporarily disabled
+            // if ($sendSms
+            //     && (int)$row->client_sms_reminder === 1
+            //     && (int)$row->client_sms_48_hours_sent === 0
+            //     && ella_send_reminder_sms($row->appointment_id, 'client_48h')
+            // ) {
+            //     $CI->appointment_reminder_model->mark_sms_stage_sent($row->appointment_id, 'client_48h');
+            //     $notificationsSent++;
+            // }
         }
 
         // Staff 48-hour reminder (uses same channel selections)
@@ -952,13 +955,14 @@ function ella_run_reminder_dispatch()
                 $notificationsSent++;
             }
 
-            if ($sendSms
-                && (int)$row->staff_sms_48_hours_sent === 0
-                && ella_send_reminder_sms($row->appointment_id, 'staff_48h')
-            ) {
-                $CI->appointment_reminder_model->mark_sms_stage_sent($row->appointment_id, 'staff_48h');
-                $notificationsSent++;
-            }
+            // SMS dispatch temporarily disabled
+            // if ($sendSms
+            //     && (int)$row->staff_sms_48_hours_sent === 0
+            //     && ella_send_reminder_sms($row->appointment_id, 'staff_48h')
+            // ) {
+            //     $CI->appointment_reminder_model->mark_sms_stage_sent($row->appointment_id, 'staff_48h');
+            //     $notificationsSent++;
+            // }
         }
     }
 
