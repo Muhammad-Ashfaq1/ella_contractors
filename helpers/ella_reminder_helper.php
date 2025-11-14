@@ -267,38 +267,43 @@ function ella_send_reminder_email($appointment_id, $stage)
 
     $templateClass = $type === 'staff' ? 'Ella_appointment_reminder_staff' : 'Ella_appointment_reminder_client';
 
-    $mail = mail_template($templateClass, 'ella_contractors', $appointment, $stage, $to_email, $to_name, $appointment->presentation_block ?? '');
+    $CI->load->model('emails_model');
 
-    if (!$mail) {
-        log_message('error', 'EllaContractors: Mail template not found for reminder stage ' . $stage);
-        return false;
+    $subject = 'Appointment Reminder: ' . ($appointment->subject ?? 'Appointment');
+    $message = ella_parse_email_template(
+        $type === 'staff' ? 'staff_appointment_reminder' : 'client_appointment_reminder',
+        $appointment,
+        $type
+    );
+
+    if (empty($message)) {
+        $fallback  = 'Dear ' . ($to_name ?: 'Valued Customer') . ",\n\n";
+        $fallback .= "This is a reminder about your upcoming appointment.\n";
+        $fallback .= 'Subject: ' . ($appointment->subject ?? 'N/A') . "\n";
+        $fallback .= 'Date: ' . (!empty($appointment->date) ? _d($appointment->date) : 'N/A') . "\n";
+        $fallback .= 'Time: ' . (!empty($appointment->start_hour) ? date('g:i A', strtotime($appointment->start_hour)) : 'N/A') . "\n";
+        if (!empty($appointment->address)) {
+            $fallback .= 'Address: ' . $appointment->address . "\n";
+        }
+        if (!empty($appointment->notes)) {
+            $fallback .= "\nNotes: " . $appointment->notes . "\n";
+        }
+        $fallback .= "\nBest regards,\n" . (get_option('companyname') ?: "Ella's Bubbles");
+        $message = nl2br($fallback);
     }
 
     if ($ics_file && file_exists($ics_file)) {
-        $mail->add_attachment([
+        $CI->emails_model->add_attachment([
             'attachment' => $ics_file,
             'filename'   => basename($ics_file),
             'type'       => 'text/calendar',
+            'read'       => true,
         ]);
     }
 
-    // Provide custom merge fields (presentation block already passed but ensure fallback)
-    $mail->set_merge_fields([
-        '{ella_reminder_stage}'      => ella_get_reminder_stage_label($stage),
-        '{ella_presentation_block}'  => $appointment->presentation_block ?? '',
-        '{ella_recipient_name}'      => $to_name,
-    ]);
-
-    $result = $mail->send();
+    $result = $CI->emails_model->send_simple_email($to_email, $subject, $message, false);
     if (!$result) {
-        if (isset($mail->template) && isset($mail->template->prevent_sending) && $mail->template->prevent_sending) {
-            log_message('error', 'EllaContractors: Mail template prevented sending (probably inactive) for appointment ' . $appointment_id);
-        } else {
-            log_message('error', 'EllaContractors: mail_template send() returned false for appointment ' . $appointment_id);
-            if (isset($CI->email)) {
-                log_message('error', 'EllaContractors: Email debug info: ' . $CI->email->print_debugger(['headers', 'subject']));
-            }
-        }
+        log_message('error', 'EllaContractors: send_simple_email failed for appointment ' . $appointment_id . ' (stage: ' . $stage . ')');
     }
 
     if ($ics_file && file_exists($ics_file)) {
