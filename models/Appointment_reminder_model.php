@@ -195,6 +195,10 @@ class Appointment_reminder_model extends App_Model
         ];
 
         switch ($stage) {
+            case 'client_instant':
+            case 'client_instant_remind':
+                // Base fields already mark sms_send/last_sms_sent_at
+                break;
             case 'client_48h':
             case 'client_48_hours':
                 $data['client_sms_48_hours_sent'] = 1;

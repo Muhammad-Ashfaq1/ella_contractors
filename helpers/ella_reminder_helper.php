@@ -938,27 +938,48 @@ function ella_run_reminder_dispatch()
         }
         //Condition 3 staff 48-hour reminder ends here
         
-    
+        // =========================
+        // SMS Conditions
+        // =========================
 
-            // SMS dispatch temporarily disabled
-            // if ($sendSms
-            //     && (int)$row->client_sms_reminder === 1
-            //     && (int)$row->client_sms_48_hours_sent === 0
-            //     && ella_send_reminder_sms($row->appointment_id, 'client_48h')
-            // ) {
-            //     $CI->appointment_reminder_model->mark_sms_stage_sent($row->appointment_id, 'client_48h');
-            //     $notificationsSent++;
-            // }
-        // }
+        // Condition 1: Client instant SMS (only once)
+        if ($sendSms
+            && (int)$row->client_instant_remind === 1
+            && (int)$row->client_sms_reminder === 1
+            && (int)$row->sms_send === 0
+        ) {
+            if (ella_send_reminder_sms($row->appointment_id, 'client_instant')) {
+                $CI->appointment_reminder_model->mark_sms_stage_sent($row->appointment_id, 'client_instant');
+                $notificationsSent++;
+            }
+        }
 
-            // SMS dispatch temporarily disabled
-            // if ($sendSms
-            //     && (int)$row->staff_sms_48_hours_sent === 0
-            //     && ella_send_reminder_sms($row->appointment_id, 'staff_48h')
-            // ) {
-            //     $CI->appointment_reminder_model->mark_sms_stage_sent($row->appointment_id, 'staff_48h');
-            //     $notificationsSent++;
-            // }
+        // Condition 2: Client 48-hour SMS reminder
+        if ($sendSms
+            && (int)$row->client_sms_reminder === 1
+            && (int)$row->client_sms_48_hours_sent === 0
+            && (int)$row->client_48_hours === 1
+            && (int)$row->reminder_48h === 1
+            && $within48Hours
+        ) {
+            if (ella_send_reminder_sms($row->appointment_id, 'client_48h')) {
+                $CI->appointment_reminder_model->mark_sms_stage_sent($row->appointment_id, 'client_48h');
+                $notificationsSent++;
+            }
+        }
+
+        // Condition 3: Staff 48-hour SMS reminder
+        if ($sendSms
+            && (int)$row->staff_sms_48_hours_sent === 0
+            && (int)$row->staff_48_hours === 1
+            && (int)$row->staff_reminder_48h === 1
+            && $within48Hours
+        ) {
+            if (ella_send_reminder_sms($row->appointment_id, 'staff_48h')) {
+                $CI->appointment_reminder_model->mark_sms_stage_sent($row->appointment_id, 'staff_48h');
+                $notificationsSent++;
+            }
+        }
     }
 
     return [
