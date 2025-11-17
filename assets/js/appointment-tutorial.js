@@ -38,6 +38,53 @@
          * Initialize tutorial system
          */
         init: function() {
+            var self = this;
+            
+            // Set up modal event handlers (only once) - listen to standard Bootstrap modal events
+            $(document).off('show.bs.modal.tutorial hidden.bs.modal.tutorial');
+            $(document).on('show.bs.modal.tutorial', function() {
+                // Hide tutorial overlay when modals open
+                if (self.state.overlay) {
+                    self.state.overlay.css('display', 'none');
+                }
+                if (self.state.tooltip) {
+                    self.state.tooltip.css('display', 'none');
+                }
+            });
+
+            $(document).on('hidden.bs.modal.tutorial', function() {
+                // Show tutorial overlay when modals close (if tutorial is still active)
+                if (self.state.isActive) {
+                    if (self.state.overlay) {
+                        self.state.overlay.css('display', 'block');
+                    }
+                    if (self.state.tooltip) {
+                        self.state.tooltip.css('display', 'block');
+                    }
+                }
+            });
+
+            // Also listen to standard Bootstrap modal events (without namespace for compatibility)
+            $(document).on('show.bs.modal', function() {
+                if (self.state.overlay) {
+                    self.state.overlay.css('display', 'none');
+                }
+                if (self.state.tooltip) {
+                    self.state.tooltip.css('display', 'none');
+                }
+            });
+
+            $(document).on('hidden.bs.modal', function() {
+                if (self.state.isActive) {
+                    if (self.state.overlay) {
+                        self.state.overlay.css('display', 'block');
+                    }
+                    if (self.state.tooltip) {
+                        self.state.tooltip.css('display', 'block');
+                    }
+                }
+            });
+
             // Check if tutorial should be shown
             if (this.shouldShowTutorial()) {
                 // Load tutorial steps configuration
@@ -164,7 +211,7 @@
                     content: 'You\'re all set! You can now create, manage, and track appointments efficiently. If you need help anytime, look for the help icon or contact support.',
                     target: null,
                     position: 'center',
-                    showNext: false,
+                    showNext: true, // Show "Got it!" button
                     showBack: true,
                     showSkip: false,
                     isLast: true
@@ -186,9 +233,20 @@
          * @param {number} stepIndex - Index of the step to show
          */
         showStep: function(stepIndex) {
+            // Ensure steps array is loaded
+            if (!this.config.steps || this.config.steps.length === 0) {
+                this.loadTutorialSteps();
+            }
+
             if (stepIndex < 0 || stepIndex >= this.config.steps.length) {
-                this.complete();
-                return;
+                // If trying to go beyond last step, show completion step
+                if (stepIndex >= this.config.steps.length) {
+                    // Show the last step (completion)
+                    stepIndex = this.config.steps.length - 1;
+                } else {
+                    this.complete();
+                    return;
+                }
             }
 
             var step = this.config.steps[stepIndex];
@@ -201,11 +259,23 @@
                 })) {
                     // Element not found, skip this step if optional
                     if (step.optional) {
-                        this.next();
+                        // Don't skip if this is the completion step (last step)
+                        if (stepIndex < this.config.steps.length - 1) {
+                            this.next();
+                            return;
+                        } else {
+                            // If completion step has no target, render it anyway
+                            this.renderStep(step, stepIndex);
+                            return;
+                        }
+                    } else {
+                        // Element not found and not optional - render anyway
+                        this.renderStep(step, stepIndex);
                         return;
                     }
                 }
             } else {
+                // No wait needed, render immediately
                 this.renderStep(step, stepIndex);
             }
         },
@@ -247,6 +317,17 @@
          */
         renderStep: function(step, stepIndex) {
             var self = this;
+            
+            // Ensure step is valid
+            if (!step) {
+                console.error('Tutorial: Invalid step at index', stepIndex);
+                return;
+            }
+
+            // Ensure we have steps loaded
+            if (!this.config.steps || this.config.steps.length === 0) {
+                this.loadTutorialSteps();
+            }
             
             // Fade out previous step with animation
             if (this.state.tooltip) {
@@ -340,7 +421,7 @@
                     width: '100%',
                     height: '100%',
                     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    zIndex: 9998,
+                    zIndex: 1040, // Below Bootstrap modals (1050)
                     pointerEvents: 'auto'
                 }
             });
@@ -417,6 +498,7 @@
                 tooltipHtml += '<input type="checkbox" id="tutorial-dont-show-again"> ';
                 tooltipHtml += "Don't show me this again";
                 tooltipHtml += '</label>';
+                tooltipHtml += '<button type="button" class="btn btn-default tutorial-btn-close" style="margin-left: 15px;">Close</button>';
                 tooltipHtml += '</div>';
             }
 
@@ -578,7 +660,7 @@
                 position: 'fixed', // Fixed positioning for viewport-relative placement
                 top: position.top + 'px',
                 left: position.left + 'px',
-                zIndex: 9999
+                zIndex: 1041 // Below Bootstrap modals (1050) but above overlay
             });
         },
 
@@ -661,7 +743,9 @@
             // Next button
             this.state.tooltip.find('.tutorial-btn-next').on('click', function() {
                 if (step.isLast) {
-                    self.complete();
+                    // Check if "Don't show again" is checked
+                    var dontShow = $('#tutorial-dont-show-again').is(':checked');
+                    self.complete(dontShow);
                 } else {
                     self.next();
                 }
@@ -671,13 +755,26 @@
             this.state.tooltip.find('.tutorial-btn-skip').on('click', function() {
                 self.skip();
             });
+
+            // Close button (on completion step)
+            this.state.tooltip.find('.tutorial-btn-close').on('click', function() {
+                // Check if "Don't show again" is checked
+                var dontShow = $('#tutorial-dont-show-again').is(':checked');
+                self.complete(dontShow);
+            });
         },
 
         /**
          * Go to next step
          */
         next: function() {
-            this.showStep(this.state.currentStepIndex + 1);
+            var nextIndex = this.state.currentStepIndex + 1;
+            // Ensure we don't go beyond the last step
+            if (nextIndex >= this.config.steps.length) {
+                // Show the last step (completion)
+                nextIndex = this.config.steps.length - 1;
+            }
+            this.showStep(nextIndex);
         },
 
         /**
@@ -697,8 +794,11 @@
         /**
          * Complete tutorial
          */
-        complete: function() {
-            var dontShowAgain = $('#tutorial-dont-show-again').is(':checked');
+        complete: function(dontShowAgain) {
+            // If parameter not provided, check checkbox
+            if (dontShowAgain === undefined) {
+                dontShowAgain = $('#tutorial-dont-show-again').is(':checked');
+            }
             this.dismiss(dontShowAgain);
         },
 
