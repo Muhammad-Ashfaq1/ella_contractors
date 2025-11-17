@@ -1,7 +1,7 @@
 /**
- * EllaContractors Appointment Tutorial System
+ * EllaContractors Appointment View Tutorial System
  * 
- * Provides step-by-step guided tours for first-time users
+ * Provides step-by-step guided tours for the appointment view page
  * Supports "Don't show again" functionality with persistence
  * 
  * @version 1.0.0
@@ -12,17 +12,17 @@
     'use strict';
 
     /**
-     * Tutorial Manager Class
+     * Tutorial Manager Class for View Page
      */
-    var AppointmentTutorial = {
+    var AppointmentViewTutorial = {
         // Configuration
         config: {
-            storageKey: 'ella_contractors_tutorial_completed',
-            storageKeyDismissed: 'ella_contractors_tutorial_dismissed',
-            tutorialId: 'appointments_tutorial',
+            storageKey: 'ella_contractors_view_tutorial_completed',
+            storageKeyDismissed: 'ella_contractors_view_tutorial_dismissed',
+            tutorialId: 'appointment_view_tutorial',
             currentStep: 0,
             steps: [],
-            shouldShow: true // Default to showing tutorial
+            shouldShow: true
         },
 
         // State
@@ -38,6 +38,8 @@
          * Initialize tutorial system
          */
         init: function() {
+            var self = this;
+            
             // Check if tutorial should be shown
             if (this.shouldShowTutorial()) {
                 // Load tutorial steps configuration
@@ -47,8 +49,18 @@
                 $(document).ready(function() {
                     // Small delay to ensure all elements are rendered
                     setTimeout(function() {
-                        AppointmentTutorial.start();
+                        AppointmentViewTutorial.start();
                     }, 1000);
+                });
+                
+                // Handle window resize to reposition tooltip
+                $(window).on('resize', function() {
+                    if (self.state.isActive && self.state.tooltip && self.config.steps.length > 0) {
+                        var currentStep = self.config.steps[self.state.currentStepIndex];
+                        if (currentStep && currentStep.target) {
+                            self.positionTooltip(currentStep);
+                        }
+                    }
                 });
             }
         },
@@ -58,31 +70,28 @@
          * @returns {boolean}
          */
         shouldShowTutorial: function() {
-            // Check localStorage first (client-side)
-            var dismissed = localStorage.getItem(this.config.storageKeyDismissed);
-            if (dismissed === 'true') {
+            // Check localStorage first
+            if (localStorage.getItem(this.config.storageKeyDismissed) === 'true') {
                 return false;
             }
 
-            // Check server-side preference
+            // Check server preference via AJAX
             var self = this;
             $.ajax({
                 url: admin_url + 'ella_contractors/appointments/check_tutorial_status',
-                type: 'GET',
-                async: false, // Synchronous for initialization
-                dataType: 'json',
+                type: 'POST',
+                data: {
+                    tutorial_id: this.config.tutorialId
+                },
+                async: false,
                 success: function(response) {
-                    if (response && response.show_tutorial === false) {
+                    if (response && response.should_show === false) {
                         self.config.shouldShow = false;
                     }
-                },
-                error: function() {
-                    // On error, default to showing tutorial
-                    self.config.shouldShow = true;
                 }
             });
 
-            return this.config.shouldShow !== false;
+            return this.config.shouldShow;
         },
 
         /**
@@ -92,30 +101,19 @@
             this.config.steps = [
                 {
                     id: 'welcome',
-                    title: 'Welcome to Appointments',
-                    content: 'Welcome to the EllaContractors Appointments module! This quick tour will help you get started with managing appointments efficiently.',
-                    target: null, // No specific target for welcome
-                    position: 'center', // Center of screen
+                    title: 'Welcome to Appointment Details',
+                    content: 'Welcome to the Appointment Details page! This page shows all information about a specific appointment. Let\'s take a quick tour to help you navigate efficiently.',
+                    target: null,
+                    position: 'center',
                     showNext: true,
                     showBack: false,
                     showSkip: true
                 },
                 {
-                    id: 'new_appointment_button',
-                    title: 'Create New Appointment',
-                    content: 'Click the "New Appointment" button to create a new appointment. You can schedule appointments with leads or clients, set reminders, and add attendees.',
-                    target: '#new-appointment',
-                    position: 'bottom', // Tooltip appears below button
-                    showNext: true,
-                    showBack: true,
-                    showSkip: true,
-                    highlight: true
-                },
-                {
-                    id: 'filter_dropdown',
-                    title: 'Filter Appointments',
-                    content: 'Use the filter dropdown to view appointments by status (Scheduled, Complete, Cancelled) or by date range (Today, This Week, This Month).',
-                    target: '.btn-group .dropdown-toggle',
+                    id: 'action_buttons',
+                    title: 'Action Buttons',
+                    content: 'Use these action buttons to navigate and manage the appointment. "Back" returns to the appointments list, "Edit" opens the edit form, and "Delete" removes the appointment.',
+                    target: '._buttons',
                     position: 'bottom',
                     showNext: true,
                     showBack: true,
@@ -123,10 +121,10 @@
                     highlight: true
                 },
                 {
-                    id: 'calendar_button',
-                    title: 'View Calendar',
-                    content: 'Click the calendar icon to view all your appointments in a calendar view. This helps you visualize your schedule at a glance.',
-                    target: '#open-calendar-modal',
+                    id: 'appointment_info',
+                    title: 'Appointment Information',
+                    content: 'This section displays the appointment subject, date, time, duration, and status. You can quickly see all key details at a glance.',
+                    target: '.appointment-subject',
                     position: 'bottom',
                     showNext: true,
                     showBack: true,
@@ -134,34 +132,87 @@
                     highlight: true
                 },
                 {
-                    id: 'appointments_table',
-                    title: 'Appointments Table',
-                    content: 'This table shows all your appointments. You can sort by any column, search for specific appointments, and use bulk actions to manage multiple appointments at once.',
-                    target: '.table-ella_appointments',
-                    position: 'top',
+                    id: 'lead_information',
+                    title: 'Lead Information',
+                    content: 'View the lead or client details associated with this appointment, including contact information, address, and other relevant details.',
+                    target: '.col-md-6 h5',
+                    position: 'bottom',
                     showNext: true,
                     showBack: true,
                     showSkip: true,
                     highlight: true,
-                    waitForElement: true // Wait for table to load
+                    optional: true
                 },
                 {
-                    id: 'status_column',
-                    title: 'Appointment Status',
-                    content: 'Click on any status badge to quickly change the appointment status. Statuses include Scheduled, Complete, and Cancelled.',
-                    target: '.status-button',
-                    position: 'left',
+                    id: 'tabs_section',
+                    title: 'Tabs Section',
+                    content: 'Use these tabs to access different sections: Measurements, Estimates, Notes, Attachments, and Timeline. Each tab contains related information and actions.',
+                    target: '.nav-tabs',
+                    position: 'bottom',
                     showNext: true,
                     showBack: true,
                     showSkip: true,
-                    highlight: true,
-                    waitForElement: true,
-                    optional: true // This step is optional if element doesn't exist
+                    highlight: true
+                },
+                {
+                    id: 'measurements_tab',
+                    title: 'Measurements Tab',
+                    content: 'The Measurements tab allows you to view and manage measurement data for this appointment. Click on the tab to see measurement details.',
+                    target: '.nav-tabs li:first-child a',
+                    position: 'bottom',
+                    showNext: true,
+                    showBack: true,
+                    showSkip: true,
+                    highlight: true
+                },
+                {
+                    id: 'estimates_tab',
+                    title: 'Estimates Tab',
+                    content: 'The Estimates tab shows all estimates related to this appointment. You can view, create, or manage estimates from here.',
+                    target: '.nav-tabs li:nth-child(2) a',
+                    position: 'bottom',
+                    showNext: true,
+                    showBack: true,
+                    showSkip: true,
+                    highlight: true
+                },
+                {
+                    id: 'notes_tab',
+                    title: 'Notes Tab',
+                    content: 'The Notes tab contains all notes and comments related to this appointment. Add important information or reminders here.',
+                    target: '.nav-tabs li:nth-child(3) a',
+                    position: 'bottom',
+                    showNext: true,
+                    showBack: true,
+                    showSkip: true,
+                    highlight: true
+                },
+                {
+                    id: 'attachments_tab',
+                    title: 'Attachments Tab',
+                    content: 'The Attachments tab allows you to upload and manage files related to this appointment. Drag and drop files or click to browse.',
+                    target: '.nav-tabs li:nth-child(4) a',
+                    position: 'bottom',
+                    showNext: true,
+                    showBack: true,
+                    showSkip: true,
+                    highlight: true
+                },
+                {
+                    id: 'timeline_tab',
+                    title: 'Timeline Tab',
+                    content: 'The Timeline tab shows a chronological history of all activities and changes related to this appointment. Track the complete history here.',
+                    target: '.nav-tabs li:last-child a',
+                    position: 'bottom',
+                    showNext: true,
+                    showBack: true,
+                    showSkip: true,
+                    highlight: true
                 },
                 {
                     id: 'completion',
                     title: 'Tutorial Complete!',
-                    content: 'You\'re all set! You can now create, manage, and track appointments efficiently. If you need help anytime, look for the help icon or contact support.',
+                    content: 'You\'re all set! You now know how to navigate the Appointment Details page. Use the tabs to access different sections and the action buttons to manage appointments.',
                     target: null,
                     position: 'center',
                     showNext: false,
@@ -173,17 +224,21 @@
         },
 
         /**
-         * Start the tutorial
+         * Start tutorial
          */
         start: function() {
+            if (this.config.steps.length === 0) {
+                this.loadTutorialSteps();
+            }
+
             this.state.isActive = true;
             this.state.currentStepIndex = 0;
             this.showStep(0);
         },
 
         /**
-         * Show a specific step
-         * @param {number} stepIndex - Index of the step to show
+         * Show specific step
+         * @param {number} stepIndex - Step index to show
          */
         showStep: function(stepIndex) {
             if (stepIndex < 0 || stepIndex >= this.config.steps.length) {
@@ -191,13 +246,13 @@
                 return;
             }
 
-            var step = this.config.steps[stepIndex];
             this.state.currentStepIndex = stepIndex;
+            var step = this.config.steps[stepIndex];
 
-            // Wait for target element if needed
-            if (step.waitForElement && step.target) {
+            // Check if element exists, wait if needed
+            if (step.target && step.waitForElement) {
                 if (!this.waitForElement(step.target, function() {
-                    AppointmentTutorial.renderStep(step, stepIndex);
+                    AppointmentViewTutorial.renderStep(step, stepIndex);
                 })) {
                     // Element not found, skip this step if optional
                     if (step.optional) {
@@ -307,7 +362,7 @@
             this.state.overlay.on('click', function(e) {
                 // Only advance if clicking the overlay itself, not the tooltip
                 if ($(e.target).hasClass('tutorial-overlay')) {
-                    AppointmentTutorial.next();
+                    AppointmentViewTutorial.next();
                 }
             });
         },
@@ -370,9 +425,10 @@
             if (step.isLast) {
                 tooltipHtml += '<div class="tutorial-dont-show">';
                 tooltipHtml += '<label>';
-                tooltipHtml += '<input type="checkbox" id="tutorial-dont-show-again"> ';
-                tooltipHtml += "Don't show me this again";
+                tooltipHtml += '<input type="checkbox" id="tutorial-dont-show-again" />';
+                tooltipHtml += ' Don\'t show me this tutorial again';
                 tooltipHtml += '</label>';
+                tooltipHtml += '<button type="button" class="btn btn-default tutorial-btn-close" style="margin-left: 15px;">Close</button>';
                 tooltipHtml += '</div>';
             }
 
@@ -439,42 +495,35 @@
             var position = {
                 top: 0,
                 left: 0,
-                arrowPosition: null // Track arrow position for CSS
+                arrowPosition: null
             };
 
             // Calculate position relative to viewport (for fixed positioning)
-            // Position modal intelligently based on available space
-            var arrowOffset = 0; // Track arrow position for CSS
+            var arrowOffset = 0;
             
             switch (step.position) {
                 case 'top':
                     position.top = viewportTop - tooltipHeight - spacing;
-                    // Center tooltip horizontally relative to target, but keep within viewport
                     position.left = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
-                    position.arrowPosition = 'bottom'; // Arrow points down
-                    // Calculate arrow offset: center of target relative to tooltip left
+                    position.arrowPosition = 'bottom';
                     arrowOffset = (viewportLeft + targetWidth / 2) - position.left;
                     break;
                 case 'bottom':
                     position.top = viewportTop + targetHeight + spacing;
-                    // Center tooltip horizontally relative to target
                     position.left = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
-                    position.arrowPosition = 'top'; // Arrow points up
-                    // Calculate arrow offset: center of target relative to tooltip left
+                    position.arrowPosition = 'top';
                     arrowOffset = (viewportLeft + targetWidth / 2) - position.left;
                     break;
                 case 'left':
                     position.top = viewportTop + (targetHeight / 2) - (tooltipHeight / 2);
                     position.left = viewportLeft - tooltipWidth - spacing;
-                    position.arrowPosition = 'right'; // Arrow points right
-                    // Calculate arrow offset: center of target relative to tooltip top
+                    position.arrowPosition = 'right';
                     arrowOffset = (viewportTop + targetHeight / 2) - position.top;
                     break;
                 case 'right':
                     position.top = viewportTop + (targetHeight / 2) - (tooltipHeight / 2);
                     position.left = viewportLeft + targetWidth + spacing;
-                    position.arrowPosition = 'left'; // Arrow points left
-                    // Calculate arrow offset: center of target relative to tooltip top
+                    position.arrowPosition = 'left';
                     arrowOffset = (viewportTop + targetHeight / 2) - position.top;
                     break;
             }
@@ -488,7 +537,6 @@
             }
 
             // Adjust position to keep tooltip within viewport while maintaining arrow alignment
-            // Recalculate arrow offset after adjustments
             var adjustedArrowOffset = arrowOffset;
             
             // Horizontal adjustments
@@ -505,12 +553,10 @@
             if (position.top < 10) {
                 position.top = 10;
             } else if (position.top + tooltipHeight > windowHeight - 10) {
-                // If tooltip extends beyond bottom, try to position above button instead
                 if (step.position === 'bottom') {
                     position.top = viewportTop - tooltipHeight - spacing;
                     position.arrowPosition = 'bottom';
                     tooltip.removeClass('tutorial-arrow-top').addClass('tutorial-arrow-bottom');
-                    // Recalculate arrow offset for new position
                     adjustedArrowOffset = (viewportLeft + targetWidth / 2) - position.left;
                 } else {
                     position.top = windowHeight - tooltipHeight - 10;
@@ -531,7 +577,7 @@
             }
 
             tooltip.css({
-                position: 'fixed', // Fixed positioning for viewport-relative placement
+                position: 'fixed',
                 top: position.top + 'px',
                 left: position.left + 'px',
                 zIndex: 9999
@@ -556,7 +602,7 @@
             // Add highlight class
             element.addClass('tutorial-highlight');
 
-            // Scroll element into view if needed - use native scrollIntoView for better control
+            // Scroll element into view if needed
             var elementOffset = element.offset();
             var elementHeight = element.outerHeight();
             var elementWidth = element.outerWidth();
@@ -604,7 +650,9 @@
             // Next button
             this.state.tooltip.find('.tutorial-btn-next').on('click', function() {
                 if (step.isLast) {
-                    self.complete();
+                    // Check if "Don't show again" is checked
+                    var dontShow = $('#tutorial-dont-show-again').is(':checked');
+                    self.complete(dontShow);
                 } else {
                     self.next();
                 }
@@ -614,62 +662,60 @@
             this.state.tooltip.find('.tutorial-btn-skip').on('click', function() {
                 self.skip();
             });
+
+            // Close button (on completion step)
+            this.state.tooltip.find('.tutorial-btn-close').on('click', function() {
+                // Check if "Don't show again" is checked
+                var dontShow = $('#tutorial-dont-show-again').is(':checked');
+                self.complete(dontShow);
+            });
         },
 
         /**
          * Go to next step
          */
         next: function() {
-            this.showStep(this.state.currentStepIndex + 1);
+            var nextIndex = this.state.currentStepIndex + 1;
+            this.showStep(nextIndex);
         },
 
         /**
          * Go to previous step
          */
         previous: function() {
-            this.showStep(this.state.currentStepIndex - 1);
+            var prevIndex = this.state.currentStepIndex - 1;
+            this.showStep(prevIndex);
         },
 
         /**
          * Skip tutorial
          */
         skip: function() {
-            this.dismiss(true); // Dismiss with "don't show again"
+            this.complete(true);
         },
 
         /**
          * Complete tutorial
+         * @param {boolean} dontShowAgain - Whether to save preference
          */
-        complete: function() {
-            var dontShowAgain = $('#tutorial-dont-show-again').is(':checked');
-            this.dismiss(dontShowAgain);
-        },
-
-        /**
-         * Dismiss tutorial
-         * @param {boolean} dontShowAgain - Whether to hide permanently
-         */
-        dismiss: function(dontShowAgain) {
-            this.removeCurrentStep();
+        complete: function(dontShowAgain) {
             this.state.isActive = false;
+            this.removeCurrentStep();
 
-            // Save preference
             if (dontShowAgain) {
+                // Save preference to localStorage
                 localStorage.setItem(this.config.storageKeyDismissed, 'true');
-                
-                // Save to server
+                localStorage.setItem(this.config.storageKeyCompleted, 'true');
+
+                // Save preference to server
                 $.ajax({
                     url: admin_url + 'ella_contractors/appointments/save_tutorial_preference',
                     type: 'POST',
                     data: {
-                        dismissed: 1,
-                        [csrf_token_name]: csrf_hash
-                    },
-                    dataType: 'json'
+                        tutorial_id: this.config.tutorialId,
+                        dismissed: true
+                    }
                 });
-            } else {
-                // Mark as completed but allow restart
-                localStorage.setItem(this.config.storageKey, 'true');
             }
         },
 
@@ -697,25 +743,32 @@
         },
 
         /**
-         * Restart tutorial (for manual restart)
+         * Restart tutorial
          */
         restart: function() {
-            localStorage.removeItem(this.config.storageKey);
+            // Clear preferences
             localStorage.removeItem(this.config.storageKeyDismissed);
-            this.start();
+            localStorage.removeItem(this.config.storageKeyCompleted);
+
+            // Reset on server
+            $.ajax({
+                url: admin_url + 'ella_contractors/appointments/reset_tutorial',
+                type: 'POST',
+                data: {
+                    tutorial_id: this.config.tutorialId
+                },
+                success: function() {
+                    AppointmentViewTutorial.start();
+                }
+            });
         }
     };
 
-    // Auto-initialize when DOM is ready
-    $(document).ready(function() {
-        // Only initialize if on appointments page
-        if ($('.table-ella_appointments').length > 0 || $('#new-appointment').length > 0) {
-            AppointmentTutorial.init();
-        }
-    });
+    // Initialize on page load
+    AppointmentViewTutorial.init();
 
     // Expose globally for manual control
-    window.AppointmentTutorial = AppointmentTutorial;
+    window.AppointmentViewTutorial = AppointmentViewTutorial;
 
 })(jQuery);
 

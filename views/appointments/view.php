@@ -1,6 +1,9 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 
+<!-- Load Tutorial CSS -->
+<link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/appointment-tutorial.css'); ?>">
+
 <style>
 .connected-buttons {
     display: inline-flex;
@@ -239,6 +242,9 @@ html {
                             <a href="javascript:void(0)" class="btn btn-danger" onclick="deleteAppointment(<?php echo $appointment->id; ?>)">
                                 <i class="fa fa-trash"></i> <?php echo _l('delete'); ?>
                             </a>
+                            <button type="button" class="btn btn-default" id="restart-view-tutorial" style="margin-left: 10px;" data-toggle="tooltip" data-placement="top" title="Restart Tutorial">
+                                <i class="fa fa-question-circle"></i> Help
+                            </button>
                         </div>
                         <div class="clearfix"></div>
                         <hr class="hr-panel-heading" />
@@ -1785,3 +1791,40 @@ $(function () {
 
 <!-- Load module CSS for SMS modal styling -->
 <link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/ella-contractors.css'); ?>">
+
+<!-- Include Tutorial System for View Page -->
+<script src="<?php echo module_dir_url('ella_contractors', 'assets/js/appointment-view-tutorial.js'); ?>"></script>
+
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    // Restart Tutorial Button for View Page
+    $('#restart-view-tutorial').on('click', function() {
+        if (confirm('Would you like to restart the tutorial? This will show you step-by-step guidance on how to use the appointment details page.')) {
+            // Clear preferences
+            localStorage.removeItem('ella_contractors_view_tutorial_dismissed');
+            localStorage.removeItem('ella_contractors_view_tutorial_completed');
+            
+            // Reset on server
+            $.ajax({
+                url: admin_url + 'ella_contractors/appointments/reset_tutorial',
+                type: 'POST',
+                data: {
+                    tutorial_id: 'appointment_view_tutorial'
+                },
+                success: function() {
+                    // Restart tutorial
+                    if (typeof AppointmentViewTutorial !== 'undefined') {
+                        AppointmentViewTutorial.restart();
+                    } else {
+                        // Reload page to restart tutorial
+                        location.reload();
+                    }
+                }
+            });
+        }
+    });
+});
+</script>

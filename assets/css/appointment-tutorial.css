@@ -43,52 +43,56 @@
 .tutorial-tooltip.tutorial-arrow-top::before {
     content: '';
     position: absolute;
-    top: -10px;
-    left: 20px;
+    top: -8px;
+    left: calc(50% + var(--arrow-offset, 0px));
+    transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-bottom: 10px solid #03a9f4;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid #03a9f4;
     z-index: 10000;
 }
 
 .tutorial-tooltip.tutorial-arrow-top::after {
     content: '';
     position: absolute;
-    top: -9px;
-    left: 20px;
+    top: -7px;
+    left: calc(50% + var(--arrow-offset, 0px));
+    transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-bottom: 10px solid #ffffff;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid #ffffff;
     z-index: 10001;
 }
 
 .tutorial-tooltip.tutorial-arrow-bottom::before {
     content: '';
     position: absolute;
-    bottom: -10px;
-    left: 20px;
+    bottom: -8px;
+    left: calc(50% + var(--arrow-offset, 0px));
+    transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-top: 10px solid #03a9f4;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid #03a9f4;
     z-index: 10000;
 }
 
 .tutorial-tooltip.tutorial-arrow-bottom::after {
     content: '';
     position: absolute;
-    bottom: -9px;
-    left: 20px;
+    bottom: -7px;
+    left: calc(50% + var(--arrow-offset, 0px));
+    transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-top: 10px solid #ffffff;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid #ffffff;
     z-index: 10001;
 }
 
@@ -96,7 +100,7 @@
     content: '';
     position: absolute;
     left: -10px;
-    top: 50%;
+    top: calc(50% + var(--arrow-offset, 0px));
     transform: translateY(-50%);
     width: 0;
     height: 0;
@@ -110,7 +114,7 @@
     content: '';
     position: absolute;
     left: -9px;
-    top: 50%;
+    top: calc(50% + var(--arrow-offset, 0px));
     transform: translateY(-50%);
     width: 0;
     height: 0;
@@ -124,7 +128,7 @@
     content: '';
     position: absolute;
     right: -10px;
-    top: 50%;
+    top: calc(50% + var(--arrow-offset, 0px));
     transform: translateY(-50%);
     width: 0;
     height: 0;
@@ -138,7 +142,7 @@
     content: '';
     position: absolute;
     right: -9px;
-    top: 50%;
+    top: calc(50% + var(--arrow-offset, 0px));
     transform: translateY(-50%);
     width: 0;
     height: 0;
@@ -303,6 +307,10 @@
     padding-top: 12px;
     border-top: 1px solid #e5e5e5;
     margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
 }
 
 .tutorial-dont-show label {
@@ -313,6 +321,7 @@
     color: #6c757d;
     margin: 0;
     user-select: none;
+    flex: 1;
 }
 
 .tutorial-dont-show input[type="checkbox"] {
@@ -322,6 +331,14 @@
 
 .tutorial-dont-show label:hover {
     color: #495057;
+}
+
+.tutorial-btn-close {
+    min-width: 80px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: all 0.2s;
 }
 
 /* Highlight Effect */
