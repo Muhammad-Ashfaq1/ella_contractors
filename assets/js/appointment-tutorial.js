@@ -248,14 +248,44 @@
         renderStep: function(step, stepIndex) {
             var self = this;
             
-            // Remove previous step
-            this.removeCurrentStep();
+            // Fade out previous step with animation
+            if (this.state.tooltip) {
+                this.state.tooltip.css({
+                    opacity: 0,
+                    transform: 'scale(0.95)',
+                    transition: 'opacity 0.2s ease-out, transform 0.2s ease-out'
+                });
+                
+                // Remove after fade out animation
+                setTimeout(function() {
+                    self.removeCurrentStep();
+                    self.showNewStep(step, stepIndex);
+                }, 200);
+            } else {
+                // No previous step, show immediately
+                this.showNewStep(step, stepIndex);
+            }
+        },
+
+        /**
+         * Show new step with animation
+         * @param {object} step - Step configuration
+         * @param {number} stepIndex - Current step index
+         */
+        showNewStep: function(step, stepIndex) {
+            var self = this;
 
             // Create overlay
             this.createOverlay();
 
             // Create tooltip
             this.createTooltip(step, stepIndex);
+
+            // Initially hide tooltip for fade-in animation
+            this.state.tooltip.css({
+                opacity: 0,
+                transform: 'scale(0.95)'
+            });
 
             // If target element exists, wait for it to be visible, then position
             if (step.target && step.position !== 'center') {
@@ -271,11 +301,25 @@
                     // Small delay to allow scroll animation to complete
                     setTimeout(function() {
                         self.positionTooltip(step);
+                        // Fade in tooltip with animation
+                        self.state.tooltip.css({
+                            opacity: 1,
+                            transform: 'scale(1)',
+                            transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
+                        });
                     }, 350);
                 }, 100);
             } else {
                 // No target or center position - position immediately
                 this.positionTooltip(step);
+                // Fade in tooltip with animation
+                setTimeout(function() {
+                    self.state.tooltip.css({
+                        opacity: 1,
+                        transform: 'scale(1)',
+                        transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
+                    });
+                }, 50);
             }
         },
 
@@ -550,11 +594,24 @@
 
             this.state.targetElement = element;
 
-            // Remove any existing highlight first
-            $('.tutorial-highlight').removeClass('tutorial-highlight');
+            // Remove any existing highlight first with fade out
+            var existingHighlight = $('.tutorial-highlight');
+            if (existingHighlight.length > 0) {
+                existingHighlight.css({
+                    transition: 'all 0.3s ease-out'
+                });
+                setTimeout(function() {
+                    existingHighlight.removeClass('tutorial-highlight');
+                }, 100);
+            }
 
-            // Add highlight class
-            element.addClass('tutorial-highlight');
+            // Add highlight class with fade in animation
+            setTimeout(function() {
+                element.css({
+                    transition: 'all 0.3s ease-out'
+                });
+                element.addClass('tutorial-highlight');
+            }, 150);
 
             // Scroll element into view if needed - use native scrollIntoView for better control
             var elementOffset = element.offset();
@@ -677,21 +734,35 @@
          * Remove current step elements
          */
         removeCurrentStep: function() {
-            // Remove highlight
+            // Remove highlight with fade out
             if (this.state.targetElement) {
-                this.state.targetElement.removeClass('tutorial-highlight');
+                this.state.targetElement.css({
+                    transition: 'all 0.2s ease-out'
+                });
+                var targetElement = this.state.targetElement;
+                setTimeout(function() {
+                    targetElement.removeClass('tutorial-highlight');
+                }, 100);
                 this.state.targetElement = null;
             }
 
-            // Remove tooltip
+            // Remove tooltip (already handled in renderStep with fade out)
             if (this.state.tooltip) {
                 this.state.tooltip.remove();
                 this.state.tooltip = null;
             }
 
-            // Remove overlay
-            if (this.state.overlay) {
-                this.state.overlay.remove();
+            // Keep overlay for smooth transitions (it will be reused)
+            // Only remove if tutorial is completing
+            if (!this.state.isActive && this.state.overlay) {
+                this.state.overlay.css({
+                    opacity: 0,
+                    transition: 'opacity 0.3s ease-out'
+                });
+                var overlay = this.state.overlay;
+                setTimeout(function() {
+                    overlay.remove();
+                }, 300);
                 this.state.overlay = null;
             }
         },
