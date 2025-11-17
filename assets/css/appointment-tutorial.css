@@ -1,0 +1,410 @@
+/**
+ * EllaContractors Appointment Tutorial Styles
+ * 
+ * Provides styling for the step-by-step tutorial system
+ */
+
+/* Tutorial Overlay */
+.tutorial-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 9998;
+    pointer-events: auto;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Tutorial Tooltip */
+.tutorial-tooltip {
+    position: fixed;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 450px;
+    min-width: 320px;
+    z-index: 9999;
+    animation: slideIn 0.3s ease-out;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Arrow pointer for tooltip - Points UP (tooltip below button) */
+.tutorial-tooltip.tutorial-arrow-top::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid #03a9f4;
+    z-index: 10000;
+}
+
+.tutorial-tooltip.tutorial-arrow-top::after {
+    content: '';
+    position: absolute;
+    top: -9px;
+    left: 20px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid #ffffff;
+    z-index: 10001;
+}
+
+.tutorial-tooltip.tutorial-arrow-bottom::before {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 20px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #03a9f4;
+    z-index: 10000;
+}
+
+.tutorial-tooltip.tutorial-arrow-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: -9px;
+    left: 20px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #ffffff;
+    z-index: 10001;
+}
+
+.tutorial-tooltip.tutorial-arrow-left::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 10px solid #03a9f4;
+    z-index: 10000;
+}
+
+.tutorial-tooltip.tutorial-arrow-left::after {
+    content: '';
+    position: absolute;
+    left: -9px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 10px solid #ffffff;
+    z-index: 10001;
+}
+
+.tutorial-tooltip.tutorial-arrow-right::before {
+    content: '';
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-left: 10px solid #03a9f4;
+    z-index: 10000;
+}
+
+.tutorial-tooltip.tutorial-arrow-right::after {
+    content: '';
+    position: absolute;
+    right: -9px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-left: 10px solid #ffffff;
+    z-index: 10001;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Tooltip Header */
+.tutorial-tooltip-header {
+    padding: 20px 20px 15px;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #03a9f4;
+    border-radius: 8px 8px 0 0;
+    color: #ffffff;
+}
+
+.tutorial-tooltip-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+}
+
+.tutorial-tooltip-title i {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+.tutorial-close {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.tutorial-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Progress Indicator */
+.tutorial-progress {
+    padding: 10px 20px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e5e5e5;
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Tooltip Content */
+.tutorial-tooltip-content {
+    padding: 20px;
+    color: #333333;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.tutorial-tooltip-content p {
+    margin: 0;
+    color: #555555;
+}
+
+.tutorial-tooltip-content p:not(:last-child) {
+    margin-bottom: 12px;
+}
+
+/* Tooltip Footer */
+.tutorial-tooltip-footer {
+    padding: 15px 20px 20px;
+    border-top: 1px solid #e5e5e5;
+    background-color: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+}
+
+.tutorial-tooltip-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.tutorial-tooltip-actions .btn {
+    min-width: 80px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.tutorial-btn-back {
+    background-color: #F1F5F7;
+    border: 1px solid #E6E9EB;
+    color: #415164;
+}
+
+.tutorial-btn-back:hover {
+    background-color: #E1E4E6;
+    border-color: #E6E9EB;
+    color: #415164;
+}
+
+.tutorial-btn-next {
+    background-color: #28b8da;
+    border: none;
+    color: #ffffff;
+    margin-left: auto;
+}
+
+.tutorial-btn-next:hover {
+    background-color: #1e95b1;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(40, 184, 218, 0.4);
+}
+
+.tutorial-btn-skip {
+    color: #6c757d;
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+.tutorial-btn-skip:hover {
+    color: #495057;
+    text-decoration: underline;
+}
+
+/* Don't Show Again Checkbox */
+.tutorial-dont-show {
+    padding-top: 12px;
+    border-top: 1px solid #e5e5e5;
+    margin-top: 12px;
+}
+
+.tutorial-dont-show label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 13px;
+    color: #6c757d;
+    margin: 0;
+    user-select: none;
+}
+
+.tutorial-dont-show input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.tutorial-dont-show label:hover {
+    color: #495057;
+}
+
+/* Highlight Effect */
+.tutorial-highlight {
+    position: relative;
+    z-index: 9997 !important;
+    outline: 3px solid #03a9f4 !important;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(3, 169, 244, 0.2) !important;
+    border-radius: 4px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 4px rgba(3, 169, 244, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(3, 169, 244, 0.1);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .tutorial-tooltip {
+        max-width: 90%;
+        min-width: 280px;
+        margin: 0 5%;
+    }
+
+    .tutorial-tooltip-header {
+        padding: 15px 15px 12px;
+    }
+
+    .tutorial-tooltip-title {
+        font-size: 16px;
+    }
+
+    .tutorial-tooltip-content {
+        padding: 15px;
+        font-size: 13px;
+    }
+
+    .tutorial-tooltip-footer {
+        padding: 12px 15px 15px;
+    }
+
+    .tutorial-tooltip-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .tutorial-tooltip-actions .btn {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .tutorial-btn-skip {
+        order: -1;
+    }
+}
+
+/* Accessibility */
+.tutorial-tooltip:focus {
+    outline: 2px solid #03a9f4;
+    outline-offset: 2px;
+}
+
+.tutorial-close:focus,
+.tutorial-btn-back:focus,
+.tutorial-btn-next:focus,
+.tutorial-btn-skip:focus {
+    outline: 2px solid #03a9f4;
+    outline-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+    .tutorial-overlay,
+    .tutorial-tooltip,
+    .tutorial-highlight {
+        display: none !important;
+    }
+}
+
+

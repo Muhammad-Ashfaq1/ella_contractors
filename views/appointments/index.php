@@ -4,6 +4,9 @@
 <!-- Load module CSS -->
 <!-- <link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/ella-contractors.css'); ?>"> -->
 
+<!-- Load Tutorial CSS -->
+<link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/appointment-tutorial.css'); ?>">
+
 <div id="wrapper">
     <div class="content">
         <div class="row">
@@ -15,6 +18,9 @@
                                 <div class="col-md-6">
                                     <button type="button" class="btn btn-info" id="new-appointment">
                                         <i class="fa fa-plus" style="margin-right: 2% !important;"></i> New Appointment
+                                    </button>
+                                    <button type="button" class="btn btn-default" id="restart-tutorial" style="margin-left: 10px;" data-toggle="tooltip" data-placement="top" title="Restart Tutorial">
+                                        <i class="fa fa-question-circle"></i> Help
                                     </button>
                                 </div>
                                 <div class="col-md-6">
@@ -473,6 +479,36 @@ $(document).ready(function() {
     
     // Initialize tooltips
     $('[data-toggle="tooltip"]').tooltip();
+    
+    // Restart Tutorial Button
+    $('#restart-tutorial').on('click', function() {
+        if (confirm('Would you like to restart the tutorial? This will show you step-by-step guidance on how to use the appointments module.')) {
+            // Clear preferences
+            localStorage.removeItem('ella_contractors_tutorial_dismissed');
+            localStorage.removeItem('ella_contractors_tutorial_completed');
+            
+            // Reset on server
+            $.ajax({
+                url: admin_url + 'ella_contractors/appointments/reset_tutorial',
+                type: 'POST',
+                data: {
+                    [csrf_token_name]: csrf_hash
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // Restart tutorial
+                        if (typeof AppointmentTutorial !== 'undefined') {
+                            AppointmentTutorial.restart();
+                        } else {
+                            // Reload page if tutorial not initialized
+                            location.reload();
+                        }
+                    }
+                }
+            });
+        }
+    });
     
     // Initialize AJAX search for leads and clients
     init_combined_ajax_search('#contact_id.ajax-search');
@@ -1684,6 +1720,9 @@ $(document).ready(function() {
 
 <!-- Include global appointment.js for lead modal functionality -->
 <script src="<?php echo base_url('assets/js/global/appointment.js'); ?>"></script>
+
+<!-- Include Tutorial System -->
+<script src="<?php echo module_dir_url('ella_contractors', 'assets/js/appointment-tutorial.js'); ?>"></script>
 
 
 

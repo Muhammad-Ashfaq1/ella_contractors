@@ -2411,6 +2411,106 @@ startxref
         }
     }
 
+    /**
+     * Check tutorial status for current user
+     * Returns whether tutorial should be shown
+     * 
+     * @return json
+     */
+    public function check_tutorial_status()
+    {
+        if (!is_staff_logged_in()) {
+            echo json_encode(['show_tutorial' => false]);
+            return;
+        }
+
+        $staff_id = get_staff_user_id();
+        
+        // Check user meta for tutorial dismissal
+        if (!function_exists('get_meta')) {
+            $this->load->helper('user_meta');
+        }
+        
+        $tutorial_dismissed = get_meta('staff', $staff_id, 'ella_contractors_tutorial_dismissed');
+        
+        $show_tutorial = empty($tutorial_dismissed) || $tutorial_dismissed != '1';
+        
+        echo json_encode([
+            'show_tutorial' => $show_tutorial,
+            'dismissed' => $tutorial_dismissed == '1'
+        ]);
+    }
+
+    /**
+     * Save tutorial preference (dismissed state)
+     * 
+     * @return json
+     */
+    public function save_tutorial_preference()
+    {
+        if (!is_staff_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ]);
+            return;
+        }
+
+        $staff_id = get_staff_user_id();
+        $dismissed = $this->input->post('dismissed') ? 1 : 0;
+        
+        // Load user meta helper if not loaded
+        if (!function_exists('update_meta')) {
+            $this->load->helper('user_meta');
+        }
+        
+        // Save preference
+        $result = update_meta('staff', $staff_id, 'ella_contractors_tutorial_dismissed', $dismissed);
+        
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Tutorial preference saved successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to save tutorial preference'
+            ]);
+        }
+    }
+
+    /**
+     * Reset tutorial for current user (admin function)
+     * Allows users to restart the tutorial
+     * 
+     * @return json
+     */
+    public function reset_tutorial()
+    {
+        if (!is_staff_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ]);
+            return;
+        }
+
+        $staff_id = get_staff_user_id();
+        
+        // Load user meta helper if not loaded
+        if (!function_exists('delete_meta')) {
+            $this->load->helper('user_meta');
+        }
+        
+        // Remove tutorial dismissal preference
+        $result = delete_meta('staff', $staff_id, 'ella_contractors_tutorial_dismissed');
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Tutorial reset successfully. Refresh the page to see it again.'
+        ]);
+    }
 
     
 }
