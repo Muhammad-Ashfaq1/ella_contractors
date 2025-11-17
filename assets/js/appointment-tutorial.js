@@ -807,8 +807,42 @@
          * @param {boolean} dontShowAgain - Whether to hide permanently
          */
         dismiss: function(dontShowAgain) {
-            this.removeCurrentStep();
+            // Set inactive first to ensure cleanup happens
             this.state.isActive = false;
+            
+            // Immediately remove all tutorial elements
+            this.removeCurrentStep();
+            
+            // Force remove overlay and tooltip if they still exist (immediate removal, no animation)
+            if (this.state.overlay) {
+                this.state.overlay.stop(true, true); // Stop any animations
+                this.state.overlay.remove();
+                this.state.overlay = null;
+            }
+            if (this.state.tooltip) {
+                this.state.tooltip.stop(true, true); // Stop any animations
+                this.state.tooltip.remove();
+                this.state.tooltip = null;
+            }
+            
+            // Remove any remaining highlights
+            $('.tutorial-highlight').removeClass('tutorial-highlight');
+            
+            // Remove any tutorial overlays/tooltips that might still exist in DOM
+            $('.tutorial-overlay').remove();
+            $('.tutorial-tooltip').remove();
+            
+            // Ensure body is scrollable and interactive
+            $('body').css({
+                'overflow': '',
+                'pointer-events': ''
+            });
+            
+            // Remove any inline styles that might block interaction
+            $('html').css({
+                'overflow': '',
+                'pointer-events': ''
+            });
 
             // Save preference
             if (dontShowAgain) {
@@ -834,36 +868,24 @@
          * Remove current step elements
          */
         removeCurrentStep: function() {
-            // Remove highlight with fade out
+            // Remove highlight immediately
             if (this.state.targetElement) {
-                this.state.targetElement.css({
-                    transition: 'all 0.2s ease-out'
-                });
-                var targetElement = this.state.targetElement;
-                setTimeout(function() {
-                    targetElement.removeClass('tutorial-highlight');
-                }, 100);
+                this.state.targetElement.removeClass('tutorial-highlight');
                 this.state.targetElement = null;
             }
 
-            // Remove tooltip (already handled in renderStep with fade out)
+            // Remove tooltip immediately
             if (this.state.tooltip) {
                 this.state.tooltip.remove();
                 this.state.tooltip = null;
             }
 
-            // Keep overlay for smooth transitions (it will be reused)
-            // Only remove if tutorial is completing
-            if (!this.state.isActive && this.state.overlay) {
-                this.state.overlay.css({
-                    opacity: 0,
-                    transition: 'opacity 0.3s ease-out'
-                });
-                var overlay = this.state.overlay;
-                setTimeout(function() {
-                    overlay.remove();
-                }, 300);
-                this.state.overlay = null;
+            // Remove overlay immediately if tutorial is not active (dismissing)
+            if (!this.state.isActive) {
+                if (this.state.overlay) {
+                    this.state.overlay.remove();
+                    this.state.overlay = null;
+                }
             }
         },
 
