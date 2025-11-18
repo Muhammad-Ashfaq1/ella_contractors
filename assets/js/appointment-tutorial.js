@@ -428,10 +428,16 @@
 
             $('body').append(this.state.overlay);
 
-            // Click overlay to go to next step
+            // Click overlay to go to next step - BUT NOT when modals are open
             this.state.overlay.on('click', function(e) {
-                // Only advance if clicking the overlay itself, not the tooltip
-                if ($(e.target).hasClass('tutorial-overlay')) {
+                // Prevent advancing if a modal is open
+                if ($('.modal:visible').length > 0) {
+                    e.stopPropagation();
+                    return false;
+                }
+                
+                // Only advance if clicking the overlay itself, not the tooltip or any child elements
+                if ($(e.target).hasClass('tutorial-overlay') && e.target === e.currentTarget) {
                     AppointmentTutorial.next();
                 }
             });
@@ -519,15 +525,38 @@
         positionTooltip: function(step) {
             var tooltip = this.state.tooltip;
             
+            // Check if a modal is currently open
+            var $openModal = $('.modal:visible');
+            var isModalOpen = $openModal.length > 0;
+            var modalContainer = isModalOpen ? $openModal : null;
+            
             if (!step.target || step.position === 'center') {
-                // Center on screen
-                tooltip.css({
-                    position: 'fixed',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 9999
-                });
+                // Center on screen or modal
+                if (isModalOpen && modalContainer) {
+                    // Position relative to modal
+                    var modalOffset = modalContainer.offset();
+                    var modalWidth = modalContainer.outerWidth();
+                    var modalHeight = modalContainer.outerHeight();
+                    var tooltipWidth = tooltip.outerWidth();
+                    var tooltipHeight = tooltip.outerHeight();
+                    
+                    tooltip.css({
+                        position: 'absolute',
+                        top: modalOffset.top + (modalHeight / 2) - (tooltipHeight / 2),
+                        left: modalOffset.left + (modalWidth / 2) - (tooltipWidth / 2),
+                        transform: 'none',
+                        zIndex: 10000 // Above modal
+                    });
+                } else {
+                    // Center on screen
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: 1041
+                    });
+                }
                 return;
             }
 
@@ -535,13 +564,29 @@
             var target = $(step.target);
             if (target.length === 0) {
                 // Fallback to center if target not found
-                tooltip.css({
-                    position: 'fixed',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 9999
-                });
+                if (isModalOpen && modalContainer) {
+                    var modalOffset = modalContainer.offset();
+                    var modalWidth = modalContainer.outerWidth();
+                    var modalHeight = modalContainer.outerHeight();
+                    var tooltipWidth = tooltip.outerWidth();
+                    var tooltipHeight = tooltip.outerHeight();
+                    
+                    tooltip.css({
+                        position: 'absolute',
+                        top: modalOffset.top + (modalHeight / 2) - (tooltipHeight / 2),
+                        left: modalOffset.left + (modalWidth / 2) - (tooltipWidth / 2),
+                        transform: 'none',
+                        zIndex: 10000
+                    });
+                } else {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: 1041
+                    });
+                }
                 return;
             }
 
@@ -561,90 +606,150 @@
             // Convert document-relative offset() to viewport-relative for fixed positioning
             var viewportTop = targetOffset.top - scrollTop;
             var viewportLeft = targetOffset.left - scrollLeft;
-
+            
             var position = {
                 top: 0,
                 left: 0,
                 arrowPosition: null // Track arrow position for CSS
             };
 
-            // Calculate position relative to viewport (for fixed positioning)
-            // Position modal intelligently based on available space
+            // Calculate position relative to viewport (for fixed positioning) or modal (if modal is open)
             var arrowOffset = 0; // Track arrow position for CSS
+            var useModalPositioning = isModalOpen && modalContainer && target.closest('.modal').length > 0;
             
-            switch (step.position) {
-                case 'top':
-                    position.top = viewportTop - tooltipHeight - spacing;
-                    // Center tooltip horizontally relative to target, but keep within viewport
-                    position.left = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
-                    position.arrowPosition = 'bottom'; // Arrow points down
-                    // Calculate arrow offset: center of target relative to tooltip left
-                    arrowOffset = (viewportLeft + targetWidth / 2) - position.left;
-                    break;
-                case 'bottom':
-                    position.top = viewportTop + targetHeight + spacing;
-                    // Center tooltip horizontally relative to target
-                    position.left = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
-                    position.arrowPosition = 'top'; // Arrow points up
-                    // Calculate arrow offset: center of target relative to tooltip left
-                    arrowOffset = (viewportLeft + targetWidth / 2) - position.left;
-                    break;
-                case 'left':
-                    position.top = viewportTop + (targetHeight / 2) - (tooltipHeight / 2);
-                    position.left = viewportLeft - tooltipWidth - spacing;
-                    position.arrowPosition = 'right'; // Arrow points right
-                    // Calculate arrow offset: center of target relative to tooltip top
-                    arrowOffset = (viewportTop + targetHeight / 2) - position.top;
-                    break;
-                case 'right':
-                    position.top = viewportTop + (targetHeight / 2) - (tooltipHeight / 2);
-                    position.left = viewportLeft + targetWidth + spacing;
-                    position.arrowPosition = 'left'; // Arrow points left
-                    // Calculate arrow offset: center of target relative to tooltip top
-                    arrowOffset = (viewportTop + targetHeight / 2) - position.top;
-                    break;
+            if (useModalPositioning) {
+                // Position relative to modal
+                var modalOffset = modalContainer.offset();
+                var modalBody = modalContainer.find('.modal-body').first();
+                var modalBodyOffset = modalBody.length > 0 ? modalBody.offset() : modalOffset;
+                
+                // Calculate target position relative to modal body
+                var relativeTop = targetOffset.top - modalBodyOffset.top;
+                var relativeLeft = targetOffset.left - modalBodyOffset.left;
+                var modalWidth = modalContainer.outerWidth();
+                var modalBodyWidth = modalBody.length > 0 ? modalBody.outerWidth() : modalWidth;
+                
+                switch (step.position) {
+                    case 'top':
+                        position.top = relativeTop - tooltipHeight - spacing;
+                        position.left = relativeLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        position.arrowPosition = 'bottom';
+                        arrowOffset = (relativeLeft + targetWidth / 2) - position.left;
+                        break;
+                    case 'bottom':
+                        position.top = relativeTop + targetHeight + spacing;
+                        position.left = relativeLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        position.arrowPosition = 'top';
+                        arrowOffset = (relativeLeft + targetWidth / 2) - position.left;
+                        break;
+                    case 'left':
+                        position.top = relativeTop + (targetHeight / 2) - (tooltipHeight / 2);
+                        position.left = relativeLeft - tooltipWidth - spacing;
+                        position.arrowPosition = 'right';
+                        arrowOffset = (relativeTop + targetHeight / 2) - position.top;
+                        break;
+                    case 'right':
+                        position.top = relativeTop + (targetHeight / 2) - (tooltipHeight / 2);
+                        position.left = relativeLeft + targetWidth + spacing;
+                        position.arrowPosition = 'left';
+                        arrowOffset = (relativeTop + targetHeight / 2) - position.top;
+                        break;
+                }
+                
+                // Adjust position to keep tooltip within modal bounds
+                var minLeft = 10;
+                var maxLeft = modalBodyWidth - tooltipWidth - 10;
+                var adjustedArrowOffset;
+                if (position.left < minLeft) {
+                    adjustedArrowOffset = arrowOffset - (minLeft - position.left);
+                    position.left = minLeft;
+                } else if (position.left > maxLeft) {
+                    var overflow = position.left - maxLeft;
+                    adjustedArrowOffset = arrowOffset + overflow;
+                    position.left = maxLeft;
+                } else {
+                    adjustedArrowOffset = arrowOffset;
+                }
+                
+                // Vertical adjustments within modal
+                var minTop = 10;
+                var modalBodyHeight = modalBody.length > 0 ? modalBody.outerHeight() : modalContainer.outerHeight();
+                var maxTop = modalBodyHeight - tooltipHeight - 10;
+                if (position.top < minTop) {
+                    position.top = minTop;
+                } else if (position.top > maxTop) {
+                    if (step.position === 'bottom') {
+                        position.top = relativeTop - tooltipHeight - spacing;
+                        position.arrowPosition = 'bottom';
+                        tooltip.removeClass('tutorial-arrow-top').addClass('tutorial-arrow-bottom');
+                        adjustedArrowOffset = (relativeLeft + targetWidth / 2) - position.left;
+                    } else {
+                        position.top = maxTop;
+                    }
+                }
+            } else {
+                // Position relative to viewport (normal case)
+                switch (step.position) {
+                    case 'top':
+                        position.top = viewportTop - tooltipHeight - spacing;
+                        position.left = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        position.arrowPosition = 'bottom';
+                        arrowOffset = (viewportLeft + targetWidth / 2) - position.left;
+                        break;
+                    case 'bottom':
+                        position.top = viewportTop + targetHeight + spacing;
+                        position.left = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        position.arrowPosition = 'top';
+                        arrowOffset = (viewportLeft + targetWidth / 2) - position.left;
+                        break;
+                    case 'left':
+                        position.top = viewportTop + (targetHeight / 2) - (tooltipHeight / 2);
+                        position.left = viewportLeft - tooltipWidth - spacing;
+                        position.arrowPosition = 'right';
+                        arrowOffset = (viewportTop + targetHeight / 2) - position.top;
+                        break;
+                    case 'right':
+                        position.top = viewportTop + (targetHeight / 2) - (tooltipHeight / 2);
+                        position.left = viewportLeft + targetWidth + spacing;
+                        position.arrowPosition = 'left';
+                        arrowOffset = (viewportTop + targetHeight / 2) - position.top;
+                        break;
+                }
+                
+                // Adjust position to keep tooltip within viewport
+                var adjustedArrowOffset = arrowOffset;
+                if (position.left < 10) {
+                    adjustedArrowOffset = arrowOffset - (10 - position.left);
+                    position.left = 10;
+                } else if (position.left + tooltipWidth > windowWidth - 10) {
+                    var overflow = (position.left + tooltipWidth) - (windowWidth - 10);
+                    adjustedArrowOffset = arrowOffset + overflow;
+                    position.left = windowWidth - tooltipWidth - 10;
+                }
+                
+                if (position.top < 10) {
+                    position.top = 10;
+                } else if (position.top + tooltipHeight > windowHeight - 10) {
+                    if (step.position === 'bottom') {
+                        position.top = viewportTop - tooltipHeight - spacing;
+                        position.arrowPosition = 'bottom';
+                        tooltip.removeClass('tutorial-arrow-top').addClass('tutorial-arrow-bottom');
+                        adjustedArrowOffset = (viewportLeft + targetWidth / 2) - position.left;
+                    } else {
+                        position.top = windowHeight - tooltipHeight - 10;
+                    }
+                }
             }
             
             // Store arrow offset for CSS positioning
-            tooltip.data('arrow-offset', arrowOffset);
+            tooltip.data('arrow-offset', adjustedArrowOffset);
             
             // Add arrow class to tooltip for CSS styling
             if (position.arrowPosition) {
                 tooltip.addClass('tutorial-arrow-' + position.arrowPosition);
             }
-
-            // Adjust position to keep tooltip within viewport while maintaining arrow alignment
-            // Recalculate arrow offset after adjustments
-            var adjustedArrowOffset = arrowOffset;
-            
-            // Horizontal adjustments
-            if (position.left < 10) {
-                adjustedArrowOffset = arrowOffset - (10 - position.left);
-                position.left = 10;
-            } else if (position.left + tooltipWidth > windowWidth - 10) {
-                var overflow = (position.left + tooltipWidth) - (windowWidth - 10);
-                adjustedArrowOffset = arrowOffset + overflow;
-                position.left = windowWidth - tooltipWidth - 10;
-            }
-            
-            // Vertical adjustments
-            if (position.top < 10) {
-                position.top = 10;
-            } else if (position.top + tooltipHeight > windowHeight - 10) {
-                // If tooltip extends beyond bottom, try to position above button instead
-                if (step.position === 'bottom') {
-                    position.top = viewportTop - tooltipHeight - spacing;
-                    position.arrowPosition = 'bottom';
-                    tooltip.removeClass('tutorial-arrow-top').addClass('tutorial-arrow-bottom');
-                    // Recalculate arrow offset for new position
-                    adjustedArrowOffset = (viewportLeft + targetWidth / 2) - position.left;
-                } else {
-                    position.top = windowHeight - tooltipHeight - 10;
-                }
-            }
             
             // Update arrow offset data attribute and CSS variable
-            tooltip.data('arrow-offset', adjustedArrowOffset);
             tooltip.css('--arrow-offset', adjustedArrowOffset + 'px');
             
             // Ensure arrow doesn't go outside tooltip bounds (min 20px from edges)
@@ -656,12 +761,37 @@
                 tooltip.css('--arrow-offset', maxArrowOffset + 'px');
             }
 
-            tooltip.css({
-                position: 'fixed', // Fixed positioning for viewport-relative placement
-                top: position.top + 'px',
-                left: position.left + 'px',
-                zIndex: 1041 // Below Bootstrap modals (1050) but above overlay
-            });
+            // Set positioning based on whether modal is open
+            if (useModalPositioning) {
+                // Append tooltip to modal body for proper positioning
+                var modalBody = modalContainer.find('.modal-body').first();
+                if (modalBody.length > 0) {
+                    tooltip.appendTo(modalBody);
+                } else {
+                    tooltip.appendTo(modalContainer);
+                }
+                
+                // Position relative to modal
+                tooltip.css({
+                    position: 'absolute',
+                    top: position.top + 'px',
+                    left: position.left + 'px',
+                    zIndex: 10000 // Above modal
+                });
+            } else {
+                // Ensure tooltip is in body (not modal)
+                if (tooltip.parent().hasClass('modal') || tooltip.parent().hasClass('modal-body')) {
+                    tooltip.appendTo('body');
+                }
+                
+                // Fixed positioning for viewport-relative placement
+                tooltip.css({
+                    position: 'fixed',
+                    top: position.top + 'px',
+                    left: position.left + 'px',
+                    zIndex: 1041 // Below Bootstrap modals (1050) but above overlay
+                });
+            }
         },
 
         /**
