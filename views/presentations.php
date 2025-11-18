@@ -1,24 +1,31 @@
 <?php init_head(); ?>
+
+<!-- Load Tutorial CSS -->
+<link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/appointment-tutorial.css'); ?>">
+
 <div id="wrapper">
     <div class="content">
         <div class="row">
             <div class="col-md-12">
                 <div class="panel_s">
                     <div class="panel-body">
-                        <h4 class="no-margin">Presentations Management</h4>
-                        <hr class="hr-panel-heading" />
-                        
-                        <!-- Upload Presentation Form -->
                         <div class="_buttons">
                             <div class="row">
-                                <div class="col-md-12">
-                                    <button type="button" class="btn btn-info" data-toggle="modal" data-target="#uploadPresentationModal">
-                                        <i class="fa fa-upload" style="margin-right: 2% !important;"></i> Upload Presentation
+                                <div class="col-md-6">
+                                    <h4 class="no-margin" style="display: inline-block; margin-right: 10px;">Presentations Management</h4>
+                                    <button type="button" class="btn btn-default" id="restart-tutorial" style="margin-left: 10px;" data-toggle="tooltip" data-placement="top" title="Restart Tutorial">
+                                        <i class="fa fa-question-circle"></i> Help
                                     </button>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group pull-right">
+                                        <button type="button" class="btn btn-info" data-toggle="modal" data-target="#uploadPresentationModal">
+                                            <i class="fa fa-upload" style="margin-right: 2% !important;"></i> Upload Presentation
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        
                         <hr class="hr-panel-heading" />
                         
                         <!-- Presentations DataTable -->
@@ -1084,4 +1091,46 @@ function deletePresentation(presentationId) {
         }
     });
 }
+
+// ========================================
+// TUTORIAL FUNCTIONALITY
+// ========================================
+
+// Restart tutorial button handler
+$(document).ready(function() {
+    $('#restart-tutorial').on('click', function() {
+        // Reset tutorial preference on server
+        $.ajax({
+            url: admin_url + 'ella_contractors/presentations/reset_tutorial',
+            type: 'POST',
+            data: {
+                [csrf_token_name]: csrf_hash
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    // Clear localStorage
+                    localStorage.removeItem('ella_contractors_presentation_tutorial_completed');
+                    localStorage.removeItem('ella_contractors_presentation_tutorial_dismissed');
+                    
+                    // Restart tutorial
+                    if (typeof PresentationTutorial !== 'undefined') {
+                        PresentationTutorial.restart();
+                    } else {
+                        // Reload page if tutorial not initialized yet
+                        location.reload();
+                    }
+                } else {
+                    alert_float('warning', response.message || 'Failed to reset tutorial');
+                }
+            },
+            error: function() {
+                alert_float('danger', 'Error resetting tutorial');
+            }
+        });
+    });
+});
 </script>
+
+<!-- Include Tutorial System -->
+<script src="<?php echo module_dir_url('ella_contractors', 'assets/js/presentation-tutorial.js'); ?>"></script>
