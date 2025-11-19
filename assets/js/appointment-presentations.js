@@ -396,6 +396,9 @@ function initPresentationSelectionPreview(selectId, previewContainerId) {
         // Render the preview
         renderPresentationSelectionPreview(previewContainerId);
     });
+    
+    // Render initial state (shows "None" if no presentations selected)
+    renderPresentationSelectionPreview(previewContainerId);
 }
 
 /**
@@ -416,8 +419,7 @@ function renderPresentationSelectionPreview(containerId) {
     }
     
     if (selectedPresentationsInModal && selectedPresentationsInModal.length > 0) {
-        html = '<strong>Selected Presentations:</strong>';
-        html += '<ul class="list-unstyled" style="margin-top: 10px;">';
+        html = '<ul class="list-unstyled" style="margin-top: 10px;">';
         selectedPresentationsInModal.forEach(function(presentation) {
             var publicUrl = presentation.public_url;
             if (!publicUrl && presentation.file_name) {
@@ -439,8 +441,10 @@ function renderPresentationSelectionPreview(containerId) {
             html += '</li>';
         });
         html += '</ul>';
+    } else {
+        // Show "None" centered when no presentations are selected
+        html = '<p style="text-align: center; color: #778485; margin: 10px 0;">None</p>';
     }
-    // Don't show "No presentations selected" message - only show when there are presentations
     
     $('#' + containerId).html(html);
 }
@@ -471,6 +475,6 @@ function removePresentationFromPreview(presentationId) {
  */
 function clearPresentationSelectionPreview() {
     selectedPresentationsInModal = [];
-    $('#modal-presentation-list').html(''); // Clear completely, don't show "No presentations selected"
+    $('#modal-presentation-list').html('<p style="text-align: center; color: #778485; margin: 10px 0;">None</p>');
 }
 

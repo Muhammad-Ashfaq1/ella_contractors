@@ -274,6 +274,7 @@ button.delete-btn {
                     <input type="hidden" id="type_id" name="type_id" value="">
                     <input type="hidden" id="status" name="status" value="scheduled">
                     <input type="hidden" id="selected_presentation_ids" name="selected_presentation_ids" value="">
+                    <input type="hidden" name="reminder_channel" value="both">
                     
                     <div class="row">
                         <div class="col-md-6">
@@ -371,24 +372,7 @@ button.delete-btn {
                                         <input type="checkbox" name="staff_reminder_48h" id="staff_reminder_48h" value="1" checked>
                                         <label for="staff_reminder_48h">2 Day Notice</label>
                                     </div>
-                                    <p class="text-muted">You will receive an email reminder 48 hours before this appointment</p>
-                                </div>
-                                <div class="col-sm-12">
-                                    <h5>Reminder Channel</h5>
-                                    <div class="form-group no-mbot">
-                                        <div class="radio radio-primary radio-inline">
-                                            <input type="radio" name="reminder_channel" id="reminder_channel_sms" value="sms">
-                                            <label for="reminder_channel_sms">SMS Only</label>
-                                        </div>
-                                        <div class="radio radio-primary radio-inline">
-                                            <input type="radio" name="reminder_channel" id="reminder_channel_email" value="email">
-                                            <label for="reminder_channel_email">Email Only</label>
-                                        </div>
-                                        <div class="radio radio-primary radio-inline">
-                                            <input type="radio" name="reminder_channel" id="reminder_channel_both" value="both" checked>
-                                            <label for="reminder_channel_both">SMS &amp; Email</label>
-                                        </div>
-                                    </div>
+                                    <!-- <p class="text-muted">You will receive an email reminder 48 hours before this appointment</p> -->
                                 </div>
                             </div>
                         </div>
@@ -399,8 +383,9 @@ button.delete-btn {
                                     <option value="">Nothing selected</option>
                                 </select>
                             </div>
+                            <h5>Selected Presentations</h5>
                             <div id="modal-presentation-list">
-                                <!-- Presentations will be shown here when selected -->
+                                <p style="text-align: center; color: #778485; margin: 10px 0;">None</p>
                             </div>
                         </div>
                     </div>
@@ -409,7 +394,7 @@ button.delete-btn {
                     <div class="row">
                         <div class="col-md-12">
                             <hr class="hr-panel-heading" />
-                            <h5><?php echo _l('appointment_attachments'); ?></h5>                            
+                            <h5>Attachments</h5>                            
                             <div class="drop-zone" id="appointmentDropzone">
                                 <span class="drop-zone__prompt">Drop Files Here or Click to Select</span>
                                 <input type="file" name="appointment_files[]" class="drop-zone__input" id="appointment_files" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">

@@ -1280,13 +1280,14 @@ function resetAppointmentModal() {
     if (typeof clearPresentationSelectionPreview === 'function') {
         clearPresentationSelectionPreview();
     } else {
-        $('#modal-presentation-list').html('');
+        $('#modal-presentation-list').html('<p style="text-align: center; color: #778485; margin: 10px 0;">None</p>');
     }
     
     // Reset reminder checkboxes to default (checked)
     $('#send_reminder').prop('checked', true);
     $('#reminder_48h').prop('checked', true);
-    $('#reminder_channel_both').prop('checked', true);
+    // Reminder channel defaults to 'both' (Email + SMS) via hidden field
+    $('input[name="reminder_channel"]').val('both');
 }
 
 // Global functions for modal operations
@@ -1354,8 +1355,9 @@ function loadAppointmentData(appointmentId) {
                 // Handle reminder checkboxes
                 $('#send_reminder').prop('checked', data.send_reminder == 1);
                 $('#reminder_48h').prop('checked', data.reminder_48h == 1);
+                // Reminder channel defaults to 'both' (Email + SMS) via hidden field
                 var reminderChannel = data.reminder_channel || 'both';
-                $('input[name="reminder_channel"][value="' + reminderChannel + '"]').prop('checked', true);
+                $('input[name="reminder_channel"]').val(reminderChannel);
                 
                 // Set status dropdown
                 var status = data.appointment_status || 'scheduled';

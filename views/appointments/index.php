@@ -1057,7 +1057,7 @@ function resetAppointmentModal() {
     if (typeof clearPresentationSelectionPreview === 'function') {
         clearPresentationSelectionPreview();
     } else {
-        $('#modal-presentation-list').html('');
+        $('#modal-presentation-list').html('<p style="text-align: center; color: #778485; margin: 10px 0;">None</p>');
     }
     
     // Reset reminder checkboxes to default (checked)
