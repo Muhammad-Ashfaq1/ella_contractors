@@ -358,13 +358,7 @@
 
             $('body').append(this.state.overlay);
 
-            // Click overlay to go to next step
-            this.state.overlay.on('click', function(e) {
-                // Only advance if clicking the overlay itself, not the tooltip
-                if ($(e.target).hasClass('tutorial-overlay')) {
-                    AppointmentViewTutorial.next();
-                }
-            });
+            // Overlay click handler removed - steps only change via next/previous buttons
         },
 
         /**

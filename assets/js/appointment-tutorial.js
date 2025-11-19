@@ -428,19 +428,7 @@
 
             $('body').append(this.state.overlay);
 
-            // Click overlay to go to next step - BUT NOT when modals are open
-            this.state.overlay.on('click', function(e) {
-                // Prevent advancing if a modal is open
-                if ($('.modal:visible').length > 0) {
-                    e.stopPropagation();
-                    return false;
-                }
-                
-                // Only advance if clicking the overlay itself, not the tooltip or any child elements
-                if ($(e.target).hasClass('tutorial-overlay') && e.target === e.currentTarget) {
-                    AppointmentTutorial.next();
-                }
-            });
+            // Overlay click handler removed - steps only change via next/previous buttons
         },
 
         /**
