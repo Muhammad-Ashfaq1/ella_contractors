@@ -358,18 +358,18 @@ button.delete-btn {
                                     <h5>Client Reminders</h5>
                                     <div class="checkbox checkbox-primary">
                                         <input type="checkbox" name="send_reminder" id="send_reminder" value="1" checked>
-                                        <label for="send_reminder">Instantly Send Appointment Date/Time to Client</label>
+                                        <label for="send_reminder">Appointment Creation Notice</label>
                                     </div>
                                     <div class="checkbox checkbox-primary">
                                         <input type="checkbox" name="reminder_48h" id="reminder_48h" value="1" checked>
-                                        <label for="reminder_48h">Send 48 Hour Reminder to Client</label>
+                                        <label for="reminder_48h">2 Day Notice</label>
                                     </div>
                                 </div>
                                 <div class="col-sm-12">
                                     <h5>My Reminder</h5>
                                     <div class="checkbox checkbox-success">
                                         <input type="checkbox" name="staff_reminder_48h" id="staff_reminder_48h" value="1" checked>
-                                        <label for="staff_reminder_48h">My Reminder (48 hours before)</label>
+                                        <label for="staff_reminder_48h">2 Day Notice</label>
                                     </div>
                                     <p class="text-muted">You will receive an email reminder 48 hours before this appointment</p>
                                 </div>
@@ -393,12 +393,11 @@ button.delete-btn {
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <h5>Choose Presentation <span style="opacity: 0.7;">(Optional)</span></h5>
+                            <h5>Choose Presentations <span style="opacity: 0.7;">(Optional)</span></h5>
                             <div class="form-group">
                                 <select class="form-control selectpicker" id="presentation_select" name="presentation_ids[]" multiple data-live-search="true">
                                     <option value="">Nothing selected</option>
                                 </select>
-                                <small class="text-muted">You can select multiple presentations to attach to this appointment</small>
                             </div>
                             <div id="modal-presentation-list">
                                 <!-- Presentations will be shown here when selected -->

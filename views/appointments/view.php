@@ -434,7 +434,7 @@ html {
                                                data-appointment-id="<?php echo $appointment->id; ?>"
                                                <?php echo (isset($appointment->reminder_48h) && $appointment->reminder_48h == 1) ? 'checked' : ''; ?>>
                                         <label for="reminder_48h_toggle">
-                                            <strong>48-Hour Reminder</strong> - Send 48 hours before appointment
+                                            <strong>2 Day Notice</strong> - Send 48 hours before appointment
                                         </label>
                                     </div>
 
@@ -927,7 +927,7 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     var action = isChecked ? 'enabled' : 'disabled';
-                    alert_float('success', '48 hours reminder' + ' ' + action + ' successfully');
+                    alert_float('success', '2 Day Notice' + ' ' + action + ' successfully');
                 } else {
                     alert_float('danger', response.message || 'Failed to update reminder setting');
                     // Revert checkbox state on failure
