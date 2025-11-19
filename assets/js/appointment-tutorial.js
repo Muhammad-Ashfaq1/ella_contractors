@@ -512,9 +512,31 @@
          */
         positionTooltip: function(step) {
             var tooltip = this.state.tooltip;
+            var self = this;
             
             // Find the target element first to check if it's in a modal
-            var target = step.target ? $(step.target) : null;
+            // Retry finding the element with multiple attempts
+            var target = null;
+            var attempts = 0;
+            var maxAttempts = 10;
+            
+            if (step.target) {
+                while (attempts < maxAttempts && (!target || target.length === 0 || !target.is(':visible'))) {
+                    target = $(step.target);
+                    if (target.length > 0 && target.is(':visible') && target.outerWidth() > 0 && target.outerHeight() > 0) {
+                        break;
+                    }
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        // Wait a bit before retrying
+                        var start = new Date().getTime();
+                        while (new Date().getTime() - start < 50) {
+                            // Busy wait
+                        }
+                    }
+                }
+            }
+            
             var targetInModal = target && target.length > 0 ? target.closest('.modal') : null;
             
             // Check if a modal is currently open (multiple ways to detect)
@@ -575,8 +597,16 @@
             }
 
             // Position relative to target element
-            if (!target || target.length === 0) {
-                // Fallback to center if target not found
+            if (!target || target.length === 0 || !target.is(':visible') || target.outerWidth() === 0 || target.outerHeight() === 0) {
+                // Target not found or not visible - retry positioning after a short delay
+                if (attempts < maxAttempts) {
+                    setTimeout(function() {
+                        self.positionTooltip(step);
+                    }, 100);
+                    return;
+                }
+                
+                // Fallback to center if target still not found after retries
                 if (isModalOpen && modalContainer) {
                     var modalContent = modalContainer.find('.modal-content').first();
                     var container = modalContent.length > 0 ? modalContent : modalContainer.find('.modal-dialog').first();
@@ -614,12 +644,84 @@
                 return;
             }
 
+            // Get tooltip dimensions - ensure they're calculated
+            var tooltipWidth = tooltip.outerWidth();
+            var tooltipHeight = tooltip.outerHeight();
+            
+            // If dimensions are 0, force calculation by temporarily making visible
+            if (tooltipWidth === 0 || tooltipHeight === 0) {
+                tooltip.css({ visibility: 'hidden', display: 'block', position: 'fixed', top: '-9999px' });
+                tooltipWidth = tooltip.outerWidth();
+                tooltipHeight = tooltip.outerHeight();
+                tooltip.css({ visibility: 'visible', top: '', left: '' });
+            }
+            
+            // Ensure target is in viewport before positioning
             var targetOffset = target.offset();
             var targetWidth = target.outerWidth();
             var targetHeight = target.outerHeight();
-            var tooltipWidth = tooltip.outerWidth();
-            var tooltipHeight = tooltip.outerHeight();
-            var spacing = 0; // No spacing - tooltip appears directly adjacent to button
+            
+            // Scroll target into view if needed (smooth scroll)
+            var windowHeight = $(window).height();
+            var windowWidth = $(window).width();
+            var scrollTop = $(window).scrollTop();
+            var scrollLeft = $(window).scrollLeft();
+            
+            var targetTop = targetOffset.top;
+            var targetBottom = targetTop + targetHeight;
+            var targetLeft = targetOffset.left;
+            var targetRight = targetLeft + targetWidth;
+            
+            // Check if target is fully visible, if not scroll it into view
+            if (targetTop < scrollTop || targetBottom > scrollTop + windowHeight || 
+                targetLeft < scrollLeft || targetRight > scrollLeft + windowWidth) {
+                // Use native scrollIntoView for smooth scrolling
+                var targetElement = target[0];
+                if (targetElement && targetElement.scrollIntoView) {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+                    // Wait for scroll to complete before positioning
+                    var self = this;
+                    setTimeout(function() {
+                        targetOffset = target.offset();
+                        targetWidth = target.outerWidth();
+                        targetHeight = target.outerHeight();
+                        self.calculateAndSetPosition(step, target, targetOffset, targetWidth, targetHeight, tooltip, tooltipWidth, tooltipHeight, targetInModal);
+                    }, 300);
+                    return;
+                }
+            }
+            
+            // Calculate and set position immediately
+            this.calculateAndSetPosition(step, target, targetOffset, targetWidth, targetHeight, tooltip, tooltipWidth, tooltipHeight, targetInModal);
+        },
+
+        /**
+         * Calculate and set tooltip position
+         * @param {object} step - Step configuration
+         * @param {jQuery} target - Target element
+         * @param {object} targetOffset - Target offset
+         * @param {number} targetWidth - Target width
+         * @param {number} targetHeight - Target height
+         * @param {jQuery} tooltip - Tooltip element
+         * @param {number} tooltipWidth - Tooltip width
+         * @param {number} tooltipHeight - Tooltip height
+         * @param {jQuery} targetInModal - Target's modal container if any
+         */
+        calculateAndSetPosition: function(step, target, targetOffset, targetWidth, targetHeight, tooltip, tooltipWidth, tooltipHeight, targetInModal) {
+            var spacing = 3; // Professional minimal spacing - tooltip appears very close to button
+
+            // Check if a modal is currently open
+            var $openModal = $('.modal.in, .modal.show, .modal[style*="display: block"]');
+            if ($openModal.length === 0) {
+                if ($('body').hasClass('modal-open')) {
+                    $openModal = $('.modal').filter(function() {
+                        return $(this).css('display') !== 'none';
+                    });
+                }
+            }
+            
+            var modalContainer = targetInModal && targetInModal.length > 0 ? targetInModal : ($openModal.length > 0 ? $openModal.first() : null);
+            var isModalOpen = modalContainer && modalContainer.length > 0;
 
             // Get viewport dimensions and scroll position for fixed positioning
             var windowWidth = $(window).width();
