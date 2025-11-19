@@ -525,30 +525,56 @@
         positionTooltip: function(step) {
             var tooltip = this.state.tooltip;
             
-            // Check if a modal is currently open
-            var $openModal = $('.modal:visible');
-            var isModalOpen = $openModal.length > 0;
-            var modalContainer = isModalOpen ? $openModal : null;
+            // Find the target element first to check if it's in a modal
+            var target = step.target ? $(step.target) : null;
+            var targetInModal = target && target.length > 0 ? target.closest('.modal') : null;
+            
+            // Check if a modal is currently open (multiple ways to detect)
+            var $openModal = $('.modal.in, .modal.show, .modal[style*="display: block"]');
+            if ($openModal.length === 0) {
+                // Fallback: check if body has modal-open class
+                if ($('body').hasClass('modal-open')) {
+                    $openModal = $('.modal').filter(function() {
+                        return $(this).css('display') !== 'none';
+                    });
+                }
+            }
+            
+            // If target is in a modal, use that modal; otherwise use any open modal
+            var modalContainer = targetInModal && targetInModal.length > 0 ? targetInModal : ($openModal.length > 0 ? $openModal.first() : null);
+            var isModalOpen = modalContainer && modalContainer.length > 0;
             
             if (!step.target || step.position === 'center') {
                 // Center on screen or modal
                 if (isModalOpen && modalContainer) {
-                    // Position relative to modal
-                    var modalOffset = modalContainer.offset();
-                    var modalWidth = modalContainer.outerWidth();
-                    var modalHeight = modalContainer.outerHeight();
+                    // Position relative to modal-content (the actual visible container)
+                    var modalContent = modalContainer.find('.modal-content').first();
+                    var container = modalContent.length > 0 ? modalContent : modalContainer.find('.modal-dialog').first();
+                    if (container.length === 0) {
+                        container = modalContainer;
+                    }
+                    
+                    var containerOffset = container.offset();
+                    var containerWidth = container.outerWidth();
+                    var containerHeight = container.outerHeight();
                     var tooltipWidth = tooltip.outerWidth();
                     var tooltipHeight = tooltip.outerHeight();
                     
+                    // Append to modal-content for proper positioning context
+                    tooltip.appendTo(container);
+                    
                     tooltip.css({
                         position: 'absolute',
-                        top: modalOffset.top + (modalHeight / 2) - (tooltipHeight / 2),
-                        left: modalOffset.left + (modalWidth / 2) - (tooltipWidth / 2),
+                        top: (containerHeight / 2) - (tooltipHeight / 2),
+                        left: (containerWidth / 2) - (tooltipWidth / 2),
                         transform: 'none',
                         zIndex: 10000 // Above modal
                     });
                 } else {
                     // Center on screen
+                    if (tooltip.parent().hasClass('modal') || tooltip.parent().hasClass('modal-content') || tooltip.parent().hasClass('modal-body') || tooltip.parent().hasClass('modal-dialog')) {
+                        tooltip.appendTo('body');
+                    }
                     tooltip.css({
                         position: 'fixed',
                         top: '50%',
@@ -561,24 +587,34 @@
             }
 
             // Position relative to target element
-            var target = $(step.target);
-            if (target.length === 0) {
+            if (!target || target.length === 0) {
                 // Fallback to center if target not found
                 if (isModalOpen && modalContainer) {
-                    var modalOffset = modalContainer.offset();
-                    var modalWidth = modalContainer.outerWidth();
-                    var modalHeight = modalContainer.outerHeight();
+                    var modalContent = modalContainer.find('.modal-content').first();
+                    var container = modalContent.length > 0 ? modalContent : modalContainer.find('.modal-dialog').first();
+                    if (container.length === 0) {
+                        container = modalContainer;
+                    }
+                    
+                    var containerOffset = container.offset();
+                    var containerWidth = container.outerWidth();
+                    var containerHeight = container.outerHeight();
                     var tooltipWidth = tooltip.outerWidth();
                     var tooltipHeight = tooltip.outerHeight();
                     
+                    tooltip.appendTo(container);
+                    
                     tooltip.css({
                         position: 'absolute',
-                        top: modalOffset.top + (modalHeight / 2) - (tooltipHeight / 2),
-                        left: modalOffset.left + (modalWidth / 2) - (tooltipWidth / 2),
+                        top: (containerHeight / 2) - (tooltipHeight / 2),
+                        left: (containerWidth / 2) - (tooltipWidth / 2),
                         transform: 'none',
                         zIndex: 10000
                     });
                 } else {
+                    if (tooltip.parent().hasClass('modal') || tooltip.parent().hasClass('modal-content') || tooltip.parent().hasClass('modal-body') || tooltip.parent().hasClass('modal-dialog')) {
+                        tooltip.appendTo('body');
+                    }
                     tooltip.css({
                         position: 'fixed',
                         top: '50%',
@@ -615,19 +651,37 @@
 
             // Calculate position relative to viewport (for fixed positioning) or modal (if modal is open)
             var arrowOffset = 0; // Track arrow position for CSS
-            var useModalPositioning = isModalOpen && modalContainer && target.closest('.modal').length > 0;
+            var useModalPositioning = isModalOpen && modalContainer && targetInModal && targetInModal.length > 0;
             
             if (useModalPositioning) {
-                // Position relative to modal
-                var modalOffset = modalContainer.offset();
+                // Find the best container for positioning (modal-content is preferred)
+                var modalContent = modalContainer.find('.modal-content').first();
+                var modalDialog = modalContainer.find('.modal-dialog').first();
                 var modalBody = modalContainer.find('.modal-body').first();
-                var modalBodyOffset = modalBody.length > 0 ? modalBody.offset() : modalOffset;
                 
-                // Calculate target position relative to modal body
-                var relativeTop = targetOffset.top - modalBodyOffset.top;
-                var relativeLeft = targetOffset.left - modalBodyOffset.left;
-                var modalWidth = modalContainer.outerWidth();
-                var modalBodyWidth = modalBody.length > 0 ? modalBody.outerWidth() : modalWidth;
+                // Use modal-content if available, otherwise modal-dialog, otherwise modal itself
+                var positioningContainer = modalContent.length > 0 ? modalContent : (modalDialog.length > 0 ? modalDialog : modalContainer);
+                
+                // Get container offset for relative positioning
+                var containerOffset = positioningContainer.offset();
+                var containerPosition = positioningContainer.position();
+                
+                // Calculate target position relative to container
+                // Use position() if container is the parent, otherwise use offset() difference
+                var relativeTop, relativeLeft;
+                if (target.closest(positioningContainer).length > 0 && positioningContainer.find(target).length > 0) {
+                    // Target is inside container, use position relative to container
+                    var targetPosition = target.position();
+                    relativeTop = targetPosition.top;
+                    relativeLeft = targetPosition.left;
+                } else {
+                    // Calculate relative to container offset
+                    relativeTop = targetOffset.top - containerOffset.top;
+                    relativeLeft = targetOffset.left - containerOffset.left;
+                }
+                
+                var containerWidth = positioningContainer.outerWidth();
+                var containerHeight = positioningContainer.outerHeight();
                 
                 switch (step.position) {
                     case 'top':
@@ -656,9 +710,9 @@
                         break;
                 }
                 
-                // Adjust position to keep tooltip within modal bounds
+                // Adjust position to keep tooltip within container bounds
                 var minLeft = 10;
-                var maxLeft = modalBodyWidth - tooltipWidth - 10;
+                var maxLeft = containerWidth - tooltipWidth - 10;
                 var adjustedArrowOffset;
                 if (position.left < minLeft) {
                     adjustedArrowOffset = arrowOffset - (minLeft - position.left);
@@ -671,10 +725,9 @@
                     adjustedArrowOffset = arrowOffset;
                 }
                 
-                // Vertical adjustments within modal
+                // Vertical adjustments within container
                 var minTop = 10;
-                var modalBodyHeight = modalBody.length > 0 ? modalBody.outerHeight() : modalContainer.outerHeight();
-                var maxTop = modalBodyHeight - tooltipHeight - 10;
+                var maxTop = containerHeight - tooltipHeight - 10;
                 if (position.top < minTop) {
                     position.top = minTop;
                 } else if (position.top > maxTop) {
@@ -763,15 +816,22 @@
 
             // Set positioning based on whether modal is open
             if (useModalPositioning) {
-                // Append tooltip to modal body for proper positioning
+                // Find the best container for appending tooltip
+                var modalContent = modalContainer.find('.modal-content').first();
+                var modalDialog = modalContainer.find('.modal-dialog').first();
                 var modalBody = modalContainer.find('.modal-body').first();
-                if (modalBody.length > 0) {
-                    tooltip.appendTo(modalBody);
-                } else {
-                    tooltip.appendTo(modalContainer);
+                
+                // Prefer modal-content, then modal-dialog, then modal-body, then modal itself
+                var appendContainer = modalContent.length > 0 ? modalContent : 
+                                     (modalDialog.length > 0 ? modalDialog : 
+                                     (modalBody.length > 0 ? modalBody : modalContainer));
+                
+                // Only append if not already in the right place
+                if (!tooltip.parent().is(appendContainer)) {
+                    tooltip.appendTo(appendContainer);
                 }
                 
-                // Position relative to modal
+                // Position relative to container
                 tooltip.css({
                     position: 'absolute',
                     top: position.top + 'px',
@@ -780,7 +840,10 @@
                 });
             } else {
                 // Ensure tooltip is in body (not modal)
-                if (tooltip.parent().hasClass('modal') || tooltip.parent().hasClass('modal-body')) {
+                var parent = tooltip.parent();
+                if (parent.hasClass('modal') || parent.hasClass('modal-content') || 
+                    parent.hasClass('modal-body') || parent.hasClass('modal-dialog') ||
+                    parent.closest('.modal').length > 0) {
                     tooltip.appendTo('body');
                 }
                 
