@@ -162,7 +162,7 @@
                     id: 'filter_dropdown',
                     title: 'Filter Appointments',
                     content: 'Use the filter dropdown to view appointments by status (Scheduled, Complete, Cancelled) or by date range (Today, This Week, This Month).',
-                    target: '.btn-group .dropdown-toggle',
+                    target: '.panel-body .btn-group:last-child .dropdown-toggle',
                     position: 'bottom',
                     showNext: true,
                     showBack: true,
@@ -619,7 +619,7 @@
             var targetHeight = target.outerHeight();
             var tooltipWidth = tooltip.outerWidth();
             var tooltipHeight = tooltip.outerHeight();
-            var spacing = 2; // Minimal spacing - tooltip appears very close to button
+            var spacing = 0; // No spacing - tooltip appears directly adjacent to button
 
             // Get viewport dimensions and scroll position for fixed positioning
             var windowWidth = $(window).width();
