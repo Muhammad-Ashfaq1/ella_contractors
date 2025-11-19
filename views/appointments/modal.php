@@ -314,7 +314,7 @@ button.delete-btn {
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="attendees">Attendees 
-                                    <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="Which staff members will be joining you or handling this Appointment?"></i>
+                                    <!-- <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="Which staff members will be joining you or handling this Appointment?"></i> -->
                                 </label>
                                 <select class="form-control selectpicker" id="attendees" name="attendees[]" multiple data-live-search="true">
                                     <option value="">Loading staff members...</option>

@@ -1053,6 +1053,11 @@ function resetAppointmentModal() {
     }
     $('#selected_presentation_ids').val('');
     
+    // Clear presentation array FIRST
+    if (typeof selectedPresentationsInModal !== 'undefined') {
+        selectedPresentationsInModal = [];
+    }
+    
     // Clear presentation preview using centralized function
     if (typeof clearPresentationSelectionPreview === 'function') {
         clearPresentationSelectionPreview();

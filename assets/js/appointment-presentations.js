@@ -361,11 +361,17 @@ function attachMultiplePresentationsToAppointment(appointmentId, presentationIds
  * @param {string} previewContainerId - ID of container to show preview
  */
 function initPresentationSelectionPreview(selectId, previewContainerId) {
-    // Initialize the selected presentations array
+    // Clear any existing event handlers to prevent duplicates
+    $('#' + selectId).off('change.presentationPreview');
+    
+    // Initialize the selected presentations array - ALWAYS start empty
     selectedPresentationsInModal = [];
     
+    // Render initial state FIRST (shows "None" since array is empty)
+    renderPresentationSelectionPreview(previewContainerId);
+    
     // Handle dropdown change event
-    $('#' + selectId).on('change', function() {
+    $('#' + selectId).on('change.presentationPreview', function() {
         var selectedValues = $(this).val() || [];
         
         // Clear and rebuild the array
@@ -396,9 +402,6 @@ function initPresentationSelectionPreview(selectId, previewContainerId) {
         // Render the preview
         renderPresentationSelectionPreview(previewContainerId);
     });
-    
-    // Render initial state (shows "None" if no presentations selected)
-    renderPresentationSelectionPreview(previewContainerId);
 }
 
 /**
@@ -406,6 +409,11 @@ function initPresentationSelectionPreview(selectId, previewContainerId) {
  * @param {string} containerId - Container ID to render the preview
  */
 function renderPresentationSelectionPreview(containerId) {
+    // Ensure array exists and is properly checked
+    if (!selectedPresentationsInModal) {
+        selectedPresentationsInModal = [];
+    }
+    
     var html = '';
     
     // Get site URL
@@ -418,7 +426,8 @@ function renderPresentationSelectionPreview(containerId) {
         siteUrl = window.location.protocol + '//' + window.location.host + '/';
     }
     
-    if (selectedPresentationsInModal && selectedPresentationsInModal.length > 0) {
+    // Check if array has items - use strict length check
+    if (Array.isArray(selectedPresentationsInModal) && selectedPresentationsInModal.length > 0) {
         html = '<ul class="list-unstyled" style="margin-top: 10px;">';
         selectedPresentationsInModal.forEach(function(presentation) {
             var publicUrl = presentation.public_url;
@@ -442,7 +451,7 @@ function renderPresentationSelectionPreview(containerId) {
         });
         html += '</ul>';
     } else {
-        // Show "None" centered when no presentations are selected
+        // ALWAYS show "None" when array is empty or undefined
         html = '<p style="text-align: center; color: #778485; margin: 10px 0;">None</p>';
     }
     
