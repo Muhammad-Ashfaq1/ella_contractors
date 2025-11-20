@@ -1752,6 +1752,22 @@ function checkGoogleCalendarStatus() {
             [csrf_token_name]: csrf_hash
         },
         success: function(response) {
+            if (!response) {
+                console.error('Google Calendar: Invalid response from server');
+                $('#google-calendar-connect-group').show();
+                $('#google-calendar-status-group').hide();
+                return;
+            }
+
+            // Check for error message
+            if (response.error) {
+                // Credentials not configured or other error - show connect button
+                // (error message is informational, not blocking)
+                if (response.message !== 'Not configured') {
+                    console.warn('Google Calendar status check:', response.error);
+                }
+            }
+
             if (response && response.connected) {
                 // Show connected status
                 $('#google-calendar-connect-group').hide();
@@ -1762,8 +1778,15 @@ function checkGoogleCalendarStatus() {
                 $('#google-calendar-status-group').hide();
             }
         },
-        error: function() {
-            // On error, show connect button
+        error: function(xhr, status, error) {
+            // Log error for debugging
+            console.error('Google Calendar status check failed:', {
+                status: status,
+                error: error,
+                responseText: xhr.responseText
+            });
+            
+            // On error, show connect button (don't block user)
             $('#google-calendar-connect-group').show();
             $('#google-calendar-status-group').hide();
         }
@@ -1785,25 +1808,58 @@ $(document).on('click', '#google-calendar-connect-btn', function(e) {
             [csrf_token_name]: csrf_hash
         },
         success: function(response) {
-            if (response && response.error) {
+            if (!response) {
+                // Invalid response - try to connect anyway (might be a temporary error)
+                console.warn('Google Calendar: Invalid response, attempting connection anyway');
+                window.location.href = admin_url + 'ella_contractors/google_auth';
+                return;
+            }
+
+            if (response && response.error && response.message === 'Not configured') {
                 // Credentials not configured
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         title: 'Google Calendar Not Configured',
-                        html: 'Please configure Google Calendar API credentials in Settings before connecting.<br><br><a href="' + admin_url + 'settings?group=appointments" target="_blank">Go to Settings</a>',
+                        html: 'Please configure Google Calendar API credentials in EllaContractors Settings first.<br><br><strong>Setup Steps:</strong><br>1. Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a><br>2. Create OAuth 2.0 Client ID with Calendar API enabled<br>3. Add credentials in Settings below<br><br><a href="' + admin_url + 'ella_contractors/settings" class="btn btn-sm btn-primary" style="color: white; margin-top: 10px;"><i class="fa fa-cog"></i> Go to EllaContractors Settings</a>',
                         icon: 'warning',
-                        confirmButtonText: 'OK'
+                        confirmButtonText: 'OK',
+                        width: '600px'
                     });
                 } else {
-                    alert('Please configure Google Calendar API credentials in Settings first.');
+                    alert('Please configure Google Calendar API credentials in EllaContractors → Settings first.');
                 }
             } else {
-                // Redirect to Google OAuth
+                // Credentials configured or already connected - proceed to OAuth
                 window.location.href = admin_url + 'ella_contractors/google_auth';
             }
         },
-        error: function() {
-            alert_float('danger', 'Failed to check Google Calendar configuration');
+        error: function(xhr, status, error) {
+            // On error, try to connect anyway (might be a temporary issue)
+            console.error('Google Calendar status check failed:', {
+                status: status,
+                error: error,
+                responseText: xhr.responseText
+            });
+            
+            // Show warning but allow user to proceed
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Warning',
+                    text: 'Unable to verify Google Calendar configuration. Do you want to proceed anyway?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Continue',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = admin_url + 'ella_contractors/google_auth';
+                    }
+                });
+            } else {
+                if (confirm('Unable to verify Google Calendar configuration. Do you want to proceed anyway?')) {
+                    window.location.href = admin_url + 'ella_contractors/google_auth';
+                }
+            }
         }
     });
 });

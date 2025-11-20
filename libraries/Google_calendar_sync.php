@@ -14,6 +14,7 @@ class Google_calendar_sync
 
     public function __construct()
     {
+        // Use ONLY EllaContractors-specific credentials (no fallback to Appointly)
         $this->client_id = get_option('google_calendar_client_id');
         $this->client_secret = get_option('google_calendar_client_secret');
         $this->redirect_uri = get_option('google_calendar_redirect_uri') ?: site_url('ella_contractors/google_callback');
@@ -21,16 +22,26 @@ class Google_calendar_sync
 
         // Load Google API client if not already loaded
         if (!class_exists('Google_Client')) {
-            // Try to load from appointly module vendor
-            $appointly_vendor = module_dir_path('appointly', 'vendor/autoload.php');
-            if (file_exists($appointly_vendor)) {
-                require_once($appointly_vendor);
-            } else {
-                // Try global vendor
-                $global_vendor = FCPATH . 'vendor/autoload.php';
-                if (file_exists($global_vendor)) {
-                    require_once($global_vendor);
+            try {
+                // Try to load from appointly module vendor first (reuse library)
+                $appointly_vendor = module_dir_path('appointly', 'vendor/autoload.php');
+                if (file_exists($appointly_vendor)) {
+                    require_once($appointly_vendor);
+                } else {
+                    // Try global vendor
+                    $global_vendor = FCPATH . 'vendor/autoload.php';
+                    if (file_exists($global_vendor)) {
+                        require_once($global_vendor);
+                    } else {
+                        log_message('error', 'Google Calendar: Google API Client library not found. Please install via Composer: composer require google/apiclient:^2.0');
+                        $this->client = null;
+                        return;
+                    }
                 }
+            } catch (Exception $e) {
+                log_message('error', 'Google Calendar: Failed to load autoload - ' . $e->getMessage());
+                $this->client = null;
+                return;
             }
         }
     }
@@ -294,36 +305,45 @@ class Google_calendar_sync
      */
     public function get_connection_status($staff_id)
     {
-        $tokens = $this->get_tokens($staff_id);
+        try {
+            $tokens = $this->get_tokens($staff_id);
 
-        if (!$tokens) {
+            if (!$tokens) {
+                return [
+                    'connected' => false,
+                    'message' => 'Not connected'
+                ];
+            }
+
+            // Check if token is expired
+            $is_expired = false;
+            if (!empty($tokens['expires_at'])) {
+                $expires_timestamp = strtotime($tokens['expires_at']);
+                $is_expired = time() >= $expires_timestamp;
+            }
+
+            // Try to refresh if expired
+            if ($is_expired && !empty($tokens['refresh_token'])) {
+                $refreshed = $this->refresh_token($staff_id);
+                if ($refreshed) {
+                    $tokens = $this->get_tokens($staff_id);
+                }
+            }
+
+            return [
+                'connected' => !empty($tokens['access_token']),
+                'expired' => $is_expired,
+                'calendar_id' => $tokens['calendar_id'] ?? 'primary',
+                'message' => !empty($tokens['access_token']) ? 'Connected' : 'Not connected'
+            ];
+        } catch (Exception $e) {
+            log_message('error', 'Google Calendar: get_connection_status error - ' . $e->getMessage());
             return [
                 'connected' => false,
-                'message' => 'Not connected'
+                'error' => $e->getMessage(),
+                'message' => 'Error checking status'
             ];
         }
-
-        // Check if token is expired
-        $is_expired = false;
-        if (!empty($tokens['expires_at'])) {
-            $expires_timestamp = strtotime($tokens['expires_at']);
-            $is_expired = time() >= $expires_timestamp;
-        }
-
-        // Try to refresh if expired
-        if ($is_expired && !empty($tokens['refresh_token'])) {
-            $refreshed = $this->refresh_token($staff_id);
-            if ($refreshed) {
-                $tokens = $this->get_tokens($staff_id);
-            }
-        }
-
-        return [
-            'connected' => !empty($tokens['access_token']),
-            'expired' => $is_expired,
-            'calendar_id' => $tokens['calendar_id'] ?? 'primary',
-            'message' => !empty($tokens['access_token']) ? 'Connected' : 'Not connected'
-        ];
     }
 
     /**

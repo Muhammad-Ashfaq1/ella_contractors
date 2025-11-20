@@ -73,8 +73,18 @@ function ella_contractors_init_menu() {
                 'icon' => 'fa fa-list-alt',
                 'position' => 25,
             ],
-            
         ];
+
+        // Add Settings submenu for admins only
+        if (is_admin()) {
+            $submenu[] = [
+                'slug' => 'ella_contractors_settings',
+                'name' => 'Settings',
+                'href' => admin_url('ella_contractors/settings'),
+                'icon' => 'fa fa-cog',
+                'position' => 99,
+            ];
+        }
 
         foreach ($submenu as $item) {
             $CI->app_menu->add_sidebar_children_item('ella_contractors', $item);
@@ -679,6 +689,7 @@ function ella_contractors_activate_module() {
     }
     
     // Initialize Google Calendar configuration options (if not exist)
+    // Note: These are optional - if not set, will fall back to Appointly's credentials
     if (get_option('google_calendar_client_id') === false) {
         add_option('google_calendar_client_id', '');
     }
@@ -690,6 +701,8 @@ function ella_contractors_activate_module() {
         $redirect_uri = site_url('ella_contractors/google_callback');
         add_option('google_calendar_redirect_uri', $redirect_uri);
     }
+    
+    log_message('info', 'EllaContractors: Google Calendar options initialized. Will use Appointly credentials if EllaContractors ones are not set.');
     
     // ==================== END GOOGLE CALENDAR INTEGRATION - DATABASE SETUP ====================
     
