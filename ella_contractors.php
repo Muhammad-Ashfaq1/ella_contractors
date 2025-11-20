@@ -667,7 +667,9 @@ function ella_contractors_activate_module() {
         }
     }
     
-    // Add google_event_id and google_calendar_id columns to appointly_appointments table
+    // Add google_event_id and google_calendar_id columns to appointly_appointments table (DEPRECATED - kept for backward compatibility)
+    // NOTE: These columns are now deprecated in favor of tblappointment_google_events table
+    // They are kept for existing data migration and backward compatibility
     if (!$CI->db->field_exists('google_event_id', db_prefix() . 'appointly_appointments')) {
         try {
             $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `google_event_id` VARCHAR(255) NULL DEFAULT NULL AFTER `reminder_channel`');
@@ -686,6 +688,29 @@ function ella_contractors_activate_module() {
         } catch (Exception $e) {
             log_message('error', 'EllaContractors: Failed to add google_calendar_id column - ' . $e->getMessage());
         }
+    }
+    
+    // Create appointment_google_events junction table to track per-staff Google event IDs
+    // This allows each staff member to have their own Google Calendar event ID for the same appointment
+    if (!$CI->db->table_exists(db_prefix() . 'appointment_google_events')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'appointment_google_events` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `appointment_id` int(11) NOT NULL,
+            `staff_id` int(11) NOT NULL,
+            `google_event_id` varchar(255) NOT NULL,
+            `google_calendar_id` varchar(255) DEFAULT "primary",
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `unique_appointment_staff` (`appointment_id`, `staff_id`),
+            KEY `idx_appointment_id` (`appointment_id`),
+            KEY `idx_staff_id` (`staff_id`),
+            KEY `idx_google_event_id` (`google_event_id`),
+            FOREIGN KEY (`appointment_id`) REFERENCES `' . db_prefix() . 'appointly_appointments` (`id`) ON DELETE CASCADE,
+            FOREIGN KEY (`staff_id`) REFERENCES `' . db_prefix() . 'staff` (`staffid`) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+        
+        log_message('info', 'EllaContractors: appointment_google_events junction table created successfully');
     }
     
     // Initialize Google Calendar configuration options (if not exist)

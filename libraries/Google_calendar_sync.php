@@ -469,14 +469,20 @@ class Google_calendar_sync
                 'sendUpdates' => 'all', // Send notifications to attendees
             ]);
 
-            // Save Google event ID to appointment
-            $CI->db->where('id', $appointment_id);
-            $CI->db->update(db_prefix() . 'appointly_appointments', [
-                'google_event_id' => $created_event->getId(),
-                'google_calendar_id' => $calendar_id
-            ]);
+            // Save Google event ID to junction table (per-staff event tracking)
+            $this->save_event_mapping($appointment_id, $staff_id, $created_event->getId(), $calendar_id);
 
-            log_activity('Google Calendar event created [Appointment ID: ' . $appointment_id . ', Event ID: ' . $created_event->getId() . ']');
+            // Also save to appointment table for backward compatibility (will be deprecated)
+            // This stores the creator's event ID only
+            if ($staff_id == $appointment->created_by) {
+                $CI->db->where('id', $appointment_id);
+                $CI->db->update(db_prefix() . 'appointly_appointments', [
+                    'google_event_id' => $created_event->getId(),
+                    'google_calendar_id' => $calendar_id
+                ]);
+            }
+
+            log_activity('Google Calendar event created for staff ' . $staff_id . ' [Appointment ID: ' . $appointment_id . ', Event ID: ' . $created_event->getId() . ']');
 
             return [
                 'event_id' => $created_event->getId(),
@@ -512,8 +518,10 @@ class Google_calendar_sync
             return false;
         }
 
-        // Check if event already exists
-        if (empty($appointment->google_event_id)) {
+        // Check if event already exists for this staff member (use junction table)
+        $event_mapping = $this->get_event_mapping($appointment_id, $staff_id);
+        
+        if (empty($event_mapping)) {
             // Create new event instead
             return $this->create_event($appointment_id, $staff_id);
         }
@@ -526,14 +534,16 @@ class Google_calendar_sync
         try {
             $service = new Google_Service_Calendar($this->client);
             $tokens = $this->get_tokens($staff_id);
-            $calendar_id = $tokens['calendar_id'] ?? 'primary';
+            $calendar_id = $event_mapping['google_calendar_id'] ?? ($tokens['calendar_id'] ?? 'primary');
 
             // Get existing event
             try {
-                $existing_event = $service->events->get($calendar_id, $appointment->google_event_id);
+                $existing_event = $service->events->get($calendar_id, $event_mapping['google_event_id']);
             } catch (Exception $e) {
                 // Event not found, create new one
-                log_message('info', 'Google Calendar: Event not found, creating new - ' . $appointment->google_event_id);
+                log_message('info', 'Google Calendar: Event not found for staff ' . $staff_id . ', creating new - ' . $event_mapping['google_event_id']);
+                // Delete stale mapping
+                $this->delete_event_mapping($appointment_id, $staff_id);
                 return $this->create_event($appointment_id, $staff_id);
             }
 
@@ -560,8 +570,11 @@ class Google_calendar_sync
             $updated_event = $service->events->update($calendar_id, $existing_event->getId(), $existing_event, [
                 'sendUpdates' => 'all',
             ]);
+            
+            // Update the event mapping timestamp (updated_at will auto-update)
+            $this->save_event_mapping($appointment_id, $staff_id, $updated_event->getId(), $calendar_id);
 
-            log_activity('Google Calendar event updated [Appointment ID: ' . $appointment_id . ', Event ID: ' . $updated_event->getId() . ']');
+            log_activity('Google Calendar event updated for staff ' . $staff_id . ' [Appointment ID: ' . $appointment_id . ', Event ID: ' . $updated_event->getId() . ']');
 
             return [
                 'event_id' => $updated_event->getId(),
@@ -588,12 +601,10 @@ class Google_calendar_sync
             return false;
         }
 
-        // Load appointment data
-        $CI = &get_instance();
-        $CI->load->model('ella_contractors/Ella_appointments_model', 'appointments_model');
-        $appointment = $CI->appointments_model->get_appointment($appointment_id);
-
-        if (!$appointment || empty($appointment->google_event_id)) {
+        // Check if event exists for this staff member (use junction table)
+        $event_mapping = $this->get_event_mapping($appointment_id, $staff_id);
+        
+        if (empty($event_mapping)) {
             return true; // No event to delete
         }
 
@@ -602,39 +613,33 @@ class Google_calendar_sync
             return false;
         }
 
+        $CI = &get_instance();
+        
         try {
             $service = new Google_Service_Calendar($this->client);
-            $tokens = $this->get_tokens($staff_id);
-            $calendar_id = $tokens['calendar_id'] ?? 'primary';
+            $calendar_id = $event_mapping['google_calendar_id'] ?? 'primary';
 
-            // Delete event
-            $service->events->delete($calendar_id, $appointment->google_event_id, [
+            // Delete event from Google Calendar
+            $service->events->delete($calendar_id, $event_mapping['google_event_id'], [
                 'sendUpdates' => 'all',
             ]);
 
-            // Clear Google event ID from appointment
-            $CI->db->where('id', $appointment_id);
-            $CI->db->update(db_prefix() . 'appointly_appointments', [
-                'google_event_id' => null,
-                'google_calendar_id' => null
-            ]);
+            // Delete event mapping from junction table
+            $this->delete_event_mapping($appointment_id, $staff_id);
 
-            log_activity('Google Calendar event deleted [Appointment ID: ' . $appointment_id . ', Event ID: ' . $appointment->google_event_id . ']');
+            log_activity('Google Calendar event deleted for staff ' . $staff_id . ' [Appointment ID: ' . $appointment_id . ', Event ID: ' . $event_mapping['google_event_id'] . ']');
 
             return true;
         } catch (Exception $e) {
             // If event not found (404), consider it already deleted
-            if (strpos($e->getMessage(), '404') !== false) {
-                // Clear from database anyway
-                $CI->db->where('id', $appointment_id);
-                $CI->db->update(db_prefix() . 'appointly_appointments', [
-                    'google_event_id' => null,
-                    'google_calendar_id' => null
-                ]);
+            if (strpos($e->getMessage(), '404') !== false || strpos($e->getMessage(), 'not found') !== false) {
+                // Delete event mapping from database anyway
+                $this->delete_event_mapping($appointment_id, $staff_id);
+                log_message('info', 'Google Calendar: Event not found in Google (404), removed mapping for staff ' . $staff_id);
                 return true;
             }
 
-            log_message('error', 'Google Calendar: Failed to delete event - ' . $e->getMessage());
+            log_message('error', 'Google Calendar: Failed to delete event for staff ' . $staff_id . ' - ' . $e->getMessage());
             return false;
         }
     }
@@ -797,5 +802,107 @@ class Google_calendar_sync
             'synced' => $synced,
             'failed' => $failed
         ];
+    }
+
+    // ==================== JUNCTION TABLE HELPERS ====================
+    
+    /**
+     * Save event mapping to junction table (per-staff event tracking)
+     *
+     * @param int $appointment_id Appointment ID
+     * @param int $staff_id Staff ID
+     * @param string $google_event_id Google Calendar event ID
+     * @param string $google_calendar_id Google Calendar ID (default: 'primary')
+     * @return bool Success status
+     */
+    private function save_event_mapping($appointment_id, $staff_id, $google_event_id, $google_calendar_id = 'primary')
+    {
+        $CI = &get_instance();
+        
+        // Check if mapping exists
+        $existing = $CI->db->get_where(db_prefix() . 'appointment_google_events', [
+            'appointment_id' => $appointment_id,
+            'staff_id' => $staff_id
+        ])->row_array();
+        
+        $data = [
+            'appointment_id' => $appointment_id,
+            'staff_id' => $staff_id,
+            'google_event_id' => $google_event_id,
+            'google_calendar_id' => $google_calendar_id,
+        ];
+        
+        if ($existing) {
+            // Update existing mapping
+            $CI->db->where('id', $existing['id']);
+            return $CI->db->update(db_prefix() . 'appointment_google_events', $data);
+        } else {
+            // Insert new mapping
+            return $CI->db->insert(db_prefix() . 'appointment_google_events', $data);
+        }
+    }
+    
+    /**
+     * Get event mapping from junction table
+     *
+     * @param int $appointment_id Appointment ID
+     * @param int $staff_id Staff ID
+     * @return array|null Event mapping data or null if not found
+     */
+    private function get_event_mapping($appointment_id, $staff_id)
+    {
+        $CI = &get_instance();
+        
+        $mapping = $CI->db->get_where(db_prefix() . 'appointment_google_events', [
+            'appointment_id' => $appointment_id,
+            'staff_id' => $staff_id
+        ])->row_array();
+        
+        return $mapping ?: null;
+    }
+    
+    /**
+     * Delete event mapping from junction table
+     *
+     * @param int $appointment_id Appointment ID
+     * @param int $staff_id Staff ID
+     * @return bool Success status
+     */
+    private function delete_event_mapping($appointment_id, $staff_id)
+    {
+        $CI = &get_instance();
+        
+        $CI->db->where('appointment_id', $appointment_id);
+        $CI->db->where('staff_id', $staff_id);
+        return $CI->db->delete(db_prefix() . 'appointment_google_events');
+    }
+    
+    /**
+     * Get all event mappings for an appointment (all staff members)
+     *
+     * @param int $appointment_id Appointment ID
+     * @return array Event mappings
+     */
+    public function get_all_event_mappings($appointment_id)
+    {
+        $CI = &get_instance();
+        
+        return $CI->db->get_where(db_prefix() . 'appointment_google_events', [
+            'appointment_id' => $appointment_id
+        ])->result_array();
+    }
+    
+    /**
+     * Delete all event mappings for an appointment (all staff members)
+     *
+     * @param int $appointment_id Appointment ID
+     * @return bool Success status
+     */
+    public function delete_all_event_mappings($appointment_id)
+    {
+        $CI = &get_instance();
+        
+        $CI->db->where('appointment_id', $appointment_id);
+        return $CI->db->delete(db_prefix() . 'appointment_google_events');
     }
 }
