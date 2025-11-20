@@ -68,3 +68,10 @@ $route[$module_name . $appointment_module . '/upload_sms_media'] = 'Appointments
 
 // Reminder cron endpoint
 $route[$module_name . '/reminders/cron'] = 'Reminders/cron';
+
+// Google Calendar integration routes
+$route[$module_name . '/google_auth'] = 'Google_auth/connect';
+$route[$module_name . '/google_callback'] = 'Google_auth/callback';
+$route[$module_name . '/google_disconnect'] = 'Google_auth/disconnect';
+$route[$module_name . '/google_status'] = 'Google_auth/status';
+$route[$module_name . '/google_sync_now'] = 'Google_auth/sync_now';

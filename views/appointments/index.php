@@ -25,6 +25,26 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group pull-right">
+                                        <!-- Google Calendar Connect Button -->
+                                        <div class="btn-group" role="group" style="margin-right:5px;" id="google-calendar-connect-group">
+                                            <button type="button" class="btn btn-default" id="google-calendar-connect-btn" data-toggle="tooltip" data-placement="top" title="Connect Google Calendar">
+                                                <i class="fa fa-google" style="color: #4285F4;"></i> Connect Google Calendar
+                                            </button>
+                                        </div>
+                                        <!-- Google Calendar Status (shown when connected) -->
+                                        <div class="btn-group" role="group" style="margin-right:5px; display:none;" id="google-calendar-status-group">
+                                            <button type="button" class="btn btn-success" id="google-calendar-status-btn" data-toggle="tooltip" data-placement="top" title="Google Calendar Connected" disabled>
+                                                <i class="fa fa-check-circle"></i> Google Calendar Connected ✓
+                                            </button>
+                                            <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <span class="caret"></span>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-right">
+                                                <li><a href="#" id="google-calendar-sync-now"><i class="fa fa-refresh"></i> Sync Now</a></li>
+                                                <li role="separator" class="divider"></li>
+                                                <li><a href="#" id="google-calendar-disconnect" style="color: #e74c3c;"><i class="fa fa-unlink"></i> Disconnect</a></li>
+                                            </ul>
+                                        </div>
                                         <div class="btn-group" role="group" style="margin-right:5px;">
                                             <button type="button" class="btn btn-default" id="open-calendar-modal" data-toggle="tooltip" data-placement="top" title="View Calendar">
                                                 <i class="fa fa-calendar"></i>
@@ -418,6 +438,9 @@ function init_combined_ajax_search(selector) {
 }
 
 $(document).ready(function() {
+    // Check Google Calendar connection status on page load
+    checkGoogleCalendarStatus();
+    
     // Initialize DataTable for appointments
     // Sort by column 4 (Scheduled datetime - combined date+time for proper chronological sorting) descending by default
     // Columns: 0=checkbox, 1=ID, 2=Appointment, 3=Lead, 4=Scheduled(datetime), 5=Status, 6=Measurements, 7=Estimates, 8=Options
@@ -1711,6 +1734,240 @@ $(document).ready(function() {
 
 // ========================================
 // END LEAD MODAL FUNCTIONALITY
+// ========================================
+
+// ========================================
+// GOOGLE CALENDAR INTEGRATION
+// ========================================
+
+/**
+ * Check Google Calendar connection status
+ */
+function checkGoogleCalendarStatus() {
+    $.ajax({
+        url: admin_url + 'ella_contractors/google_status',
+        type: 'GET',
+        dataType: 'json',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        success: function(response) {
+            if (response && response.connected) {
+                // Show connected status
+                $('#google-calendar-connect-group').hide();
+                $('#google-calendar-status-group').show();
+            } else {
+                // Show connect button
+                $('#google-calendar-connect-group').show();
+                $('#google-calendar-status-group').hide();
+            }
+        },
+        error: function() {
+            // On error, show connect button
+            $('#google-calendar-connect-group').show();
+            $('#google-calendar-status-group').hide();
+        }
+    });
+}
+
+/**
+ * Connect Google Calendar button click
+ */
+$(document).on('click', '#google-calendar-connect-btn', function(e) {
+    e.preventDefault();
+    
+    // Check if Google Calendar credentials are configured
+    $.ajax({
+        url: admin_url + 'ella_contractors/google_status',
+        type: 'GET',
+        dataType: 'json',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        success: function(response) {
+            if (response && response.error) {
+                // Credentials not configured
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Google Calendar Not Configured',
+                        html: 'Please configure Google Calendar API credentials in Settings before connecting.<br><br><a href="' + admin_url + 'settings?group=appointments" target="_blank">Go to Settings</a>',
+                        icon: 'warning',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    alert('Please configure Google Calendar API credentials in Settings first.');
+                }
+            } else {
+                // Redirect to Google OAuth
+                window.location.href = admin_url + 'ella_contractors/google_auth';
+            }
+        },
+        error: function() {
+            alert_float('danger', 'Failed to check Google Calendar configuration');
+        }
+    });
+});
+
+/**
+ * Sync Now button click
+ */
+$(document).on('click', '#google-calendar-sync-now', function(e) {
+    e.preventDefault();
+    
+    var $btn = $(this);
+    var originalHtml = $btn.html();
+    $btn.html('<i class="fa fa-spinner fa-spin"></i> Syncing...');
+    $btn.parent().addClass('disabled');
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/google_sync_now',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        success: function(response) {
+            if (response && response.success) {
+                var message = response.message;
+                if (response.synced !== undefined) {
+                    message += ' (' + response.synced + ' synced';
+                    if (response.failed > 0) {
+                        message += ', ' + response.failed + ' failed';
+                    }
+                    message += ')';
+                }
+                
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Sync Complete',
+                        text: message,
+                        icon: 'success',
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    alert_float('success', message);
+                }
+            } else {
+                var errorMsg = response && response.message ? response.message : 'Failed to sync appointments';
+                
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Sync Failed',
+                        text: errorMsg,
+                        icon: 'error'
+                    });
+                } else {
+                    alert_float('danger', errorMsg);
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            var errorMsg = 'An error occurred during sync. Please try again.';
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Sync Error',
+                    text: errorMsg,
+                    icon: 'error'
+                });
+            } else {
+                alert_float('danger', errorMsg);
+            }
+        },
+        complete: function() {
+            $btn.html(originalHtml);
+            $btn.parent().removeClass('disabled');
+        }
+    });
+});
+
+/**
+ * Disconnect Google Calendar button click
+ */
+$(document).on('click', '#google-calendar-disconnect', function(e) {
+    e.preventDefault();
+    
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Disconnect Google Calendar?',
+            text: 'This will remove your Google Calendar connection and stop syncing appointments. Existing calendar events will not be deleted from Google Calendar.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e74c3c',
+            cancelButtonColor: '#95a5a6',
+            confirmButtonText: 'Yes, Disconnect',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                disconnectGoogleCalendar();
+            }
+        });
+    } else {
+        if (confirm('Are you sure you want to disconnect Google Calendar? This will stop syncing appointments.')) {
+            disconnectGoogleCalendar();
+        }
+    }
+});
+
+/**
+ * Disconnect Google Calendar function
+ */
+function disconnectGoogleCalendar() {
+    $.ajax({
+        url: admin_url + 'ella_contractors/google_disconnect',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        success: function(response) {
+            if (response && response.success) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Disconnected',
+                        text: response.message,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    alert_float('success', response.message);
+                }
+                
+                // Update UI
+                $('#google-calendar-connect-group').show();
+                $('#google-calendar-status-group').hide();
+            } else {
+                var errorMsg = response && response.message ? response.message : 'Failed to disconnect';
+                
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Error',
+                        text: errorMsg,
+                        icon: 'error'
+                    });
+                } else {
+                    alert_float('danger', errorMsg);
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            var errorMsg = 'An error occurred while disconnecting. Please try again.';
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Error',
+                    text: errorMsg,
+                    icon: 'error'
+                });
+            } else {
+                alert_float('danger', errorMsg);
+            }
+        }
+    });
+}
+
+// ========================================
+// END GOOGLE CALENDAR INTEGRATION
 // ========================================
 </script>
 
