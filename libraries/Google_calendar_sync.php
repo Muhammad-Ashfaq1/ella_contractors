@@ -821,12 +821,15 @@ class Google_calendar_sync
         
         // Check if mapping exists
         $existing = $CI->db->get_where(db_prefix() . 'appointment_google_events', [
-            'appointment_id' => $appointment_id,
+            'rel_type' => 'appointment',
+            'rel_id' => $appointment_id,
             'staff_id' => $staff_id
         ])->row_array();
         
         $data = [
-            'appointment_id' => $appointment_id,
+            'rel_type' => 'appointment',
+            'rel_id' => $appointment_id,
+            'org_id' => null, // Can be set based on appointment's organization if needed
             'staff_id' => $staff_id,
             'google_event_id' => $google_event_id,
             'google_calendar_id' => $google_calendar_id,
@@ -854,7 +857,8 @@ class Google_calendar_sync
         $CI = &get_instance();
         
         $mapping = $CI->db->get_where(db_prefix() . 'appointment_google_events', [
-            'appointment_id' => $appointment_id,
+            'rel_type' => 'appointment',
+            'rel_id' => $appointment_id,
             'staff_id' => $staff_id
         ])->row_array();
         
@@ -872,7 +876,8 @@ class Google_calendar_sync
     {
         $CI = &get_instance();
         
-        $CI->db->where('appointment_id', $appointment_id);
+        $CI->db->where('rel_type', 'appointment');
+        $CI->db->where('rel_id', $appointment_id);
         $CI->db->where('staff_id', $staff_id);
         return $CI->db->delete(db_prefix() . 'appointment_google_events');
     }
@@ -888,7 +893,8 @@ class Google_calendar_sync
         $CI = &get_instance();
         
         return $CI->db->get_where(db_prefix() . 'appointment_google_events', [
-            'appointment_id' => $appointment_id
+            'rel_type' => 'appointment',
+            'rel_id' => $appointment_id
         ])->result_array();
     }
     
@@ -902,7 +908,8 @@ class Google_calendar_sync
     {
         $CI = &get_instance();
         
-        $CI->db->where('appointment_id', $appointment_id);
+        $CI->db->where('rel_type', 'appointment');
+        $CI->db->where('rel_id', $appointment_id);
         return $CI->db->delete(db_prefix() . 'appointment_google_events');
     }
 }

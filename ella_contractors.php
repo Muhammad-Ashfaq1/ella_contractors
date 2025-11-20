@@ -692,22 +692,24 @@ function ella_contractors_activate_module() {
     
     // Create appointment_google_events junction table to track per-staff Google event IDs
     // This allows each staff member to have their own Google Calendar event ID for the same appointment
+    // Uses Perfex CRM standard rel_type/rel_id/org_id pattern for flexibility (no foreign key constraints)
     if (!$CI->db->table_exists(db_prefix() . 'appointment_google_events')) {
         $CI->db->query('CREATE TABLE `' . db_prefix() . 'appointment_google_events` (
             `id` int(11) NOT NULL AUTO_INCREMENT,
-            `appointment_id` int(11) NOT NULL,
-            `staff_id` int(11) NOT NULL,
-            `google_event_id` varchar(255) NOT NULL,
-            `google_calendar_id` varchar(255) DEFAULT "primary",
+            `rel_type` varchar(50) DEFAULT "appointment" COMMENT "Related entity type",
+            `rel_id` int(11) NOT NULL COMMENT "Appointment ID",
+            `org_id` int(11) DEFAULT NULL COMMENT "Organization ID for multi-tenant support",
+            `staff_id` int(11) NOT NULL COMMENT "Staff member who owns this calendar event",
+            `google_event_id` varchar(255) NOT NULL COMMENT "Google Calendar event ID",
+            `google_calendar_id` varchar(255) DEFAULT "primary" COMMENT "Google Calendar ID (usually primary)",
             `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
             `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`),
-            UNIQUE KEY `unique_appointment_staff` (`appointment_id`, `staff_id`),
-            KEY `idx_appointment_id` (`appointment_id`),
+            UNIQUE KEY `unique_rel_staff` (`rel_type`, `rel_id`, `staff_id`),
+            KEY `idx_rel_type_id` (`rel_type`, `rel_id`),
+            KEY `idx_org_id` (`org_id`),
             KEY `idx_staff_id` (`staff_id`),
-            KEY `idx_google_event_id` (`google_event_id`),
-            FOREIGN KEY (`appointment_id`) REFERENCES `' . db_prefix() . 'appointly_appointments` (`id`) ON DELETE CASCADE,
-            FOREIGN KEY (`staff_id`) REFERENCES `' . db_prefix() . 'staff` (`staffid`) ON DELETE CASCADE
+            KEY `idx_google_event_id` (`google_event_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
         
         log_message('info', 'EllaContractors: appointment_google_events junction table created successfully');
