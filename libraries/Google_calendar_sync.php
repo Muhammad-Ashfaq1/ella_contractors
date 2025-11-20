@@ -25,23 +25,30 @@ class Google_calendar_sync
             try {
                 // Try to load from appointly module vendor first (reuse library)
                 $appointly_vendor = module_dir_path('appointly', 'vendor/autoload.php');
+                
                 if (file_exists($appointly_vendor)) {
                     require_once($appointly_vendor);
+                    log_message('info', 'Google Calendar: Loaded Google API Client from Appointly vendor');
                 } else {
                     // Try global vendor
                     $global_vendor = FCPATH . 'vendor/autoload.php';
                     if (file_exists($global_vendor)) {
                         require_once($global_vendor);
+                        log_message('info', 'Google Calendar: Loaded Google API Client from global vendor');
                     } else {
-                        log_message('error', 'Google Calendar: Google API Client library not found. Please install via Composer: composer require google/apiclient:^2.0');
-                        $this->client = null;
-                        return;
+                        log_message('error', 'Google Calendar: Google API Client library not found. Please install Appointly module or run: composer require google/apiclient:^2.0');
+                        throw new Exception('Google API Client library not found. Please ensure Appointly module is installed or install google/apiclient via Composer.');
                     }
                 }
+                
+                // Verify the class is now available
+                if (!class_exists('Google_Client')) {
+                    throw new Exception('Google_Client class not available after loading autoload.php');
+                }
             } catch (Exception $e) {
-                log_message('error', 'Google Calendar: Failed to load autoload - ' . $e->getMessage());
-                $this->client = null;
-                return;
+                log_message('error', 'Google Calendar: Failed to load Google API Client - ' . $e->getMessage());
+                log_message('error', 'Google Calendar: Stack trace - ' . $e->getTraceAsString());
+                throw $e; // Re-throw to be caught by controller
             }
         }
     }

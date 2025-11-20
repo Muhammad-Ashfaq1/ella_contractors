@@ -5,7 +5,21 @@ class Google_auth extends AdminController
     public function __construct()
     {
         parent::__construct();
-        $this->load->library('ella_contractors/Google_calendar_sync');
+        
+        // Try to load Google Calendar sync library
+        try {
+            $this->load->library('ella_contractors/Google_calendar_sync');
+        } catch (Exception $e) {
+            log_message('error', 'Google_auth: Failed to load Google_calendar_sync library - ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Index method - redirects to connect (default action)
+     */
+    public function index()
+    {
+        $this->connect();
     }
 
     /**
@@ -18,16 +32,29 @@ class Google_auth extends AdminController
             access_denied('ella_contractors');
         }
 
+        // Check if library loaded successfully
+        if (!isset($this->google_calendar_sync)) {
+            set_alert('danger', 'Google Calendar library not loaded. Please ensure Appointly module is installed (for Google API client library).');
+            redirect(admin_url('ella_contractors/appointments'));
+            return;
+        }
+
         $staff_id = get_staff_user_id();
         $redirect_uri = get_option('google_calendar_redirect_uri') ?: site_url('ella_contractors/google_callback');
 
-        // Get authorization URL
-        $auth_url = $this->google_calendar_sync->get_authorization_url($staff_id, $redirect_uri);
+        try {
+            // Get authorization URL
+            $auth_url = $this->google_calendar_sync->get_authorization_url($staff_id, $redirect_uri);
 
-        if ($auth_url) {
-            redirect($auth_url);
-        } else {
-            set_alert('danger', 'Failed to initialize Google Calendar connection. Please check your Google Calendar API credentials in settings.');
+            if ($auth_url) {
+                redirect($auth_url);
+            } else {
+                set_alert('danger', 'Failed to initialize Google Calendar connection. Please check your Google Calendar API credentials in settings.');
+                redirect(admin_url('ella_contractors/appointments'));
+            }
+        } catch (Exception $e) {
+            log_message('error', 'Google Calendar connect error: ' . $e->getMessage());
+            set_alert('danger', 'Error: ' . $e->getMessage());
             redirect(admin_url('ella_contractors/appointments'));
         }
     }

@@ -1745,7 +1745,7 @@ $(document).ready(function() {
  */
 function checkGoogleCalendarStatus() {
     $.ajax({
-        url: admin_url + 'ella_contractors/google_status',
+        url: admin_url + 'ella_contractors/google_auth/status',
         type: 'GET',
         dataType: 'json',
         data: {
@@ -1801,7 +1801,7 @@ $(document).on('click', '#google-calendar-connect-btn', function(e) {
     
     // Check if Google Calendar credentials are configured
     $.ajax({
-        url: admin_url + 'ella_contractors/google_status',
+        url: admin_url + 'ella_contractors/google_auth/status',
         type: 'GET',
         dataType: 'json',
         data: {
@@ -1811,7 +1811,7 @@ $(document).on('click', '#google-calendar-connect-btn', function(e) {
             if (!response) {
                 // Invalid response - try to connect anyway (might be a temporary error)
                 console.warn('Google Calendar: Invalid response, attempting connection anyway');
-                window.location.href = admin_url + 'ella_contractors/google_auth';
+                window.location.href = admin_url + 'ella_contractors/google_auth/connect';
                 return;
             }
 
@@ -1830,7 +1830,7 @@ $(document).on('click', '#google-calendar-connect-btn', function(e) {
                 }
             } else {
                 // Credentials configured or already connected - proceed to OAuth
-                window.location.href = admin_url + 'ella_contractors/google_auth';
+                window.location.href = admin_url + 'ella_contractors/google_auth/connect';
             }
         },
         error: function(xhr, status, error) {
@@ -1852,12 +1852,12 @@ $(document).on('click', '#google-calendar-connect-btn', function(e) {
                     cancelButtonText: 'Cancel'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        window.location.href = admin_url + 'ella_contractors/google_auth';
+                        window.location.href = admin_url + 'ella_contractors/google_auth/connect';
                     }
                 });
             } else {
                 if (confirm('Unable to verify Google Calendar configuration. Do you want to proceed anyway?')) {
-                    window.location.href = admin_url + 'ella_contractors/google_auth';
+                    window.location.href = admin_url + 'ella_contractors/google_auth/connect';
                 }
             }
         }
@@ -1876,7 +1876,7 @@ $(document).on('click', '#google-calendar-sync-now', function(e) {
     $btn.parent().addClass('disabled');
     
     $.ajax({
-        url: admin_url + 'ella_contractors/google_sync_now',
+        url: admin_url + 'ella_contractors/google_auth/sync_now',
         type: 'POST',
         dataType: 'json',
         data: {
@@ -1970,7 +1970,7 @@ $(document).on('click', '#google-calendar-disconnect', function(e) {
  */
 function disconnectGoogleCalendar() {
     $.ajax({
-        url: admin_url + 'ella_contractors/google_disconnect',
+        url: admin_url + 'ella_contractors/google_auth/disconnect',
         type: 'POST',
         dataType: 'json',
         data: {
