@@ -167,7 +167,7 @@
                     showNext: true,
                     showBack: true,
                     showSkip: true,
-                    highlight: true
+                    highlight: true,
                 },
                 {
                     id: 'calendar_button',
@@ -708,7 +708,9 @@
          * @param {jQuery} targetInModal - Target's modal container if any
          */
         calculateAndSetPosition: function(step, target, targetOffset, targetWidth, targetHeight, tooltip, tooltipWidth, tooltipHeight, targetInModal) {
-            var spacing = 3; // Professional minimal spacing - tooltip appears very close to button
+            // Responsive spacing - larger on bigger screens, smaller on mobile
+            var windowWidth = $(window).width();
+            var spacing = windowWidth >= 768 ? 42 : (windowWidth >= 480 ? 34 : 25); // Responsive spacing for all screen sizes
 
             // Check if a modal is currently open
             var $openModal = $('.modal.in, .modal.show, .modal[style*="display: block"]');
@@ -773,7 +775,10 @@
                 var containerWidth = positioningContainer.outerWidth();
                 var containerHeight = positioningContainer.outerHeight();
                 
-                switch (step.position) {
+                switch (step.position)
+                
+                {
+                    
                     case 'top':
                         position.top = relativeTop - tooltipHeight - spacing;
                         position.left = relativeLeft + (targetWidth / 2) - (tooltipWidth / 2);
@@ -882,6 +887,16 @@
                         position.top = windowHeight - tooltipHeight - 10;
                     }
                 }
+            }
+            
+            // Special positioning override for specific steps
+            if (step.id === 'filter_dropdown') {
+                position.left = 2089;
+            } else if (step.id === 'calendar_button') {
+                position.left = 2000;
+            } else if (step.id === 'status_column') {
+                position.left = 1360;
+                position.top = 110;
             }
             
             // Store arrow offset for CSS positioning

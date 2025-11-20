@@ -56,7 +56,7 @@
     z-index: 10000;
 }
 
-.tutorial-tooltip.tutorial-arrow-top::after {
+.tutorial-tooltip .tutorial-arrow-top::after {
     content: '';
     position: absolute;
     top: -7px;
