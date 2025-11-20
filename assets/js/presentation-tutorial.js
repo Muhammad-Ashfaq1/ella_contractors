@@ -786,6 +786,15 @@
                 }
             }
             
+            // Special positioning override for specific steps
+            if (step.id === 'upload_button') {
+                position.left = 2090;
+                position.top = 130;
+            } else if (step.id === 'preview_action') {
+                position.left = 1881.94;
+                position.top = 139.756;
+            }
+            
             // Store arrow offset for CSS positioning
             tooltip.data('arrow-offset', adjustedArrowOffset);
             
