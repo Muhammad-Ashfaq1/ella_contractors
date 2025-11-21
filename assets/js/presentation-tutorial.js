@@ -366,28 +366,70 @@
             // Create tooltip
             this.createTooltip(step, stepIndex);
 
-            // Initially hide tooltip for fade-in animation
+            // Initially hide tooltip completely (off-screen and invisible) to prevent any flashing
             this.state.tooltip.css({
                 opacity: 0,
-                transform: 'scale(0.95)'
+                transform: 'scale(0.95)',
+                position: 'fixed',
+                top: '-9999px',
+                left: '-9999px',
+                visibility: 'hidden'
             });
 
-            // If target element exists, wait for it to be visible, then position
-            if (step.target && step.position !== 'center') {
+            // Apply special positioning immediately for specific steps to prevent initial wrong positioning
+            var hasSpecialPositioning = (step.id === 'upload_button' || step.id === 'preview_action');
+            
+            if (step.id === 'upload_button') {
+                this.state.tooltip.css({
+                    position: 'fixed',
+                    top: '130px',
+                    left: '2090px',
+                    zIndex: 1041,
+                    visibility: 'visible'
+                });
+                // Fade in immediately for special positioned elements
+                setTimeout(function() {
+                    self.state.tooltip.css({
+                        opacity: 1,
+                        transform: 'scale(1)',
+                        transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
+                    });
+                }, 50);
+            } else if (step.id === 'preview_action') {
+                this.state.tooltip.css({
+                    position: 'fixed',
+                    top: '139.756px',
+                    left: '1881.94px',
+                    zIndex: 1041,
+                    visibility: 'visible'
+                });
+                // Fade in immediately for special positioned elements
+                setTimeout(function() {
+                    self.state.tooltip.css({
+                        opacity: 1,
+                        transform: 'scale(1)',
+                        transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
+                    });
+                }, 50);
+            }
+            // Skip delayed positioning for special steps
+            else if (step.target && step.position !== 'center') {
                 var target = $(step.target);
                 
                 // Wait a bit for element to be fully rendered
                 setTimeout(function() {
-                    // Scroll element into view first if needed
+                    // Scroll element into view first if needed (while tooltip is still hidden)
                     if (step.highlight) {
                         self.highlightElement(step.target);
                     }
                     
-                    // Small delay to allow scroll animation to complete
+                    // Small delay to allow scroll animation to complete, then position once and show
                     setTimeout(function() {
+                        // Position tooltip (this happens only once now)
                         self.positionTooltip(step);
-                        // Fade in tooltip with animation
+                        // Make visible and fade in with animation
                         self.state.tooltip.css({
+                            visibility: 'visible',
                             opacity: 1,
                             transform: 'scale(1)',
                             transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
@@ -397,6 +439,7 @@
             } else {
                 // No target or center position - position immediately
                 this.positionTooltip(step);
+                this.state.tooltip.css('visibility', 'visible');
                 // Fade in tooltip with animation
                 setTimeout(function() {
                     self.state.tooltip.css({
@@ -516,6 +559,25 @@
          */
         positionTooltip: function(step) {
             var tooltip = this.state.tooltip;
+            
+            // Special positioning override for specific steps - apply early to avoid double positioning
+            if (step.id === 'upload_button') {
+                tooltip.css({
+                    position: 'fixed',
+                    top: '130px',
+                    left: '2090px',
+                    zIndex: 1041
+                });
+                return;
+            } else if (step.id === 'preview_action') {
+                tooltip.css({
+                    position: 'fixed',
+                    top: '139.756px',
+                    left: '1881.94px',
+                    zIndex: 1041
+                });
+                return;
+            }
             
             // Find the target element first to check if it's in a modal
             var target = step.target ? $(step.target) : null;
@@ -784,15 +846,6 @@
                         position.top = windowHeight - tooltipHeight - 10;
                     }
                 }
-            }
-            
-            // Special positioning override for specific steps
-            if (step.id === 'upload_button') {
-                position.left = 2090;
-                position.top = 130;
-            } else if (step.id === 'preview_action') {
-                position.left = 1881.94;
-                position.top = 139.756;
             }
             
             // Store arrow offset for CSS positioning
