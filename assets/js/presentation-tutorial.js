@@ -3,8 +3,9 @@
  * 
  * Provides step-by-step guided tours for first-time users
  * Supports "Don't show again" functionality with persistence
+ * Fully responsive with dynamic positioning
  * 
- * @version 1.0.0
+ * @version 2.0.0
  * @author EllaContractors Team
  */
 
@@ -31,7 +32,8 @@
             currentStepIndex: 0,
             overlay: null,
             tooltip: null,
-            targetElement: null
+            targetElement: null,
+            resizeHandler: null // NEW: track resize handler
         },
 
         /**
@@ -229,7 +231,44 @@
         start: function() {
             this.state.isActive = true;
             this.state.currentStepIndex = 0;
+            this.setupResizeHandler(); // NEW: Setup resize handler when tutorial starts
             this.showStep(0);
+        },
+
+        // NEW: Setup window resize handler
+        setupResizeHandler: function() {
+            var self = this;
+            var resizeTimeout;
+            
+            // Remove any existing handler
+            if (this.state.resizeHandler) {
+                $(window).off('resize', this.state.resizeHandler);
+            }
+            
+            // Create debounced resize handler
+            this.state.resizeHandler = function() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(function() {
+                    // Only reposition if tutorial is active and tooltip exists
+                    if (self.state.isActive && self.state.tooltip && self.state.tooltip.length > 0) {
+                        var currentStep = self.config.steps[self.state.currentStepIndex];
+                        if (currentStep) {
+                            // Reposition current tooltip without animation
+                            self.positionTooltip(currentStep, true);
+                        }
+                    }
+                }, 150); // Debounce for 150ms
+            };
+            
+            $(window).on('resize', this.state.resizeHandler);
+        },
+
+        // NEW: Remove resize handler
+        removeResizeHandler: function() {
+            if (this.state.resizeHandler) {
+                $(window).off('resize', this.state.resizeHandler);
+                this.state.resizeHandler = null;
+            }
         },
 
         /**
@@ -289,12 +328,20 @@
          * @param {string} selector - CSS selector
          * @param {function} callback - Callback when element found
          * @param {number} maxAttempts - Maximum attempts (default: 20)
-         * @returns {boolean} - True if element found
+         * @returns {boolean} - True if element found immediately
          */
         waitForElement: function(selector, callback, maxAttempts) {
             maxAttempts = maxAttempts || 20;
             var attempts = 0;
+            var element = $(selector);
+            
+            // Check if element is already visible
+            if (element.length > 0 && element.is(':visible')) {
+                callback();
+                return true;
+            }
 
+            // If not visible, wait for it
             var checkElement = setInterval(function() {
                 attempts++;
                 var element = $(selector);
@@ -302,12 +349,12 @@
                 if (element.length > 0 && element.is(':visible')) {
                     clearInterval(checkElement);
                     callback();
-                    return true;
+                    return;
                 }
 
                 if (attempts >= maxAttempts) {
                     clearInterval(checkElement);
-                    return false;
+                    return;
                 }
             }, 500);
 
@@ -376,44 +423,8 @@
                 visibility: 'hidden'
             });
 
-            // Apply special positioning immediately for specific steps to prevent initial wrong positioning
-            var hasSpecialPositioning = (step.id === 'upload_button' || step.id === 'preview_action');
-            
-            if (step.id === 'upload_button') {
-                this.state.tooltip.css({
-                    position: 'fixed',
-                    top: '130px',
-                    left: '2090px',
-                    zIndex: 1041,
-                    visibility: 'visible'
-                });
-                // Fade in immediately for special positioned elements
-                setTimeout(function() {
-                    self.state.tooltip.css({
-                        opacity: 1,
-                        transform: 'scale(1)',
-                        transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
-                    });
-                }, 50);
-            } else if (step.id === 'preview_action') {
-                this.state.tooltip.css({
-                    position: 'fixed',
-                    top: '139.756px',
-                    left: '1881.94px',
-                    zIndex: 1041,
-                    visibility: 'visible'
-                });
-                // Fade in immediately for special positioned elements
-                setTimeout(function() {
-                    self.state.tooltip.css({
-                        opacity: 1,
-                        transform: 'scale(1)',
-                        transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
-                    });
-                }, 50);
-            }
-            // Skip delayed positioning for special steps
-            else if (step.target && step.position !== 'center') {
+            // UPDATED: Use unified positioning logic for ALL steps (no more hard-coded positions)
+            if (step.target && step.position !== 'center') {
                 var target = $(step.target);
                 
                 // Wait a bit for element to be fully rendered
@@ -425,15 +436,19 @@
                     
                     // Small delay to allow scroll animation to complete, then position once and show
                     setTimeout(function() {
-                        // Position tooltip (this happens only once now)
+                        // Position tooltip first (while still hidden)
                         self.positionTooltip(step);
-                        // Make visible and fade in with animation
-                        self.state.tooltip.css({
-                            visibility: 'visible',
-                            opacity: 1,
-                            transform: 'scale(1)',
-                            transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
-                        });
+                        
+                        // Small delay to ensure positioning is complete, then make visible
+                        setTimeout(function() {
+                            // Make visible and fade in with animation
+                            self.state.tooltip.css({
+                                visibility: 'visible',
+                                opacity: 1,
+                                transform: 'scale(1)',
+                                transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
+                            });
+                        }, 50);
                     }, 350);
                 }, 100);
             } else {
@@ -556,24 +571,115 @@
         /**
          * Position tooltip relative to target element
          * @param {object} step - Step configuration
+         * @param {boolean} skipTransition - Skip transition animation (for resize)
          */
-        positionTooltip: function(step) {
+        positionTooltip: function(step, skipTransition) {
             var tooltip = this.state.tooltip;
             
-            // Special positioning override for specific steps - apply early to avoid double positioning
+            // CUSTOM POSITIONING: Responsive override for specific steps
+            // Get viewport width for responsive positioning
+            var viewportWidth = $(window).width();
+            
             if (step.id === 'upload_button') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-top');
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens (1920px and above)
+                    positions = { top: '11%', left: '81.6%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens (1600px - 1919px)
+                    positions = { top: '11%', left: '80%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens (1366px - 1599px)
+                    positions = { top: '11%', left: '78%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens (1024px - 1365px)
+                    positions = { top: '11%', left: '75%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape (768px - 1023px)
+                    positions = { top: '12%', left: '70%' };
+                } else {
+                    // Mobile and small tablets (below 768px)
+                    positions = { top: '15%', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
                 tooltip.css({
                     position: 'fixed',
-                    top: '130px',
-                    left: '2090px',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
                     zIndex: 1041
                 });
                 return;
-            } else if (step.id === 'preview_action') {
+            }
+            
+            if (step.id === 'preview_action') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-right');
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens
+                    positions = { top: '15.7%', left: '73.5%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens
+                    positions = { top: '16%', left: '71%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens
+                    positions = { top: '16.5%', left: '68%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens
+                    positions = { top: '17%', left: '65%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape
+                    positions = { top: '18%', left: '60%' };
+                } else {
+                    // Mobile and small tablets
+                    positions = { top: '20%', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
                 tooltip.css({
                     position: 'fixed',
-                    top: '139.756px',
-                    left: '1881.94px',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
+                    zIndex: 1041
+                });
+                return;
+            }
+            
+            if (step.id === 'edit_name') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-right');
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens
+                    positions = { top: '15.5%', left: '13.2%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens
+                    positions = { top: '16%', left: '12%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens
+                    positions = { top: '16.5%', left: '10%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens
+                    positions = { top: '17%', left: '8%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape
+                    positions = { top: '18%', left: '5%' };
+                } else {
+                    // Mobile and small tablets
+                    positions = { top: '20%', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
                     zIndex: 1041
                 });
                 return;
@@ -685,7 +791,7 @@
             var targetHeight = target.outerHeight();
             var tooltipWidth = tooltip.outerWidth();
             var tooltipHeight = tooltip.outerHeight();
-            var spacing = 2; // Minimal spacing - tooltip appears very close to button
+            var spacing = 20; // Spacing between tooltip and target
 
             // Get viewport dimensions and scroll position for fixed positioning
             var windowWidth = $(window).width();
@@ -850,6 +956,9 @@
             
             // Store arrow offset for CSS positioning
             tooltip.data('arrow-offset', adjustedArrowOffset);
+            
+            // Remove any existing arrow classes first
+            tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
             
             // Add arrow class to tooltip for CSS styling
             if (position.arrowPosition) {
@@ -1057,6 +1166,9 @@
             // Set inactive first to ensure cleanup happens
             this.state.isActive = false;
             
+            // UPDATED: Remove resize handler when tutorial ends
+            this.removeResizeHandler();
+            
             // Immediately remove all tutorial elements
             this.removeCurrentStep();
             
@@ -1158,4 +1270,3 @@
     window.PresentationTutorial = PresentationTutorial;
 
 })(jQuery);
-

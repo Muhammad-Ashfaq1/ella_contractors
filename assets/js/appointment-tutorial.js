@@ -3,8 +3,9 @@
  * 
  * Provides step-by-step guided tours for first-time users
  * Supports "Don't show again" functionality with persistence
+ * Fully responsive with dynamic positioning across all screen sizes
  * 
- * @version 1.0.0
+ * @version 2.0.0
  * @author EllaContractors Team
  */
 
@@ -31,7 +32,8 @@
             currentStepIndex: 0,
             overlay: null,
             tooltip: null,
-            targetElement: null
+            targetElement: null,
+            resizeHandler: null // NEW: track resize handler
         },
 
         /**
@@ -206,6 +208,28 @@
                     optional: true // This step is optional if element doesn't exist
                 },
                 {
+                    id: 'appointment_actions',
+                    title: 'Appointment Actions',
+                    content: 'Use the action buttons in each row to edit appointment details, attach presentations, add notes, send reminders, or delete appointments. Hover over icons to see what each action does.',
+                    target: '.table-ella_appointments',
+                    position: 'right', // Tooltip to the right, arrow points left
+                    showNext: true,
+                    showBack: true,
+                    showSkip: true,
+                    highlight: true
+                },
+                {
+                    id: 'google_calendar',
+                    title: 'Google Calendar Sync',
+                    content: 'Sync your appointments with Google Calendar to keep all your schedules in one place. Click the Google Calendar icon to connect your account and automatically sync appointments both ways.',
+                    target: '.panel-body',
+                    position: 'bottom', // Tooltip below target, arrow points up
+                    showNext: true,
+                    showBack: true,
+                    showSkip: true,
+                    highlight: true
+                },
+                {
                     id: 'completion',
                     title: 'Tutorial Complete!',
                     content: 'You\'re all set! You can now create, manage, and track appointments efficiently. If you need help anytime, look for the help icon or contact support.',
@@ -225,7 +249,44 @@
         start: function() {
             this.state.isActive = true;
             this.state.currentStepIndex = 0;
+            this.setupResizeHandler(); // NEW: Setup resize handler when tutorial starts
             this.showStep(0);
+        },
+
+        // NEW: Setup window resize handler
+        setupResizeHandler: function() {
+            var self = this;
+            var resizeTimeout;
+            
+            // Remove any existing handler
+            if (this.state.resizeHandler) {
+                $(window).off('resize', this.state.resizeHandler);
+            }
+            
+            // Create debounced resize handler
+            this.state.resizeHandler = function() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(function() {
+                    // Only reposition if tutorial is active and tooltip exists
+                    if (self.state.isActive && self.state.tooltip && self.state.tooltip.length > 0) {
+                        var currentStep = self.config.steps[self.state.currentStepIndex];
+                        if (currentStep) {
+                            // Reposition current tooltip without animation
+                            self.positionTooltip(currentStep, true);
+                        }
+                    }
+                }, 150); // Debounce for 150ms
+            };
+            
+            $(window).on('resize', this.state.resizeHandler);
+        },
+
+        // NEW: Remove resize handler
+        removeResizeHandler: function() {
+            if (this.state.resizeHandler) {
+                $(window).off('resize', this.state.resizeHandler);
+                this.state.resizeHandler = null;
+            }
         },
 
         /**
@@ -285,12 +346,20 @@
          * @param {string} selector - CSS selector
          * @param {function} callback - Callback when element found
          * @param {number} maxAttempts - Maximum attempts (default: 20)
-         * @returns {boolean} - True if element found
+         * @returns {boolean} - True if element found immediately
          */
         waitForElement: function(selector, callback, maxAttempts) {
             maxAttempts = maxAttempts || 20;
             var attempts = 0;
+            var element = $(selector);
+            
+            // UPDATED: Check if element is already visible
+            if (element.length > 0 && element.is(':visible')) {
+                callback();
+                return true;
+            }
 
+            // If not visible, wait for it
             var checkElement = setInterval(function() {
                 attempts++;
                 var element = $(selector);
@@ -298,12 +367,12 @@
                 if (element.length > 0 && element.is(':visible')) {
                     clearInterval(checkElement);
                     callback();
-                    return true;
+                    return;
                 }
 
                 if (attempts >= maxAttempts) {
                     clearInterval(checkElement);
-                    return false;
+                    return;
                 }
             }, 500);
 
@@ -355,6 +424,13 @@
          */
         showNewStep: function(step, stepIndex) {
             var self = this;
+
+            // NEW: Scroll to top for Google Calendar step
+            if (step.id === 'google_calendar') {
+                $('.content').animate({ scrollTop: 0 }, 300);
+                // Also scroll window to top
+                $('html, body').animate({ scrollTop: 0 }, 300);
+            }
 
             // Create overlay
             this.createOverlay();
@@ -509,10 +585,85 @@
         /**
          * Position tooltip relative to target element
          * @param {object} step - Step configuration
+         * @param {boolean} skipTransition - Skip transition animation (for resize)
          */
-        positionTooltip: function(step) {
+        positionTooltip: function(step, skipTransition) {
             var tooltip = this.state.tooltip;
             var self = this;
+            
+            // CUSTOM POSITIONING: Responsive override for specific steps
+            // Get viewport width for responsive positioning
+            var viewportWidth = $(window).width();
+            
+            if (step.id === 'appointment_actions') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-left'); // Arrow points left
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens (1920px and above)
+                    positions = { top: '20%', left: '35%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens (1600px - 1919px)
+                    positions = { top: '20%', left: '33%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens (1366px - 1599px)
+                    positions = { top: '21%', left: '30%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens (1024px - 1365px)
+                    positions = { top: '22%', left: '28%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape (768px - 1023px)
+                    positions = { top: '23%', left: '25%' };
+                } else {
+                    // Mobile and small tablets (below 768px)
+                    positions = { top: '25%', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
+                    zIndex: 1041
+                });
+                return;
+            }
+            
+            if (step.id === 'google_calendar') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-top'); // Arrow points up
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens (1920px and above)
+                    positions = { top: '130px', left: '70%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens (1600px - 1919px)
+                    positions = { top: '130px', left: '68%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens (1366px - 1599px)
+                    positions = { top: '130px', left: '65%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens (1024px - 1365px)
+                    positions = { top: '130px', left: '60%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape (768px - 1023px)
+                    positions = { top: '130px', left: '55%' };
+                } else {
+                    // Mobile and small tablets (below 768px)
+                    positions = { top: '130px', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
+                    zIndex: 1041
+                });
+                return;
+            }
             
             // Find the target element first to check if it's in a modal
             // Retry finding the element with multiple attempts
@@ -708,9 +859,24 @@
          * @param {jQuery} targetInModal - Target's modal container if any
          */
         calculateAndSetPosition: function(step, target, targetOffset, targetWidth, targetHeight, tooltip, tooltipWidth, tooltipHeight, targetInModal) {
-            // Responsive spacing - larger on bigger screens, smaller on mobile
+            // UPDATED: Enhanced responsive spacing across all screen sizes
             var windowWidth = $(window).width();
-            var spacing = windowWidth >= 768 ? 42 : (windowWidth >= 480 ? 34 : 25); // Responsive spacing for all screen sizes
+            var spacing;
+            if (windowWidth >= 1920) {
+                spacing = 15; // Large screens
+            } else if (windowWidth >= 1600) {
+                spacing = 12; // Medium-large screens
+            } else if (windowWidth >= 1366) {
+                spacing = 12; // Medium screens
+            } else if (windowWidth >= 1024) {
+                spacing = 10; // Small-medium screens (laptops)
+            } else if (windowWidth >= 768) {
+                spacing = 10; // Tablet landscape
+            } else if (windowWidth >= 480) {
+                spacing = 8; // Tablet portrait
+            } else {
+                spacing = 5; // Mobile
+            }
 
             // Check if a modal is currently open
             var $openModal = $('.modal.in, .modal.show, .modal[style*="display: block"]');
@@ -805,9 +971,10 @@
                         break;
                 }
                 
-                // Adjust position to keep tooltip within container bounds
-                var minLeft = 10;
-                var maxLeft = containerWidth - tooltipWidth - 10;
+                // UPDATED: Responsive bounds checking for modal positioning
+                var containerMargin = windowWidth >= 768 ? 10 : 5; // Smaller margins on mobile
+                var minLeft = containerMargin;
+                var maxLeft = containerWidth - tooltipWidth - containerMargin;
                 var adjustedArrowOffset;
                 if (position.left < minLeft) {
                     adjustedArrowOffset = arrowOffset - (minLeft - position.left);
@@ -821,8 +988,8 @@
                 }
                 
                 // Vertical adjustments within container
-                var minTop = 10;
-                var maxTop = containerHeight - tooltipHeight - 10;
+                var minTop = containerMargin;
+                var maxTop = containerHeight - tooltipHeight - containerMargin;
                 if (position.top < minTop) {
                     position.top = minTop;
                 } else if (position.top > maxTop) {
@@ -864,43 +1031,56 @@
                         break;
                 }
                 
-                // Adjust position to keep tooltip within viewport
+                // UPDATED: Responsive viewport bounds checking - adjust margins based on screen size
+                var viewportMargin = windowWidth >= 768 ? 10 : 5; // Smaller margins on mobile
                 var adjustedArrowOffset = arrowOffset;
-                if (position.left < 10) {
-                    adjustedArrowOffset = arrowOffset - (10 - position.left);
-                    position.left = 10;
-                } else if (position.left + tooltipWidth > windowWidth - 10) {
-                    var overflow = (position.left + tooltipWidth) - (windowWidth - 10);
+                
+                if (position.left < viewportMargin) {
+                    adjustedArrowOffset = arrowOffset - (viewportMargin - position.left);
+                    position.left = viewportMargin;
+                } else if (position.left + tooltipWidth > windowWidth - viewportMargin) {
+                    var overflow = (position.left + tooltipWidth) - (windowWidth - viewportMargin);
                     adjustedArrowOffset = arrowOffset + overflow;
-                    position.left = windowWidth - tooltipWidth - 10;
+                    position.left = windowWidth - tooltipWidth - viewportMargin;
                 }
                 
-                if (position.top < 10) {
-                    position.top = 10;
-                } else if (position.top + tooltipHeight > windowHeight - 10) {
+                if (position.top < viewportMargin) {
+                    position.top = viewportMargin;
+                } else if (position.top + tooltipHeight > windowHeight - viewportMargin) {
                     if (step.position === 'bottom') {
                         position.top = viewportTop - tooltipHeight - spacing;
                         position.arrowPosition = 'bottom';
                         tooltip.removeClass('tutorial-arrow-top').addClass('tutorial-arrow-bottom');
                         adjustedArrowOffset = (viewportLeft + targetWidth / 2) - position.left;
                     } else {
-                        position.top = windowHeight - tooltipHeight - 10;
+                        position.top = windowHeight - tooltipHeight - viewportMargin;
                     }
                 }
             }
             
-            // Special positioning override for specific steps
-            if (step.id === 'filter_dropdown') {
-                position.left = 2089;
-            } else if (step.id === 'calendar_button') {
-                position.left = 2000;
-            } else if (step.id === 'status_column') {
-                position.left = 1360;
-                position.top = 110;
+            // UPDATED: Enhanced percentage-based positioning for responsive behavior across all screen sizes
+            var leftPercent = null;
+            var topPercent = null;
+            var usePercentPositioning = false;
+            
+            // Convert pixel position to percentage for better responsiveness on all screen sizes
+            if (position.left !== undefined && !useModalPositioning) {
+                leftPercent = (position.left / windowWidth) * 100;
+                usePercentPositioning = true;
+            }
+            if (position.top !== undefined && !useModalPositioning) {
+                topPercent = (position.top / windowHeight) * 100;
+                // For better mobile experience, cap top percentage
+                if (windowWidth < 768 && topPercent < 5) {
+                    topPercent = 5;
+                }
             }
             
             // Store arrow offset for CSS positioning
             tooltip.data('arrow-offset', adjustedArrowOffset);
+            
+            // UPDATED: Clean up existing arrow classes before adding new ones
+            tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
             
             // Add arrow class to tooltip for CSS styling
             if (position.arrowPosition) {
@@ -952,13 +1132,31 @@
                     tooltip.appendTo('body');
                 }
                 
-                // Fixed positioning for viewport-relative placement
-                tooltip.css({
+                // UPDATED: Responsive fixed positioning for viewport-relative placement
+                // Use percentage for horizontal positioning for better responsiveness across all screen sizes
+                var cssPosition = {
                     position: 'fixed',
-                    top: position.top + 'px',
-                    left: position.left + 'px',
                     zIndex: 1041 // Below Bootstrap modals (1050) but above overlay
-                });
+                };
+                
+                // Apply top position (keep as pixels for better vertical precision)
+                cssPosition.top = position.top + 'px';
+                
+                // Apply left position (use percentage on larger screens, pixels on mobile for precision)
+                if (usePercentPositioning && leftPercent !== null && windowWidth >= 768) {
+                    // Use percentage on tablets and above for fluid responsiveness
+                    cssPosition.left = leftPercent + '%';
+                } else {
+                    // Use pixels on mobile for better control
+                    cssPosition.left = position.left + 'px';
+                }
+                
+                // On very small screens, ensure tooltip doesn't overflow
+                if (windowWidth < 480) {
+                    cssPosition.maxWidth = (windowWidth - 20) + 'px';
+                }
+                
+                tooltip.css(cssPosition);
             }
         },
 
@@ -1107,6 +1305,9 @@
         dismiss: function(dontShowAgain) {
             // Set inactive first to ensure cleanup happens
             this.state.isActive = false;
+            
+            // UPDATED: Remove resize handler when tutorial ends
+            this.removeResizeHandler();
             
             // Immediately remove all tutorial elements
             this.removeCurrentStep();
