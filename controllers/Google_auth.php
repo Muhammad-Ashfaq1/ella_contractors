@@ -1,0 +1,329 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed');
+
+class Google_auth extends AdminController
+{
+    public function __construct()
+    {
+        parent::__construct();
+        
+        // Try to load Google Calendar sync library
+        try {
+            $this->load->library('ella_contractors/Google_calendar_sync');
+        } catch (Exception $e) {
+            log_message('error', 'Google_auth: Failed to load Google_calendar_sync library - ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Index method - redirects to connect (default action)
+     */
+    public function index()
+    {
+        $this->connect();
+    }
+
+    /**
+     * Initiate Google OAuth2 authentication
+     * Redirects user to Google consent screen
+     */
+    public function connect()
+    {
+        if (!is_staff_logged_in()) {
+            access_denied('ella_contractors');
+        }
+
+        // Check if library loaded successfully
+        if (!isset($this->google_calendar_sync)) {
+            set_alert('danger', 'Google Calendar library not loaded. Please ensure Appointly module is installed (for Google API client library).');
+            redirect(admin_url('ella_contractors/appointments'));
+            return;
+        }
+
+        $staff_id = get_staff_user_id();
+        $redirect_uri = get_option('google_calendar_redirect_uri') ?: site_url('ella_contractors/google_callback');
+
+        try {
+            // Get authorization URL
+            $auth_url = $this->google_calendar_sync->get_authorization_url($staff_id, $redirect_uri);
+
+            if ($auth_url) {
+                redirect($auth_url);
+            } else {
+                set_alert('danger', 'Failed to initialize Google Calendar connection. Please check your Google Calendar API credentials in settings.');
+                redirect(admin_url('ella_contractors/appointments'));
+            }
+        } catch (Exception $e) {
+            log_message('error', 'Google Calendar connect error: ' . $e->getMessage());
+            set_alert('danger', 'Error: ' . $e->getMessage());
+            redirect(admin_url('ella_contractors/appointments'));
+        }
+    }
+
+    /**
+     * OAuth callback handler
+     * Receives authorization code from Google and exchanges for tokens
+     */
+    public function callback()
+    {
+        if (!is_staff_logged_in()) {
+            access_denied('ella_contractors');
+        }
+
+        $code = $this->input->get('code');
+        $error = $this->input->get('error');
+        $staff_id = get_staff_user_id();
+
+        // Handle OAuth errors
+        if ($error) {
+            $error_message = $this->input->get('error_description') ?: 'Authentication was cancelled or failed.';
+            set_alert('danger', 'Google Calendar connection failed: ' . $error_message);
+            redirect(admin_url('ella_contractors/appointments'));
+            return;
+        }
+
+        // Handle missing authorization code
+        if (!$code) {
+            set_alert('danger', 'Missing authorization code. Please try connecting again.');
+            redirect(admin_url('ella_contractors/appointments'));
+            return;
+        }
+
+        try {
+            // Exchange code for tokens
+            $tokens = $this->google_calendar_sync->exchange_code_for_tokens($code, $staff_id);
+
+            if ($tokens && isset($tokens['access_token'])) {
+                // Save tokens to database
+                $saved = $this->google_calendar_sync->save_tokens($staff_id, $tokens);
+
+                if ($saved) {
+                    set_alert('success', 'Google Calendar connected successfully!');
+
+                    // Immediately sync all existing appointments for this staff member
+                    $this->google_calendar_sync->sync_all_appointments($staff_id);
+
+                    redirect(admin_url('ella_contractors/appointments'));
+                } else {
+                    set_alert('danger', 'Failed to save Google Calendar credentials. Please try again.');
+                    redirect(admin_url('ella_contractors/appointments'));
+                }
+            } else {
+                set_alert('danger', 'Failed to obtain access tokens from Google. Please try again.');
+                redirect(admin_url('ella_contractors/appointments'));
+            }
+        } catch (Exception $e) {
+            log_message('error', 'Google Calendar OAuth callback error: ' . $e->getMessage());
+            set_alert('danger', 'An error occurred during Google Calendar connection: ' . $e->getMessage());
+            redirect(admin_url('ella_contractors/appointments'));
+        }
+    }
+
+    /**
+     * Disconnect Google Calendar (revoke tokens)
+     */
+    public function disconnect()
+    {
+        if (!is_staff_logged_in()) {
+            ajax_access_denied();
+        }
+
+        $staff_id = get_staff_user_id();
+
+        try {
+            // Revoke tokens and delete from database
+            $disconnected = $this->google_calendar_sync->disconnect($staff_id);
+
+            if ($disconnected) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Google Calendar disconnected successfully'
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to disconnect Google Calendar'
+                ]);
+            }
+        } catch (Exception $e) {
+            log_message('error', 'Google Calendar disconnect error: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'An error occurred while disconnecting: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Check connection status (AJAX)
+     */
+    public function status()
+    {
+        if (!is_staff_logged_in()) {
+            ajax_access_denied();
+        }
+
+        // Set JSON response header
+        header('Content-Type: application/json');
+
+        try {
+            $staff_id = get_staff_user_id();
+            
+            // Check if credentials are configured (EllaContractors-specific only)
+            $client_id = get_option('google_calendar_client_id');
+            $client_secret = get_option('google_calendar_client_secret');
+            
+            if (empty($client_id) || empty($client_secret)) {
+                echo json_encode([
+                    'connected' => false,
+                    'error' => 'Google Calendar API credentials not configured. Please configure them in EllaContractors → Settings.',
+                    'message' => 'Not configured'
+                ]);
+                exit;
+            }
+            
+            // Load library if not already loaded
+            if (!isset($this->google_calendar_sync)) {
+                try {
+                    $this->load->library('ella_contractors/Google_calendar_sync');
+                } catch (Exception $lib_e) {
+                    log_message('error', 'Google Calendar: Failed to load library - ' . $lib_e->getMessage());
+                    echo json_encode([
+                        'connected' => false,
+                        'error' => 'Failed to load Google Calendar library: ' . $lib_e->getMessage(),
+                        'message' => 'Library error'
+                    ]);
+                    exit;
+                }
+            }
+            
+            $status = $this->google_calendar_sync->get_connection_status($staff_id);
+
+            if (!is_array($status)) {
+                // If status is not an array, something went wrong
+                echo json_encode([
+                    'connected' => false,
+                    'error' => 'Invalid response from Google Calendar sync library',
+                    'message' => 'Invalid response'
+                ]);
+                exit;
+            }
+
+            echo json_encode($status);
+            exit;
+        } catch (Exception $e) {
+            log_message('error', 'Google Calendar status check error: ' . $e->getMessage());
+            log_message('error', 'Google Calendar status check trace: ' . $e->getTraceAsString());
+            echo json_encode([
+                'connected' => false,
+                'error' => 'Failed to check Google Calendar status: ' . $e->getMessage(),
+                'message' => 'Error checking status'
+            ]);
+            exit;
+        }
+    }
+
+    /**
+     * Debug method to check credentials (REMOVE IN PRODUCTION)
+     */
+    public function debug_credentials()
+    {
+        if (!is_staff_logged_in() || !is_admin()) {
+            die('Access denied');
+        }
+
+        echo '<h2>EllaContractors Google Calendar Debug Info</h2>';
+        echo '<p><a href="' . admin_url('ella_contractors/settings') . '">Go to Settings</a></p>';
+        
+        echo '<h3>EllaContractors Google Calendar Credentials:</h3>';
+        $client_id = get_option('google_calendar_client_id');
+        $client_secret = get_option('google_calendar_client_secret');
+        $redirect_uri = get_option('google_calendar_redirect_uri');
+        
+        echo 'google_calendar_client_id: ' . ($client_id ?: '[NOT SET]') . '<br>';
+        echo 'google_calendar_client_secret: ' . ($client_secret ? '[SET - ' . strlen($client_secret) . ' chars]' : '[NOT SET]') . '<br>';
+        echo 'google_calendar_redirect_uri: ' . ($redirect_uri ?: '[NOT SET]') . '<br><br>';
+        
+        echo '<h3>Configuration Status:</h3>';
+        if (empty($client_id) || empty($client_secret)) {
+            echo '<span style="color: red; font-size: 18px;">❌ CREDENTIALS NOT CONFIGURED</span><br><br>';
+            echo '<strong>Missing:</strong> ';
+            $missing = [];
+            if (empty($client_id)) $missing[] = 'Client ID';
+            if (empty($client_secret)) $missing[] = 'Client Secret';
+            echo implode(', ', $missing) . '<br><br>';
+            echo '<p style="background: #fff3cd; padding: 15px; border-left: 4px solid #ffc107;">';
+            echo '<strong>To configure:</strong><br>';
+            echo '1. Go to <a href="' . admin_url('ella_contractors/settings') . '">EllaContractors Settings</a><br>';
+            echo '2. Follow the setup instructions on that page<br>';
+            echo '3. Paste your Google OAuth 2.0 credentials<br>';
+            echo '</p>';
+        } else {
+            echo '<span style="color: green; font-size: 18px;">✅ CREDENTIALS CONFIGURED</span><br><br>';
+            echo 'Client ID: ' . substr($client_id, 0, 30) . '...<br>';
+            echo 'Client Secret: [' . strlen($client_secret) . ' characters]<br>';
+            echo 'Redirect URI: ' . $redirect_uri . '<br>';
+        }
+        
+        echo '<br><h3>Routes Test:</h3>';
+        echo 'Settings: <a href="' . admin_url('ella_contractors/settings') . '" target="_blank">' . admin_url('ella_contractors/settings') . '</a><br>';
+        echo 'Status URL: <a href="' . admin_url('ella_contractors/google_status') . '" target="_blank">' . admin_url('ella_contractors/google_status') . '</a><br>';
+        echo 'Connect URL: <a href="' . admin_url('ella_contractors/google_auth') . '" target="_blank">' . admin_url('ella_contractors/google_auth') . '</a><br>';
+        
+        echo '<br><h3>Database Tables:</h3>';
+        echo 'tbl_staff_google_calendar_tokens exists: ' . ($this->db->table_exists(db_prefix() . 'staff_google_calendar_tokens') ? '<span style="color: green;">✅ Yes</span>' : '<span style="color: red;">❌ No</span>') . '<br>';
+        
+        // Check if current user has tokens
+        if ($this->db->table_exists(db_prefix() . 'staff_google_calendar_tokens')) {
+            $staff_id = get_staff_user_id();
+            $this->db->where('staff_id', $staff_id);
+            $tokens = $this->db->get(db_prefix() . 'staff_google_calendar_tokens')->row();
+            
+            echo '<br><h3>Your Connection Status:</h3>';
+            if ($tokens) {
+                echo '<span style="color: green;">✅ Connected</span><br>';
+                echo 'Token expires: ' . ($tokens->expires_at ?? 'Unknown') . '<br>';
+            } else {
+                echo '<span style="color: orange;">⚠️ Not Connected</span><br>';
+                echo 'You have not connected your Google Calendar yet.<br>';
+            }
+        }
+        
+        die();
+    }
+
+    /**
+     * Manual sync all appointments (AJAX)
+     */
+    public function sync_now()
+    {
+        if (!is_staff_logged_in()) {
+            ajax_access_denied();
+        }
+
+        $staff_id = get_staff_user_id();
+
+        try {
+            $result = $this->google_calendar_sync->sync_all_appointments($staff_id);
+
+            if ($result['success']) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Sync completed successfully. ' . $result['synced'] . ' appointment(s) synced.',
+                    'synced' => $result['synced'],
+                    'failed' => $result['failed']
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => $result['message']
+                ]);
+            }
+        } catch (Exception $e) {
+            log_message('error', 'Google Calendar sync_now error: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => 'An error occurred during sync: ' . $e->getMessage()
+            ]);
+        }
+    }
+}

@@ -73,8 +73,18 @@ function ella_contractors_init_menu() {
                 'icon' => 'fa fa-list-alt',
                 'position' => 25,
             ],
-            
         ];
+
+        // Add Settings submenu for admins only
+        if (is_admin()) {
+            $submenu[] = [
+                'slug' => 'ella_contractors_settings',
+                'name' => 'Settings',
+                'href' => admin_url('ella_contractors/settings'),
+                'icon' => 'fa fa-cog',
+                'position' => 99,
+            ];
+        }
 
         foreach ($submenu as $item) {
             $CI->app_menu->add_sidebar_children_item('ella_contractors', $item);
@@ -625,6 +635,103 @@ function ella_contractors_activate_module() {
     }
     
     // ==================== END DATA MIGRATION ====================
+    
+    // ==================== GOOGLE CALENDAR INTEGRATION - DATABASE SETUP ====================
+    
+    // Create staff_google_calendar_tokens table for staff-specific Google Calendar connections
+    if (!$CI->db->table_exists(db_prefix() . 'staff_google_calendar_tokens')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'staff_google_calendar_tokens` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `staff_id` int(11) NOT NULL,
+            `access_token` text,
+            `refresh_token` text,
+            `expires_at` datetime DEFAULT NULL,
+            `calendar_id` varchar(255) DEFAULT "primary",
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `unique_staff_id` (`staff_id`),
+            KEY `idx_staff_id` (`staff_id`),
+            KEY `idx_expires_at` (`expires_at`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+        
+        log_message('info', 'EllaContractors: staff_google_calendar_tokens table created successfully');
+    } else {
+        // Add missing columns if table exists but columns are missing
+        if (!$CI->db->field_exists('calendar_id', db_prefix() . 'staff_google_calendar_tokens')) {
+            try {
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'staff_google_calendar_tokens` ADD COLUMN `calendar_id` VARCHAR(255) DEFAULT "primary" AFTER `expires_at`');
+            } catch (Exception $e) {
+                log_message('error', 'EllaContractors: Failed to add calendar_id column - ' . $e->getMessage());
+            }
+        }
+    }
+    
+    // Add google_event_id and google_calendar_id columns to appointly_appointments table (DEPRECATED - kept for backward compatibility)
+    // NOTE: These columns are now deprecated in favor of tblappointment_google_events table
+    // They are kept for existing data migration and backward compatibility
+    if (!$CI->db->field_exists('google_event_id', db_prefix() . 'appointly_appointments')) {
+        try {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `google_event_id` VARCHAR(255) NULL DEFAULT NULL AFTER `reminder_channel`');
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD INDEX `idx_google_event_id` (`google_event_id`)');
+            log_message('info', 'EllaContractors: google_event_id column added successfully');
+        } catch (Exception $e) {
+            log_message('error', 'EllaContractors: Failed to add google_event_id column - ' . $e->getMessage());
+        }
+    }
+    
+    if (!$CI->db->field_exists('google_calendar_id', db_prefix() . 'appointly_appointments')) {
+        try {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `google_calendar_id` VARCHAR(255) NULL DEFAULT NULL AFTER `google_event_id`');
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD INDEX `idx_google_calendar_id` (`google_calendar_id`)');
+            log_message('info', 'EllaContractors: google_calendar_id column added successfully');
+        } catch (Exception $e) {
+            log_message('error', 'EllaContractors: Failed to add google_calendar_id column - ' . $e->getMessage());
+        }
+    }
+    
+    // Create appointment_google_events junction table to track per-staff Google event IDs
+    // This allows each staff member to have their own Google Calendar event ID for the same appointment
+    // Uses Perfex CRM standard rel_type/rel_id/org_id pattern for flexibility (no foreign key constraints)
+    if (!$CI->db->table_exists(db_prefix() . 'appointment_google_events')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'appointment_google_events` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `rel_type` varchar(50) DEFAULT "appointment" COMMENT "Related entity type",
+            `rel_id` int(11) NOT NULL COMMENT "Appointment ID",
+            `org_id` int(11) DEFAULT NULL COMMENT "Organization ID for multi-tenant support",
+            `staff_id` int(11) NOT NULL COMMENT "Staff member who owns this calendar event",
+            `google_event_id` varchar(255) NOT NULL COMMENT "Google Calendar event ID",
+            `google_calendar_id` varchar(255) DEFAULT "primary" COMMENT "Google Calendar ID (usually primary)",
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `unique_rel_staff` (`rel_type`, `rel_id`, `staff_id`),
+            KEY `idx_rel_type_id` (`rel_type`, `rel_id`),
+            KEY `idx_org_id` (`org_id`),
+            KEY `idx_staff_id` (`staff_id`),
+            KEY `idx_google_event_id` (`google_event_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+        
+        log_message('info', 'EllaContractors: appointment_google_events junction table created successfully');
+    }
+    
+    // Initialize Google Calendar configuration options (if not exist)
+    // Note: These are optional - if not set, will fall back to Appointly's credentials
+    if (get_option('google_calendar_client_id') === false) {
+        add_option('google_calendar_client_id', '');
+    }
+    if (get_option('google_calendar_client_secret') === false) {
+        add_option('google_calendar_client_secret', '');
+    }
+    if (get_option('google_calendar_redirect_uri') === false) {
+        // Default redirect URI
+        $redirect_uri = site_url('ella_contractors/google_callback');
+        add_option('google_calendar_redirect_uri', $redirect_uri);
+    }
+    
+    log_message('info', 'EllaContractors: Google Calendar options initialized. Will use Appointly credentials if EllaContractors ones are not set.');
+    
+    // ==================== END GOOGLE CALENDAR INTEGRATION - DATABASE SETUP ====================
     
     // Set module version
     update_option('ella_contractors_version', '1.0.0');
