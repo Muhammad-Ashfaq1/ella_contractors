@@ -76,15 +76,13 @@ class Google_auth extends AdminController
         // Handle OAuth errors
         if ($error) {
             $error_message = $this->input->get('error_description') ?: 'Authentication was cancelled or failed.';
-            set_alert('danger', 'Google Calendar connection failed: ' . $error_message);
-            redirect(admin_url('ella_contractors/appointments'));
+            $this->_close_popup_with_message('error', 'Google Calendar connection failed: ' . $error_message);
             return;
         }
 
         // Handle missing authorization code
         if (!$code) {
-            set_alert('danger', 'Missing authorization code. Please try connecting again.');
-            redirect(admin_url('ella_contractors/appointments'));
+            $this->_close_popup_with_message('error', 'Missing authorization code. Please try connecting again.');
             return;
         }
 
@@ -97,24 +95,19 @@ class Google_auth extends AdminController
                 $saved = $this->google_calendar_sync->save_tokens($staff_id, $tokens);
 
                 if ($saved) {
-                    set_alert('success', 'Google Calendar connected successfully!');
-
                     // Immediately sync all existing appointments for this staff member
                     $this->google_calendar_sync->sync_all_appointments($staff_id);
 
-                    redirect(admin_url('ella_contractors/appointments'));
+                    $this->_close_popup_with_message('success', 'Google Calendar connected successfully!');
                 } else {
-                    set_alert('danger', 'Failed to save Google Calendar credentials. Please try again.');
-                    redirect(admin_url('ella_contractors/appointments'));
+                    $this->_close_popup_with_message('error', 'Failed to save Google Calendar credentials. Please try again.');
                 }
             } else {
-                set_alert('danger', 'Failed to obtain access tokens from Google. Please try again.');
-                redirect(admin_url('ella_contractors/appointments'));
+                $this->_close_popup_with_message('error', 'Failed to obtain access tokens from Google. Please try again.');
             }
         } catch (Exception $e) {
             log_message('error', 'Google Calendar OAuth callback error: ' . $e->getMessage());
-            set_alert('danger', 'An error occurred during Google Calendar connection: ' . $e->getMessage());
-            redirect(admin_url('ella_contractors/appointments'));
+            $this->_close_popup_with_message('error', 'An error occurred during Google Calendar connection: ' . $e->getMessage());
         }
     }
 
@@ -222,74 +215,6 @@ class Google_auth extends AdminController
         }
     }
 
-    /**
-     * Debug method to check credentials (REMOVE IN PRODUCTION)
-     */
-    public function debug_credentials()
-    {
-        if (!is_staff_logged_in() || !is_admin()) {
-            die('Access denied');
-        }
-
-        echo '<h2>EllaContractors Google Calendar Debug Info</h2>';
-        echo '<p><a href="' . admin_url('ella_contractors/settings') . '">Go to Settings</a></p>';
-        
-        echo '<h3>EllaContractors Google Calendar Credentials:</h3>';
-        $client_id = get_option('google_calendar_client_id');
-        $client_secret = get_option('google_calendar_client_secret');
-        $redirect_uri = get_option('google_calendar_redirect_uri');
-        
-        echo 'google_calendar_client_id: ' . ($client_id ?: '[NOT SET]') . '<br>';
-        echo 'google_calendar_client_secret: ' . ($client_secret ? '[SET - ' . strlen($client_secret) . ' chars]' : '[NOT SET]') . '<br>';
-        echo 'google_calendar_redirect_uri: ' . ($redirect_uri ?: '[NOT SET]') . '<br><br>';
-        
-        echo '<h3>Configuration Status:</h3>';
-        if (empty($client_id) || empty($client_secret)) {
-            echo '<span style="color: red; font-size: 18px;">❌ CREDENTIALS NOT CONFIGURED</span><br><br>';
-            echo '<strong>Missing:</strong> ';
-            $missing = [];
-            if (empty($client_id)) $missing[] = 'Client ID';
-            if (empty($client_secret)) $missing[] = 'Client Secret';
-            echo implode(', ', $missing) . '<br><br>';
-            echo '<p style="background: #fff3cd; padding: 15px; border-left: 4px solid #ffc107;">';
-            echo '<strong>To configure:</strong><br>';
-            echo '1. Go to <a href="' . admin_url('ella_contractors/settings') . '">EllaContractors Settings</a><br>';
-            echo '2. Follow the setup instructions on that page<br>';
-            echo '3. Paste your Google OAuth 2.0 credentials<br>';
-            echo '</p>';
-        } else {
-            echo '<span style="color: green; font-size: 18px;">✅ CREDENTIALS CONFIGURED</span><br><br>';
-            echo 'Client ID: ' . substr($client_id, 0, 30) . '...<br>';
-            echo 'Client Secret: [' . strlen($client_secret) . ' characters]<br>';
-            echo 'Redirect URI: ' . $redirect_uri . '<br>';
-        }
-        
-        echo '<br><h3>Routes Test:</h3>';
-        echo 'Settings: <a href="' . admin_url('ella_contractors/settings') . '" target="_blank">' . admin_url('ella_contractors/settings') . '</a><br>';
-        echo 'Status URL: <a href="' . admin_url('ella_contractors/google_status') . '" target="_blank">' . admin_url('ella_contractors/google_status') . '</a><br>';
-        echo 'Connect URL: <a href="' . admin_url('ella_contractors/google_auth') . '" target="_blank">' . admin_url('ella_contractors/google_auth') . '</a><br>';
-        
-        echo '<br><h3>Database Tables:</h3>';
-        echo 'tbl_staff_google_calendar_tokens exists: ' . ($this->db->table_exists(db_prefix() . 'staff_google_calendar_tokens') ? '<span style="color: green;">✅ Yes</span>' : '<span style="color: red;">❌ No</span>') . '<br>';
-        
-        // Check if current user has tokens
-        if ($this->db->table_exists(db_prefix() . 'staff_google_calendar_tokens')) {
-            $staff_id = get_staff_user_id();
-            $this->db->where('staff_id', $staff_id);
-            $tokens = $this->db->get(db_prefix() . 'staff_google_calendar_tokens')->row();
-            
-            echo '<br><h3>Your Connection Status:</h3>';
-            if ($tokens) {
-                echo '<span style="color: green;">✅ Connected</span><br>';
-                echo 'Token expires: ' . ($tokens->expires_at ?? 'Unknown') . '<br>';
-            } else {
-                echo '<span style="color: orange;">⚠️ Not Connected</span><br>';
-                echo 'You have not connected your Google Calendar yet.<br>';
-            }
-        }
-        
-        die();
-    }
 
     /**
      * Manual sync all appointments (AJAX)
@@ -325,5 +250,83 @@ class Google_auth extends AdminController
                 'message' => 'An error occurred during sync: ' . $e->getMessage()
             ]);
         }
+    }
+
+    /**
+     * Close popup window and send message to parent
+     * 
+     * @param string $type - 'success' or 'error'
+     * @param string $message - Message to display
+     */
+    private function _close_popup_with_message($type, $message)
+    {
+        // Output HTML that sends postMessage to opener and closes the popup
+        $html = '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Google Calendar Connection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: ' . ($type === 'success' ? '#4caf50' : '#f44336') . ';
+            color: white;
+        }
+        .message-container {
+            text-align: center;
+            padding: 20px;
+        }
+        .message-container h2 {
+            margin-bottom: 10px;
+        }
+        .message-container p {
+            font-size: 16px;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="message-container">
+        <h2>' . ($type === 'success' ? '✓ Success!' : '✗ Error') . '</h2>
+        <p>' . htmlspecialchars($message) . '</p>
+        <div class="spinner"></div>
+        <p style="font-size: 14px; margin-top: 15px;">Closing window...</p>
+    </div>
+    <script>
+        // Send message to parent window
+        if (window.opener) {
+            window.opener.postMessage({
+                type: "' . ($type === 'success' ? 'google_calendar_auth_success' : 'google_calendar_auth_error') . '",
+                message: "' . addslashes($message) . '"
+            }, window.location.origin);
+        }
+        
+        // Close popup after a short delay
+        setTimeout(function() {
+            window.close();
+        }, ' . ($type === 'success' ? '1500' : '3000') . ');
+    </script>
+</body>
+</html>';
+
+        echo $html;
+        exit;
     }
 }

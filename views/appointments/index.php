@@ -25,31 +25,66 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group pull-right">
-                                        <!-- Google Calendar Connect Button -->
-                                        <div class="btn-group" role="group" style="margin-right:5px;" id="google-calendar-connect-group">
-                                            <button type="button" class="btn btn-default" id="google-calendar-connect-btn" data-toggle="tooltip" data-placement="top" title="Connect Google Calendar">
-                                                <i class="fa fa-google" style="color: #4285F4;"></i> Connect Google Calendar
-                                            </button>
-                                        </div>
-                                        <!-- Google Calendar Status (shown when connected) -->
-                                        <div class="btn-group" role="group" style="margin-right:5px; display:none;" id="google-calendar-status-group">
-                                            <button type="button" class="btn btn-success" id="google-calendar-status-btn" data-toggle="tooltip" data-placement="top" title="Google Calendar Connected" disabled>
-                                                <i class="fa fa-check-circle"></i> Google Calendar Connected ✓
-                                            </button>
-                                            <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <span class="caret"></span>
-                                            </button>
-                                            <ul class="dropdown-menu dropdown-menu-right">
-                                                <li><a href="#" id="google-calendar-sync-now"><i class="fa fa-refresh"></i> Sync Now</a></li>
-                                                <li role="separator" class="divider"></li>
-                                                <li><a href="#" id="google-calendar-disconnect" style="color: #e74c3c;"><i class="fa fa-unlink"></i> Disconnect</a></li>
-                                            </ul>
-                                        </div>
+                                        <!-- Calendar View Button -->
                                         <div class="btn-group" role="group" style="margin-right:5px;">
                                             <button type="button" class="btn btn-default" id="open-calendar-modal" data-toggle="tooltip" data-placement="top" title="View Calendar">
                                                 <i class="fa fa-calendar"></i>
                                             </button>
                                         </div>
+                                        <!-- Integrations Dropdown -->
+                                        <div class="btn-group btn-with-tooltip-group mright5" data-toggle="tooltip" data-title="Integrations">
+                                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <i class="fa fa-rocket" aria-hidden="true"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-right w-max-content" id="integrations-dropdown">
+                                                <!-- Google Calendar Integration -->
+                                                <li id="google-calendar-connect-item">
+                                                    <a href="#" id="google-calendar-connect-btn" data-toggle="tooltip" title="Connect Google Calendar">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="16" height="16" style="vertical-align: middle; margin-right: 6px;">
+                                                            <rect width="22" height="22" x="13" y="13" fill="#fff"/>
+                                                            <polygon fill="#1e88e5" points="25.68,20.92 26.688,22.36 28.272,21.208 28.272,29.56 30,29.56 30,18.616 28.56,18.616"/>
+                                                            <path fill="#1e88e5" d="M22.943,23.745c0.625-0.574,1.013-1.37,1.013-2.249c0-1.747-1.533-3.168-3.417-3.168 c-1.602,0-2.972,1.009-3.33,2.453l1.657,0.421c0.165-0.664,0.868-1.146,1.673-1.146c0.942,0,1.709,0.646,1.709,1.44 c0,0.794-0.767,1.44-1.709,1.44h-0.997v1.728h0.997c1.081,0,1.993,0.751,1.993,1.64c0,0.904-0.866,1.64-1.931,1.64 c-0.962,0-1.784-0.61-1.914-1.418L17,26.802c0.262,1.636,1.81,2.87,3.6,2.87c2.007,0,3.64-1.511,3.64-3.368 C24.24,25.281,23.736,24.363,22.943,23.745z"/>
+                                                            <polygon fill="#fbc02d" points="34,42 14,42 13,38 35,38"/>
+                                                            <polygon fill="#4caf50" points="38,35 10,35 11,38 37,38"/>
+                                                            <path fill="#1e88e5" d="M34,14l1-4l-1-4H9C7.343,6,6,7.343,6,9v25l4,1l4-1V16c0-1.105,0.895-2,2-2H34z"/>
+                                                            <polygon fill="#e53935" points="34,34 34,42 42,34"/>
+                                                            <path fill="#1565c0" d="M39,6h-5v8h8V9C42,7.343,40.657,6,39,6z"/>
+                                                            <path fill="#1565c0" d="M9,42h5v-8H6v5C6,40.657,7.343,42,9,42z"/>
+                                                        </svg>
+                                                        Connect Google Calendar
+                                                    </a>
+                                                </li>
+                                                <!-- Google Calendar Connected Status (hidden by default) -->
+                                                <li id="google-calendar-connected-item" style="display:none;">
+                                                    <a href="#" class="text-success" style="cursor: default; pointer-events: none;">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="16" height="16" style="vertical-align: middle; margin-right: 6px;">
+                                                            <rect width="22" height="22" x="13" y="13" fill="#fff"/>
+                                                            <polygon fill="#4caf50" points="25.68,20.92 26.688,22.36 28.272,21.208 28.272,29.56 30,29.56 30,18.616 28.56,18.616"/>
+                                                            <path fill="#4caf50" d="M22.943,23.745c0.625-0.574,1.013-1.37,1.013-2.249c0-1.747-1.533-3.168-3.417-3.168 c-1.602,0-2.972,1.009-3.33,2.453l1.657,0.421c0.165-0.664,0.868-1.146,1.673-1.146c0.942,0,1.709,0.646,1.709,1.44 c0,0.794-0.767,1.44-1.709,1.44h-0.997v1.728h0.997c1.081,0,1.993,0.751,1.993,1.64c0,0.904-0.866,1.64-1.931,1.64 c-0.962,0-1.784-0.61-1.914-1.418L17,26.802c0.262,1.636,1.81,2.87,3.6,2.87c2.007,0,3.64-1.511,3.64-3.368 C24.24,25.281,23.736,24.363,22.943,23.745z"/>
+                                                            <polygon fill="#fbc02d" points="34,42 14,42 13,38 35,38"/>
+                                                            <polygon fill="#4caf50" points="38,35 10,35 11,38 37,38"/>
+                                                            <path fill="#4caf50" d="M34,14l1-4l-1-4H9C7.343,6,6,7.343,6,9v25l4,1l4-1V16c0-1.105,0.895-2,2-2H34z"/>
+                                                            <polygon fill="#4caf50" points="34,34 34,42 42,34"/>
+                                                            <path fill="#4caf50" d="M39,6h-5v8h8V9C42,7.343,40.657,6,39,6z"/>
+                                                            <path fill="#4caf50" d="M9,42h5v-8H6v5C6,40.657,7.343,42,9,42z"/>
+                                                        </svg>
+                                                        Google Calendar Connected ✓
+                                                    </a>
+                                                </li>
+                                                <li id="google-calendar-sync-item" style="display:none;">
+                                                    <a href="#" id="google-calendar-sync-now">
+                                                        <i class="fa fa-refresh" style="margin-right: 6px;"></i> Sync Now
+                                                    </a>
+                                                </li>
+                                                <li role="separator" class="divider" id="google-calendar-divider" style="display:none;"></li>
+                                                <li id="google-calendar-disconnect-item" style="display:none;">
+                                                    <a href="#" id="google-calendar-disconnect" style="color: #e74c3c;">
+                                                        <i class="fa fa-unlink" style="margin-right: 6px;"></i> Disconnect
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <!-- Filter Dropdown -->
                                         <div class="btn-group" role="group">
                                             <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                 <i class="fa fa-filter"></i> All Appointments <span class="caret"></span>
@@ -140,6 +175,19 @@ $this->load->view('appointments/modal', $data);
 <script src="<?php echo base_url('assets/plugins/fullcalendar/fullcalendar.min.js'); ?>"></script>
 
 <style>
+
+/* Integrations dropdown styling */
+.w-max-content {
+    width: max-content;
+}
+
+#integrations-dropdown svg {
+    vertical-align: middle;
+}
+
+#integrations-dropdown .text-success {
+    color: #4caf50 !important;
+}
 
 /* Calendar modal styling */
 #ella-appointment-calendar {
@@ -1754,8 +1802,12 @@ function checkGoogleCalendarStatus() {
         success: function(response) {
             if (!response) {
                 console.error('Google Calendar: Invalid response from server');
-                $('#google-calendar-connect-group').show();
-                $('#google-calendar-status-group').hide();
+                // Show connect button, hide connected status
+                $('#google-calendar-connect-item').show();
+                $('#google-calendar-connected-item').hide();
+                $('#google-calendar-sync-item').hide();
+                $('#google-calendar-divider').hide();
+                $('#google-calendar-disconnect-item').hide();
                 return;
             }
 
@@ -1769,13 +1821,19 @@ function checkGoogleCalendarStatus() {
             }
 
             if (response && response.connected) {
-                // Show connected status
-                $('#google-calendar-connect-group').hide();
-                $('#google-calendar-status-group').show();
+                // Show connected status and options
+                $('#google-calendar-connect-item').hide();
+                $('#google-calendar-connected-item').show();
+                $('#google-calendar-sync-item').show();
+                $('#google-calendar-divider').show();
+                $('#google-calendar-disconnect-item').show();
             } else {
                 // Show connect button
-                $('#google-calendar-connect-group').show();
-                $('#google-calendar-status-group').hide();
+                $('#google-calendar-connect-item').show();
+                $('#google-calendar-connected-item').hide();
+                $('#google-calendar-sync-item').hide();
+                $('#google-calendar-divider').hide();
+                $('#google-calendar-disconnect-item').hide();
             }
         },
         error: function(xhr, status, error) {
@@ -1787,15 +1845,20 @@ function checkGoogleCalendarStatus() {
             });
             
             // On error, show connect button (don't block user)
-            $('#google-calendar-connect-group').show();
-            $('#google-calendar-status-group').hide();
+            $('#google-calendar-connect-item').show();
+            $('#google-calendar-connected-item').hide();
+            $('#google-calendar-sync-item').hide();
+            $('#google-calendar-divider').hide();
+            $('#google-calendar-disconnect-item').hide();
         }
     });
 }
 
 /**
- * Connect Google Calendar button click
+ * Connect Google Calendar button click - Opens OAuth in popup window
  */
+var googleAuthPopup = null;
+
 $(document).on('click', '#google-calendar-connect-btn', function(e) {
     e.preventDefault();
     
@@ -1811,7 +1874,7 @@ $(document).on('click', '#google-calendar-connect-btn', function(e) {
             if (!response) {
                 // Invalid response - try to connect anyway (might be a temporary error)
                 console.warn('Google Calendar: Invalid response, attempting connection anyway');
-                window.location.href = admin_url + 'ella_contractors/google_auth/connect';
+                openGoogleAuthPopup();
                 return;
             }
 
@@ -1820,17 +1883,17 @@ $(document).on('click', '#google-calendar-connect-btn', function(e) {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         title: 'Google Calendar Not Configured',
-                        html: 'Please configure Google Calendar API credentials in EllaContractors Settings first.<br><br><strong>Setup Steps:</strong><br>1. Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a><br>2. Create OAuth 2.0 Client ID with Calendar API enabled<br>3. Add credentials in Settings below<br><br><a href="' + admin_url + 'ella_contractors/settings" class="btn btn-sm btn-primary" style="color: white; margin-top: 10px;"><i class="fa fa-cog"></i> Go to EllaContractors Settings</a>',
+                        html: 'Please configure Google Calendar API credentials in <strong>Setup → Settings → Google</strong> first.<br><br><strong>Setup Steps:</strong><br>1. Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a><br>2. Create OAuth 2.0 Client ID with Calendar API enabled<br>3. Add credentials in Settings<br><br><a href="' + admin_url + 'settings?group=google" class="btn btn-sm btn-primary" style="color: white; margin-top: 10px;"><i class="fa fa-cog"></i> Go to Settings</a>',
                         icon: 'warning',
                         confirmButtonText: 'OK',
                         width: '600px'
                     });
                 } else {
-                    alert('Please configure Google Calendar API credentials in EllaContractors → Settings first.');
+                    alert('Please configure Google Calendar API credentials in Setup → Settings → Google first.');
                 }
             } else {
                 // Credentials configured or already connected - proceed to OAuth
-                window.location.href = admin_url + 'ella_contractors/google_auth/connect';
+                openGoogleAuthPopup();
             }
         },
         error: function(xhr, status, error) {
@@ -1852,17 +1915,96 @@ $(document).on('click', '#google-calendar-connect-btn', function(e) {
                     cancelButtonText: 'Cancel'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        window.location.href = admin_url + 'ella_contractors/google_auth/connect';
+                        openGoogleAuthPopup();
                     }
                 });
             } else {
                 if (confirm('Unable to verify Google Calendar configuration. Do you want to proceed anyway?')) {
-                    window.location.href = admin_url + 'ella_contractors/google_auth/connect';
+                    openGoogleAuthPopup();
                 }
             }
         }
     });
 });
+
+/**
+ * Open Google OAuth in popup window
+ */
+function openGoogleAuthPopup() {
+    var authUrl = admin_url + 'ella_contractors/google_auth/connect';
+    var width = 600;
+    var height = 700;
+    var left = (screen.width / 2) - (width / 2);
+    var top = (screen.height / 2) - (height / 2);
+    
+    googleAuthPopup = window.open(
+        authUrl,
+        'GoogleAuth',
+        'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes'
+    );
+    
+    // Focus the popup
+    if (googleAuthPopup && !googleAuthPopup.closed) {
+        googleAuthPopup.focus();
+    }
+}
+
+/**
+ * Listen for message from popup window when OAuth is complete
+ */
+window.addEventListener('message', function(event) {
+    // Verify origin for security
+    if (event.origin !== window.location.origin) {
+        return;
+    }
+    
+    // Check if this is a Google Calendar auth success message
+    if (event.data && event.data.type === 'google_calendar_auth_success') {
+        console.log('Google Calendar authentication successful');
+        
+        // Close popup if still open
+        if (googleAuthPopup && !googleAuthPopup.closed) {
+            googleAuthPopup.close();
+        }
+        
+        // Refresh Google Calendar connection status
+        checkGoogleCalendarStatus();
+        
+        // Show success message
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Success!',
+                text: 'Google Calendar connected successfully. Your appointments will now sync automatically.',
+                icon: 'success',
+                confirmButtonText: 'OK'
+            });
+        } else {
+            alert_float('success', 'Google Calendar connected successfully!');
+        }
+    }
+    
+    // Check if this is a Google Calendar auth error message
+    if (event.data && event.data.type === 'google_calendar_auth_error') {
+        console.error('Google Calendar authentication failed:', event.data.message);
+        
+        // Close popup if still open
+        if (googleAuthPopup && !googleAuthPopup.closed) {
+            googleAuthPopup.close();
+        }
+        
+        // Show error message
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Authentication Failed',
+                text: event.data.message || 'Failed to connect Google Calendar. Please try again.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        } else {
+            alert_float('danger', event.data.message || 'Failed to connect Google Calendar');
+        }
+    }
+}, false);
 
 /**
  * Sync Now button click
