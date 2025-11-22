@@ -75,17 +75,6 @@ function ella_contractors_init_menu() {
             ],
         ];
 
-        // Add Settings submenu for admins only
-        if (is_admin()) {
-            $submenu[] = [
-                'slug' => 'ella_contractors_settings',
-                'name' => 'Settings',
-                'href' => admin_url('ella_contractors/settings'),
-                'icon' => 'fa fa-cog',
-                'position' => 99,
-            ];
-        }
-
         foreach ($submenu as $item) {
             $CI->app_menu->add_sidebar_children_item('ella_contractors', $item);
         }
