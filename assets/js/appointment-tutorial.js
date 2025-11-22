@@ -594,6 +594,160 @@
             // CUSTOM POSITIONING: Responsive override for specific steps
             // Get viewport width for responsive positioning
             var viewportWidth = $(window).width();
+            var viewportHeight = $(window).height();
+            
+            if (step.id === 'new_appointment_button') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-top'); // Arrow points up
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens (1920px and above)
+                    positions = { top: '145px', left: '6.87622%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens (1600px - 1919px)
+                    var topPos = viewportHeight > 900 ? '145px' : (viewportHeight * 0.16) + 'px';
+                    positions = { top: topPos, left: '6%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens (1366px - 1599px)
+                    var topPos = viewportHeight > 900 ? '140px' : (viewportHeight * 0.16) + 'px';
+                    positions = { top: topPos, left: '5.5%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens (1024px - 1365px)
+                    var topPos = viewportHeight > 800 ? '135px' : (viewportHeight * 0.17) + 'px';
+                    positions = { top: topPos, left: '5%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape (768px - 1023px)
+                    var topPos = viewportHeight > 700 ? '130px' : (viewportHeight * 0.18) + 'px';
+                    positions = { top: topPos, left: '4%' };
+                } else {
+                    // Mobile and small tablets (below 768px)
+                    var topPos = viewportHeight > 600 ? '120px' : (viewportHeight * 0.18) + 'px';
+                    positions = { top: topPos, left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
+                    zIndex: 1041
+                });
+                return;
+            }
+            
+            if (step.id === 'filter_dropdown') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-top'); // Arrow points up
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens (1920px and above)
+                    positions = { top: '145px', left: '82.2591%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens (1600px - 1919px)
+                    var topPos = viewportHeight > 900 ? '145px' : (viewportHeight * 0.16) + 'px';
+                    positions = { top: topPos, left: '80%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens (1366px - 1599px)
+                    var topPos = viewportHeight > 900 ? '140px' : (viewportHeight * 0.16) + 'px';
+                    positions = { top: topPos, left: '78%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens (1024px - 1365px)
+                    var topPos = viewportHeight > 800 ? '135px' : (viewportHeight * 0.17) + 'px';
+                    positions = { top: topPos, left: '75%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape (768px - 1023px)
+                    var topPos = viewportHeight > 700 ? '130px' : (viewportHeight * 0.18) + 'px';
+                    positions = { top: topPos, left: '70%' };
+                } else {
+                    // Mobile and small tablets (below 768px)
+                    var topPos = viewportHeight > 600 ? '120px' : (viewportHeight * 0.18) + 'px';
+                    positions = { top: topPos, left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
+                    zIndex: 1041
+                });
+                return;
+            }
+            
+            if (step.id === 'calendar_button') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-top'); // Arrow points up
+                
+                // Temporarily make tooltip visible off-screen for dimension calculation
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
+                }
+                
+                // Calculate left position from target element (original behavior - centered on target)
+                var target = $(step.target);
+                var leftPosition;
+                if (target.length > 0 && target.is(':visible')) {
+                    var targetOffset = target.offset();
+                    var targetWidth = target.outerWidth();
+                    var tooltipWidth = tooltip.outerWidth() || tooltip[0].offsetWidth || 300;
+                    var scrollLeft = $(window).scrollLeft();
+                    var windowWidth = $(window).width();
+                    var viewportLeft = targetOffset.left - scrollLeft;
+                    // Calculate left position in pixels (centered on target)
+                    var leftPx = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                    // Convert to percentage
+                    leftPosition = ((leftPx / windowWidth) * 100);
+                    leftPosition = Math.max(1, Math.min(99, leftPosition));
+                    leftPosition = leftPosition + '%';
+                } else {
+                    // Fallback to center if target not found
+                    leftPosition = '50%';
+                }
+                
+                // Responsive top positioning (145px on large screens)
+                var topPosition;
+                if (viewportWidth >= 1920) {
+                    topPosition = '145px';
+                } else if (viewportWidth >= 1600) {
+                    topPosition = viewportHeight > 900 ? '145px' : (viewportHeight * 0.16) + 'px';
+                } else if (viewportWidth >= 1366) {
+                    topPosition = viewportHeight > 900 ? '140px' : (viewportHeight * 0.16) + 'px';
+                } else if (viewportWidth >= 1024) {
+                    topPosition = viewportHeight > 800 ? '135px' : (viewportHeight * 0.17) + 'px';
+                } else if (viewportWidth >= 768) {
+                    topPosition = viewportHeight > 700 ? '130px' : (viewportHeight * 0.18) + 'px';
+                } else {
+                    topPosition = viewportHeight > 600 ? '120px' : (viewportHeight * 0.18) + 'px';
+                    leftPosition = '50%'; // Center on mobile
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: topPosition,
+                    left: leftPosition,
+                    transform: viewportWidth < 768 ? 'translateX(-50%)' : 'none',
+                    zIndex: 1041
+                });
+                
+                // Restore visibility state
+                if (wasHidden) {
+                    tooltip.css({
+                        visibility: 'hidden',
+                        opacity: 0
+                    });
+                }
+                
+                return;
+            }
             
             if (step.id === 'appointment_actions') {
                 tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
@@ -637,22 +791,22 @@
                 var positions;
                 if (viewportWidth >= 1920) {
                     // Large screens (1920px and above)
-                    positions = { top: '130px', left: '70%' };
+                    positions = { top: '140px', left: '78%' };
                 } else if (viewportWidth >= 1600) {
                     // Medium-large screens (1600px - 1919px)
-                    positions = { top: '130px', left: '68%' };
+                    positions = { top: '140px', left: '76%' };
                 } else if (viewportWidth >= 1366) {
                     // Medium screens (1366px - 1599px)
-                    positions = { top: '130px', left: '65%' };
+                    positions = { top: '140px', left: '73%' };
                 } else if (viewportWidth >= 1024) {
                     // Small-medium screens (1024px - 1365px)
-                    positions = { top: '130px', left: '60%' };
+                    positions = { top: '140px', left: '70%' };
                 } else if (viewportWidth >= 768) {
                     // Tablet landscape (768px - 1023px)
-                    positions = { top: '130px', left: '55%' };
+                    positions = { top: '140px', left: '65%' };
                 } else {
                     // Mobile and small tablets (below 768px)
-                    positions = { top: '130px', left: '50%', transform: 'translateX(-50%)' };
+                    positions = { top: '140px', left: '50%', transform: 'translateX(-50%)' };
                 }
                 
                 tooltip.css({

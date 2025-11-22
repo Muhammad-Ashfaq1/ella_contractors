@@ -312,6 +312,15 @@
             // Create tooltip
             this.createTooltip(step, stepIndex);
 
+            // UPDATED: Hide tooltip completely off-screen initially to prevent glitch
+            this.state.tooltip.css({
+                position: 'fixed',
+                top: '-9999px',
+                left: '-9999px',
+                visibility: 'hidden',
+                opacity: 0
+            });
+
             // If target element exists, wait for it to be visible, then position
             if (step.target && step.position !== 'center') {
                 var target = $(step.target);
@@ -325,12 +334,29 @@
                     
                     // Small delay to allow scroll animation to complete
                     setTimeout(function() {
+                        // Position tooltip first (while still hidden)
                         self.positionTooltip(step);
+                        // Then make visible with fade-in
+                        setTimeout(function() {
+                            self.state.tooltip.css({
+                                visibility: 'visible',
+                                opacity: 1,
+                                transition: 'opacity 0.3s ease-out'
+                            });
+                        }, 50);
                     }, 350);
                 }, 100);
             } else {
                 // No target or center position - position immediately
                 this.positionTooltip(step);
+                // Make visible after positioning
+                setTimeout(function() {
+                    self.state.tooltip.css({
+                        visibility: 'visible',
+                        opacity: 1,
+                        transition: 'opacity 0.3s ease-out'
+                    });
+                }, 50);
             }
         },
 
@@ -443,8 +469,388 @@
         positionTooltip: function(step) {
             var tooltip = this.state.tooltip;
             
+            // UPDATED: Ensure tooltip is temporarily visible for dimension calculation (but off-screen)
+            // This prevents glitch where tooltip appears in wrong position
+            var wasHidden = tooltip.css('visibility') === 'hidden';
+            if (wasHidden) {
+                tooltip.css({
+                    position: 'fixed',
+                    top: '-9999px',
+                    left: '-9999px',
+                    visibility: 'visible',
+                    opacity: 0
+                });
+            }
+            
+            // CUSTOM POSITIONING: Responsive override for specific steps
+            // Get viewport width for responsive positioning
+            var viewportWidth = $(window).width();
+            
+            if (step.id === 'action_buttons') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-top'); // Arrow points up
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens (1920px and above)
+                    positions = { top: '15%', left: '20%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens (1600px - 1919px)
+                    positions = { top: '15%', left: '18%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens (1366px - 1599px)
+                    positions = { top: '15%', left: '15%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens (1024px - 1365px)
+                    positions = { top: '16%', left: '12%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape (768px - 1023px)
+                    positions = { top: '17%', left: '10%' };
+                } else {
+                    // Mobile and small tablets (below 768px)
+                    positions = { top: '18%', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
+                    zIndex: 9999
+                });
+                return;
+            }
+            
+            if (step.id === 'appointment_info') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-top'); // Arrow points up
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens (1920px and above)
+                    positions = { top: '22%', left: '30%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens (1600px - 1919px)
+                    positions = { top: '22%', left: '28%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens (1366px - 1599px)
+                    positions = { top: '22%', left: '25%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens (1024px - 1365px)
+                    positions = { top: '23%', left: '22%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape (768px - 1023px)
+                    positions = { top: '24%', left: '18%' };
+                } else {
+                    // Mobile and small tablets (below 768px)
+                    positions = { top: '25%', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
+                    zIndex: 9999
+                });
+                return;
+            }
+            
+            if (step.id === 'lead_information') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-top'); // Arrow points up
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens (1920px and above)
+                    positions = { top: '50%', left: '30%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens (1600px - 1919px)
+                    positions = { top: '50%', left: '28%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens (1366px - 1599px)
+                    positions = { top: '50%', left: '25%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens (1024px - 1365px)
+                    positions = { top: '50%', left: '22%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape (768px - 1023px)
+                    positions = { top: '50%', left: '18%' };
+                } else {
+                    // Mobile and small tablets (below 768px)
+                    positions = { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
+                    zIndex: 9999
+                });
+                return;
+            }
+            
+            if (step.id === 'measurements_tab') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-bottom'); // Arrow points down
+                
+                // Get viewport height for responsive top positioning
+                var viewportHeight = $(window).height();
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens (1920px and above)
+                    positions = { top: '300px', left: '5%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens (1600px - 1919px)
+                    var topPos = viewportHeight > 900 ? '300px' : (viewportHeight * 0.30) + 'px';
+                    positions = { top: topPos, left: '4%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens (1366px - 1599px)
+                    var topPos = viewportHeight > 900 ? '280px' : (viewportHeight * 0.30) + 'px';
+                    positions = { top: topPos, left: '3%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens (1024px - 1365px)
+                    var topPos = viewportHeight > 800 ? '260px' : (viewportHeight * 0.30) + 'px';
+                    positions = { top: topPos, left: '2%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape (768px - 1023px)
+                    var topPos = viewportHeight > 700 ? '240px' : (viewportHeight * 0.32) + 'px';
+                    positions = { top: topPos, left: '1%' };
+                } else {
+                    // Mobile and small tablets (below 768px)
+                    var topPos = viewportHeight > 600 ? '220px' : (viewportHeight * 0.35) + 'px';
+                    positions = { top: topPos, left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
+                    zIndex: 9999
+                });
+                return;
+            }
+            
+            if (step.id === 'estimates_tab') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-bottom'); // Arrow points down
+                
+                // Get viewport height for responsive top positioning
+                var viewportHeight = $(window).height();
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens (1920px and above)
+                    positions = { top: '300px', left: '9%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens (1600px - 1919px)
+                    var topPos = viewportHeight > 900 ? '300px' : (viewportHeight * 0.30) + 'px';
+                    positions = { top: topPos, left: '8%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens (1366px - 1599px)
+                    var topPos = viewportHeight > 900 ? '280px' : (viewportHeight * 0.30) + 'px';
+                    positions = { top: topPos, left: '7%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens (1024px - 1365px)
+                    var topPos = viewportHeight > 800 ? '260px' : (viewportHeight * 0.30) + 'px';
+                    positions = { top: topPos, left: '6%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape (768px - 1023px)
+                    var topPos = viewportHeight > 700 ? '240px' : (viewportHeight * 0.32) + 'px';
+                    positions = { top: topPos, left: '5%' };
+                } else {
+                    // Mobile and small tablets (below 768px)
+                    var topPos = viewportHeight > 600 ? '220px' : (viewportHeight * 0.35) + 'px';
+                    positions = { top: topPos, left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
+                    zIndex: 9999
+                });
+                return;
+            }
+            
+            if (step.id === 'notes_tab') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-bottom'); // Arrow points down
+                
+                // Get viewport height for responsive top positioning
+                var viewportHeight = $(window).height();
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens (1920px and above)
+                    positions = { top: '300px', left: '13%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens (1600px - 1919px)
+                    var topPos = viewportHeight > 900 ? '300px' : (viewportHeight * 0.30) + 'px';
+                    positions = { top: topPos, left: '12%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens (1366px - 1599px)
+                    var topPos = viewportHeight > 900 ? '280px' : (viewportHeight * 0.30) + 'px';
+                    positions = { top: topPos, left: '11%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens (1024px - 1365px)
+                    var topPos = viewportHeight > 800 ? '260px' : (viewportHeight * 0.30) + 'px';
+                    positions = { top: topPos, left: '10%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape (768px - 1023px)
+                    var topPos = viewportHeight > 700 ? '240px' : (viewportHeight * 0.32) + 'px';
+                    positions = { top: topPos, left: '9%' };
+                } else {
+                    // Mobile and small tablets (below 768px)
+                    var topPos = viewportHeight > 600 ? '220px' : (viewportHeight * 0.35) + 'px';
+                    positions = { top: topPos, left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
+                    zIndex: 9999
+                });
+                return;
+            }
+            
+            if (step.id === 'attachments_tab') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-bottom'); // Arrow points down
+                
+                // Get viewport height for responsive top positioning
+                var viewportHeight = $(window).height();
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens (1920px and above)
+                    positions = { top: '300px', left: '17%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens (1600px - 1919px)
+                    var topPos = viewportHeight > 900 ? '300px' : (viewportHeight * 0.30) + 'px';
+                    positions = { top: topPos, left: '16%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens (1366px - 1599px)
+                    var topPos = viewportHeight > 900 ? '280px' : (viewportHeight * 0.30) + 'px';
+                    positions = { top: topPos, left: '15%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens (1024px - 1365px)
+                    var topPos = viewportHeight > 800 ? '260px' : (viewportHeight * 0.30) + 'px';
+                    positions = { top: topPos, left: '14%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape (768px - 1023px)
+                    var topPos = viewportHeight > 700 ? '240px' : (viewportHeight * 0.32) + 'px';
+                    positions = { top: topPos, left: '13%' };
+                } else {
+                    // Mobile and small tablets (below 768px)
+                    var topPos = viewportHeight > 600 ? '220px' : (viewportHeight * 0.35) + 'px';
+                    positions = { top: topPos, left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
+                    zIndex: 9999
+                });
+                return;
+            }
+            
+            if (step.id === 'timeline_tab') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-bottom'); // Arrow points down
+                
+                // Get viewport height for responsive top positioning
+                var viewportHeight = $(window).height();
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens (1920px and above)
+                    positions = { top: '300px', left: '21%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens (1600px - 1919px)
+                    var topPos = viewportHeight > 900 ? '300px' : (viewportHeight * 0.30) + 'px';
+                    positions = { top: topPos, left: '20%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens (1366px - 1599px)
+                    var topPos = viewportHeight > 900 ? '280px' : (viewportHeight * 0.30) + 'px';
+                    positions = { top: topPos, left: '19%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens (1024px - 1365px)
+                    var topPos = viewportHeight > 800 ? '260px' : (viewportHeight * 0.30) + 'px';
+                    positions = { top: topPos, left: '18%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape (768px - 1023px)
+                    var topPos = viewportHeight > 700 ? '240px' : (viewportHeight * 0.32) + 'px';
+                    positions = { top: topPos, left: '17%' };
+                } else {
+                    // Mobile and small tablets (below 768px)
+                    var topPos = viewportHeight > 600 ? '220px' : (viewportHeight * 0.35) + 'px';
+                    positions = { top: topPos, left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
+                    zIndex: 9999
+                });
+                return;
+            }
+            
+            if (step.id === 'tabs_section') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-bottom'); // Arrow points down
+                
+                // Get viewport height for responsive top positioning
+                var viewportHeight = $(window).height();
+                
+                var positions;
+                if (viewportWidth >= 1920) {
+                    // Large screens (1920px and above)
+                    positions = { top: '200px', left: '40%' };
+                } else if (viewportWidth >= 1600) {
+                    // Medium-large screens (1600px - 1919px)
+                    var topPos = viewportHeight > 900 ? '200px' : (viewportHeight * 0.21) + 'px';
+                    positions = { top: topPos, left: '38%' };
+                } else if (viewportWidth >= 1366) {
+                    // Medium screens (1366px - 1599px)
+                    var topPos = viewportHeight > 900 ? '190px' : (viewportHeight * 0.21) + 'px';
+                    positions = { top: topPos, left: '35%' };
+                } else if (viewportWidth >= 1024) {
+                    // Small-medium screens (1024px - 1365px)
+                    var topPos = viewportHeight > 800 ? '180px' : (viewportHeight * 0.22) + 'px';
+                    positions = { top: topPos, left: '32%' };
+                } else if (viewportWidth >= 768) {
+                    // Tablet landscape (768px - 1023px)
+                    var topPos = viewportHeight > 700 ? '170px' : (viewportHeight * 0.23) + 'px';
+                    positions = { top: topPos, left: '28%' };
+                } else {
+                    // Mobile and small tablets (below 768px)
+                    var topPos = viewportHeight > 600 ? '160px' : (viewportHeight * 0.24) + 'px';
+                    positions = { top: topPos, left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: positions.top,
+                    left: positions.left,
+                    transform: positions.transform || 'none',
+                    zIndex: 9999
+                });
+                return;
+            }
+            
             if (!step.target || step.position === 'center') {
-                // Center on screen
+                // Center on screen - don't change visibility, let renderStep handle it
                 tooltip.css({
                     position: 'fixed',
                     top: '50%',
@@ -458,7 +864,7 @@
             // Position relative to target element
             var target = $(step.target);
             if (target.length === 0) {
-                // Fallback to center if target not found
+                // Fallback to center if target not found - don't change visibility
                 tooltip.css({
                     position: 'fixed',
                     top: '50%',
@@ -570,12 +976,22 @@
                 tooltip.css('--arrow-offset', maxArrowOffset + 'px');
             }
 
-            tooltip.css({
+            // UPDATED: Apply positioning without changing visibility/opacity
+            // Visibility is controlled by renderStep to prevent glitch
+            var finalCss = {
                 position: 'fixed',
                 top: position.top + 'px',
                 left: position.left + 'px',
                 zIndex: 9999
-            });
+            };
+            
+            // Only set visibility/opacity if tooltip was already visible
+            if (!wasHidden) {
+                finalCss.visibility = 'visible';
+                finalCss.opacity = 1;
+            }
+            
+            tooltip.css(finalCss);
         },
 
         /**
