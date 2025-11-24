@@ -41,6 +41,13 @@
     will-change: opacity, transform;
 }
 
+/* No animation / movement for centered steps (welcome and completion) */
+.tutorial-tooltip.tutorial-centered {
+    animation: none !important;
+    transition: opacity 0.3s ease-out; /* only fade */
+    will-change: opacity;
+}
+
 /* Arrow pointer for tooltip - Points UP (tooltip below button) */
 .tutorial-tooltip.tutorial-arrow-top::before {
     content: '';

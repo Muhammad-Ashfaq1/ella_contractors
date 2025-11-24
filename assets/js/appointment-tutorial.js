@@ -183,16 +183,15 @@
                     highlight: true
                 },
                 {
-                    id: 'appointments_table',
-                    title: 'Appointments Table',
-                    content: 'This table shows all your appointments. You can sort by any column, search for specific appointments, and use bulk actions to manage multiple appointments at once.',
-                    target: '.table-ella_appointments',
-                    position: 'top',
+                    id: 'google_calendar',
+                    title: 'Google Calendar Sync',
+                    content: 'Sync your appointments with Google Calendar to keep all your schedules in one place. Click the Google Calendar icon to connect your account and automatically sync appointments both ways.',
+                    target: '.btn-group.btn-with-tooltip-group.mright5',
+                    position: 'bottom', // Tooltip below target, arrow points up
                     showNext: true,
                     showBack: true,
                     showSkip: true,
-                    highlight: true,
-                    waitForElement: true // Wait for table to load
+                    highlight: true
                 },
                 {
                     id: 'status_column',
@@ -219,15 +218,16 @@
                     highlight: true
                 },
                 {
-                    id: 'google_calendar',
-                    title: 'Google Calendar Sync',
-                    content: 'Sync your appointments with Google Calendar to keep all your schedules in one place. Click the Google Calendar icon to connect your account and automatically sync appointments both ways.',
-                    target: '.panel-body',
-                    position: 'bottom', // Tooltip below target, arrow points up
+                    id: 'appointments_table',
+                    title: 'Appointments Table',
+                    content: 'This table shows all your appointments. You can sort by any column, search for specific appointments, and use bulk actions to manage multiple appointments at once.',
+                    target: '.table-ella_appointments',
+                    position: 'top',
                     showNext: true,
                     showBack: true,
                     showSkip: true,
-                    highlight: true
+                    highlight: true,
+                    waitForElement: true // Wait for table to load
                 },
                 {
                     id: 'completion',
@@ -438,7 +438,7 @@
             // Create tooltip
             this.createTooltip(step, stepIndex);
 
-            // Initially hide tooltip for fade-in animation
+            // Initially hide tooltip for fade-in animation (already set in createTooltip)
             this.state.tooltip.css({
                 opacity: 0,
                 transform: 'scale(0.95)'
@@ -458,8 +458,9 @@
                     // Small delay to allow scroll animation to complete
                     setTimeout(function() {
                         self.positionTooltip(step);
-                        // Fade in tooltip with animation
+                        // Make visible and fade in tooltip with animation
                         self.state.tooltip.css({
+                            visibility: 'visible',
                             opacity: 1,
                             transform: 'scale(1)',
                             transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
@@ -469,9 +470,10 @@
             } else {
                 // No target or center position - position immediately
                 this.positionTooltip(step);
-                // Fade in tooltip with animation
+                // Make visible and fade in tooltip with animation
                 setTimeout(function() {
                     self.state.tooltip.css({
+                        visibility: 'visible',
                         opacity: 1,
                         transform: 'scale(1)',
                         transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
@@ -576,6 +578,18 @@
             tooltipHtml += '</div>';
 
             this.state.tooltip = $(tooltipHtml);
+            
+            // Set initial positioning immediately to prevent tooltip from appearing at default position
+            // Position off-screen until final position is calculated
+            this.state.tooltip.css({
+                position: 'fixed',
+                top: '-9999px',
+                left: '-9999px',
+                visibility: 'hidden',
+                opacity: 0,
+                zIndex: 1041
+            });
+            
             $('body').append(this.state.tooltip);
 
             // Bind events
@@ -599,6 +613,18 @@
             if (step.id === 'new_appointment_button') {
                 tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
                 tooltip.addClass('tutorial-arrow-top'); // Arrow points up
+                
+                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
+                }
                 
                 var positions;
                 if (viewportWidth >= 1920) {
@@ -633,12 +659,32 @@
                     transform: positions.transform || 'none',
                     zIndex: 1041
                 });
+                
+                // Restore visibility state if it was hidden
+                if (wasHidden) {
+                    tooltip.css({
+                        visibility: 'hidden',
+                        opacity: 0
+                    });
+                }
                 return;
             }
             
             if (step.id === 'filter_dropdown') {
                 tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
                 tooltip.addClass('tutorial-arrow-top'); // Arrow points up
+                
+                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
+                }
                 
                 var positions;
                 if (viewportWidth >= 1920) {
@@ -673,6 +719,14 @@
                     transform: positions.transform || 'none',
                     zIndex: 1041
                 });
+                
+                // Restore visibility state if it was hidden
+                if (wasHidden) {
+                    tooltip.css({
+                        visibility: 'hidden',
+                        opacity: 0
+                    });
+                }
                 return;
             }
             
@@ -753,6 +807,18 @@
                 tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
                 tooltip.addClass('tutorial-arrow-left'); // Arrow points left
                 
+                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
+                }
+                
                 var positions;
                 if (viewportWidth >= 1920) {
                     // Large screens (1920px and above)
@@ -781,12 +847,32 @@
                     transform: positions.transform || 'none',
                     zIndex: 1041
                 });
+                
+                // Restore visibility state if it was hidden
+                if (wasHidden) {
+                    tooltip.css({
+                        visibility: 'hidden',
+                        opacity: 0
+                    });
+                }
                 return;
             }
             
             if (step.id === 'google_calendar') {
                 tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
                 tooltip.addClass('tutorial-arrow-top'); // Arrow points up
+                
+                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
+                }
                 
                 var positions;
                 if (viewportWidth >= 1920) {
@@ -816,6 +902,60 @@
                     transform: positions.transform || 'none',
                     zIndex: 1041
                 });
+                
+                // Restore visibility state if it was hidden
+                if (wasHidden) {
+                    tooltip.css({
+                        visibility: 'hidden',
+                        opacity: 0
+                    });
+                }
+                return;
+            }
+            
+            if (step.id === 'status_column') {
+                tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
+                tooltip.addClass('tutorial-arrow-right'); // Arrow points right
+                
+                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
+                }
+                
+                // Get target element position for top calculation
+                var target = $(step.target);
+                var topPosition;
+                if (target.length > 0 && target.is(':visible')) {
+                    var targetOffset = target.offset();
+                    var scrollTop = $(window).scrollTop();
+                    topPosition = (targetOffset.top - scrollTop) + 'px';
+                } else {
+                    // Fallback to approximate position if target not found
+                    topPosition = '119.602px';
+                }
+                
+                tooltip.css({
+                    position: 'fixed',
+                    top: topPosition,
+                    left: '52.1535%',
+                    transform: 'none',
+                    zIndex: 1041
+                });
+                
+                // Restore visibility state if it was hidden
+                if (wasHidden) {
+                    tooltip.css({
+                        visibility: 'hidden',
+                        opacity: 0
+                    });
+                }
                 return;
             }
             
