@@ -373,28 +373,359 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+
+/* Extra Large Screens (1920px and above) */
+@media (min-width: 1920px) {
+    .tutorial-tooltip {
+        max-width: 550px;
+        min-width: 400px;
+    }
+
+    .tutorial-tooltip-header {
+        padding: 24px 24px 18px;
+    }
+
+    .tutorial-tooltip-title {
+        font-size: 20px;
+    }
+
+    .tutorial-tooltip-title i {
+        font-size: 18px;
+    }
+
+    .tutorial-close {
+        font-size: 26px;
+        width: 28px;
+        height: 28px;
+    }
+
+    .tutorial-progress {
+        padding: 12px 24px;
+        font-size: 13px;
+    }
+
+    .tutorial-tooltip-content {
+        padding: 24px;
+        font-size: 15px;
+        line-height: 1.7;
+    }
+
+    .tutorial-tooltip-footer {
+        padding: 18px 24px 24px;
+    }
+
+    .tutorial-tooltip-actions .btn {
+        min-width: 100px;
+        padding: 10px 20px;
+        font-size: 15px;
+    }
+
+    .tutorial-btn-skip {
+        font-size: 14px;
+        padding: 10px 14px;
+    }
+
+    .tutorial-dont-show {
+        padding-top: 15px;
+        margin-top: 15px;
+    }
+
+    .tutorial-dont-show label {
+        font-size: 14px;
+    }
+}
+
+/* Large Screens (1600px - 1919px) */
+@media (min-width: 1600px) and (max-width: 1919px) {
+    .tutorial-tooltip {
+        max-width: 500px;
+        min-width: 380px;
+    }
+
+    .tutorial-tooltip-header {
+        padding: 22px 22px 16px;
+    }
+
+    .tutorial-tooltip-title {
+        font-size: 19px;
+    }
+
+    .tutorial-tooltip-title i {
+        font-size: 17px;
+    }
+
+    .tutorial-close {
+        font-size: 25px;
+        width: 26px;
+        height: 26px;
+    }
+
+    .tutorial-progress {
+        padding: 11px 22px;
+        font-size: 12.5px;
+    }
+
+    .tutorial-tooltip-content {
+        padding: 22px;
+        font-size: 14.5px;
+        line-height: 1.65;
+    }
+
+    .tutorial-tooltip-footer {
+        padding: 16px 22px 22px;
+    }
+
+    .tutorial-tooltip-actions .btn {
+        min-width: 90px;
+        padding: 9px 18px;
+        font-size: 14.5px;
+    }
+
+    .tutorial-btn-skip {
+        font-size: 13.5px;
+        padding: 9px 13px;
+    }
+
+    .tutorial-dont-show {
+        padding-top: 14px;
+        margin-top: 14px;
+    }
+
+    .tutorial-dont-show label {
+        font-size: 13.5px;
+    }
+}
+
+/* Medium-Large Screens (1366px - 1599px) */
+@media (min-width: 1366px) and (max-width: 1599px) {
+    .tutorial-tooltip {
+        max-width: 480px;
+        min-width: 360px;
+    }
+
+    .tutorial-tooltip-header {
+        padding: 20px 20px 15px;
+    }
+
+    .tutorial-tooltip-title {
+        font-size: 18px;
+    }
+
+    .tutorial-tooltip-title i {
+        font-size: 16px;
+    }
+
+    .tutorial-close {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+    }
+
+    .tutorial-progress {
+        padding: 10px 20px;
+        font-size: 12px;
+    }
+
+    .tutorial-tooltip-content {
+        padding: 20px;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .tutorial-tooltip-footer {
+        padding: 15px 20px 20px;
+    }
+
+    .tutorial-tooltip-actions .btn {
+        min-width: 85px;
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+
+    .tutorial-btn-skip {
+        font-size: 13px;
+        padding: 8px 12px;
+    }
+
+    .tutorial-dont-show {
+        padding-top: 12px;
+        margin-top: 12px;
+    }
+
+    .tutorial-dont-show label {
+        font-size: 13px;
+    }
+}
+
+/* Medium Screens (1024px - 1365px) */
+@media (min-width: 1024px) and (max-width: 1365px) {
+    .tutorial-tooltip {
+        max-width: 450px;
+        min-width: 340px;
+    }
+
+    .tutorial-tooltip-header {
+        padding: 18px 18px 14px;
+    }
+
+    .tutorial-tooltip-title {
+        font-size: 17px;
+    }
+
+    .tutorial-tooltip-title i {
+        font-size: 15px;
+    }
+
+    .tutorial-close {
+        font-size: 23px;
+        width: 23px;
+        height: 23px;
+    }
+
+    .tutorial-progress {
+        padding: 10px 18px;
+        font-size: 11.5px;
+    }
+
+    .tutorial-tooltip-content {
+        padding: 18px;
+        font-size: 13.5px;
+        line-height: 1.6;
+    }
+
+    .tutorial-tooltip-footer {
+        padding: 14px 18px 18px;
+    }
+
+    .tutorial-tooltip-actions .btn {
+        min-width: 80px;
+        padding: 8px 15px;
+        font-size: 13.5px;
+    }
+
+    .tutorial-btn-skip {
+        font-size: 12.5px;
+        padding: 8px 12px;
+    }
+
+    .tutorial-dont-show {
+        padding-top: 12px;
+        margin-top: 12px;
+    }
+
+    .tutorial-dont-show label {
+        font-size: 12.5px;
+    }
+}
+
+/* Tablet (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .tutorial-tooltip {
+        max-width: 420px;
+        min-width: 300px;
+    }
+
+    .tutorial-tooltip-header {
+        padding: 16px 16px 13px;
+    }
+
+    .tutorial-tooltip-title {
+        font-size: 16.5px;
+    }
+
+    .tutorial-tooltip-title i {
+        font-size: 15px;
+    }
+
+    .tutorial-close {
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+    }
+
+    .tutorial-progress {
+        padding: 9px 16px;
+        font-size: 11px;
+    }
+
+    .tutorial-tooltip-content {
+        padding: 16px;
+        font-size: 13px;
+        line-height: 1.55;
+    }
+
+    .tutorial-tooltip-footer {
+        padding: 13px 16px 16px;
+    }
+
+    .tutorial-tooltip-actions {
+        gap: 8px;
+    }
+
+    .tutorial-tooltip-actions .btn {
+        min-width: 75px;
+        padding: 7px 14px;
+        font-size: 13px;
+    }
+
+    .tutorial-btn-skip {
+        font-size: 12px;
+        padding: 7px 11px;
+    }
+
+    .tutorial-dont-show {
+        padding-top: 11px;
+        margin-top: 11px;
+    }
+
+    .tutorial-dont-show label {
+        font-size: 12px;
+    }
+}
+
+/* Mobile (below 768px) */
+@media (max-width: 767px) {
     .tutorial-tooltip {
         max-width: 90%;
         min-width: 280px;
         margin: 0 5%;
+        border-radius: 6px;
     }
 
     .tutorial-tooltip-header {
         padding: 15px 15px 12px;
+        border-radius: 6px 6px 0 0;
     }
 
     .tutorial-tooltip-title {
         font-size: 16px;
     }
 
+    .tutorial-tooltip-title i {
+        font-size: 14px;
+        margin-right: 6px;
+    }
+
+    .tutorial-close {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+    }
+
+    .tutorial-progress {
+        padding: 8px 15px;
+        font-size: 10.5px;
+    }
+
     .tutorial-tooltip-content {
         padding: 15px;
         font-size: 13px;
+        line-height: 1.5;
     }
 
     .tutorial-tooltip-footer {
         padding: 12px 15px 15px;
+        border-radius: 0 0 6px 6px;
     }
 
     .tutorial-tooltip-actions {
@@ -405,10 +736,105 @@
     .tutorial-tooltip-actions .btn {
         width: 100%;
         margin-left: 0;
+        min-width: auto;
+        padding: 10px 16px;
+        font-size: 14px;
     }
 
     .tutorial-btn-skip {
         order: -1;
+        font-size: 13px;
+        padding: 8px 12px;
+    }
+
+    .tutorial-dont-show {
+        padding-top: 12px;
+        margin-top: 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .tutorial-dont-show label {
+        font-size: 12px;
+        width: 100%;
+    }
+
+    .tutorial-btn-close {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    /* Adjust arrow sizes for mobile */
+    .tutorial-tooltip.tutorial-arrow-top::before,
+    .tutorial-tooltip.tutorial-arrow-top::after,
+    .tutorial-tooltip.tutorial-arrow-bottom::before,
+    .tutorial-tooltip.tutorial-arrow-bottom::after {
+        border-width: 6px;
+    }
+
+    .tutorial-tooltip.tutorial-arrow-left::before,
+    .tutorial-tooltip.tutorial-arrow-left::after,
+    .tutorial-tooltip.tutorial-arrow-right::before,
+    .tutorial-tooltip.tutorial-arrow-right::after {
+        border-width: 8px;
+    }
+}
+
+/* Small Mobile (below 480px) */
+@media (max-width: 479px) {
+    .tutorial-tooltip {
+        max-width: 95%;
+        min-width: 260px;
+        margin: 0 2.5%;
+    }
+
+    .tutorial-tooltip-header {
+        padding: 12px 12px 10px;
+    }
+
+    .tutorial-tooltip-title {
+        font-size: 15px;
+    }
+
+    .tutorial-tooltip-title i {
+        font-size: 13px;
+        margin-right: 5px;
+    }
+
+    .tutorial-close {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+    }
+
+    .tutorial-progress {
+        padding: 7px 12px;
+        font-size: 10px;
+    }
+
+    .tutorial-tooltip-content {
+        padding: 12px;
+        font-size: 12.5px;
+        line-height: 1.5;
+    }
+
+    .tutorial-tooltip-footer {
+        padding: 10px 12px 12px;
+    }
+
+    .tutorial-tooltip-actions .btn {
+        padding: 9px 14px;
+        font-size: 13px;
+    }
+
+    .tutorial-btn-skip {
+        font-size: 12px;
+        padding: 7px 10px;
+    }
+
+    .tutorial-dont-show label {
+        font-size: 11.5px;
     }
 }
 
