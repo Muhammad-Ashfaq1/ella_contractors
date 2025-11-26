@@ -114,3 +114,27 @@ $lang['time_ago_days'] = '%d days ago';
 $lang['time_ago_weeks'] = '%d weeks ago';
 $lang['time_ago_months'] = '%d months ago';
 $lang['time_ago_years'] = '%d years ago';
+
+// Reminder Templates
+$lang['reminder_templates'] = 'Reminder Templates';
+$lang['reminder_template'] = 'Reminder Template';
+$lang['new_reminder_template'] = 'New Reminder Template';
+$lang['edit_reminder_template'] = 'Edit Reminder Template';
+$lang['template_name'] = 'Template Name';
+$lang['template_type'] = 'Template Type';
+$lang['reminder_stage'] = 'Reminder Stage';
+$lang['email_subject'] = 'Email Subject';
+$lang['message_content'] = 'Message Content';
+$lang['template_active'] = 'Active';
+$lang['template_inactive'] = 'Inactive';
+$lang['client_instant'] = 'Client Instant';
+$lang['client_48h'] = 'Client 48 Hours';
+$lang['staff_48h'] = 'Staff 48 Hours';
+$lang['template_preview'] = 'Template Preview';
+$lang['available_placeholders'] = 'Available Placeholders';
+$lang['template_saved_successfully'] = 'Template saved successfully';
+$lang['template_deleted_successfully'] = 'Template deleted successfully';
+$lang['template_status_updated'] = 'Template status updated';
+$lang['template_already_exists'] = 'A template for this type and stage already exists';
+$lang['fill_all_required_fields'] = 'Please fill in all required fields';
+$lang['email_subject_required'] = 'Email subject is required for email templates';

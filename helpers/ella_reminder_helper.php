@@ -207,6 +207,12 @@ function ella_send_reminder_email($appointment_id, $stage)
     $type  = $stage === 'staff_48h' ? 'staff' : 'client';
     $context = $stage;
     
+    // Load reminder templates model
+    $CI->load->model('ella_contractors/Reminder_templates_model', 'templates_model');
+    
+    // Get template from database
+    $db_template = $CI->templates_model->get_template_by_type_stage('email', $stage);
+    
     // Generate ICS file
     $ics_file = ella_generate_ics($appointment_id, $type);
 
@@ -227,9 +233,13 @@ function ella_send_reminder_email($appointment_id, $stage)
         
         $to_email = $staff->email;
         $to_name = trim($staff->firstname . ' ' . $staff->lastname);
-        $subject_prefix = 'Your Appointment Reminder: ';
-        $subject = $subject_prefix . $appointment->subject;
-        $template = 'staff_appointment_reminder';
+        
+        // Use template subject if available, otherwise use default
+        if ($db_template && !empty($db_template->subject)) {
+            $subject = ella_replace_template_placeholders($db_template->subject, $appointment, $type, $to_name);
+        } else {
+            $subject = 'Your Appointment Reminder: ' . $appointment->subject;
+        }
     } else {
         // Default to the email stored on the appointment
         $to_email = $appointment->email;
@@ -257,16 +267,28 @@ function ella_send_reminder_email($appointment_id, $stage)
             return false;
         }
 
-        $subject_prefix = 'Appointment Reminder: ';
-        if ($stage === 'client_instant') {
-            $subject_prefix = 'Appointment Confirmation: ';
+        // Use template subject if available, otherwise use default
+        if ($db_template && !empty($db_template->subject)) {
+            $subject = ella_replace_template_placeholders($db_template->subject, $appointment, $type, $to_name);
+        } else {
+            $subject_prefix = 'Appointment Reminder: ';
+            if ($stage === 'client_instant') {
+                $subject_prefix = 'Appointment Confirmation: ';
+            }
+            $subject = $subject_prefix . $appointment->subject;
         }
-        $subject = $subject_prefix . $appointment->subject;
-        $template = 'client_appointment_reminder';
     }
 
-    // Build email body from template
-    $email_body = ella_parse_email_template($template, $appointment, $type);
+    // Build email body from database template or fallback
+    if ($db_template && !empty($db_template->message_content)) {
+        $email_body = ella_replace_template_placeholders($db_template->message_content, $appointment, $type, $to_name);
+        // Convert newlines to HTML breaks for email
+        $email_body = nl2br($email_body);
+    } else {
+        // Fallback to old template system
+        $template = $type === 'staff' ? 'staff_appointment_reminder' : 'client_appointment_reminder';
+        $email_body = ella_parse_email_template($template, $appointment, $type);
+    }
 
     // Ensure presentation links are visible even if template lacks placeholder
     if (!empty($appointment->presentation_block)
@@ -584,6 +606,12 @@ function ella_send_reminder_sms($appointment_id, $stage)
     $stage   = strtolower($stage);
     $type    = $stage === 'staff_48h' ? 'staff' : 'client';
     $context = $stage;
+    
+    // Load reminder templates model
+    $CI->load->model('ella_contractors/Reminder_templates_model', 'templates_model');
+    
+    // Get SMS template from database
+    $db_template = $CI->templates_model->get_template_by_type_stage('sms', $stage);
 
     if ($type === 'staff') {
         $staff = $CI->db->select('firstname, lastname, phonenumber')
@@ -602,7 +630,14 @@ function ella_send_reminder_sms($appointment_id, $stage)
             return false;
         }
 
-        $message = 'Reminder: ' . $appointment->subject . ' on ' . date('F j, Y g:i A', strtotime($appointment->date . ' ' . $appointment->start_hour));
+        // Use template message if available, otherwise use default
+        if ($db_template && !empty($db_template->message_content)) {
+            $staff_name = trim($staff->firstname . ' ' . $staff->lastname);
+            $message = ella_replace_template_placeholders($db_template->message_content, $appointment, $type, $staff_name);
+        } else {
+            $message = 'Reminder: ' . $appointment->subject . ' on ' . date('F j, Y g:i A', strtotime($appointment->date . ' ' . $appointment->start_hour));
+        }
+        
         $dispatch = ella_dispatch_sms($normalized, $message, [
             'appointment_id' => $appointment_id,
             'staff_id'       => $appointment->created_by,
@@ -632,6 +667,7 @@ function ella_send_reminder_sms($appointment_id, $stage)
     // Client SMS logic
     $phoneNumber = $appointment->phone;
     $leadId = 0;
+    $contact_name = '';
 
     if (empty($phoneNumber) && !empty($appointment->contact_id)) {
         if (!empty($appointment->lead_name)) {
@@ -639,13 +675,17 @@ function ella_send_reminder_sms($appointment_id, $stage)
             if ($lead && !empty($lead->phonenumber)) {
                 $phoneNumber = $lead->phonenumber;
                 $leadId = $lead->id;
+                $contact_name = $lead->name;
             }
         } else {
             $client = $CI->clients_model->get($appointment->contact_id);
             if ($client && !empty($client->phonenumber)) {
                 $phoneNumber = $client->phonenumber;
+                $contact_name = $client->company ?: trim(($client->firstname ?? '') . ' ' . ($client->lastname ?? ''));
             }
         }
+    } else {
+        $contact_name = $appointment->lead_name ?: ($appointment->client_name ?: 'Valued Customer');
     }
 
     if (empty($phoneNumber)) {
@@ -659,7 +699,13 @@ function ella_send_reminder_sms($appointment_id, $stage)
         return false;
     }
 
-    $message = 'Reminder: ' . $appointment->subject . ' on ' . date('F j, Y g:i A', strtotime($appointment->date . ' ' . $appointment->start_hour));
+    // Use template message if available, otherwise use default
+    if ($db_template && !empty($db_template->message_content)) {
+        $message = ella_replace_template_placeholders($db_template->message_content, $appointment, $type, $contact_name);
+    } else {
+        $message = 'Reminder: ' . $appointment->subject . ' on ' . date('F j, Y g:i A', strtotime($appointment->date . ' ' . $appointment->start_hour));
+    }
+    
     $dispatch = ella_dispatch_sms($normalized, $message, [
         'appointment_id' => $appointment_id,
         'lead_id'        => $leadId,

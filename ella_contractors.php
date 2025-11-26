@@ -53,6 +53,13 @@ function ella_contractors_init_menu() {
                 'position' => 10,
             ],
             [
+                'slug' => 'ella_contractors_reminder_templates',
+                'name' => 'Reminder Templates',
+                'href' => admin_url('ella_contractors/reminder_templates'),
+                'icon' => 'fa fa-envelope-o',
+                'position' => 15,
+            ],
+            [
                 'slug' => 'ella_contractors_presentations',
                 'name' => 'Presentations',
                 'href' => admin_url('ella_contractors/presentations'),
@@ -721,6 +728,135 @@ function ella_contractors_activate_module() {
     log_message('info', 'EllaContractors: Google Calendar options initialized. Will use Appointly credentials if EllaContractors ones are not set.');
     
     // ==================== END GOOGLE CALENDAR INTEGRATION - DATABASE SETUP ====================
+    
+    // ==================== REMINDER TEMPLATES - DATABASE SETUP ====================
+    
+    // Create reminder templates table for email and SMS templates
+    if (!$CI->db->table_exists(db_prefix() . 'ella_appointment_reminder_templates')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_appointment_reminder_templates` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `template_name` varchar(255) NOT NULL,
+            `template_type` ENUM(\'email\', \'sms\') NOT NULL,
+            `reminder_stage` ENUM(\'client_instant\', \'client_48h\', \'staff_48h\') NOT NULL,
+            `subject` varchar(500) DEFAULT NULL COMMENT "Email subject (NULL for SMS)",
+            `message_content` text NOT NULL,
+            `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+            `created_by` int(11) NOT NULL,
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `idx_template_type` (`template_type`),
+            KEY `idx_reminder_stage` (`reminder_stage`),
+            KEY `idx_is_active` (`is_active`),
+            UNIQUE KEY `unique_type_stage` (`template_type`, `reminder_stage`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+        
+        // Insert default templates
+        $default_templates = [
+            [
+                'template_name' => 'Client Instant Email Reminder',
+                'template_type' => 'email',
+                'reminder_stage' => 'client_instant',
+                'subject' => 'Appointment Confirmation: {appointment_subject}',
+                'message_content' => 'Dear {contact_name},
+
+Thank you for scheduling your appointment with us!
+
+Appointment Details:
+- Subject: {appointment_subject}
+- Date: {appointment_date}
+- Time: {appointment_time}
+- Location: {appointment_address}
+
+We look forward to meeting with you.
+
+Best regards,
+{company_name}',
+                'is_active' => 1,
+                'created_by' => 1
+            ],
+            [
+                'template_name' => 'Client 48 Hours Email Reminder',
+                'template_type' => 'email',
+                'reminder_stage' => 'client_48h',
+                'subject' => 'Appointment Reminder: {appointment_subject}',
+                'message_content' => 'Dear {contact_name},
+
+This is a reminder that you have an appointment scheduled:
+
+Appointment Details:
+- Subject: {appointment_subject}
+- Date: {appointment_date}
+- Time: {appointment_time}
+- Location: {appointment_address}
+
+Please let us know if you need to reschedule.
+
+Best regards,
+{company_name}',
+                'is_active' => 1,
+                'created_by' => 1
+            ],
+            [
+                'template_name' => 'Staff 48 Hours Email Reminder',
+                'template_type' => 'email',
+                'reminder_stage' => 'staff_48h',
+                'subject' => 'Upcoming Appointment: {appointment_subject}',
+                'message_content' => 'Hello {staff_name},
+
+You have an upcoming appointment scheduled:
+
+Appointment Details:
+- Subject: {appointment_subject}
+- Date: {appointment_date}
+- Time: {appointment_time}
+- Location: {appointment_address}
+- Contact: {contact_name} ({contact_email})
+
+Please prepare accordingly.
+
+Best regards,
+CRM System',
+                'is_active' => 1,
+                'created_by' => 1
+            ],
+            [
+                'template_name' => 'Client Instant SMS Reminder',
+                'template_type' => 'sms',
+                'reminder_stage' => 'client_instant',
+                'subject' => NULL,
+                'message_content' => 'Hi {contact_name}, your appointment "{appointment_subject}" is confirmed for {appointment_date} at {appointment_time}. Location: {appointment_address}. See you soon!',
+                'is_active' => 1,
+                'created_by' => 1
+            ],
+            [
+                'template_name' => 'Client 48 Hours SMS Reminder',
+                'template_type' => 'sms',
+                'reminder_stage' => 'client_48h',
+                'subject' => NULL,
+                'message_content' => 'Reminder: Your appointment "{appointment_subject}" is scheduled for {appointment_date} at {appointment_time}. Location: {appointment_address}. Please confirm or reschedule if needed.',
+                'is_active' => 1,
+                'created_by' => 1
+            ],
+            [
+                'template_name' => 'Staff 48 Hours SMS Reminder',
+                'template_type' => 'sms',
+                'reminder_stage' => 'staff_48h',
+                'subject' => NULL,
+                'message_content' => 'Reminder: You have an appointment "{appointment_subject}" on {appointment_date} at {appointment_time} with {contact_name}. Location: {appointment_address}.',
+                'is_active' => 1,
+                'created_by' => 1
+            ]
+        ];
+        
+        foreach ($default_templates as $template) {
+            $CI->db->insert(db_prefix() . 'ella_appointment_reminder_templates', $template);
+        }
+        
+        log_message('info', 'EllaContractors: Reminder templates table created with default templates');
+    }
+    
+    // ==================== END REMINDER TEMPLATES - DATABASE SETUP ====================
     
     // Set module version
     update_option('ella_contractors_version', '1.0.0');
