@@ -564,15 +564,15 @@
             tooltipHtml += '</div>';
 
             // Don't show again checkbox (only on last step)
-            if (step.isLast) {
-                tooltipHtml += '<div class="tutorial-dont-show">';
-                tooltipHtml += '<label>';
-                tooltipHtml += '<input type="checkbox" id="tutorial-dont-show-again"> ';
-                tooltipHtml += "Don't show me this again";
-                tooltipHtml += '</label>';
-                tooltipHtml += '<button type="button" class="btn btn-default tutorial-btn-close" style="margin-left: 15px;">Close</button>';
-                tooltipHtml += '</div>';
-            }
+            // if (step.isLast) {
+            //     tooltipHtml += '<div class="tutorial-dont-show">';
+            //     tooltipHtml += '<label>';
+            //     // tooltipHtml += '<input type="checkbox" id="tutorial-dont-show-again"> ';
+            //     // tooltipHtml += "Don't show me this again";
+            //     tooltipHtml += '</label>';
+            //     tooltipHtml += '<button type="button" class="btn btn-default tutorial-btn-close" style="margin-left: 15px;">Close</button>';
+            //     tooltipHtml += '</div>';
+            // }
 
             tooltipHtml += '</div>';
             tooltipHtml += '</div>';
