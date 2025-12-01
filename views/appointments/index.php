@@ -553,7 +553,7 @@ $(document).ready(function() {
     
     // Restart Tutorial Button
     $('#restart-tutorial').on('click', function() {
-        if (confirm('Would you like to restart the tutorial? This will show you step-by-step guidance on how to use the appointments module.')) {
+        // if (confirm('Would you like to restart the tutorial? This will show you step-by-step guidance on how to use the appointments module.')) {
             // Clear preferences
             localStorage.removeItem('ella_contractors_tutorial_dismissed');
             localStorage.removeItem('ella_contractors_tutorial_completed');
@@ -578,7 +578,7 @@ $(document).ready(function() {
                     }
                 }
             });
-        }
+        // }
     });
     
     // Initialize AJAX search for leads and clients
