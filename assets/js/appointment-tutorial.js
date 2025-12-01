@@ -642,22 +642,19 @@
                     // Desktop screens (1440px - 1599px)
                     var topPos = viewportHeight > 900 ? '175px' : (viewportHeight * 0.20) + 'px';
                     positions = { top: topPos, left: '3.5%' };
-                } else if (viewportWidth >= 1366) {
-                    // Medium screens (1366px - 1439px)
+                } else if (viewportWidth >= 1370) {
+                    // Medium screens (1370px - 1439px)
                     var topPos = viewportHeight > 900 ? '180px' : (viewportHeight * 0.21) + 'px';
                     positions = { top: topPos, left: '3%' };
                 } else if (viewportWidth >= 1280) {
-                    // Laptop screens (1280px - 1365px)
-                    var topPos = viewportHeight > 800 ? '185px' : '200px';
-                    positions = { top: topPos, left: '3.5%' };
+                    // Laptop screens (1280px - 1369px)
+                    positions = { top: '140px', left: '3.5%' };
                 } else if (viewportWidth >= 1024) {
                     // Small-medium screens (1024px - 1279px)
-                    var topPos = viewportHeight > 800 ? '190px' : '200px';
-                    positions = { top: topPos, left: '4%' };
+                    positions = { top: '140px', left: '4%' };
                 } else if (viewportWidth >= 768) {
                     // Tablet landscape (768px - 1023px)
-                    var topPos = viewportHeight > 700 ? '190px' : '200px';
-                    positions = { top: topPos, left: '3%' };
+                    positions = { top: '140px', left: '3%' };
                 } else {
                     // Mobile and small tablets (below 768px)
                     var topPos = viewportHeight > 600 ? '130px' : '130px';
@@ -714,22 +711,19 @@
                     // Desktop screens (1440px - 1599px)
                     var topPos = viewportHeight > 900 ? '175px' : (viewportHeight * 0.20) + 'px';
                     positions = { top: topPos, left: '79%' };
-                } else if (viewportWidth >= 1366) {
-                    // Medium screens (1366px - 1439px)
+                } else if (viewportWidth >= 1370) {
+                    // Medium screens (1370px - 1439px)
                     var topPos = viewportHeight > 900 ? '180px' : (viewportHeight * 0.21) + 'px';
                     positions = { top: topPos, left: '78%' };
                 } else if (viewportWidth >= 1280) {
-                    // Laptop screens (1280px - 1365px)
-                    var topPos = viewportHeight > 800 ? '185px' : '200px';
-                    positions = { top: topPos, left: '76.5%' };
+                    // Laptop screens (1280px - 1369px)
+                    positions = { top: '140px', left: '76.5%' };
                 } else if (viewportWidth >= 1024) {
                     // Small-medium screens (1024px - 1279px)
-                    var topPos = viewportHeight > 800 ? '190px' : '200px';
-                    positions = { top: topPos, left: '75%' };
+                    positions = { top: '140px', left: '75%' };
                 } else if (viewportWidth >= 768) {
                     // Tablet landscape (768px - 1023px)
-                    var topPos = viewportHeight > 700 ? '190px' : '200px';
-                    positions = { top: topPos, left: '70%' };
+                    positions = { top: '140px', left: '70%' };
                 } else {
                     // Mobile and small tablets (below 768px)
                     var topPos = viewportHeight > 600 ? '200px' : '200px';
@@ -801,14 +795,14 @@
                     topPosition = viewportHeight > 900 ? '170px' : (viewportHeight * 0.20) + 'px';
                 } else if (viewportWidth >= 1440) {
                     topPosition = viewportHeight > 900 ? '175px' : (viewportHeight * 0.20) + 'px';
-                } else if (viewportWidth >= 1366) {
+                } else if (viewportWidth >= 1370) {
                     topPosition = viewportHeight > 900 ? '180px' : (viewportHeight * 0.21) + 'px';
                 } else if (viewportWidth >= 1280) {
-                    topPosition = viewportHeight > 800 ? '185px' : '200px';
+                    topPosition = '140px';
                 } else if (viewportWidth >= 1024) {
-                    topPosition = '190px';
+                    topPosition = '140px';
                 } else if (viewportWidth >= 768) {
-                    topPosition = viewportHeight > 700 ? '190px' : '200px';
+                    topPosition = '140px';
                 } else {
                     topPosition = viewportHeight > 600 ? '200px' : '200px';
                     leftPosition = '50%'; // Center on mobile
@@ -917,18 +911,18 @@
                 } else if (viewportWidth >= 1440) {
                     // Desktop screens (1440px - 1599px)
                     positions = { top: '175px', left: '73%' };
-                } else if (viewportWidth >= 1366) {
-                    // Medium screens (1366px - 1439px)
+                } else if (viewportWidth >= 1370) {
+                    // Medium screens (1370px - 1439px)
                     positions = { top: '180px', left: '72%' };
                 } else if (viewportWidth >= 1280) {
-                    // Laptop screens (1280px - 1365px)
-                    positions = { top: '185px', left: '70%' };
+                    // Laptop screens (1280px - 1369px)
+                    positions = { top: '140px', left: '70%' };
                 } else if (viewportWidth >= 1024) {
                     // Small-medium screens (1024px - 1279px)
-                    positions = { top: '190px', left: '68%' };
+                    positions = { top: '140px', left: '68%' };
                 } else if (viewportWidth >= 768) {
                     // Tablet landscape (768px - 1023px)
-                    positions = { top: '190px', left: '61%' };
+                    positions = { top: '140px', left: '61%' };
                 } else {
                     // Mobile and small tablets (below 768px)
                     positions = { top: '200px', left: '50%', transform: 'translateX(-50%)' };
@@ -972,28 +966,28 @@
                 var positions;
                 if (viewportWidth >= 1920) {
                     // Extra large screens (1920px and above)
-                    positions = { top: '203.891px', left: '49.1535%' };
+                    positions = { top: '203.891px', left: '44.1535%' };
                 } else if (viewportWidth >= 1800) {
                     // Large screens (1800px - 1919px)
-                    positions = { top: '200px', left: '48%' };
+                    positions = { top: '200px', left: '42%' };
                 } else if (viewportWidth >= 1600) {
                     // Medium-large screens (1600px - 1799px)
-                    positions = { top: '195px', left: '47.5%' };
+                    positions = { top: '195px', left: '40.5%' };
                 } else if (viewportWidth >= 1440) {
                     // Desktop screens (1440px - 1599px)
-                    positions = { top: '190px', left: '45%' };
+                    positions = { top: '190px', left: '37%' };
                 } else if (viewportWidth >= 1366) {
                     // Medium screens (1366px - 1439px)
-                    positions = { top: '185px', left: '43.5%' };
+                    positions = { top: '185px', left: '35.5%' };
                 } else if (viewportWidth >= 1280) {
                     // Laptop screens (1280px - 1365px)
-                    positions = { top: '180px', left: '42%' };
+                    positions = { top: '180px', left: '33%' };
                 } else if (viewportWidth >= 1024) {
                     // Small-medium screens (1024px - 1279px)
-                    positions = { top: '175px', left: '41.5%' };
+                    positions = { top: '175px', left: '31.5%' };
                 } else if (viewportWidth >= 768) {
                     // Tablet landscape (768px - 1023px)
-                    positions = { top: '170px', left: '40%', transform: 'translateX(-50%)' };
+                    positions = { top: '170px', left: '30.5%', transform: 'translateX(-50%)' };
                 } else {
                     // Mobile and small tablets (below 768px)
                     positions = { top: '165px', left: '50%', transform: 'translateX(-50%)' };
