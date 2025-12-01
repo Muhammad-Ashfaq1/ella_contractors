@@ -21,16 +21,16 @@
                         <hr class="hr-panel-heading" />
                         
                         <div class="table-responsive">
-                            <table class="table table-reminder-templates">
+                            <table class="table table-striped table-reminder-templates">
                                 <thead>
                                     <tr>
                                         <th class="text-center"><?php echo _l('id'); ?></th>
-                                        <th>Template Name</th>
+                                        <th class="text-center" style="min-width: 200px;">Template Name</th>
                                         <th class="text-center">Type</th>
                                         <th class="text-center">Stage</th>
                                         <th class="text-center">Status</th>
-                                        <th>Created By</th>
-                                        <th>Last Updated</th>
+                                        <th class="text-center">Created By</th>
+                                        <th class="text-center">Last Updated</th>
                                         <th class="text-center" width="120px"><?php echo _l('options'); ?></th>
                                     </tr>
                                 </thead>
@@ -40,8 +40,8 @@
                                             <?php if (isset($template['id'])): ?>
                                             <tr>
                                                 <td class="text-center"><?php echo $template['id']; ?></td>
-                                                <td>
-                                                    <a href="<?php echo admin_url('ella_contractors/reminder_templates/edit/' . $template['id']); ?>" class="template-name-link">
+                                                <td class="text-center">
+                                                    <a href="<?php echo admin_url('ella_contractors/reminder_templates/edit/' . $template['id']); ?>">
                                                         <?php echo htmlspecialchars($template['template_name'] ?? ''); ?>
                                                     </a>
                                                 </td>
@@ -74,9 +74,9 @@
                                                         </span>
                                                     <?php endif; ?>
                                                 </td>
-                                                <td><?php echo htmlspecialchars($template['created_by_name'] ?? 'N/A'); ?></td>
-                                                <td><?php echo isset($template['updated_at']) ? time_ago($template['updated_at']) : 'N/A'; ?></td>
-                                                <td class="text-right">
+                                                <td class="text-center"><?php echo htmlspecialchars($template['created_by_name'] ?? 'N/A'); ?></td>
+                                                <td class="text-center"><?php echo isset($template['updated_at']) ? time_ago($template['updated_at']) : 'N/A'; ?></td>
+                                                <td class="text-center">
                                                     <div class="row-options">
                                                         <a href="javascript:void(0);" 
                                                            onclick="previewTemplate(<?php echo $template['id']; ?>)" 
@@ -144,6 +144,19 @@
 </div>
 
 <?php init_tail(); ?>
+<style>
+/* Ensure row-options buttons are always visible */
+.table-reminder-templates .row-options {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.table-reminder-templates .row-options .btn-icon {
+    display: inline-block;
+    margin: 0 2px;
+}
+</style>
 <script>
 $(document).ready(function() {
     // Initialize tooltips
