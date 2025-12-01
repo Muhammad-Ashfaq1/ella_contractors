@@ -686,7 +686,7 @@
                     positions = { top: '97.0515px', right: '230.12px' };
                 } else if (viewportWidth >= 1370) {
                     // Medium screens (1370px - 1439px)
-                    positions = { top: '97.0515px', right: '230.12px' };
+                    positions = { top: '120.0515px', right: '230.12px' };
                 } else if (viewportWidth >= 1280) {
                     // Laptop screens (1280px - 1369px)
                     positions = { top: '97.0515px', right: '230.12px' };
