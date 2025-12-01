@@ -600,40 +600,50 @@
                 var positions;
                 if (viewportWidth >= 1920) {
                     // Extra large screens (1920px and above)
-                    positions = { top: '140.391px', left: '2000px' };
+                    positions = { top: '140.391px', right: '30.12px' };
                 } else if (viewportWidth >= 1800) {
                     // Large screens (1800px - 1919px)
-                    positions = { top: '140.391px', left: '1800px' };
+                    positions = { top: '140.391px', right: '30.12px' };
                 } else if (viewportWidth >= 1600) {
                     // Medium-large screens (1600px - 1799px)
-                    positions = { top: '140.391px', left: '1700px' };
+                    positions = { top: '140.391px', right: '30.12px' };
                 } else if (viewportWidth >= 1440) {
                     // Desktop screens (1440px - 1599px)
-                    positions = { top: '140.391px', left: '1440px' };
+                    positions = { top: '140.391px', right: '30.12px' };
                 } else if (viewportWidth >= 1370) {
                     // Medium screens (1370px - 1439px)
-                    positions = { top: '140.391px', left: '1370px' };
+                    positions = { top: '140.391px', right: '30.12px' };
                 } else if (viewportWidth >= 1280) {
                     // Laptop screens (1280px - 1369px)
-                    positions = { top: '140.391px', left: '1280px' };
+                    positions = { top: '140.391px', right: '30.12px' };
                 } else if (viewportWidth >= 1024) {
                     // Small-medium screens (1024px - 1279px)
-                    positions = { top: '160.391px', left: '1024px' };
+                    positions = { top: '160.391px', right: '30.12px' };
                 } else if (viewportWidth >= 768) {
                     // Tablet landscape (768px - 1023px)
-                    positions = { top: '180.391px', left: '768px' };
+                    positions = { top: '180.391px', right: '30.12px' };
                 } else {
                     // Mobile and small tablets (below 768px)
                     positions = { top: '140.391px', left: '50%', transform: 'translateX(-50%)' };
                 }
                 
-                tooltip.css({
+                var cssProps = {
                     position: 'fixed',
                     top: positions.top,
-                    left: positions.left,
                     transform: positions.transform || 'none',
                     zIndex: 1041
-                });
+                };
+                
+                // Only set right or left, not both
+                if (positions.right) {
+                    cssProps.right = positions.right;
+                    cssProps.left = 'auto'; // Clear left when using right
+                } else if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto'; // Clear right when using left
+                }
+                
+                tooltip.css(cssProps);
                 
                 // Restore visibility state if it was hidden
                 if (wasHidden) {
@@ -664,40 +674,50 @@
                 var positions;
                 if (viewportWidth >= 1920) {
                     // Extra large screens (1920px and above)
-                    positions = { top: '97.0515px', left: '1778.12px' };
+                    positions = { top: '97.0515px', right: '230.12px' };
                 } else if (viewportWidth >= 1800) {
                     // Large screens (1800px - 1919px)
-                    positions = { top: '97.0515px', left: '1678.12px' };
+                    positions = { top: '97.0515px', right: '230.12px' };
                 } else if (viewportWidth >= 1600) {
                     // Medium-large screens (1600px - 1799px)
-                    positions = { top: '97.0515px', left: '1478.12px' };
+                    positions = { top: '97.0515px', right: '230.12px' };
                 } else if (viewportWidth >= 1440) {
                     // Desktop screens (1440px - 1599px)
-                    positions = { top: '97.0515px', left: '1300.12px' };
+                    positions = { top: '97.0515px', right: '230.12px' };
                 } else if (viewportWidth >= 1370) {
                     // Medium screens (1370px - 1439px)
-                    positions = { top: '97.0515px', left: '1200.12px' };
+                    positions = { top: '97.0515px', right: '230.12px' };
                 } else if (viewportWidth >= 1280) {
                     // Laptop screens (1280px - 1369px)
-                    positions = { top: '130.0515px', left: '1000.12px' };
+                    positions = { top: '97.0515px', right: '230.12px' };
                 } else if (viewportWidth >= 1024) {
                     // Small-medium screens (1024px - 1279px)
-                    positions = { top: '130.0515px', left: '900.12px' };
+                    positions = { top: '97.0515px', right: '230.12px' };
                 } else if (viewportWidth >= 768) {
                     // Tablet landscape (768px - 1023px)
-                    positions = { top: '230.0515px', left: '700.12px' };
+                    positions = { top: '97.0515px', right: '230.12px' };
                 } else {
                     // Mobile and small tablets (below 768px)
                     positions = { top: '97.0515px', left: '50%', transform: 'translateX(-50%)' };
                 }
                 
-                tooltip.css({
+                var cssProps = {
                     position: 'fixed',
                     top: positions.top,
-                    left: positions.left,
                     transform: positions.transform || 'none',
                     zIndex: 1041
-                });
+                };
+                
+                // Only set right or left, not both
+                if (positions.right) {
+                    cssProps.right = positions.right;
+                    cssProps.left = 'auto'; // Clear left when using right
+                } else if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto'; // Clear right when using left
+                }
+                
+                tooltip.css(cssProps);
                 
                 // Restore visibility state if it was hidden
                 if (wasHidden) {
@@ -740,7 +760,7 @@
                     positions = { top: '121.136px', left: '112.312px' };
                 } else if (viewportWidth >= 1370) {
                     // Medium screens (1370px - 1439px)
-                    positions = { top: '121.136px', left: '101.312px' };
+                    positions = { top: '121.136px', left: '121.312px' };
                 } else if (viewportWidth >= 1280) {
                     // Laptop screens (1280px - 1369px)
                     positions = { top: '121.136px', left: '91.312px' };
