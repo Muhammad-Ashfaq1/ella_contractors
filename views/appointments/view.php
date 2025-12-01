@@ -1804,7 +1804,7 @@ $(document).ready(function() {
     
     // Restart Tutorial Button for View Page
     $('#restart-view-tutorial').on('click', function() {
-        if (confirm('Would you like to restart the tutorial? This will show you step-by-step guidance on how to use the appointment details page.')) {
+        // if (confirm('Would you like to restart the tutorial? This will show you step-by-step guidance on how to use the appointment details page.')) {
             // Clear preferences
             localStorage.removeItem('ella_contractors_view_tutorial_dismissed');
             localStorage.removeItem('ella_contractors_view_tutorial_completed');
@@ -1826,7 +1826,7 @@ $(document).ready(function() {
                     }
                 }
             });
-        }
+        // }
     });
 });
 </script>
