@@ -689,13 +689,13 @@
                     positions = { top: '120.0515px', right: '230.12px' };
                 } else if (viewportWidth >= 1280) {
                     // Laptop screens (1280px - 1369px)
-                    positions = { top: '97.0515px', right: '230.12px' };
+                    positions = { top: '120.0515px', right: '230.12px' };
                 } else if (viewportWidth >= 1024) {
                     // Small-medium screens (1024px - 1279px)
-                    positions = { top: '97.0515px', right: '230.12px' };
+                    positions = { top: '120.0515px', right: '230.12px' };
                 } else if (viewportWidth >= 768) {
                     // Tablet landscape (768px - 1023px)
-                    positions = { top: '97.0515px', right: '230.12px' };
+                    positions = { top: '120.0515px', right: '230.12px' };
                 } else {
                     // Mobile and small tablets (below 768px)
                     positions = { top: '97.0515px', left: '50%', transform: 'translateX(-50%)' };
