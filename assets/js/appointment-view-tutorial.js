@@ -476,18 +476,6 @@
             }
             
             tooltipHtml += '</div>';
-            
-            // Don't show again checkbox (only on last step)
-            if (step.isLast) {
-                tooltipHtml += '<div class="tutorial-dont-show">';
-                tooltipHtml += '<label>';
-                tooltipHtml += '<input type="checkbox" id="tutorial-dont-show-again" />';
-                tooltipHtml += ' Don\'t show me this tutorial again';
-                tooltipHtml += '</label>';
-                tooltipHtml += '<button type="button" class="btn btn-default tutorial-btn-close" style="margin-left: 15px;">Close</button>';
-                tooltipHtml += '</div>';
-            }
-            
             tooltipHtml += '</div>';
             tooltipHtml += '</div>';
             
@@ -1007,9 +995,7 @@
             // Next button
             this.state.tooltip.find('.tutorial-btn-next').on('click', function() {
                 if (step.isLast) {
-                    // Check if "Don't show again" is checked
-                    var dontShow = $('#tutorial-dont-show-again').is(':checked');
-                    self.complete(dontShow);
+                    self.complete();
                 } else {
                     self.next();
                 }
@@ -1018,13 +1004,6 @@
             // Skip button
             this.state.tooltip.find('.tutorial-btn-skip').on('click', function() {
                 self.skip();
-            });
-
-            // Close button (on completion step)
-            this.state.tooltip.find('.tutorial-btn-close').on('click', function() {
-                // Check if "Don't show again" is checked
-                var dontShow = $('#tutorial-dont-show-again').is(':checked');
-                self.complete(dontShow);
             });
         },
 
@@ -1053,27 +1032,10 @@
 
         /**
          * Complete tutorial
-         * @param {boolean} dontShowAgain - Whether to save preference
          */
-        complete: function(dontShowAgain) {
+        complete: function() {
             this.state.isActive = false;
             this.removeCurrentStep();
-
-            if (dontShowAgain) {
-                // Save preference to localStorage
-                localStorage.setItem(this.config.storageKeyDismissed, 'true');
-                localStorage.setItem(this.config.storageKeyCompleted, 'true');
-
-                // Save preference to server
-                $.ajax({
-                    url: admin_url + 'ella_contractors/appointments/save_tutorial_preference',
-                    type: 'POST',
-                    data: {
-                        tutorial_id: this.config.tutorialId,
-                        dismissed: true
-                    }
-                });
-            }
         },
 
         /**
