@@ -1803,7 +1803,14 @@ $(document).ready(function() {
     $('[data-toggle="tooltip"]').tooltip();
     
     // Restart Tutorial Button for View Page
-    $('#restart-view-tutorial').on('click', function() {
+    $('#restart-view-tutorial').on('click', function(e) {
+        // Prevent event propagation to avoid sidebar closing
+        e.stopPropagation();
+        e.preventDefault();
+        
+        // Add tutorial-active class immediately to prevent sidebar from closing
+        $('body').addClass('tutorial-active');
+        
         // if (confirm('Would you like to restart the tutorial? This will show you step-by-step guidance on how to use the appointment details page.')) {
             // Clear preferences
             localStorage.removeItem('ella_contractors_view_tutorial_dismissed');

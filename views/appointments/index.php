@@ -552,7 +552,14 @@ $(document).ready(function() {
     $('[data-toggle="tooltip"]').tooltip();
     
     // Restart Tutorial Button
-    $('#restart-tutorial').on('click', function() {
+    $('#restart-tutorial').on('click', function(e) {
+        // Prevent event propagation to avoid sidebar closing
+        e.stopPropagation();
+        e.preventDefault();
+        
+        // Add tutorial-active class immediately to prevent sidebar from closing
+        $('body').addClass('tutorial-active');
+        
         // if (confirm('Would you like to restart the tutorial? This will show you step-by-step guidance on how to use the appointments module.')) {
             // Clear preferences
             localStorage.removeItem('ella_contractors_tutorial_dismissed');

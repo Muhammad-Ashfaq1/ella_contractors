@@ -1098,7 +1098,14 @@ function deletePresentation(presentationId) {
 
 // Restart tutorial button handler
 $(document).ready(function() {
-    $('#restart-tutorial').on('click', function() {
+    $('#restart-tutorial').on('click', function(e) {
+        // Prevent event propagation to avoid sidebar closing
+        e.stopPropagation();
+        e.preventDefault();
+        
+        // Add tutorial-active class immediately to prevent sidebar from closing
+        $('body').addClass('tutorial-active');
+        
         // Reset tutorial preference on server
         $.ajax({
             url: admin_url + 'ella_contractors/presentations/reset_tutorial',
