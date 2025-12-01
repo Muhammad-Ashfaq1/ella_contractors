@@ -966,10 +966,10 @@
                 var positions;
                 if (viewportWidth >= 1920) {
                     // Extra large screens (1920px and above)
-                    positions = { top: '203.891px', left: '44.1535%' };
+                    positions = { top: '203.891px', left: '49.1535%' };
                 } else if (viewportWidth >= 1800) {
                     // Large screens (1800px - 1919px)
-                    positions = { top: '200px', left: '42%' };
+                    positions = { top: '200px', left: '47%' };
                 } else if (viewportWidth >= 1600) {
                     // Medium-large screens (1600px - 1799px)
                     positions = { top: '195px', left: '40.5%' };
@@ -981,13 +981,13 @@
                     positions = { top: '185px', left: '35.5%' };
                 } else if (viewportWidth >= 1280) {
                     // Laptop screens (1280px - 1365px)
-                    positions = { top: '180px', left: '33%' };
+                    positions = { top: '180px', left: '35%' };
                 } else if (viewportWidth >= 1024) {
                     // Small-medium screens (1024px - 1279px)
-                    positions = { top: '175px', left: '31.5%' };
+                    positions = { top: '175px', left: '34.5%' };
                 } else if (viewportWidth >= 768) {
                     // Tablet landscape (768px - 1023px)
-                    positions = { top: '170px', left: '30.5%', transform: 'translateX(-50%)' };
+                    positions = { top: '170px', left: '32.5%', transform: 'translateX(-50%)' };
                 } else {
                     // Mobile and small tablets (below 768px)
                     positions = { top: '165px', left: '50%', transform: 'translateX(-50%)' };
