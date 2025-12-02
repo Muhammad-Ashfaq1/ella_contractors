@@ -1601,9 +1601,7 @@
             // Next button
             this.state.tooltip.find('.tutorial-btn-next').on('click', function() {
                 if (step.isLast) {
-                    // Check if "Don't show again" is checked
-                    var dontShow = $('#tutorial-dont-show-again').is(':checked');
-                    self.complete(dontShow);
+                    self.complete();
                 } else {
                     self.next();
                 }
@@ -1612,13 +1610,6 @@
             // Skip button
             this.state.tooltip.find('.tutorial-btn-skip').on('click', function() {
                 self.skip();
-            });
-
-            // Close button (on completion step)
-            this.state.tooltip.find('.tutorial-btn-close').on('click', function() {
-                // Check if "Don't show again" is checked
-                var dontShow = $('#tutorial-dont-show-again').is(':checked');
-                self.complete(dontShow);
             });
         },
 
@@ -1652,12 +1643,8 @@
         /**
          * Complete tutorial
          */
-        complete: function(dontShowAgain) {
-            // If parameter not provided, check checkbox
-            if (dontShowAgain === undefined) {
-                dontShowAgain = $('#tutorial-dont-show-again').is(':checked');
-            }
-            this.dismiss(dontShowAgain);
+        complete: function() {
+            this.dismiss(false);
         },
 
         /**
