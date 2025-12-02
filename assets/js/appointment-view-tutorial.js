@@ -220,7 +220,7 @@
                     content: 'You\'re all set! You now know how to navigate the Appointment Details page. Use the tabs to access different sections and the action buttons to manage appointments.',
                     target: null,
                     position: 'center',
-                    showNext: false,
+                    showNext: true,
                     showBack: true,
                     showSkip: false,
                     isLast: true
@@ -238,6 +238,10 @@
 
             this.state.isActive = true;
             this.state.currentStepIndex = 0;
+            
+            // Add class to body to prevent sidebar closing
+            $('body').addClass('tutorial-active');
+            
             this.showStep(0);
         },
 
@@ -400,6 +404,7 @@
          * Create overlay backdrop
          */
         createOverlay: function() {
+            var self = this;
             if (this.state.overlay) {
                 return;
             }
@@ -419,6 +424,12 @@
             });
 
             $('body').append(this.state.overlay);
+
+            // Prevent sidebar from closing when clicking on overlay
+            this.state.overlay.on('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+            });
 
             // Overlay click handler removed - steps only change via next/previous buttons
         },
@@ -495,6 +506,11 @@
              
             $('body').append(this.state.tooltip);
             
+            // Prevent sidebar from closing when clicking on tooltip
+            this.state.tooltip.on('click', function(e) {
+                e.stopPropagation();
+            });
+            
             // Bind events
             this.bindTooltipEvents(step, stepIndex);
         },
@@ -527,28 +543,58 @@
                 tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
                 tooltip.addClass('tutorial-arrow-top');
                 
-                var positions;
-                if (viewportWidth >= 1920) {
-                    positions = { top: '13%', left: '20%', transform: 'none' };
-                } else if (viewportWidth >= 1600) {
-                    positions = { top: '14%', left: '18%', transform: 'none' };
-                } else if (viewportWidth >= 1366) {
-                    positions = { top: '15%', left: '15%', transform: 'none' };
-                } else if (viewportWidth >= 1024) {
-                    positions = { top: '16%', left: '12%', transform: 'none' };
-                } else if (viewportWidth >= 768) {
-                    positions = { top: '20%', left: '10%', transform: 'none' };
-                } else {
-                    positions = { top: '22%', left: '50%', transform: 'translateX(-50%)' };
+                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
                 }
                 
-                tooltip.css({
+                var positions;
+                if (viewportWidth >= 1920) {
+                    positions = { top: '140px', left: '384px', transform: 'none' };
+                } else if (viewportWidth >= 1600) {
+                    positions = { top: '150px', left: '288px', transform: 'none' };
+                } else if (viewportWidth >= 1366) {
+                    positions = { top: '160px', left: '205px', transform: 'none' };
+                } else if (viewportWidth >= 1024) {
+                    positions = { top: '170px', left: '123px', transform: 'none' };
+                } else if (viewportWidth >= 768) {
+                    positions = { top: '200px', left: '77px', transform: 'none' };
+                } else {
+                    positions = { top: '220px', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                var cssProps = {
                     position: 'fixed',
                     top: positions.top,
-                    left: positions.left,
-                    transform: positions.transform,
+                    transform: positions.transform || 'none',
                     zIndex: 9999
-                });
+                };
+                
+                // Only set right or left, not both
+                if (positions.right) {
+                    cssProps.right = positions.right;
+                    cssProps.left = 'auto';
+                } else if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto';
+                }
+                
+                tooltip.css(cssProps);
+                
+                // Restore visibility state if it was hidden
+                if (wasHidden) {
+                    tooltip.css({
+                        visibility: 'hidden',
+                        opacity: 0
+                    });
+                }
                 return;
             }
             
@@ -556,28 +602,58 @@
                 tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
                 tooltip.addClass('tutorial-arrow-top');
                 
-                var positions;
-                if (viewportWidth >= 1920) {
-                    positions = { top: '18%', left: '30%', transform: 'none' };
-                } else if (viewportWidth >= 1600) {
-                    positions = { top: '18%', left: '28%', transform: 'none' };
-                } else if (viewportWidth >= 1366) {
-                    positions = { top: '18%', left: '25%', transform: 'none' };
-                } else if (viewportWidth >= 1024) {
-                    positions = { top: '20%', left: '22%', transform: 'none' };
-                } else if (viewportWidth >= 768) {
-                    positions = { top: '22%', left: '18%', transform: 'none' };
-                } else {
-                    positions = { top: '24%', left: '50%', transform: 'translateX(-50%)' };
+                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
                 }
                 
-                tooltip.css({
+                var positions;
+                if (viewportWidth >= 1920) {
+                    positions = { top: '190px', left: '576px', transform: 'none' };
+                } else if (viewportWidth >= 1600) {
+                    positions = { top: '190px', left: '448px', transform: 'none' };
+                } else if (viewportWidth >= 1366) {
+                    positions = { top: '190px', left: '342px', transform: 'none' };
+                } else if (viewportWidth >= 1024) {
+                    positions = { top: '210px', left: '225px', transform: 'none' };
+                } else if (viewportWidth >= 768) {
+                    positions = { top: '230px', left: '138px', transform: 'none' };
+                } else {
+                    positions = { top: '250px', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                var cssProps = {
                     position: 'fixed',
                     top: positions.top,
-                    left: positions.left,
-                    transform: positions.transform,
+                    transform: positions.transform || 'none',
                     zIndex: 9999
-                });
+                };
+                
+                // Only set right or left, not both
+                if (positions.right) {
+                    cssProps.right = positions.right;
+                    cssProps.left = 'auto';
+                } else if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto';
+                }
+                
+                tooltip.css(cssProps);
+                
+                // Restore visibility state if it was hidden
+                if (wasHidden) {
+                    tooltip.css({
+                        visibility: 'hidden',
+                        opacity: 0
+                    });
+                }
                 return;
             }
             
@@ -585,28 +661,58 @@
                 tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
                 tooltip.addClass('tutorial-arrow-top');
                 
+                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
+                }
+                
                 var positions;
                 if (viewportWidth >= 1920) {
-                    positions = { top: '38%', left: '40%', transform: 'none' };
+                    positions = { top: '510px', left: '768px', transform: 'none' };
                 } else if (viewportWidth >= 1600) {
-                    positions = { top: '38%', left: '38%', transform: 'none' };
+                    positions = { top: '510px', left: '608px', transform: 'none' };
                 } else if (viewportWidth >= 1366) {
-                    positions = { top: '38%', left: '35%', transform: 'none' };
+                    positions = { top: '510px', left: '478px', transform: 'none' };
                 } else if (viewportWidth >= 1024) {
-                    positions = { top: '39%', left: '32%', transform: 'none' };
+                    positions = { top: '520px', left: '328px', transform: 'none' };
                 } else if (viewportWidth >= 768) {
-                    positions = { top: '40%', left: '28%', transform: 'none' };
+                    positions = { top: '530px', left: '215px', transform: 'none' };
                 } else {
                     positions = { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
                 }
                 
-                tooltip.css({
+                var cssProps = {
                     position: 'fixed',
                     top: positions.top,
-                    left: positions.left,
-                    transform: positions.transform,
+                    transform: positions.transform || 'none',
                     zIndex: 9999
-                });
+                };
+                
+                // Only set right or left, not both
+                if (positions.right) {
+                    cssProps.right = positions.right;
+                    cssProps.left = 'auto';
+                } else if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto';
+                }
+                
+                tooltip.css(cssProps);
+                
+                // Restore visibility state if it was hidden
+                if (wasHidden) {
+                    tooltip.css({
+                        visibility: 'hidden',
+                        opacity: 0
+                    });
+                }
                 return;
             }
             
@@ -614,28 +720,62 @@
                 tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
                 tooltip.addClass('tutorial-arrow-bottom');
                 
-                var positions;
-                if (viewportWidth >= 1920) {
-                    positions = { top: '27%', left: '5%', transform: 'none' };
-                } else if (viewportWidth >= 1600) {
-                    positions = { top: '27%', left: '4%', transform: 'none' };
-                } else if (viewportWidth >= 1366) {
-                    positions = { top: '27%', left: '3%', transform: 'none' };
-                } else if (viewportWidth >= 1024) {
-                    positions = { top: '27%', left: '2%', transform: 'none' };
-                } else if (viewportWidth >= 768) {
-                    positions = { top: '27%', left: '1%', transform: 'none' };
-                } else {
-                    positions = { top: '27%', left: '50%', transform: 'translateX(-50%)' };
+                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
                 }
                 
-                tooltip.css({
+                var positions;
+                if (viewportWidth >= 1920) {
+                    positions = { top: '350px', left: '96px', transform: 'none' };
+                } else if (viewportWidth >= 1600) {
+                    positions = { top: '350px', left: '128px', transform: 'none' };
+                } else if (viewportWidth >= 1366) {
+                    positions = { top: '350px', left: '150px', transform: 'none' };
+                } else if (viewportWidth >= 1024) {
+                    positions = { top: '350px', left: '180px', transform: 'none' };
+                } else if (viewportWidth >= 768) {
+                    positions = { top: '350px', left: '220px', transform: 'none' };
+                } else if (viewportWidth >= 640) {
+                    positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
+                } else if (viewportWidth >= 480) {
+                    positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
+                } else {
+                    positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                var cssProps = {
                     position: 'fixed',
                     top: positions.top,
-                    left: positions.left,
-                    transform: positions.transform,
+                    transform: positions.transform || 'none',
                     zIndex: 9999
-                });
+                };
+                
+                // Only set right or left, not both
+                if (positions.right) {
+                    cssProps.right = positions.right;
+                    cssProps.left = 'auto';
+                } else if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto';
+                }
+                
+                tooltip.css(cssProps);
+                
+                // Restore visibility state if it was hidden
+                if (wasHidden) {
+                    tooltip.css({
+                        visibility: 'hidden',
+                        opacity: 0
+                    });
+                }
                 return;
             }
             
@@ -643,28 +783,62 @@
                 tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
                 tooltip.addClass('tutorial-arrow-bottom');
                 
-                var positions;
-                if (viewportWidth >= 1920) {
-                    positions = { top: '27%', left: '9%', transform: 'none' };
-                } else if (viewportWidth >= 1600) {
-                    positions = { top: '27%', left: '8%', transform: 'none' };
-                } else if (viewportWidth >= 1366) {
-                    positions = { top: '27%', left: '7%', transform: 'none' };
-                } else if (viewportWidth >= 1024) {
-                    positions = { top: '27%', left: '6%', transform: 'none' };
-                } else if (viewportWidth >= 768) {
-                    positions = { top: '27%', left: '5%', transform: 'none' };
-                } else {
-                    positions = { top: '27%', left: '50%', transform: 'translateX(-50%)' };
+                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
                 }
                 
-                tooltip.css({
+                var positions;
+                if (viewportWidth >= 1920) {
+                    positions = { top: '350px', left: '193px', transform: 'none' };
+                } else if (viewportWidth >= 1600) {
+                    positions = { top: '350px', left: '228px', transform: 'none' };
+                } else if (viewportWidth >= 1366) {
+                    positions = { top: '350px', left: '300px', transform: 'none' };
+                } else if (viewportWidth >= 1024) {
+                    positions = { top: '350px', left: '361px', transform: 'none' };
+                } else if (viewportWidth >= 768) {
+                    positions = { top: '350px', left: '438px', transform: 'none' };
+                } else if (viewportWidth >= 640) {
+                    positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
+                } else if (viewportWidth >= 480) {
+                    positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
+                } else {
+                    positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                var cssProps = {
                     position: 'fixed',
                     top: positions.top,
-                    left: positions.left,
-                    transform: positions.transform,
+                    transform: positions.transform || 'none',
                     zIndex: 9999
-                });
+                };
+                
+                // Only set right or left, not both
+                if (positions.right) {
+                    cssProps.right = positions.right;
+                    cssProps.left = 'auto';
+                } else if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto';
+                }
+                
+                tooltip.css(cssProps);
+                
+                // Restore visibility state if it was hidden
+                if (wasHidden) {
+                    tooltip.css({
+                        visibility: 'hidden',
+                        opacity: 0
+                    });
+                }
                 return;
             }
             
@@ -672,28 +846,62 @@
                 tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
                 tooltip.addClass('tutorial-arrow-bottom');
                 
-                var positions;
-                if (viewportWidth >= 1920) {
-                    positions = { top: '27%', left: '13%', transform: 'none' };
-                } else if (viewportWidth >= 1600) {
-                    positions = { top: '27%', left: '12%', transform: 'none' };
-                } else if (viewportWidth >= 1366) {
-                    positions = { top: '27%', left: '11%', transform: 'none' };
-                } else if (viewportWidth >= 1024) {
-                    positions = { top: '27%', left: '10%', transform: 'none' };
-                } else if (viewportWidth >= 768) {
-                    positions = { top: '27%', left: '9%', transform: 'none' };
-                } else {
-                    positions = { top: '27%', left: '50%', transform: 'translateX(-50%)' };
+                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
                 }
                 
-                tooltip.css({
+                var positions;
+                if (viewportWidth >= 1920) {
+                    positions = { top: '350px', left: '290px', transform: 'none' };
+                } else if (viewportWidth >= 1600) {
+                    positions = { top: '350px', left: '332px', transform: 'none' };
+                } else if (viewportWidth >= 1366) {
+                    positions = { top: '350px', left: '400px', transform: 'none' };
+                } else if (viewportWidth >= 1024) {
+                    positions = { top: '350px', left: '462px', transform: 'none' };
+                } else if (viewportWidth >= 768) {
+                    positions = { top: '350px', left: '500px', transform: 'none' };
+                } else if (viewportWidth >= 640) {
+                    positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
+                } else if (viewportWidth >= 480) {
+                    positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
+                } else {
+                    positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                var cssProps = {
                     position: 'fixed',
                     top: positions.top,
-                    left: positions.left,
-                    transform: positions.transform,
+                    transform: positions.transform || 'none',
                     zIndex: 9999
-                });
+                };
+                
+                // Only set right or left, not both
+                if (positions.right) {
+                    cssProps.right = positions.right;
+                    cssProps.left = 'auto';
+                } else if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto';
+                }
+                
+                tooltip.css(cssProps);
+                
+                // Restore visibility state if it was hidden
+                if (wasHidden) {
+                    tooltip.css({
+                        visibility: 'hidden',
+                        opacity: 0
+                    });
+                }
                 return;
             }
             
@@ -701,28 +909,62 @@
                 tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
                 tooltip.addClass('tutorial-arrow-bottom');
                 
-                var positions;
-                if (viewportWidth >= 1920) {
-                    positions = { top: '27%', left: '17%', transform: 'none' };
-                } else if (viewportWidth >= 1600) {
-                    positions = { top: '27%', left: '16%', transform: 'none' };
-                } else if (viewportWidth >= 1366) {
-                    positions = { top: '27%', left: '15%', transform: 'none' };
-                } else if (viewportWidth >= 1024) {
-                    positions = { top: '27%', left: '14%', transform: 'none' };
-                } else if (viewportWidth >= 768) {
-                    positions = { top: '27%', left: '13%', transform: 'none' };
-                } else {
-                    positions = { top: '27%', left: '50%', transform: 'translateX(-50%)' };
+                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
                 }
                 
-                tooltip.css({
+                var positions;
+                if (viewportWidth >= 1920) {
+                    positions = { top: '350px', left: '376px', transform: 'none' };
+                } else if (viewportWidth >= 1600) {
+                    positions = { top: '350px', left: '400px', transform: 'none' };
+                } else if (viewportWidth >= 1366) {
+                    positions = { top: '350px', left: '425px', transform: 'none' };
+                } else if (viewportWidth >= 1024) {
+                    positions = { top: '350px', left: '470px', transform: 'none' };
+                } else if (viewportWidth >= 768) {
+                    positions = { top: '350px', left: '500px', transform: 'none' };
+                } else if (viewportWidth >= 640) {
+                    positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
+                } else if (viewportWidth >= 480) {
+                    positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
+                } else {
+                    positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                var cssProps = {
                     position: 'fixed',
                     top: positions.top,
-                    left: positions.left,
-                    transform: positions.transform,
+                    transform: positions.transform || 'none',
                     zIndex: 9999
-                });
+                };
+                
+                // Only set right or left, not both
+                if (positions.right) {
+                    cssProps.right = positions.right;
+                    cssProps.left = 'auto';
+                } else if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto';
+                }
+                
+                tooltip.css(cssProps);
+                
+                // Restore visibility state if it was hidden
+                if (wasHidden) {
+                    tooltip.css({
+                        visibility: 'hidden',
+                        opacity: 0
+                    });
+                }
                 return;
             }
             
@@ -730,28 +972,62 @@
                 tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
                 tooltip.addClass('tutorial-arrow-bottom');
                 
-                var positions;
-                if (viewportWidth >= 1920) {
-                    positions = { top: '27%', left: '21%', transform: 'none' };
-                } else if (viewportWidth >= 1600) {
-                    positions = { top: '27%', left: '20%', transform: 'none' };
-                } else if (viewportWidth >= 1366) {
-                    positions = { top: '27%', left: '19%', transform: 'none' };
-                } else if (viewportWidth >= 1024) {
-                    positions = { top: '27%', left: '18%', transform: 'none' };
-                } else if (viewportWidth >= 768) {
-                    positions = { top: '27%', left: '17%', transform: 'none' };
-                } else {
-                    positions = { top: '27%', left: '50%', transform: 'translateX(-50%)' };
+                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
                 }
                 
-                tooltip.css({
+                var positions;
+                if (viewportWidth >= 1920) {
+                    positions = { top: '350px', left: '500px', transform: 'none' };
+                } else if (viewportWidth >= 1600) {
+                    positions = { top: '350px', left: '560px', transform: 'none' };
+                } else if (viewportWidth >= 1366) {
+                    positions = { top: '350px', left: '580px', transform: 'none' };
+                } else if (viewportWidth >= 1024) {
+                    positions = { top: '350px', left: '600px', transform: 'none' };
+                } else if (viewportWidth >= 768) {
+                    positions = { top: '350px', left: '660px', transform: 'none' };
+                } else if (viewportWidth >= 640) {
+                    positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
+                } else if (viewportWidth >= 480) {
+                    positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
+                } else {
+                    positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                var cssProps = {
                     position: 'fixed',
                     top: positions.top,
-                    left: positions.left,
-                    transform: positions.transform,
+                    transform: positions.transform || 'none',
                     zIndex: 9999
-                });
+                };
+                
+                // Only set right or left, not both
+                if (positions.right) {
+                    cssProps.right = positions.right;
+                    cssProps.left = 'auto';
+                } else if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto';
+                }
+                
+                tooltip.css(cssProps);
+                
+                // Restore visibility state if it was hidden
+                if (wasHidden) {
+                    tooltip.css({
+                        visibility: 'hidden',
+                        opacity: 0
+                    });
+                }
                 return;
             }
             
@@ -759,28 +1035,58 @@
                 tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right');
                 tooltip.addClass('tutorial-arrow-bottom');
                 
-                var positions;
-                if (viewportWidth >= 1920) {
-                    positions = { top: '27%', left: '45%', transform: 'none' };
-                } else if (viewportWidth >= 1600) {
-                    positions = { top: '27%', left: '45%', transform: 'none' };
-                } else if (viewportWidth >= 1366) {
-                    positions = { top: '27%', left: '45%', transform: 'none' };
-                } else if (viewportWidth >= 1024) {
-                    positions = { top: '27%', left: '45%', transform: 'none' };
-                } else if (viewportWidth >= 768) {
-                    positions = { top: '27%', left: '45%', transform: 'none' };
-                } else {
-                    positions = { top: '27%', left: '50%', transform: 'translateX(-50%)' };
+                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
                 }
                 
-                tooltip.css({
+                var positions;
+                if (viewportWidth >= 1920) {
+                    positions = { top: '290px', left: '864px', transform: 'none' };
+                } else if (viewportWidth >= 1600) {
+                    positions = { top: '290px', left: '720px', transform: 'none' };
+                } else if (viewportWidth >= 1366) {
+                    positions = { top: '290px', left: '615px', transform: 'none' };
+                } else if (viewportWidth >= 1024) {
+                    positions = { top: '290px', left: '461px', transform: 'none' };
+                } else if (viewportWidth >= 768) {
+                    positions = { top: '290px', left: '346px', transform: 'none' };
+                } else {
+                    positions = { top: '290px', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                var cssProps = {
                     position: 'fixed',
                     top: positions.top,
-                    left: positions.left,
-                    transform: positions.transform,
+                    transform: positions.transform || 'none',
                     zIndex: 9999
-                });
+                };
+                
+                // Only set right or left, not both
+                if (positions.right) {
+                    cssProps.right = positions.right;
+                    cssProps.left = 'auto';
+                } else if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto';
+                }
+                
+                tooltip.css(cssProps);
+                
+                // Restore visibility state if it was hidden
+                if (wasHidden) {
+                    tooltip.css({
+                        visibility: 'hidden',
+                        opacity: 0
+                    });
+                }
                 return;
             }
             
@@ -1065,6 +1371,9 @@
          * Restart tutorial
          */
         restart: function() {
+            // Ensure tutorial-active class is set before restarting
+            $('body').addClass('tutorial-active');
+            
             // Clear preferences
             localStorage.removeItem(this.config.storageKeyDismissed);
             localStorage.removeItem(this.config.storageKeyCompleted);

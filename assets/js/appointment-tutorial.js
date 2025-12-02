@@ -249,6 +249,10 @@
         start: function() {
             this.state.isActive = true;
             this.state.currentStepIndex = 0;
+            
+            // Add class to body to prevent sidebar closing
+            $('body').addClass('tutorial-active');
+            
             this.setupResizeHandler(); // NEW: Setup resize handler when tutorial starts
             this.showStep(0);
         },
@@ -486,6 +490,7 @@
          * Create overlay backdrop
          */
         createOverlay: function() {
+            var self = this;
             if (this.state.overlay) {
                 return;
             }
@@ -505,6 +510,12 @@
             });
 
             $('body').append(this.state.overlay);
+
+            // Prevent sidebar from closing when clicking on overlay
+            this.state.overlay.on('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+            });
 
             // Overlay click handler removed - steps only change via next/previous buttons
         },
@@ -591,6 +602,11 @@
             });
             
             $('body').append(this.state.tooltip);
+
+            // Prevent sidebar from closing when clicking on tooltip
+            this.state.tooltip.on('click', function(e) {
+                e.stopPropagation();
+            });
 
             // Bind events
             this.bindTooltipEvents(step, stepIndex);
@@ -1639,6 +1655,9 @@
             // Set inactive first to ensure cleanup happens
             this.state.isActive = false;
             
+            // Remove class from body to allow sidebar closing again
+            $('body').removeClass('tutorial-active');
+            
             // UPDATED: Remove resize handler when tutorial ends
             this.removeResizeHandler();
             
@@ -1725,6 +1744,9 @@
          * Restart tutorial (for manual restart)
          */
         restart: function() {
+            // Ensure tutorial-active class is set before restarting
+            $('body').addClass('tutorial-active');
+            
             localStorage.removeItem(this.config.storageKey);
             localStorage.removeItem(this.config.storageKeyDismissed);
             this.start();
