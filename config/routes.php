@@ -50,6 +50,7 @@ $route[$module_name . $appointment_module . '/delete_ajax'] = 'Appointments/dele
 $route[$module_name . $appointment_module . '/download_attachment/(:num)'] = 'Appointments/download_attachment/$1';
 $route[$module_name . $appointment_module . '/get_appointment_attachments/(:num)'] = 'Appointments/get_appointment_attachments/$1';
 $route[$module_name . $appointment_module . '/delete_appointment_attachment/(:num)'] = 'Appointments/delete_appointment_attachment/$1';
+$route[$module_name . $appointment_module . '/calendar_events'] = 'Appointments/calendar_events';
 
 // Appointment Measurements routes (using measurements controller) - moved to measurements controller
 
@@ -64,3 +65,26 @@ $route[$module_name . $appointment_module . '/save_ajax'] = 'Appointments/save_a
 $route[$module_name . $appointment_module . '/send_sms'] = 'Appointments/send_sms';
 $route[$module_name . $appointment_module . '/get_sms_logs'] = 'Appointments/get_sms_logs';
 $route[$module_name . $appointment_module . '/upload_sms_media'] = 'Appointments/upload_sms_media';
+
+// Reminder cron endpoint
+$route[$module_name . '/reminders/cron'] = 'Reminders/cron';
+
+// Google Calendar integration routes (FIXED - proper method routing)
+$route[$module_name . '/google_auth/connect'] = 'Google_auth/connect';
+$route[$module_name . '/google_auth/callback'] = 'Google_auth/callback';
+$route[$module_name . '/google_auth/disconnect'] = 'Google_auth/disconnect';
+$route[$module_name . '/google_auth/status'] = 'Google_auth/status';
+$route[$module_name . '/google_auth/sync_now'] = 'Google_auth/sync_now';
+$route[$module_name . '/google_auth/debug_credentials'] = 'Google_auth/debug_credentials';
+
+// Simplified route that defaults to connect
+$route[$module_name . '/google_auth'] = 'Google_auth/connect';
+// Also support direct method calls
+$route[$module_name . '/google_callback'] = 'Google_auth/callback';
+$route[$module_name . '/google_status'] = 'Google_auth/status';
+$route[$module_name . '/google_disconnect'] = 'Google_auth/disconnect';
+$route[$module_name . '/google_sync_now'] = 'Google_auth/sync_now';
+
+// Settings routes
+$route[$module_name . '/settings'] = 'Settings/index';
+$route[$module_name . '/settings/save'] = 'Settings/save';

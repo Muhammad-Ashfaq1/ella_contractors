@@ -213,7 +213,7 @@ button.delete-btn {
    ======================================== */
 
 /* Any input with a value should display normally */
-#appointmentModal input:not(:placeholder-shown) {
+#appointmentModal input:not([type="radio"]):not([type="checkbox"]):not(:placeholder-shown) {
   color: #333 !important;
   opacity: 1 !important;
   font-style: normal !important;
@@ -274,6 +274,7 @@ button.delete-btn {
                     <input type="hidden" id="type_id" name="type_id" value="">
                     <input type="hidden" id="status" name="status" value="scheduled">
                     <input type="hidden" id="selected_presentation_ids" name="selected_presentation_ids" value="">
+                    <input type="hidden" name="reminder_channel" value="both">
                     
                     <div class="row">
                         <div class="col-md-6">
@@ -313,7 +314,7 @@ button.delete-btn {
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="attendees">Attendees 
-                                    <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="Which staff members will be joining you or handling this Appointment?"></i>
+                                    <!-- <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="Which staff members will be joining you or handling this Appointment?"></i> -->
                                 </label>
                                 <select class="form-control selectpicker" id="attendees" name="attendees[]" multiple data-live-search="true">
                                     <option value="">Loading staff members...</option>
@@ -351,35 +352,40 @@ button.delete-btn {
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Reminders and Presentation in Same Row -->
                     <div class="row">
-                        <!-- Left Column: Reminders -->
                         <div class="col-md-6">
-                            <h5>Client Reminders</h5>
-                            <div class="checkbox checkbox-primary">
-                                <input type="checkbox" name="send_reminder" id="send_reminder" value="1" checked>
-                                <label for="send_reminder">Instantly Send Appointment Date/Time to Client</label>
-                            </div>
-                            <div class="checkbox checkbox-primary">
-                                <input type="checkbox" name="reminder_48h" id="reminder_48h" value="1" checked>
-                                <label for="reminder_48h">Send 48 Hour Reminder to Client</label>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <h5>Client Reminders</h5>
+                                    <div class="checkbox checkbox-primary">
+                                        <input type="checkbox" name="send_reminder" id="send_reminder" value="1" checked>
+                                        <label for="send_reminder">Appointment Creation Notice</label>
+                                    </div>
+                                    <div class="checkbox checkbox-primary">
+                                        <input type="checkbox" name="reminder_48h" id="reminder_48h" value="1" checked>
+                                        <label for="reminder_48h">2 Day Notice</label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-12">
+                                    <h5>My Reminder</h5>
+                                    <div class="checkbox checkbox-success">
+                                        <input type="checkbox" name="staff_reminder_48h" id="staff_reminder_48h" value="1" checked>
+                                        <label for="staff_reminder_48h">2 Day Notice</label>
+                                    </div>
+                                    <!-- <p class="text-muted">You will receive an email reminder 48 hours before this appointment</p> -->
+                                </div>
                             </div>
                         </div>
-                        
-                        <!-- Right Column: Presentation Selection -->
                         <div class="col-md-6">
-                            <h5>Choose Presentation <span style="opacity: 0.7;">(Optional)</span></h5>
+                            <h5>Choose Presentations <span style="opacity: 0.7;">(Optional)</span></h5>
                             <div class="form-group">
                                 <select class="form-control selectpicker" id="presentation_select" name="presentation_ids[]" multiple data-live-search="true">
                                     <option value="">Nothing selected</option>
                                 </select>
-                                <small class="text-muted">You can select multiple presentations to attach to this appointment</small>
                             </div>
-                            
-                            <!-- Display selected presentations (shown immediately on selection) -->
-                            <div id="modal-presentation-list" style="margin-top: 10px;">
-                                <!-- Presentations will be shown here when selected -->
+                            <h5>Selected Presentations</h5>
+                            <div id="modal-presentation-list">
+                                <p style="text-align: center; color: #778485; margin: 10px 0;">None</p>
                             </div>
                         </div>
                     </div>
@@ -388,7 +394,7 @@ button.delete-btn {
                     <div class="row">
                         <div class="col-md-12">
                             <hr class="hr-panel-heading" />
-                            <h5><?php echo _l('appointment_attachments'); ?></h5>                            
+                            <h5>Attachments</h5>                            
                             <div class="drop-zone" id="appointmentDropzone">
                                 <span class="drop-zone__prompt">Drop Files Here or Click to Select</span>
                                 <input type="file" name="appointment_files[]" class="drop-zone__input" id="appointment_files" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">

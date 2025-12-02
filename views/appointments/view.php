@@ -1,6 +1,9 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 
+<!-- Load Tutorial CSS -->
+<link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/appointment-tutorial.css'); ?>">
+
 <style>
 .connected-buttons {
     display: inline-flex;
@@ -239,6 +242,9 @@ html {
                             <a href="javascript:void(0)" class="btn btn-danger" onclick="deleteAppointment(<?php echo $appointment->id; ?>)">
                                 <i class="fa fa-trash"></i> <?php echo _l('delete'); ?>
                             </a>
+                            <button type="button" class="btn btn-default" id="restart-view-tutorial" style="margin-left: 10px;" data-toggle="tooltip" data-placement="top" title="Restart Tutorial">
+                                <i class="fa fa-question-circle"></i> Help
+                            </button>
                         </div>
                         <div class="clearfix"></div>
                         <hr class="hr-panel-heading" />
@@ -428,7 +434,7 @@ html {
                                                data-appointment-id="<?php echo $appointment->id; ?>"
                                                <?php echo (isset($appointment->reminder_48h) && $appointment->reminder_48h == 1) ? 'checked' : ''; ?>>
                                         <label for="reminder_48h_toggle">
-                                            <strong>48-Hour Reminder</strong> - Send 48 hours before appointment
+                                            <strong>2 Day Notice</strong> - Send 48 hours before appointment
                                         </label>
                                     </div>
 
@@ -921,7 +927,7 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     var action = isChecked ? 'enabled' : 'disabled';
-                    alert_float('success', '48 hours reminder' + ' ' + action + ' successfully');
+                    alert_float('success', '2 Day Notice' + ' ' + action + ' successfully');
                 } else {
                     alert_float('danger', response.message || 'Failed to update reminder setting');
                     // Revert checkbox state on failure
@@ -1274,12 +1280,14 @@ function resetAppointmentModal() {
     if (typeof clearPresentationSelectionPreview === 'function') {
         clearPresentationSelectionPreview();
     } else {
-        $('#modal-presentation-list').html('');
+        $('#modal-presentation-list').html('<p style="text-align: center; color: #778485; margin: 10px 0;">None</p>');
     }
     
     // Reset reminder checkboxes to default (checked)
     $('#send_reminder').prop('checked', true);
     $('#reminder_48h').prop('checked', true);
+    // Reminder channel defaults to 'both' (Email + SMS) via hidden field
+    $('input[name="reminder_channel"]').val('both');
 }
 
 // Global functions for modal operations
@@ -1347,6 +1355,9 @@ function loadAppointmentData(appointmentId) {
                 // Handle reminder checkboxes
                 $('#send_reminder').prop('checked', data.send_reminder == 1);
                 $('#reminder_48h').prop('checked', data.reminder_48h == 1);
+                // Reminder channel defaults to 'both' (Email + SMS) via hidden field
+                var reminderChannel = data.reminder_channel || 'both';
+                $('input[name="reminder_channel"]').val(reminderChannel);
                 
                 // Set status dropdown
                 var status = data.appointment_status || 'scheduled';
@@ -1381,16 +1392,10 @@ function loadAppointmentData(appointmentId) {
                                         return;
                                     }
                                     
-                                    // Only populate form fields if they are empty
-                                    if (!$('#email').val() && data.email) {
-                                        $('#email').val(data.email);
-                                    }
-                                    if (!$('#phone').val() && data.phone) {
-                                        $('#phone').val(data.phone);
-                                    }
-                                    if (!$('#address').val() && data.address) {
-                                        $('#address').val(data.address);
-                                    }
+                                    // Populate form fields with the selected relation data
+                                    $('#email').val(data.email || '');
+                                    $('#phone').val(data.phone || '');
+                                    $('#address').val(data.address || '');
                                     
                                     // Store validation status in hidden fields
                                     if (typeof data.emailValidaionStatus !== 'undefined') {
@@ -1520,16 +1525,10 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                                         return;
                                     }
                                     
-                                    // Only populate form fields if they are empty
-                                    if (!$('#email').val() && data.email) {
-                                        $('#email').val(data.email);
-                                    }
-                                    if (!$('#phone').val() && data.phone) {
-                                        $('#phone').val(data.phone);
-                                    }
-                                    if (!$('#address').val() && data.address) {
-                                        $('#address').val(data.address);
-                                    }
+                                    // Populate form fields with the selected relation data
+                                    $('#email').val(data.email || '');
+                                    $('#phone').val(data.phone || '');
+                                    $('#address').val(data.address || '');
                                     
                                     // Store validation status in hidden fields
                                     if (typeof data.emailValidaionStatus !== 'undefined') {
@@ -1659,16 +1658,10 @@ $(document).ready(function() {
                             }
                         }
                         
-                        // Only populate form fields if they are empty
-                        if (!$('#email').val() && data.email) {
-                            $('#email').val(data.email);
-                        }
-                        if (!$('#phone').val() && data.phone) {
-                            $('#phone').val(data.phone);
-                        }
-                        if (!$('#address').val() && data.address) {
-                            $('#address').val(data.address);
-                        }
+                        // Populate form fields with the selected relation data
+                        $('#email').val(data.email || '');
+                        $('#phone').val(data.phone || '');
+                        $('#address').val(data.address || '');
                         
                         // Store validation status in hidden fields
                         if (typeof data.emailValidaionStatus !== 'undefined') {
@@ -1800,3 +1793,47 @@ $(function () {
 
 <!-- Load module CSS for SMS modal styling -->
 <link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/ella-contractors.css'); ?>">
+
+<!-- Include Tutorial System for View Page -->
+<script src="<?php echo module_dir_url('ella_contractors', 'assets/js/appointment-view-tutorial.js'); ?>"></script>
+
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    // Restart Tutorial Button for View Page
+    $('#restart-view-tutorial').on('click', function(e) {
+        // Prevent event propagation to avoid sidebar closing
+        e.stopPropagation();
+        e.preventDefault();
+        
+        // Add tutorial-active class immediately to prevent sidebar from closing
+        $('body').addClass('tutorial-active');
+        
+        // if (confirm('Would you like to restart the tutorial? This will show you step-by-step guidance on how to use the appointment details page.')) {
+            // Clear preferences
+            localStorage.removeItem('ella_contractors_view_tutorial_dismissed');
+            localStorage.removeItem('ella_contractors_view_tutorial_completed');
+            
+            // Reset on server
+            $.ajax({
+                url: admin_url + 'ella_contractors/appointments/reset_tutorial',
+                type: 'POST',
+                data: {
+                    tutorial_id: 'appointment_view_tutorial'
+                },
+                success: function() {
+                    // Restart tutorial
+                    if (typeof AppointmentViewTutorial !== 'undefined') {
+                        AppointmentViewTutorial.restart();
+                    } else {
+                        // Reload page to restart tutorial
+                        location.reload();
+                    }
+                }
+            });
+        // }
+    });
+});
+</script>

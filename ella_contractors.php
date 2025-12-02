@@ -22,6 +22,9 @@ hooks()->add_action('app_admin_head', 'ella_contractors_load_global_css');
 // Load timeline helper
 hooks()->add_action('init', 'ella_contractors_load_helpers');
 
+// Register cron processing
+hooks()->add_action('after_cron_run', 'ella_contractors_after_cron_run');
+
 // Register activation and deactivation hooks
 register_activation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_activate_module');
 register_deactivation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_deactivate_module');
@@ -70,7 +73,6 @@ function ella_contractors_init_menu() {
                 'icon' => 'fa fa-list-alt',
                 'position' => 25,
             ],
-            
         ];
 
         foreach ($submenu as $item) {
@@ -157,6 +159,18 @@ function ella_contractors_load_helpers() {
     
     // Load appointments helper
     $CI->load->helper('ella_contractors/ella_appointments_helper');
+    
+    // Load email templates helper (for appointment reminder emails)
+    $email_templates_path = module_dir_path(ELLA_CONTRACTORS_MODULE_NAME, 'helpers/ella_email_templates_helper.php');
+    if (file_exists($email_templates_path)) {
+        require_once($email_templates_path);
+    }
+    
+    // Load reminder helper manually (for ICS generation and email scheduling)
+    $reminder_helper_path = module_dir_path(ELLA_CONTRACTORS_MODULE_NAME, 'helpers/ella_reminder_helper.php');
+    if (file_exists($reminder_helper_path)) {
+        require_once($reminder_helper_path);
+    }
 }
 
 function ella_contractors_activate_module() {
@@ -460,6 +474,56 @@ function ella_contractors_activate_module() {
                 // Column might already exist, ignore error
             }
         }
+        
+        // Add staff_reminder_48h column for staff reminders (NEW - My Reminder feature)
+        if (!$CI->db->field_exists('staff_reminder_48h', db_prefix() . 'appointly_appointments')) {
+            try {
+                // Add column with DEFAULT 1 (checked by default) to match UI behavior
+                // TINYINT(1) NULL allows for compatibility with existing records
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `staff_reminder_48h` TINYINT(1) NULL DEFAULT 1 AFTER `reminder_48h`');
+                
+                // Add index for faster queries when filtering by this field
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD INDEX `idx_staff_reminder_48h` (`staff_reminder_48h`)');
+                
+                // Update existing ella_contractor appointments to have staff reminder enabled by default
+                // This only affects appointments with source='ella_contractor', not appointly's own appointments
+                $CI->db->query('UPDATE `' . db_prefix() . 'appointly_appointments` SET `staff_reminder_48h` = 1 WHERE `source` = "ella_contractor" AND `staff_reminder_48h` IS NULL');
+                
+                log_message('info', 'EllaContractors: staff_reminder_48h column added successfully');
+            } catch (Exception $e) {
+                // Column might already exist or error occurred - log but don't break activation
+                log_message('error', 'EllaContractors: Failed to add staff_reminder_48h column - ' . $e->getMessage());
+            }
+        }
+
+        if (!$CI->db->field_exists('reminder_channel', db_prefix() . 'appointly_appointments')) {
+            try {
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `reminder_channel` ENUM(\'sms\',\'email\',\'both\') NOT NULL DEFAULT \'both\' AFTER `staff_reminder_48h`');
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD INDEX `idx_reminder_channel` (`reminder_channel`)');
+                // Ensure existing Ella appointments default to both
+                $CI->db->query('UPDATE `' . db_prefix() . 'appointly_appointments` SET `reminder_channel` = \'both\' WHERE `source` = "ella_contractor" OR `reminder_channel` IS NULL');
+                log_message('info', 'EllaContractors: reminder_channel column added successfully');
+            } catch (Exception $e) {
+                log_message('error', 'EllaContractors: Failed to add reminder_channel column - ' . $e->getMessage());
+            }
+        }
+        
+        // Create ICS upload directory for calendar file storage
+        $ics_dir = FCPATH . 'uploads/ella_appointments/ics/';
+        if (!is_dir($ics_dir)) {
+            try {
+                mkdir($ics_dir, 0755, true);
+                
+                // Create index.html to prevent directory listing
+                if (!file_exists($ics_dir . 'index.html')) {
+                    file_put_contents($ics_dir . 'index.html', '');
+                }
+                
+                log_message('info', 'EllaContractors: ICS directory created successfully');
+            } catch (Exception $e) {
+                log_message('error', 'EllaContractors: Failed to create ICS directory - ' . $e->getMessage());
+            }
+        }
     
     // Create ella_appointment_activity_log table for timeline tracking
     if (!$CI->db->table_exists(db_prefix() . 'ella_appointment_activity_log')) {
@@ -499,6 +563,55 @@ function ella_contractors_activate_module() {
             UNIQUE KEY `unique_appointment_presentation` (`appointment_id`, `presentation_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
     }
+
+    // Create appointment_reminder table to track reminder statuses
+    if (!$CI->db->table_exists(db_prefix() . 'appointment_reminder')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'appointment_reminder` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `appointment_id` int(11) NOT NULL,
+            `client_instant_remind` TINYINT(1) NOT NULL DEFAULT 0,
+            `client_48_hours` TINYINT(1) NOT NULL DEFAULT 0,
+            `staff_48_hours` TINYINT(1) NOT NULL DEFAULT 0,
+            `client_sms_reminder` TINYINT(1) NOT NULL DEFAULT 0,
+            `sms_send` TINYINT(1) NOT NULL DEFAULT 0,
+            `email_send` TINYINT(1) NOT NULL DEFAULT 0,
+            `client_instant_sent` TINYINT(1) NOT NULL DEFAULT 0,
+            `client_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
+            `staff_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
+            `client_sms_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
+            `staff_sms_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
+            `last_email_sent_at` datetime DEFAULT NULL,
+            `last_sms_sent_at` datetime DEFAULT NULL,
+            `rel_type` varchar(50) DEFAULT NULL,
+            `rel_id` int(11) DEFAULT NULL,
+            `org_id` int(11) DEFAULT NULL,
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `idx_appointment_id` (`appointment_id`),
+            KEY `idx_rel_type_rel_id` (`rel_type`, `rel_id`),
+            KEY `idx_org_id` (`org_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+    } else {
+        $table = db_prefix() . 'appointment_reminder';
+
+        $fieldsToAdd = [
+            'staff_48_hours'            => 'ALTER TABLE `' . $table . '` ADD COLUMN `staff_48_hours` TINYINT(1) NOT NULL DEFAULT 0 AFTER `client_48_hours`',
+            'client_instant_sent'       => 'ALTER TABLE `' . $table . '` ADD COLUMN `client_instant_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `email_send`',
+            'client_48_hours_sent'      => 'ALTER TABLE `' . $table . '` ADD COLUMN `client_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `client_instant_sent`',
+            'staff_48_hours_sent'       => 'ALTER TABLE `' . $table . '` ADD COLUMN `staff_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `client_48_hours_sent`',
+            'client_sms_48_hours_sent'  => 'ALTER TABLE `' . $table . '` ADD COLUMN `client_sms_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `staff_48_hours_sent`',
+            'staff_sms_48_hours_sent'   => 'ALTER TABLE `' . $table . '` ADD COLUMN `staff_sms_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `client_sms_48_hours_sent`',
+            'last_email_sent_at'        => 'ALTER TABLE `' . $table . '` ADD COLUMN `last_email_sent_at` DATETIME DEFAULT NULL AFTER `staff_sms_48_hours_sent`',
+            'last_sms_sent_at'          => 'ALTER TABLE `' . $table . '` ADD COLUMN `last_sms_sent_at` DATETIME DEFAULT NULL AFTER `last_email_sent_at`',
+        ];
+
+        foreach ($fieldsToAdd as $field => $statement) {
+            if (!$CI->db->field_exists($field, $table)) {
+                $CI->db->query($statement);
+            }
+        }
+    }
     
     // ==================== DATA MIGRATION: Update rel_type for existing records ====================
     
@@ -512,20 +625,128 @@ function ella_contractors_activate_module() {
     
     // ==================== END DATA MIGRATION ====================
     
+    // ==================== GOOGLE CALENDAR INTEGRATION - DATABASE SETUP ====================
+    
+    // Create staff_google_calendar_tokens table for staff-specific Google Calendar connections
+    if (!$CI->db->table_exists(db_prefix() . 'staff_google_calendar_tokens')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'staff_google_calendar_tokens` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `staff_id` int(11) NOT NULL,
+            `access_token` text,
+            `refresh_token` text,
+            `expires_at` datetime DEFAULT NULL,
+            `calendar_id` varchar(255) DEFAULT "primary",
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `unique_staff_id` (`staff_id`),
+            KEY `idx_staff_id` (`staff_id`),
+            KEY `idx_expires_at` (`expires_at`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+        
+        log_message('info', 'EllaContractors: staff_google_calendar_tokens table created successfully');
+    } else {
+        // Add missing columns if table exists but columns are missing
+        if (!$CI->db->field_exists('calendar_id', db_prefix() . 'staff_google_calendar_tokens')) {
+            try {
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'staff_google_calendar_tokens` ADD COLUMN `calendar_id` VARCHAR(255) DEFAULT "primary" AFTER `expires_at`');
+            } catch (Exception $e) {
+                log_message('error', 'EllaContractors: Failed to add calendar_id column - ' . $e->getMessage());
+            }
+        }
+    }
+    
+    // Add google_event_id and google_calendar_id columns to appointly_appointments table (DEPRECATED - kept for backward compatibility)
+    // NOTE: These columns are now deprecated in favor of tblappointment_google_events table
+    // They are kept for existing data migration and backward compatibility
+    if (!$CI->db->field_exists('google_event_id', db_prefix() . 'appointly_appointments')) {
+        try {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `google_event_id` VARCHAR(255) NULL DEFAULT NULL AFTER `reminder_channel`');
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD INDEX `idx_google_event_id` (`google_event_id`)');
+            log_message('info', 'EllaContractors: google_event_id column added successfully');
+        } catch (Exception $e) {
+            log_message('error', 'EllaContractors: Failed to add google_event_id column - ' . $e->getMessage());
+        }
+    }
+    
+    if (!$CI->db->field_exists('google_calendar_id', db_prefix() . 'appointly_appointments')) {
+        try {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `google_calendar_id` VARCHAR(255) NULL DEFAULT NULL AFTER `google_event_id`');
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD INDEX `idx_google_calendar_id` (`google_calendar_id`)');
+            log_message('info', 'EllaContractors: google_calendar_id column added successfully');
+        } catch (Exception $e) {
+            log_message('error', 'EllaContractors: Failed to add google_calendar_id column - ' . $e->getMessage());
+        }
+    }
+    
+    // Create appointment_google_events junction table to track per-staff Google event IDs
+    // This allows each staff member to have their own Google Calendar event ID for the same appointment
+    // Uses Perfex CRM standard rel_type/rel_id/org_id pattern for flexibility (no foreign key constraints)
+    if (!$CI->db->table_exists(db_prefix() . 'appointment_google_events')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'appointment_google_events` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `rel_type` varchar(50) DEFAULT "appointment" COMMENT "Related entity type",
+            `rel_id` int(11) NOT NULL COMMENT "Appointment ID",
+            `org_id` int(11) DEFAULT NULL COMMENT "Organization ID for multi-tenant support",
+            `staff_id` int(11) NOT NULL COMMENT "Staff member who owns this calendar event",
+            `google_event_id` varchar(255) NOT NULL COMMENT "Google Calendar event ID",
+            `google_calendar_id` varchar(255) DEFAULT "primary" COMMENT "Google Calendar ID (usually primary)",
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `unique_rel_staff` (`rel_type`, `rel_id`, `staff_id`),
+            KEY `idx_rel_type_id` (`rel_type`, `rel_id`),
+            KEY `idx_org_id` (`org_id`),
+            KEY `idx_staff_id` (`staff_id`),
+            KEY `idx_google_event_id` (`google_event_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+        
+        log_message('info', 'EllaContractors: appointment_google_events junction table created successfully');
+    }
+    
+    // Initialize Google Calendar configuration options (if not exist)
+    // Note: These are optional - if not set, will fall back to Appointly's credentials
+    if (get_option('google_calendar_client_id') === false) {
+        add_option('google_calendar_client_id', '');
+    }
+    if (get_option('google_calendar_client_secret') === false) {
+        add_option('google_calendar_client_secret', '');
+    }
+    if (get_option('google_calendar_redirect_uri') === false) {
+        // Default redirect URI
+        $redirect_uri = site_url('ella_contractors/google_callback');
+        add_option('google_calendar_redirect_uri', $redirect_uri);
+    }
+    
+    log_message('info', 'EllaContractors: Google Calendar options initialized. Will use Appointly credentials if EllaContractors ones are not set.');
+    
+    // ==================== END GOOGLE CALENDAR INTEGRATION - DATABASE SETUP ====================
+    
     // Set module version
     update_option('ella_contractors_version', '1.0.0');
     
 }
 
+/**
+ * Cron callback for Ella Contractors reminders.
+ *
+ * @param bool $manually
+ * @return void
+ */
+function ella_contractors_after_cron_run($manually)
+{
+    $reminder_helper_path = module_dir_path(ELLA_CONTRACTORS_MODULE_NAME, 'helpers/ella_reminder_helper.php');
+    if (file_exists($reminder_helper_path) && !function_exists('ella_run_reminder_dispatch')) {
+        require_once($reminder_helper_path);
+    }
+
+    if (function_exists('ella_run_reminder_dispatch')) {
+        ella_run_reminder_dispatch();
+    }
+}
+
 function ella_contractors_deactivate_module() {
-    $CI = &get_instance();
-
-    // Remove legacy tables
-    $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_line_items`');
-    $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_line_item_groups`');
-    $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_estimates`');
-    $CI->db->query('DROP TABLE IF EXISTS `' . db_prefix() . 'ella_contractor_estimate_line_items`');
-
+    //revert if you want 
 }
 
 

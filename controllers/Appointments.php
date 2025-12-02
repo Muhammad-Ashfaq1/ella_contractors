@@ -6,6 +6,7 @@ class Appointments extends AdminController
     {
         parent::__construct();
         $this->load->model('ella_contractors/Ella_appointments_model', 'appointments_model');
+        $this->load->model('ella_contractors/Appointment_reminder_model', 'appointment_reminder_model');
         $this->load->model('staff_model');
         $this->load->model('clients_model');
         $this->load->model('leads_model');
@@ -318,6 +319,7 @@ class Appointments extends AdminController
             // Convert object to array
             $appointment_data = (array) $appointment;
             $appointment_data['attendees'] = $this->appointments_model->get_appointment_attendees($id);
+            $appointment_data['reminder_channel'] = $this->normalize_reminder_channel($appointment->reminder_channel ?? 'both');
             
             // Determine contact type and prepare contact data for dropdown
             if ($appointment->client_name) {
@@ -396,7 +398,9 @@ class Appointments extends AdminController
             'appointment_status' => $this->input->post('status') ?: 'scheduled',
             'source' => 'ella_contractor',
             'send_reminder' => $this->input->post('send_reminder') ? 1 : 0,
-            'reminder_48h' => $this->input->post('reminder_48h') ? 1 : 0
+            'reminder_48h' => $this->input->post('reminder_48h') ? 1 : 0,
+            'staff_reminder_48h' => $this->input->post('staff_reminder_48h') ? 1 : 0,
+            'reminder_channel' => $this->normalize_reminder_channel($this->input->post('reminder_channel'))
         ];
         
         $appointment_id = $this->input->post('appointment_id');
@@ -418,6 +422,13 @@ class Appointments extends AdminController
                     }
                     // Handle file uploads for update
                     $this->handle_appointment_file_uploads($appointment_id);
+                    
+                    // Update reminder tracking record
+                    $this->appointment_reminder_model->sync_from_appointment($appointment_id, $data);
+                    
+                    // Sync to Google Calendar if staff has connected
+                    $this->sync_to_google_calendar($appointment_id, 'update');
+                    
                     echo json_encode([
                         'success' => true,
                         'message' => 'Appointment updated successfully'
@@ -452,6 +463,19 @@ class Appointments extends AdminController
                     }
                     // Handle file uploads for creation
                     $this->handle_appointment_file_uploads($appointment_id);
+                    
+                    // Schedule reminders (emails & ICS files)
+                    // if (!function_exists('ella_schedule_reminders')) {
+                    //     require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
+                    // }
+                    // ella_schedule_reminders($appointment_id, ['client_instant']);
+
+                    // Create reminder tracking record
+                    $this->appointment_reminder_model->sync_from_appointment($appointment_id, $data);
+                    
+                    // Sync to Google Calendar if staff has connected
+                    $this->sync_to_google_calendar($appointment_id, 'create');
+                    
                     echo json_encode([
                         'success' => true,
                         'message' => 'Appointment created successfully',
@@ -488,6 +512,15 @@ class Appointments extends AdminController
         }
 
         $id = $this->input->post('id');
+        
+        // Get appointment before deleting to check for Google Calendar sync
+        $appointment = $this->appointments_model->get_appointment($id);
+        $staff_id = $appointment ? $appointment->created_by : null;
+        
+        // Sync delete to Google Calendar before deleting from database
+        if ($appointment && $staff_id) {
+            $this->sync_to_google_calendar($id, 'delete');
+        }
         
         if ($this->appointments_model->delete_appointment($id)) {
             echo json_encode([
@@ -564,6 +597,9 @@ class Appointments extends AdminController
      */
     private function handle_attendees($appointment_id)
     {
+        // Get existing attendees for comparison (for Google Calendar sync)
+        $old_attendees = $this->appointments_model->get_appointment_attendees($appointment_id);
+        
         $attendees = $this->input->post('attendees');
         if ($attendees && is_array($attendees)) {
             // Remove existing attendees
@@ -573,6 +609,14 @@ class Appointments extends AdminController
             // Add new attendees
             foreach ($attendees as $staff_id) {
                 $this->appointments_model->add_attendee($appointment_id, $staff_id);
+            }
+            
+            // Get new attendees for comparison
+            $new_attendees = $this->appointments_model->get_appointment_attendees($appointment_id);
+            
+            // Sync assignee changes to Google Calendar
+            if (!empty($old_attendees) || !empty($new_attendees)) {
+                $this->sync_assignee_change($appointment_id, $old_attendees, $new_attendees);
             }
         }
     }
@@ -594,6 +638,76 @@ class Appointments extends AdminController
         ]);
     }
 
+    /**
+     * Calendar events feed for the logged-in staff member
+     */
+    public function calendar_events()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $startParam = $this->input->get('start');
+        $endParam   = $this->input->get('end');
+
+        $startDate = $this->normalize_calendar_date($startParam);
+        $endDate   = $this->normalize_calendar_date($endParam);
+
+        $appointments = $this->appointments_model->get_staff_calendar_appointments(
+            get_staff_user_id(),
+            $startDate,
+            $endDate
+        );
+
+        $events = [];
+        foreach ($appointments as $appointment) {
+            $startDateTime = $this->combine_calendar_datetime($appointment['date'] ?? null, $appointment['start_hour'] ?? null);
+
+            if (!$startDateTime) {
+                continue;
+            }
+
+            $endDateValue = !empty($appointment['end_date']) ? $appointment['end_date'] : $appointment['date'];
+            $endTimeValue = !empty($appointment['end_time']) ? $appointment['end_time'] : ($appointment['start_hour'] ?? null);
+
+            $endDateTime = $this->combine_calendar_datetime($endDateValue, $endTimeValue);
+
+            if (!$endDateTime) {
+                $endDateTime = clone $startDateTime;
+                $endDateTime->modify('+1 hour');
+            } else {
+                if (empty($appointment['end_time'])) {
+                    $endDateTime->modify('+1 hour');
+                }
+
+                if ($endDateTime <= $startDateTime) {
+                    $endDateTime = clone $startDateTime;
+                    $endDateTime->modify('+1 hour');
+                }
+            }
+
+            $status = !empty($appointment['appointment_status']) ? strtolower($appointment['appointment_status']) : 'scheduled';
+
+            $events[] = [
+                'id'        => (int) $appointment['id'],
+                'title'     => $appointment['subject'],
+                'start'     => $startDateTime->format(DateTime::ATOM),
+                'end'       => $endDateTime->format(DateTime::ATOM),
+                'url'       => admin_url('ella_contractors/appointments/view/' . $appointment['id']),
+                'status'    => $status,
+                'location'  => $appointment['address'] ?? '',
+                'allDay'    => false,
+                'className' => ['status-' . $status],
+            ];
+        }
+
+        echo json_encode([
+            'success'    => true,
+            'data'       => $events,
+            'csrf_token' => $this->security->get_csrf_hash(),
+        ]);
+    }
+
 
     /**
      * Send SMS to lead from appointment
@@ -603,6 +717,15 @@ class Appointments extends AdminController
         if (!has_permission('ella_contractors', '', 'edit')) {
             ajax_access_denied();
         }
+
+        // Temporarily disabled: SMS sending is turned off in QA mode.
+        echo json_encode([
+            'success' => false,
+            'message' => 'SMS sending is temporarily disabled. Please use email instead.'
+        ]);
+        return;
+        
+        /*
         
         $response = array();
         
@@ -653,15 +776,28 @@ class Appointments extends AdminController
             $dnc_validation = false;
             $tcpa = false;
             
-            // Call the method to send SMS
-            $response = $this->leads_model->send_sms($lead_id, $staff_id, $number, $sms_body, $media_url, $tcpa, $dnc_validation, $ics_url);
+            if (!function_exists('ella_dispatch_sms')) {
+                require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
+            }
+
+            // Dispatch SMS via module helper (uses Telnyx configuration)
+            $response = ella_dispatch_sms(
+                $number,
+                $sms_body,
+                [
+                    'lead_id'        => !empty($lead_id) ? (int) $lead_id : 0,
+                    'staff_id'       => (int) $staff_id,
+                    'appointment_id' => $this->input->post('appointment_id') ?: null,
+                    'ics_url'        => $ics_url,
+                    'media_url'      => $media_url,
+                ]
+            );
             
-            // Update lead last contact and log activity
+            // Update log activity hooks
             if ($response['success']) {
-                update_lead_last_contact($lead_id, get_staff_user_id(), "SMS");
-                log_staff_status_activity('Added SMS Activity from Appointment Lead# [' . $lead_id . ']');
-                // Mark all SMS as read
-                $this->leads_model->updated_sms_log_status($lead_id, 'lead_id', '0');
+                if (!empty($lead_id)) {
+                    log_staff_status_activity('Added SMS Activity from Appointment Lead# [' . $lead_id . ']');
+                }
                 
                 // Log SMS sent activity for appointment timeline
                 $appointment_id = $this->input->post('appointment_id');
@@ -676,6 +812,67 @@ class Appointments extends AdminController
         
         // Return the json response
         echo json_encode($response, true);
+        */
+    }
+
+    /**
+     * Normalize reminder channel input to supported values.
+     *
+     * @param string|null $value
+     * @return string
+     */
+    private function normalize_reminder_channel($value)
+    {
+        $allowed = ['sms', 'email', 'both'];
+        $value = is_string($value) ? strtolower(trim($value)) : '';
+        if (!in_array($value, $allowed, true)) {
+            $value = 'both';
+        }
+        return $value;
+    }
+
+    /**
+     * Normalize calendar date parameters to Y-m-d or return null on failure
+     *
+     * @param string|null $value
+     * @return string|null
+     */
+    private function normalize_calendar_date($value)
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        try {
+            return (new DateTime($value))->format('Y-m-d');
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Combine date and time into a DateTime instance (UTC unaffected)
+     *
+     * @param string|null $date
+     * @param string|null $time
+     * @return DateTime|null
+     */
+    private function combine_calendar_datetime($date, $time)
+    {
+        if (empty($date)) {
+            return null;
+        }
+
+        $time = $time ?: '00:00:00';
+        if (strlen($time) === 5) {
+            $time .= ':00';
+        }
+
+        try {
+            return new DateTime(trim($date . ' ' . $time));
+        } catch (Exception $e) {
+            return null;
+        }
     }
     
     /**
@@ -774,32 +971,6 @@ class Appointments extends AdminController
         echo json_encode($response, true);
     }
     
-    /**
-     * Send test SMS - matching leads functionality
-     */
-    public function send_test_sms()
-    {
-        if (!has_permission('ella_contractors', '', 'edit')) {
-            ajax_access_denied();
-        }
-        
-        $response = array();
-        $test_number = $this->input->post('test_number');
-        $test_sms_body = $this->input->post('test_sms_body');
-        
-        if (empty($test_number) || empty($test_sms_body)) {
-            $response['message'] = 'Please provide both phone number and message';
-            $response['success'] = false;
-        } else {
-            // Load leads model
-            $this->load->model('leads_model');
-            
-            // Send test SMS using the same method as leads
-            $response = $this->leads_model->send_sms(0, get_staff_user_id(), $test_number, $test_sms_body, '', false, false, '');
-        }
-        
-        echo json_encode($response, true);
-    }
     
     public function upload_sms_media()
     {
@@ -2068,6 +2239,14 @@ startxref
         $this->db->order_by('pivot.attached_at', 'DESC');
         
         $presentations = $this->db->get()->result_array();
+
+        if (!empty($presentations)) {
+            foreach ($presentations as &$presentation) {
+                $public_url = site_url('uploads/ella_presentations/' . $presentation['file_name']);
+                $presentation['public_url'] = str_replace('http://', 'https://', $public_url);
+            }
+            unset($presentation);
+        }
         
         echo json_encode([
             'success' => true,
@@ -2220,4 +2399,395 @@ startxref
         }
     }
 
+    /**
+     * Download ICS calendar file for appointment
+     * Allows staff to download calendar invitations for client or themselves
+     * 
+     * @param int $appointment_id Appointment ID
+     * @param string $type 'client' or 'staff'
+     */
+    public function download_ics($appointment_id, $type = 'client')
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            access_denied('ella_contractors');
+        }
+        
+        // Validate type parameter
+        if (!in_array($type, ['client', 'staff'])) {
+            show_404();
+        }
+        
+        // Load helper
+        if (!function_exists('ella_generate_ics')) {
+            require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
+        }
+        
+        // Generate ICS file
+        $ics_file = ella_generate_ics($appointment_id, $type);
+        
+        if ($ics_file && file_exists($ics_file)) {
+            // Force download
+            $this->load->helper('download');
+            $filename = $type . '_appointment_' . $appointment_id . '.ics';
+            force_download($filename, file_get_contents($ics_file));
+        } else {
+            // Failed to generate ICS file
+            set_alert('danger', 'Failed to generate calendar file. Please try again.');
+            redirect(admin_url('ella_contractors/appointments/view/' . $appointment_id));
+        }
+    }
+
+    /**
+     * Check tutorial status for current user
+     * Returns whether tutorial should be shown
+     * 
+     * @return json
+     */
+    public function check_tutorial_status()
+    {
+        if (!is_staff_logged_in()) {
+            echo json_encode(['show_tutorial' => false]);
+            return;
+        }
+
+        $staff_id = get_staff_user_id();
+        
+        // Check user meta for tutorial dismissal
+        if (!function_exists('get_meta')) {
+            $this->load->helper('user_meta');
+        }
+        
+        $tutorial_dismissed = get_meta('staff', $staff_id, 'ella_contractors_tutorial_dismissed');
+        
+        $show_tutorial = empty($tutorial_dismissed) || $tutorial_dismissed != '1';
+        
+        echo json_encode([
+            'show_tutorial' => $show_tutorial,
+            'dismissed' => $tutorial_dismissed == '1'
+        ]);
+    }
+
+    /**
+     * Save tutorial preference (dismissed state)
+     * 
+     * @return json
+     */
+    public function save_tutorial_preference()
+    {
+        if (!is_staff_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ]);
+            return;
+        }
+
+        $staff_id = get_staff_user_id();
+        $dismissed = $this->input->post('dismissed') ? 1 : 0;
+        
+        // Load user meta helper if not loaded
+        if (!function_exists('update_meta')) {
+            $this->load->helper('user_meta');
+        }
+        
+        // Save preference
+        $result = update_meta('staff', $staff_id, 'ella_contractors_tutorial_dismissed', $dismissed);
+        
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Tutorial preference saved successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to save tutorial preference'
+            ]);
+        }
+    }
+
+    /**
+     * Reset tutorial for current user (admin function)
+     * Allows users to restart the tutorial
+     * 
+     * @return json
+     */
+    public function reset_tutorial()
+    {
+        if (!is_staff_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ]);
+            return;
+        }
+
+        $staff_id = get_staff_user_id();
+        
+        // Load user meta helper if not loaded
+        if (!function_exists('delete_meta')) {
+            $this->load->helper('user_meta');
+        }
+        
+        // Remove tutorial dismissal preference
+        $result = delete_meta('staff', $staff_id, 'ella_contractors_tutorial_dismissed');
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Tutorial reset successfully. Refresh the page to see it again.'
+        ]);
+    }
+
+    /**
+     * Check estimate tutorial status for current user
+     * Returns whether tutorial should be shown
+     * 
+     * @return json
+     */
+    public function check_estimate_tutorial_status()
+    {
+        if (!is_staff_logged_in()) {
+            echo json_encode(['show_tutorial' => false]);
+            return;
+        }
+
+        $staff_id = get_staff_user_id();
+        
+        // Check user meta for tutorial dismissal
+        if (!function_exists('get_meta')) {
+            $this->load->helper('user_meta');
+        }
+        
+        $tutorial_dismissed = get_meta('staff', $staff_id, 'ella_contractors_estimate_tutorial_dismissed');
+        
+        $show_tutorial = empty($tutorial_dismissed) || $tutorial_dismissed != '1';
+        
+        echo json_encode([
+            'show_tutorial' => $show_tutorial,
+            'dismissed' => $tutorial_dismissed == '1'
+        ]);
+    }
+
+    /**
+     * Save estimate tutorial preference (dismissed state)
+     * 
+     * @return json
+     */
+    public function save_estimate_tutorial_preference()
+    {
+        if (!is_staff_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ]);
+            return;
+        }
+
+        $staff_id = get_staff_user_id();
+        $dismissed = $this->input->post('dismissed') ? 1 : 0;
+        
+        // Load user meta helper if not loaded
+        if (!function_exists('update_meta')) {
+            $this->load->helper('user_meta');
+        }
+        
+        // Save preference
+        $result = update_meta('staff', $staff_id, 'ella_contractors_estimate_tutorial_dismissed', $dismissed);
+        
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Tutorial preference saved successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to save tutorial preference'
+            ]);
+        }
+    }
+
+    /**
+     * Reset estimate tutorial for current user
+     * Allows users to restart the estimate tutorial
+     * 
+     * @return json
+     */
+    public function reset_estimate_tutorial()
+    {
+        if (!is_staff_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ]);
+            return;
+        }
+
+        $staff_id = get_staff_user_id();
+        
+        // Load user meta helper if not loaded
+        if (!function_exists('delete_meta')) {
+            $this->load->helper('user_meta');
+        }
+        
+        // Remove tutorial dismissal preference
+        $result = delete_meta('staff', $staff_id, 'ella_contractors_estimate_tutorial_dismissed');
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Estimate tutorial reset successfully. Refresh the page to see it again.'
+        ]);
+    }
+
+    /**
+     * Sync appointment to Google Calendar
+     * Handles sync for creator and all attendees who have Google Calendar connected
+     * 
+     * @param int $appointment_id Appointment ID
+     * @param string $action Action: 'create', 'update', or 'delete'
+     * @return bool Success status
+     */
+    private function sync_to_google_calendar($appointment_id, $action = 'create')
+    {
+        // Load Google Calendar sync library
+        $this->load->library('ella_contractors/Google_calendar_sync');
+
+        // Get appointment data
+        $appointment = $this->appointments_model->get_appointment($appointment_id);
+        if (!$appointment || $appointment->source !== 'ella_contractor') {
+            return false;
+        }
+
+        try {
+            // Get all staff who should have this appointment in their calendar
+            $staff_to_sync = [];
+            
+            // Add creator
+            if (!empty($appointment->created_by)) {
+                $staff_to_sync[] = $appointment->created_by;
+            }
+            
+            // Add attendees
+            $attendees = $this->appointments_model->get_appointment_attendees($appointment_id);
+            foreach ($attendees as $attendee) {
+                if (!empty($attendee['staffid']) && !in_array($attendee['staffid'], $staff_to_sync)) {
+                    $staff_to_sync[] = $attendee['staffid'];
+                }
+            }
+
+            // Sync for each connected staff member
+            $synced_count = 0;
+            foreach ($staff_to_sync as $staff_id) {
+                // Check if staff has Google Calendar connected
+                $status = $this->google_calendar_sync->get_connection_status($staff_id);
+                if (!$status || !$status['connected']) {
+                    continue; // Skip if not connected
+                }
+
+                // Perform sync based on action
+                $result = false;
+                switch ($action) {
+                    case 'create':
+                        $result = $this->google_calendar_sync->create_event($appointment_id, $staff_id);
+                        break;
+                    
+                    case 'update':
+                        // Check if appointment status changed to cancelled
+                        if (isset($appointment->appointment_status) && $appointment->appointment_status === 'cancelled') {
+                            $result = $this->google_calendar_sync->delete_event($appointment_id, $staff_id);
+                        } else {
+                            $result = $this->google_calendar_sync->update_event($appointment_id, $staff_id);
+                        }
+                        break;
+                    
+                    case 'delete':
+                        $result = $this->google_calendar_sync->delete_event($appointment_id, $staff_id);
+                        break;
+                    
+                    default:
+                        continue 2; // Skip to next staff
+                }
+
+                if ($result !== false) {
+                    $synced_count++;
+                }
+            }
+
+            return $synced_count > 0;
+        } catch (Exception $e) {
+            log_message('error', 'Google Calendar sync error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Handle assignee change - sync to Google Calendar
+     * This is called when attendees are updated
+     */
+    private function sync_assignee_change($appointment_id, $old_assignees, $new_assignees)
+    {
+        // Load Google Calendar sync library
+        $this->load->library('ella_contractors/Google_calendar_sync');
+
+        $appointment = $this->appointments_model->get_appointment($appointment_id);
+        if (!$appointment || $appointment->source !== 'ella_contractor') {
+            return;
+        }
+
+        // Get old and new staff IDs
+        $old_staff_ids = [];
+        if (!empty($old_assignees)) {
+            $old_staff_ids = array_column($old_assignees, 'staffid');
+        }
+        // Always include creator in old list
+        if (!empty($appointment->created_by) && !in_array($appointment->created_by, $old_staff_ids)) {
+            $old_staff_ids[] = $appointment->created_by;
+        }
+
+        $new_staff_ids = [];
+        if (!empty($new_assignees)) {
+            $new_staff_ids = array_column($new_assignees, 'staffid');
+        }
+        // Always include creator in new list
+        if (!empty($appointment->created_by) && !in_array($appointment->created_by, $new_staff_ids)) {
+            $new_staff_ids[] = $appointment->created_by;
+        }
+
+        // Find removed staff (need to delete from their calendars, but not creator)
+        $removed_staff = array_diff($old_staff_ids, $new_staff_ids);
+        foreach ($removed_staff as $staff_id) {
+            // Don't delete from creator's calendar (they should always have it)
+            if ($staff_id == $appointment->created_by) {
+                continue;
+            }
+            
+            $status = $this->google_calendar_sync->get_connection_status($staff_id);
+            if ($status && $status['connected']) {
+                $this->google_calendar_sync->delete_event($appointment_id, $staff_id);
+            }
+        }
+
+        // Find added staff (need to create in their calendars)
+        $added_staff = array_diff($new_staff_ids, $old_staff_ids);
+        foreach ($added_staff as $staff_id) {
+            $status = $this->google_calendar_sync->get_connection_status($staff_id);
+            if ($status && $status['connected']) {
+                // Check if event already exists for this staff (should not, but safety check)
+                $existing_event_id = null;
+                if ($staff_id == $appointment->created_by && !empty($appointment->google_event_id)) {
+                    $existing_event_id = $appointment->google_event_id;
+                }
+                
+                if ($existing_event_id) {
+                    // Update existing event
+                    $this->google_calendar_sync->update_event($appointment_id, $staff_id);
+                } else {
+                    // Create new event
+                    $this->google_calendar_sync->create_event($appointment_id, $staff_id);
+                }
+            }
+        }
+    }
+
+    
 }

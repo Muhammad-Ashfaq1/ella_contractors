@@ -4,6 +4,9 @@
 <!-- Load module CSS -->
 <!-- <link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/ella-contractors.css'); ?>"> -->
 
+<!-- Load Tutorial CSS -->
+<link rel="stylesheet" href="<?php echo module_dir_url('ella_contractors', 'assets/css/appointment-tutorial.css'); ?>">
+
 <div id="wrapper">
     <div class="content">
         <div class="row">
@@ -16,9 +19,72 @@
                                     <button type="button" class="btn btn-info" id="new-appointment">
                                         <i class="fa fa-plus" style="margin-right: 2% !important;"></i> New Appointment
                                     </button>
+                                    <button type="button" class="btn btn-default" id="restart-tutorial" style="margin-left: 10px;" data-toggle="tooltip" data-placement="top" title="Restart Tutorial">
+                                        <i class="fa fa-question-circle"></i> Help
+                                    </button>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group pull-right">
+                                        <!-- Calendar View Button -->
+                                        <div class="btn-group" role="group" style="margin-right:5px;">
+                                            <button type="button" class="btn btn-default" id="open-calendar-modal" data-toggle="tooltip" data-placement="top" title="View Calendar">
+                                                <i class="fa fa-calendar"></i>
+                                            </button>
+                                        </div>
+                                        <!-- Integrations Dropdown -->
+                                        <div class="btn-group btn-with-tooltip-group mright5" data-toggle="tooltip" data-title="Integrations">
+                                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <i class="fa fa-rocket" aria-hidden="true"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-right w-max-content" id="integrations-dropdown">
+                                                <!-- Google Calendar Integration -->
+                                                <li id="google-calendar-connect-item">
+                                                    <a href="#" id="google-calendar-connect-btn" data-toggle="tooltip" title="Connect Google Calendar">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="16" height="16" style="vertical-align: middle; margin-right: 6px;">
+                                                            <rect width="22" height="22" x="13" y="13" fill="#fff"/>
+                                                            <polygon fill="#1e88e5" points="25.68,20.92 26.688,22.36 28.272,21.208 28.272,29.56 30,29.56 30,18.616 28.56,18.616"/>
+                                                            <path fill="#1e88e5" d="M22.943,23.745c0.625-0.574,1.013-1.37,1.013-2.249c0-1.747-1.533-3.168-3.417-3.168 c-1.602,0-2.972,1.009-3.33,2.453l1.657,0.421c0.165-0.664,0.868-1.146,1.673-1.146c0.942,0,1.709,0.646,1.709,1.44 c0,0.794-0.767,1.44-1.709,1.44h-0.997v1.728h0.997c1.081,0,1.993,0.751,1.993,1.64c0,0.904-0.866,1.64-1.931,1.64 c-0.962,0-1.784-0.61-1.914-1.418L17,26.802c0.262,1.636,1.81,2.87,3.6,2.87c2.007,0,3.64-1.511,3.64-3.368 C24.24,25.281,23.736,24.363,22.943,23.745z"/>
+                                                            <polygon fill="#fbc02d" points="34,42 14,42 13,38 35,38"/>
+                                                            <polygon fill="#4caf50" points="38,35 10,35 11,38 37,38"/>
+                                                            <path fill="#1e88e5" d="M34,14l1-4l-1-4H9C7.343,6,6,7.343,6,9v25l4,1l4-1V16c0-1.105,0.895-2,2-2H34z"/>
+                                                            <polygon fill="#e53935" points="34,34 34,42 42,34"/>
+                                                            <path fill="#1565c0" d="M39,6h-5v8h8V9C42,7.343,40.657,6,39,6z"/>
+                                                            <path fill="#1565c0" d="M9,42h5v-8H6v5C6,40.657,7.343,42,9,42z"/>
+                                                        </svg>
+                                                        Connect Google Calendar
+                                                    </a>
+                                                </li>
+                                                <!-- Google Calendar Connected Status (hidden by default) -->
+                                                <li id="google-calendar-connected-item" style="display:none;">
+                                                    <a href="#" class="text-success" style="cursor: default; pointer-events: none;">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="16" height="16" style="vertical-align: middle; margin-right: 6px;">
+                                                            <rect width="22" height="22" x="13" y="13" fill="#fff"/>
+                                                            <polygon fill="#4caf50" points="25.68,20.92 26.688,22.36 28.272,21.208 28.272,29.56 30,29.56 30,18.616 28.56,18.616"/>
+                                                            <path fill="#4caf50" d="M22.943,23.745c0.625-0.574,1.013-1.37,1.013-2.249c0-1.747-1.533-3.168-3.417-3.168 c-1.602,0-2.972,1.009-3.33,2.453l1.657,0.421c0.165-0.664,0.868-1.146,1.673-1.146c0.942,0,1.709,0.646,1.709,1.44 c0,0.794-0.767,1.44-1.709,1.44h-0.997v1.728h0.997c1.081,0,1.993,0.751,1.993,1.64c0,0.904-0.866,1.64-1.931,1.64 c-0.962,0-1.784-0.61-1.914-1.418L17,26.802c0.262,1.636,1.81,2.87,3.6,2.87c2.007,0,3.64-1.511,3.64-3.368 C24.24,25.281,23.736,24.363,22.943,23.745z"/>
+                                                            <polygon fill="#fbc02d" points="34,42 14,42 13,38 35,38"/>
+                                                            <polygon fill="#4caf50" points="38,35 10,35 11,38 37,38"/>
+                                                            <path fill="#4caf50" d="M34,14l1-4l-1-4H9C7.343,6,6,7.343,6,9v25l4,1l4-1V16c0-1.105,0.895-2,2-2H34z"/>
+                                                            <polygon fill="#4caf50" points="34,34 34,42 42,34"/>
+                                                            <path fill="#4caf50" d="M39,6h-5v8h8V9C42,7.343,40.657,6,39,6z"/>
+                                                            <path fill="#4caf50" d="M9,42h5v-8H6v5C6,40.657,7.343,42,9,42z"/>
+                                                        </svg>
+                                                        Google Calendar Connected ✓
+                                                    </a>
+                                                </li>
+                                                <li id="google-calendar-sync-item" style="display:none;">
+                                                    <a href="#" id="google-calendar-sync-now">
+                                                        <i class="fa fa-refresh" style="margin-right: 6px;"></i> Sync Now
+                                                    </a>
+                                                </li>
+                                                <li role="separator" class="divider" id="google-calendar-divider" style="display:none;"></li>
+                                                <li id="google-calendar-disconnect-item" style="display:none;">
+                                                    <a href="#" id="google-calendar-disconnect" style="color: #e74c3c;">
+                                                        <i class="fa fa-unlink" style="margin-right: 6px;"></i> Disconnect
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <!-- Filter Dropdown -->
                                         <div class="btn-group" role="group">
                                             <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                 <i class="fa fa-filter"></i> All Appointments <span class="caret"></span>
@@ -79,10 +145,78 @@ $data['appointment_types'] = $this->appointments_model->get_appointment_types();
 $this->load->view('appointments/modal', $data);
 ?>
 
+<!-- Calendar Modal -->
+<div class="modal fade" id="appointmentCalendarModal" tabindex="-1" role="dialog" aria-labelledby="appointmentCalendarModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="appointmentCalendarModalLabel"><i class="fa fa-calendar"></i> My Appointment Calendar</h4>
+            </div>
+            <div class="modal-body">
+                <div id="ella-calendar-loading" class="text-center" style="display:none;margin-bottom:15px;">
+                    <i class="fa fa-spinner fa-spin fa-2x"></i>
+                    <p style="margin-top:10px;">Loading calendar...</p>
+                </div>
+                <div id="ella-appointment-calendar"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal"><?php echo _l('close'); ?></button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php init_tail(); ?>
 
+<link rel="stylesheet" href="<?php echo base_url('assets/plugins/fullcalendar/fullcalendar.min.css'); ?>">
+<script src="<?php echo base_url('assets/plugins/fullcalendar/lib/moment.min.js'); ?>"></script>
+<script src="<?php echo base_url('assets/plugins/moment-timezone/moment-timezone-with-data-2012-2022.js'); ?>"></script>
+<script src="<?php echo base_url('assets/plugins/fullcalendar/fullcalendar.min.js'); ?>"></script>
 
 <style>
+
+/* Integrations dropdown styling */
+.w-max-content {
+    width: max-content;
+}
+
+#integrations-dropdown svg {
+    vertical-align: middle;
+}
+
+#integrations-dropdown .text-success {
+    color: #4caf50 !important;
+}
+
+/* Calendar modal styling */
+#ella-appointment-calendar {
+    min-height: 520px;
+}
+
+#ella-calendar-loading p {
+    color: #555;
+}
+
+.fc-event.status-cancelled {
+    background-color: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.fc-event.status-complete {
+    background-color: #2ecc71;
+    border-color: #2ecc71;
+}
+
+.fc-event.status-scheduled {
+    background-color: #03a9f4;
+    border-color: #03a9f4;
+}
+
+.fc-event.status-pending {
+    background-color: #f39c12;
+    border-color: #f39c12;
+}
 
 /* Fix checkbox alignment - center the checkmark icon */
 .table-ella_appointments .checkbox label::after {
@@ -296,6 +430,7 @@ $this->load->view('appointments/modal', $data);
 <script>
 var csrf_token_name = '<?php echo $this->security->get_csrf_token_name(); ?>';
 var csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
+var ellaCalendarInitialized = false;
 
 // Custom function to initialize combined AJAX search for leads and clients
 function init_combined_ajax_search(selector) {
@@ -351,6 +486,9 @@ function init_combined_ajax_search(selector) {
 }
 
 $(document).ready(function() {
+    // Check Google Calendar connection status on page load
+    checkGoogleCalendarStatus();
+    
     // Initialize DataTable for appointments
     // Sort by column 4 (Scheduled datetime - combined date+time for proper chronological sorting) descending by default
     // Columns: 0=checkbox, 1=ID, 2=Appointment, 3=Lead, 4=Scheduled(datetime), 5=Status, 6=Measurements, 7=Estimates, 8=Options
@@ -413,6 +551,43 @@ $(document).ready(function() {
     // Initialize tooltips
     $('[data-toggle="tooltip"]').tooltip();
     
+    // Restart Tutorial Button
+    $('#restart-tutorial').on('click', function(e) {
+        // Prevent event propagation to avoid sidebar closing
+        e.stopPropagation();
+        e.preventDefault();
+        
+        // Add tutorial-active class immediately to prevent sidebar from closing
+        $('body').addClass('tutorial-active');
+        
+        // if (confirm('Would you like to restart the tutorial? This will show you step-by-step guidance on how to use the appointments module.')) {
+            // Clear preferences
+            localStorage.removeItem('ella_contractors_tutorial_dismissed');
+            localStorage.removeItem('ella_contractors_tutorial_completed');
+            
+            // Reset on server
+            $.ajax({
+                url: admin_url + 'ella_contractors/appointments/reset_tutorial',
+                type: 'POST',
+                data: {
+                    [csrf_token_name]: csrf_hash
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // Restart tutorial
+                        if (typeof AppointmentTutorial !== 'undefined') {
+                            AppointmentTutorial.restart();
+                        } else {
+                            // Reload page if tutorial not initialized
+                            location.reload();
+                        }
+                    }
+                }
+            });
+        // }
+    });
+    
     // Initialize AJAX search for leads and clients
     init_combined_ajax_search('#contact_id.ajax-search');
     
@@ -461,16 +636,10 @@ $(document).ready(function() {
                             }
                         }
                         
-                        // Only populate form fields if they are empty
-                        if (!$('#email').val() && data.email) {
-                            $('#email').val(data.email);
-                        }
-                        if (!$('#phone').val() && data.phone) {
-                            $('#phone').val(data.phone);
-                        }
-                        if (!$('#address').val() && data.address) {
-                            $('#address').val(data.address);
-                        }
+                        // Populate form fields with the selected relation data
+                        $('#email').val(data.email || '');
+                        $('#phone').val(data.phone || '');
+                        $('#address').val(data.address || '');
                         
                         // Store validation status in hidden fields
                         if (typeof data.emailValidaionStatus !== 'undefined') {
@@ -487,10 +656,10 @@ $(document).ready(function() {
                 });
             }
         } else {
-            // Clear form fields if no contact is selected
-            $('#email').val('');
-            $('#phone').val('');
-            $('#address').val('');
+                    // Clear form fields if no contact is selected
+                    $('#email').val('');
+                    $('#phone').val('');
+                    $('#address').val('');
         }
     });
     
@@ -536,6 +705,88 @@ $(document).ready(function() {
             table.order(currentOrder).draw(false);
         });
     });
+});
+
+function initEllaCalendar() {
+    var $calendar = $('#ella-appointment-calendar');
+
+    if ($calendar.length === 0 || typeof $calendar.fullCalendar !== 'function') {
+        console.warn('FullCalendar is not available or calendar element missing.');
+        return;
+    }
+
+    $calendar.fullCalendar({
+        height: 600,
+        header: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'month,agendaWeek,agendaDay'
+        },
+        eventLimit: true,
+        navLinks: true,
+        editable: false,
+        timezone: false,
+        events: function(start, end, timezone, callback) {
+            $('#ella-calendar-loading').show();
+            $.ajax({
+                url: admin_url + 'ella_contractors/appointments/calendar_events',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    start: start.format(),
+                    end: end.format(),
+                    [csrf_token_name]: csrf_hash
+                }
+            }).done(function(response) {
+                if (response && response.csrf_token) {
+                    csrf_hash = response.csrf_token;
+                }
+                var events = (response && response.data) ? response.data : [];
+                callback(events);
+            }).fail(function(xhr) {
+                console.error('Failed to load calendar events', xhr);
+                alert_float('danger', 'Unable to load calendar events at this time.');
+                callback([]);
+            }).always(function() {
+                $('#ella-calendar-loading').hide();
+            });
+        },
+        eventRender: function(event, element) {
+            if (event.status) {
+                element.addClass('status-' + event.status);
+            }
+
+            if (event.location) {
+                element.attr('data-toggle', 'tooltip');
+                element.attr('title', event.location);
+            }
+        },
+        eventClick: function(event) {
+            if (event.url) {
+                window.open(event.url, '_blank');
+                return false;
+            }
+        }
+    });
+
+    ellaCalendarInitialized = true;
+}
+
+$('#open-calendar-modal').on('click', function() {
+    $('#appointmentCalendarModal').modal('show');
+});
+
+$('#appointmentCalendarModal').on('shown.bs.modal', function() {
+    if (!ellaCalendarInitialized) {
+        initEllaCalendar();
+    } else {
+        $('#ella-appointment-calendar').fullCalendar('refetchEvents');
+        $('#ella-appointment-calendar').fullCalendar('render');
+    }
+});
+
+$('#appointmentCalendarModal').on('hidden.bs.modal', function() {
+    $('#ella-calendar-loading').hide();
 });
 
 // Global functions for modal operations
@@ -607,6 +858,8 @@ function loadAppointmentData(appointmentId) {
                 // Handle reminder checkboxes
                 $('#send_reminder').prop('checked', data.send_reminder == 1);
                 $('#reminder_48h').prop('checked', data.reminder_48h == 1);
+                var reminderChannel = data.reminder_channel || 'both';
+                $('input[name="reminder_channel"][value="' + reminderChannel + '"]').prop('checked', true);
                 
                 // Set status dropdown
                 var status = data.appointment_status || 'scheduled';
@@ -646,16 +899,10 @@ function loadAppointmentData(appointmentId) {
                                         return;
                                     }
                                     
-                                    // Only populate form fields if they are empty
-                                    if (!$('#email').val() && data.email) {
-                                        $('#email').val(data.email);
-                                    }
-                                    if (!$('#phone').val() && data.phone) {
-                                        $('#phone').val(data.phone);
-                                    }
-                                    if (!$('#address').val() && data.address) {
-                                        $('#address').val(data.address);
-                                    }
+                                    // Populate form fields with the selected relation data
+                                    $('#email').val(data.email || '');
+                                    $('#phone').val(data.phone || '');
+                                    $('#address').val(data.address || '');
                                     
                                     // Store validation status in hidden fields
                                     if (typeof data.emailValidaionStatus !== 'undefined') {
@@ -884,16 +1131,22 @@ function resetAppointmentModal() {
     }
     $('#selected_presentation_ids').val('');
     
+    // Clear presentation array FIRST
+    if (typeof selectedPresentationsInModal !== 'undefined') {
+        selectedPresentationsInModal = [];
+    }
+    
     // Clear presentation preview using centralized function
     if (typeof clearPresentationSelectionPreview === 'function') {
         clearPresentationSelectionPreview();
     } else {
-        $('#modal-presentation-list').html('');
+        $('#modal-presentation-list').html('<p style="text-align: center; color: #778485; margin: 10px 0;">None</p>');
     }
     
     // Reset reminder checkboxes to default (checked)
     $('#send_reminder').prop('checked', true);
     $('#reminder_48h').prop('checked', true);
+    $('#reminder_channel_both').prop('checked', true);
 }
 
 function deleteAppointment(appointmentId) {
@@ -1537,6 +1790,390 @@ $(document).ready(function() {
 // ========================================
 // END LEAD MODAL FUNCTIONALITY
 // ========================================
+
+// ========================================
+// GOOGLE CALENDAR INTEGRATION
+// ========================================
+
+/**
+ * Check Google Calendar connection status
+ */
+function checkGoogleCalendarStatus() {
+    $.ajax({
+        url: admin_url + 'ella_contractors/google_auth/status',
+        type: 'GET',
+        dataType: 'json',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        success: function(response) {
+            if (!response) {
+                console.error('Google Calendar: Invalid response from server');
+                // Show connect button, hide connected status
+                $('#google-calendar-connect-item').show();
+                $('#google-calendar-connected-item').hide();
+                $('#google-calendar-sync-item').hide();
+                $('#google-calendar-divider').hide();
+                $('#google-calendar-disconnect-item').hide();
+                return;
+            }
+
+            // Check for error message
+            if (response.error) {
+                // Credentials not configured or other error - show connect button
+                // (error message is informational, not blocking)
+                if (response.message !== 'Not configured') {
+                    console.warn('Google Calendar status check:', response.error);
+                }
+            }
+
+            if (response && response.connected) {
+                // Show connected status and options
+                $('#google-calendar-connect-item').hide();
+                $('#google-calendar-connected-item').show();
+                $('#google-calendar-sync-item').show();
+                $('#google-calendar-divider').show();
+                $('#google-calendar-disconnect-item').show();
+            } else {
+                // Show connect button
+                $('#google-calendar-connect-item').show();
+                $('#google-calendar-connected-item').hide();
+                $('#google-calendar-sync-item').hide();
+                $('#google-calendar-divider').hide();
+                $('#google-calendar-disconnect-item').hide();
+            }
+        },
+        error: function(xhr, status, error) {
+            // Log error for debugging
+            console.error('Google Calendar status check failed:', {
+                status: status,
+                error: error,
+                responseText: xhr.responseText
+            });
+            
+            // On error, show connect button (don't block user)
+            $('#google-calendar-connect-item').show();
+            $('#google-calendar-connected-item').hide();
+            $('#google-calendar-sync-item').hide();
+            $('#google-calendar-divider').hide();
+            $('#google-calendar-disconnect-item').hide();
+        }
+    });
+}
+
+/**
+ * Connect Google Calendar button click - Opens OAuth in popup window
+ */
+var googleAuthPopup = null;
+
+$(document).on('click', '#google-calendar-connect-btn', function(e) {
+    e.preventDefault();
+    
+    // Check if Google Calendar credentials are configured
+    $.ajax({
+        url: admin_url + 'ella_contractors/google_auth/status',
+        type: 'GET',
+        dataType: 'json',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        success: function(response) {
+            if (!response) {
+                // Invalid response - try to connect anyway (might be a temporary error)
+                console.warn('Google Calendar: Invalid response, attempting connection anyway');
+                openGoogleAuthPopup();
+                return;
+            }
+
+            if (response && response.error && response.message === 'Not configured') {
+                // Credentials not configured
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Google Calendar Not Configured',
+                        html: 'Please configure Google Calendar API credentials in <strong>Setup → Settings → Google</strong> first.<br><br><strong>Setup Steps:</strong><br>1. Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a><br>2. Create OAuth 2.0 Client ID with Calendar API enabled<br>3. Add credentials in Settings<br><br><a href="' + admin_url + 'settings?group=google" class="btn btn-sm btn-primary" style="color: white; margin-top: 10px;"><i class="fa fa-cog"></i> Go to Settings</a>',
+                        icon: 'warning',
+                        confirmButtonText: 'OK',
+                        width: '600px'
+                    });
+                } else {
+                    alert('Please configure Google Calendar API credentials in Setup → Settings → Google first.');
+                }
+            } else {
+                // Credentials configured or already connected - proceed to OAuth
+                openGoogleAuthPopup();
+            }
+        },
+        error: function(xhr, status, error) {
+            // On error, try to connect anyway (might be a temporary issue)
+            console.error('Google Calendar status check failed:', {
+                status: status,
+                error: error,
+                responseText: xhr.responseText
+            });
+            
+            // Show warning but allow user to proceed
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Warning',
+                    text: 'Unable to verify Google Calendar configuration. Do you want to proceed anyway?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Continue',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        openGoogleAuthPopup();
+                    }
+                });
+            } else {
+                if (confirm('Unable to verify Google Calendar configuration. Do you want to proceed anyway?')) {
+                    openGoogleAuthPopup();
+                }
+            }
+        }
+    });
+});
+
+/**
+ * Open Google OAuth in popup window
+ */
+function openGoogleAuthPopup() {
+    var authUrl = admin_url + 'ella_contractors/google_auth/connect';
+    var width = 600;
+    var height = 700;
+    var left = (screen.width / 2) - (width / 2);
+    var top = (screen.height / 2) - (height / 2);
+    
+    googleAuthPopup = window.open(
+        authUrl,
+        'GoogleAuth',
+        'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes'
+    );
+    
+    // Focus the popup
+    if (googleAuthPopup && !googleAuthPopup.closed) {
+        googleAuthPopup.focus();
+    }
+}
+
+/**
+ * Listen for message from popup window when OAuth is complete
+ */
+window.addEventListener('message', function(event) {
+    // Verify origin for security
+    if (event.origin !== window.location.origin) {
+        return;
+    }
+    
+    // Check if this is a Google Calendar auth success message
+    if (event.data && event.data.type === 'google_calendar_auth_success') {
+        console.log('Google Calendar authentication successful');
+        
+        // Close popup if still open
+        if (googleAuthPopup && !googleAuthPopup.closed) {
+            googleAuthPopup.close();
+        }
+        
+        // Refresh Google Calendar connection status
+        checkGoogleCalendarStatus();
+        
+        // Show success message
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Success!',
+                text: 'Google Calendar connected successfully. Your appointments will now sync automatically.',
+                icon: 'success',
+                confirmButtonText: 'OK'
+            });
+        } else {
+            alert_float('success', 'Google Calendar connected successfully!');
+        }
+    }
+    
+    // Check if this is a Google Calendar auth error message
+    if (event.data && event.data.type === 'google_calendar_auth_error') {
+        console.error('Google Calendar authentication failed:', event.data.message);
+        
+        // Close popup if still open
+        if (googleAuthPopup && !googleAuthPopup.closed) {
+            googleAuthPopup.close();
+        }
+        
+        // Show error message
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Authentication Failed',
+                text: event.data.message || 'Failed to connect Google Calendar. Please try again.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        } else {
+            alert_float('danger', event.data.message || 'Failed to connect Google Calendar');
+        }
+    }
+}, false);
+
+/**
+ * Sync Now button click
+ */
+$(document).on('click', '#google-calendar-sync-now', function(e) {
+    e.preventDefault();
+    
+    var $btn = $(this);
+    var originalHtml = $btn.html();
+    $btn.html('<i class="fa fa-spinner fa-spin"></i> Syncing...');
+    $btn.parent().addClass('disabled');
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/google_auth/sync_now',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        success: function(response) {
+            if (response && response.success) {
+                var message = response.message;
+                if (response.synced !== undefined) {
+                    message += ' (' + response.synced + ' synced';
+                    if (response.failed > 0) {
+                        message += ', ' + response.failed + ' failed';
+                    }
+                    message += ')';
+                }
+                
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Sync Complete',
+                        text: message,
+                        icon: 'success',
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    alert_float('success', message);
+                }
+            } else {
+                var errorMsg = response && response.message ? response.message : 'Failed to sync appointments';
+                
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Sync Failed',
+                        text: errorMsg,
+                        icon: 'error'
+                    });
+                } else {
+                    alert_float('danger', errorMsg);
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            var errorMsg = 'An error occurred during sync. Please try again.';
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Sync Error',
+                    text: errorMsg,
+                    icon: 'error'
+                });
+            } else {
+                alert_float('danger', errorMsg);
+            }
+        },
+        complete: function() {
+            $btn.html(originalHtml);
+            $btn.parent().removeClass('disabled');
+        }
+    });
+});
+
+/**
+ * Disconnect Google Calendar button click
+ */
+$(document).on('click', '#google-calendar-disconnect', function(e) {
+    e.preventDefault();
+    
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Disconnect Google Calendar?',
+            text: 'This will remove your Google Calendar connection and stop syncing appointments. Existing calendar events will not be deleted from Google Calendar.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e74c3c',
+            cancelButtonColor: '#95a5a6',
+            confirmButtonText: 'Yes, Disconnect',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                disconnectGoogleCalendar();
+            }
+        });
+    } else {
+        if (confirm('Are you sure you want to disconnect Google Calendar? This will stop syncing appointments.')) {
+            disconnectGoogleCalendar();
+        }
+    }
+});
+
+/**
+ * Disconnect Google Calendar function
+ */
+function disconnectGoogleCalendar() {
+    $.ajax({
+        url: admin_url + 'ella_contractors/google_auth/disconnect',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            [csrf_token_name]: csrf_hash
+        },
+        success: function(response) {
+            if (response && response.success) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Disconnected',
+                        text: response.message,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    alert_float('success', response.message);
+                }
+                
+                // Update UI
+                $('#google-calendar-connect-group').show();
+                $('#google-calendar-status-group').hide();
+            } else {
+                var errorMsg = response && response.message ? response.message : 'Failed to disconnect';
+                
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Error',
+                        text: errorMsg,
+                        icon: 'error'
+                    });
+                } else {
+                    alert_float('danger', errorMsg);
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            var errorMsg = 'An error occurred while disconnecting. Please try again.';
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Error',
+                    text: errorMsg,
+                    icon: 'error'
+                });
+            } else {
+                alert_float('danger', errorMsg);
+            }
+        }
+    });
+}
+
+// ========================================
+// END GOOGLE CALENDAR INTEGRATION
+// ========================================
 </script>
 
 <!-- Include shared appointment dropzone functionality -->
@@ -1550,6 +2187,9 @@ $(document).ready(function() {
 
 <!-- Include global appointment.js for lead modal functionality -->
 <script src="<?php echo base_url('assets/js/global/appointment.js'); ?>"></script>
+
+<!-- Include Tutorial System -->
+<script src="<?php echo module_dir_url('ella_contractors', 'assets/js/appointment-tutorial.js'); ?>"></script>
 
 
 
