@@ -23,21 +23,29 @@ class Google_calendar_sync
         // Load Google API client if not already loaded
         if (!class_exists('Google_Client')) {
             try {
-                // Try to load from appointly module vendor first (reuse library)
-                $appointly_vendor = module_dir_path('appointly', 'vendor/autoload.php');
+                // Try to load from EllaContractors' own vendor first
+                $ella_vendor = module_dir_path('ella_contractors', 'vendor/autoload.php');
                 
-                if (file_exists($appointly_vendor)) {
-                    require_once($appointly_vendor);
-                    log_message('info', 'Google Calendar: Loaded Google API Client from Appointly vendor');
+                if (file_exists($ella_vendor)) {
+                    require_once($ella_vendor);
+                    log_message('info', 'Google Calendar: Loaded Google API Client from EllaContractors vendor');
                 } else {
-                    // Try global vendor
-                    $global_vendor = FCPATH . 'vendor/autoload.php';
-                    if (file_exists($global_vendor)) {
-                        require_once($global_vendor);
-                        log_message('info', 'Google Calendar: Loaded Google API Client from global vendor');
+                    // Fallback to Appointly vendor if needed
+                    $appointly_vendor = module_dir_path('appointly', 'vendor/autoload.php');
+                    
+                    if (file_exists($appointly_vendor)) {
+                        require_once($appointly_vendor);
+                        log_message('info', 'Google Calendar: Loaded Google API Client from Appointly vendor (fallback)');
                     } else {
-                        log_message('error', 'Google Calendar: Google API Client library not found. Please install Appointly module or run: composer require google/apiclient:^2.0');
-                        throw new Exception('Google API Client library not found. Please ensure Appointly module is installed or install google/apiclient via Composer.');
+                        // Try global vendor as last resort
+                        $global_vendor = FCPATH . 'vendor/autoload.php';
+                        if (file_exists($global_vendor)) {
+                            require_once($global_vendor);
+                            log_message('info', 'Google Calendar: Loaded Google API Client from global vendor (fallback)');
+                        } else {
+                            log_message('error', 'Google Calendar: Google API Client library not found. Please run: cd modules/ella_contractors && composer install');
+                            throw new Exception('Google API Client library not found. Please run composer install in ella_contractors module.');
+                        }
                     }
                 }
                 

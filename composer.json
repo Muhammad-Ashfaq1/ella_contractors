@@ -4,6 +4,7 @@
     "type": "project",
     "require": {
         "php": ">=7.4",
+        "google/apiclient": "^2.0",
         "tecnickcom/tcpdf": "^6.4",
         "phpoffice/phpspreadsheet": "^1.24",
         "phpoffice/phppresentation": "^1.0",
