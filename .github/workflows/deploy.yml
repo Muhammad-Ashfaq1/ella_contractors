@@ -29,9 +29,8 @@ jobs:
           mkdir -p ./deploy_temp
           rsync -av --exclude='.git/' --exclude='.github/' --exclude='.DS_Store' --exclude='*.log' --exclude='node_modules/' --exclude='vendor/' --exclude='deploy_temp/' ./ ./deploy_temp/
           
-          # Deploy only the clean module files with proper SSH options
-          # Force password authentication and disable publickey
-          sshpass -p "gAYpe90UoL1RUgck0iDk" rsync -avz --no-times --no-perms --chmod=Du=rwx,Dg=rx,Fu=rw,Fg=r -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PubkeyAuthentication=no -o PreferredAuthentications=password" ./deploy_temp/ awt-crm-ashfaq@34.224.171.98:~/htdocs/crm.allwetrade.com/modules/ella_contractors/
+          # Deploy only the clean module files with proper SSH options and no deletion
+          sshpass -p "gAYpe90UoL1RUgck0iDk" rsync -avz --no-times --no-perms --chmod=Du=rwx,Dg=rx,Fu=rw,Fg=r -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ./deploy_temp/ awt-crm-ashfaq@34.224.171.98:~/htdocs/crm.allwetrade.com/modules/ella_contractors/
           
           # Clean up temp directory
           rm -rf ./deploy_temp
