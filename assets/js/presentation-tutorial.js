@@ -614,8 +614,59 @@
                 }
                 
                 var positions;
-                if (viewportWidth >= 1920) {
-                    // Extra large screens (1920px and above)
+                if (viewportWidth > 1920) {
+                    // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        
+                        // Position tooltip below the target button with arrow pointing up
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - $(window).scrollLeft();
+                        var spacing = 20;
+                        
+                        // Calculate top position (below button)
+                        var topPos = viewportTop + targetHeight + spacing;
+                        
+                        // Align tooltip to the right edge of the button
+                        var rightPos = viewportWidth - (viewportLeft + targetWidth);
+                        
+                        // Viewport overflow checks
+                        // Ensure tooltip doesn't go off the left edge
+                        var calculatedLeft = viewportWidth - rightPos - tooltipWidth;
+                        if (calculatedLeft < 10) {
+                            rightPos = viewportWidth - tooltipWidth - 10;
+                        }
+                        
+                        // Ensure right edge is not negative (tooltip stays visible on right side)
+                        if (rightPos < 10) {
+                            rightPos = 10;
+                        }
+                        
+                        // Ensure tooltip doesn't go off bottom; if so, position above button
+                        if (topPos + tooltipHeight > viewportHeight - 10) {
+                            topPos = viewportTop - tooltipHeight - spacing;
+                            // If also off top, clamp to viewport
+                            if (topPos < 10) {
+                                topPos = 10;
+                            }
+                        }
+                        
+                        positions = { 
+                            top: topPos + 'px', 
+                            right: rightPos + 'px'
+                        };
+                    } else {
+                        // Fallback if target not found
+                        positions = { top: '140.391px', right: '30.12px' };
+                    }
+                } else if (viewportWidth >= 1920) {
+                    // Extra large screens (1920px exactly)
                     positions = { top: '140.391px', right: '30.12px' };
                 } else if (viewportWidth >= 1800) {
                     // Large screens (1800px - 1919px)
@@ -688,8 +739,53 @@
                 }
                 
                 var positions;
-                if (viewportWidth >= 1920) {
-                    // Extra large screens (1920px and above)
+                if (viewportWidth > 1920) {
+                    // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var scrollLeft = $(window).scrollLeft();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        // Position tooltip to the left of the target (arrow on right side pointing left at target)
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - scrollLeft;
+                        
+                        // Center vertically relative to target
+                        var topPos = viewportTop + (targetHeight / 2) - (tooltipHeight / 2);
+                        
+                        // Position to the left of the target using right property
+                        var rightPos = viewportWidth - viewportLeft + spacing;
+                        
+                        // Viewport overflow checks
+                        // Ensure tooltip doesn't go off the left edge
+                        var calculatedLeft = viewportWidth - rightPos - tooltipWidth;
+                        if (calculatedLeft < 10) {
+                            rightPos = viewportWidth - tooltipWidth - 10;
+                        }
+                        
+                        // Ensure tooltip doesn't go off top or bottom
+                        if (topPos < 10) {
+                            topPos = 10;
+                        } else if (topPos + tooltipHeight > viewportHeight - 10) {
+                            topPos = viewportHeight - tooltipHeight - 10;
+                        }
+                        
+                        positions = { 
+                            top: topPos + 'px', 
+                            right: rightPos + 'px'
+                        };
+                    } else {
+                        // Fallback if target not found
+                        positions = { top: '97.0515px', right: '230.12px' };
+                    }
+                } else if (viewportWidth >= 1920) {
+                    // Extra large screens (1920px exactly)
                     positions = { top: '97.0515px', right: '230.12px' };
                 } else if (viewportWidth >= 1800) {
                     // Large screens (1800px - 1919px)
@@ -762,8 +858,56 @@
                 }
                 
                 var positions;
-                if (viewportWidth >= 1920) {
-                    // Extra large screens (1920px and above)
+                if (viewportWidth > 1920) {
+                    // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var scrollLeft = $(window).scrollLeft();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        // Position tooltip to the left of the target (arrow on right side pointing left at target)
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - scrollLeft;
+                        
+                        // Center vertically relative to target
+                        var topPos = viewportTop + (targetHeight / 2) - (tooltipHeight / 2);
+                        
+                        // Position to the left of the target
+                        var leftPos = viewportLeft - tooltipWidth - spacing;
+                        
+                        // Viewport overflow checks
+                        // If tooltip goes off left edge, position to the right instead
+                        if (leftPos < 10) {
+                            leftPos = viewportLeft + targetWidth + spacing;
+                            // If still off-screen to the right, clamp it
+                            if (leftPos + tooltipWidth > viewportWidth - 10) {
+                                leftPos = viewportWidth - tooltipWidth - 10;
+                            }
+                        }
+                        
+                        // Ensure tooltip doesn't go off top or bottom
+                        if (topPos < 10) {
+                            topPos = 10;
+                        } else if (topPos + tooltipHeight > viewportHeight - 10) {
+                            topPos = viewportHeight - tooltipHeight - 10;
+                        }
+                        
+                        positions = { 
+                            top: topPos + 'px', 
+                            left: leftPos + 'px'
+                        };
+                    } else {
+                        // Fallback if target not found
+                        positions = { top: '121.136px', left: '122.312px' };
+                    }
+                } else if (viewportWidth >= 1920) {
+                    // Extra large screens (1920px exactly)
                     positions = { top: '121.136px', left: '122.312px' };
                 } else if (viewportWidth >= 1800) {
                     // Large screens (1800px - 1919px)
@@ -896,8 +1040,56 @@
                 }
                 
                 var positions;
-                if (viewportWidth >= 1920) {
-                    // Extra large screens (1920px and above)
+                if (viewportWidth > 1920) {
+                    // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var scrollLeft = $(window).scrollLeft();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        // Position tooltip to the right of the target (arrow on left side pointing right at target)
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - scrollLeft;
+                        
+                        // Center vertically relative to target
+                        var topPos = viewportTop + (targetHeight / 2) - (tooltipHeight / 2);
+                        
+                        // Position to the right of the target
+                        var leftPos = viewportLeft + targetWidth + spacing;
+                        
+                        // Viewport overflow checks
+                        // If tooltip goes off right edge, position to the left instead
+                        if (leftPos + tooltipWidth > viewportWidth - 10) {
+                            leftPos = viewportLeft - tooltipWidth - spacing;
+                            // If still off-screen to the left, clamp it
+                            if (leftPos < 10) {
+                                leftPos = 10;
+                            }
+                        }
+                        
+                        // Ensure tooltip doesn't go off top or bottom
+                        if (topPos < 10) {
+                            topPos = 10;
+                        } else if (topPos + tooltipHeight > viewportHeight - 10) {
+                            topPos = viewportHeight - tooltipHeight - 10;
+                        }
+                        
+                        positions = { 
+                            top: topPos + 'px', 
+                            left: leftPos + 'px'
+                        };
+                    } else {
+                        // Fallback if target not found
+                        positions = { top: '150px', left: '340px' };
+                    }
+                } else if (viewportWidth >= 1920) {
+                    // Extra large screens (1920px exactly)
                     positions = { top: '150px', left: '340px' };
                 } else if (viewportWidth >= 1800) {
                     // Large screens (1800px - 1919px)

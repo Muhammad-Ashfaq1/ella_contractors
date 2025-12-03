@@ -556,7 +556,44 @@
                 }
                 
                 var positions;
-                if (viewportWidth >= 1920) {
+                if (viewportWidth > 1920) {
+                    // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        // Position tooltip below the target with arrow pointing up
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - $(window).scrollLeft();
+                        
+                        var topPos = viewportTop + targetHeight + spacing;
+                        var leftPos = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        
+                        // Viewport overflow checks
+                        if (leftPos < 10) {
+                            leftPos = 10;
+                        } else if (leftPos + tooltipWidth > viewportWidth - 10) {
+                            leftPos = viewportWidth - tooltipWidth - 10;
+                        }
+                        
+                        if (topPos + tooltipHeight > viewportHeight - 10) {
+                            topPos = viewportTop - tooltipHeight - spacing;
+                            if (topPos < 10) {
+                                topPos = 10;
+                            }
+                        }
+                        
+                        positions = { top: topPos + 'px', left: leftPos + 'px', transform: 'none' };
+                    } else {
+                        positions = { top: '140px', left: '384px', transform: 'none' };
+                    }
+                } else if (viewportWidth >= 1920) {
                     positions = { top: '140px', left: '384px', transform: 'none' };
                 } else if (viewportWidth >= 1600) {
                     positions = { top: '150px', left: '288px', transform: 'none' };
@@ -615,7 +652,43 @@
                 }
                 
                 var positions;
-                if (viewportWidth >= 1920) {
+                if (viewportWidth > 1920) {
+                    // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - $(window).scrollLeft();
+                        
+                        var topPos = viewportTop + targetHeight + spacing;
+                        var leftPos = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        
+                        // Viewport overflow checks
+                        if (leftPos < 10) {
+                            leftPos = 10;
+                        } else if (leftPos + tooltipWidth > viewportWidth - 10) {
+                            leftPos = viewportWidth - tooltipWidth - 10;
+                        }
+                        
+                        if (topPos + tooltipHeight > viewportHeight - 10) {
+                            topPos = viewportTop - tooltipHeight - spacing;
+                            if (topPos < 10) {
+                                topPos = 10;
+                            }
+                        }
+                        
+                        positions = { top: topPos + 'px', left: leftPos + 'px', transform: 'none' };
+                    } else {
+                        positions = { top: '190px', left: '576px', transform: 'none' };
+                    }
+                } else if (viewportWidth >= 1920) {
                     positions = { top: '190px', left: '576px', transform: 'none' };
                 } else if (viewportWidth >= 1600) {
                     positions = { top: '190px', left: '448px', transform: 'none' };
@@ -674,7 +747,43 @@
                 }
                 
                 var positions;
-                if (viewportWidth >= 1920) {
+                if (viewportWidth > 1920) {
+                    // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - $(window).scrollLeft();
+                        
+                        var topPos = viewportTop + targetHeight + spacing;
+                        var leftPos = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        
+                        // Viewport overflow checks
+                        if (leftPos < 10) {
+                            leftPos = 10;
+                        } else if (leftPos + tooltipWidth > viewportWidth - 10) {
+                            leftPos = viewportWidth - tooltipWidth - 10;
+                        }
+                        
+                        if (topPos + tooltipHeight > viewportHeight - 10) {
+                            topPos = viewportTop - tooltipHeight - spacing;
+                            if (topPos < 10) {
+                                topPos = 10;
+                            }
+                        }
+                        
+                        positions = { top: topPos + 'px', left: leftPos + 'px', transform: 'none' };
+                    } else {
+                        positions = { top: '510px', left: '768px', transform: 'none' };
+                    }
+                } else if (viewportWidth >= 1920) {
                     positions = { top: '510px', left: '768px', transform: 'none' };
                 } else if (viewportWidth >= 1600) {
                     positions = { top: '510px', left: '608px', transform: 'none' };
@@ -733,7 +842,45 @@
                 }
                 
                 var positions;
-                if (viewportWidth >= 1920) {
+                if (viewportWidth > 1920) {
+                    // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - $(window).scrollLeft();
+                        
+                        // Position above target (arrow-bottom means arrow points down)
+                        var topPos = viewportTop - tooltipHeight - spacing;
+                        var leftPos = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        
+                        // Viewport overflow checks
+                        if (leftPos < 10) {
+                            leftPos = 10;
+                        } else if (leftPos + tooltipWidth > viewportWidth - 10) {
+                            leftPos = viewportWidth - tooltipWidth - 10;
+                        }
+                        
+                        if (topPos < 10) {
+                            // Not enough space above, position below instead
+                            topPos = viewportTop + targetHeight + spacing;
+                            if (topPos + tooltipHeight > viewportHeight - 10) {
+                                topPos = viewportHeight - tooltipHeight - 10;
+                            }
+                        }
+                        
+                        positions = { top: topPos + 'px', left: leftPos + 'px', transform: 'none' };
+                    } else {
+                        positions = { top: '350px', left: '96px', transform: 'none' };
+                    }
+                } else if (viewportWidth >= 1920) {
                     positions = { top: '350px', left: '96px', transform: 'none' };
                 } else if (viewportWidth >= 1600) {
                     positions = { top: '350px', left: '128px', transform: 'none' };
@@ -796,7 +943,45 @@
                 }
                 
                 var positions;
-                if (viewportWidth >= 1920) {
+                if (viewportWidth > 1920) {
+                    // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - $(window).scrollLeft();
+                        
+                        // Position above target (arrow-bottom means arrow points down)
+                        var topPos = viewportTop - tooltipHeight - spacing;
+                        var leftPos = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        
+                        // Viewport overflow checks
+                        if (leftPos < 10) {
+                            leftPos = 10;
+                        } else if (leftPos + tooltipWidth > viewportWidth - 10) {
+                            leftPos = viewportWidth - tooltipWidth - 10;
+                        }
+                        
+                        if (topPos < 10) {
+                            // Not enough space above, position below instead
+                            topPos = viewportTop + targetHeight + spacing;
+                            if (topPos + tooltipHeight > viewportHeight - 10) {
+                                topPos = viewportHeight - tooltipHeight - 10;
+                            }
+                        }
+                        
+                        positions = { top: topPos + 'px', left: leftPos + 'px', transform: 'none' };
+                    } else {
+                        positions = { top: '350px', left: '193px', transform: 'none' };
+                    }
+                } else if (viewportWidth >= 1920) {
                     positions = { top: '350px', left: '193px', transform: 'none' };
                 } else if (viewportWidth >= 1600) {
                     positions = { top: '350px', left: '228px', transform: 'none' };
@@ -859,7 +1044,45 @@
                 }
                 
                 var positions;
-                if (viewportWidth >= 1920) {
+                if (viewportWidth > 1920) {
+                    // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - $(window).scrollLeft();
+                        
+                        // Position above target (arrow-bottom means arrow points down)
+                        var topPos = viewportTop - tooltipHeight - spacing;
+                        var leftPos = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        
+                        // Viewport overflow checks
+                        if (leftPos < 10) {
+                            leftPos = 10;
+                        } else if (leftPos + tooltipWidth > viewportWidth - 10) {
+                            leftPos = viewportWidth - tooltipWidth - 10;
+                        }
+                        
+                        if (topPos < 10) {
+                            // Not enough space above, position below instead
+                            topPos = viewportTop + targetHeight + spacing;
+                            if (topPos + tooltipHeight > viewportHeight - 10) {
+                                topPos = viewportHeight - tooltipHeight - 10;
+                            }
+                        }
+                        
+                        positions = { top: topPos + 'px', left: leftPos + 'px', transform: 'none' };
+                    } else {
+                        positions = { top: '350px', left: '290px', transform: 'none' };
+                    }
+                } else if (viewportWidth >= 1920) {
                     positions = { top: '350px', left: '290px', transform: 'none' };
                 } else if (viewportWidth >= 1600) {
                     positions = { top: '350px', left: '332px', transform: 'none' };
@@ -922,7 +1145,45 @@
                 }
                 
                 var positions;
-                if (viewportWidth >= 1920) {
+                if (viewportWidth > 1920) {
+                    // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - $(window).scrollLeft();
+                        
+                        // Position above target (arrow-bottom means arrow points down)
+                        var topPos = viewportTop - tooltipHeight - spacing;
+                        var leftPos = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        
+                        // Viewport overflow checks
+                        if (leftPos < 10) {
+                            leftPos = 10;
+                        } else if (leftPos + tooltipWidth > viewportWidth - 10) {
+                            leftPos = viewportWidth - tooltipWidth - 10;
+                        }
+                        
+                        if (topPos < 10) {
+                            // Not enough space above, position below instead
+                            topPos = viewportTop + targetHeight + spacing;
+                            if (topPos + tooltipHeight > viewportHeight - 10) {
+                                topPos = viewportHeight - tooltipHeight - 10;
+                            }
+                        }
+                        
+                        positions = { top: topPos + 'px', left: leftPos + 'px', transform: 'none' };
+                    } else {
+                        positions = { top: '350px', left: '376px', transform: 'none' };
+                    }
+                } else if (viewportWidth >= 1920) {
                     positions = { top: '350px', left: '376px', transform: 'none' };
                 } else if (viewportWidth >= 1600) {
                     positions = { top: '350px', left: '400px', transform: 'none' };
@@ -985,7 +1246,45 @@
                 }
                 
                 var positions;
-                if (viewportWidth >= 1920) {
+                if (viewportWidth > 1920) {
+                    // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - $(window).scrollLeft();
+                        
+                        // Position above target (arrow-bottom means arrow points down)
+                        var topPos = viewportTop - tooltipHeight - spacing;
+                        var leftPos = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        
+                        // Viewport overflow checks
+                        if (leftPos < 10) {
+                            leftPos = 10;
+                        } else if (leftPos + tooltipWidth > viewportWidth - 10) {
+                            leftPos = viewportWidth - tooltipWidth - 10;
+                        }
+                        
+                        if (topPos < 10) {
+                            // Not enough space above, position below instead
+                            topPos = viewportTop + targetHeight + spacing;
+                            if (topPos + tooltipHeight > viewportHeight - 10) {
+                                topPos = viewportHeight - tooltipHeight - 10;
+                            }
+                        }
+                        
+                        positions = { top: topPos + 'px', left: leftPos + 'px', transform: 'none' };
+                    } else {
+                        positions = { top: '350px', left: '500px', transform: 'none' };
+                    }
+                } else if (viewportWidth >= 1920) {
                     positions = { top: '350px', left: '500px', transform: 'none' };
                 } else if (viewportWidth >= 1600) {
                     positions = { top: '350px', left: '560px', transform: 'none' };
@@ -1048,7 +1347,45 @@
                 }
                 
                 var positions;
-                if (viewportWidth >= 1920) {
+                if (viewportWidth > 1920) {
+                    // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - $(window).scrollLeft();
+                        
+                        // Position above target (arrow-bottom means arrow points down)
+                        var topPos = viewportTop - tooltipHeight - spacing;
+                        var leftPos = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        
+                        // Viewport overflow checks
+                        if (leftPos < 10) {
+                            leftPos = 10;
+                        } else if (leftPos + tooltipWidth > viewportWidth - 10) {
+                            leftPos = viewportWidth - tooltipWidth - 10;
+                        }
+                        
+                        if (topPos < 10) {
+                            // Not enough space above, position below instead
+                            topPos = viewportTop + targetHeight + spacing;
+                            if (topPos + tooltipHeight > viewportHeight - 10) {
+                                topPos = viewportHeight - tooltipHeight - 10;
+                            }
+                        }
+                        
+                        positions = { top: topPos + 'px', left: leftPos + 'px', transform: 'none' };
+                    } else {
+                        positions = { top: '290px', left: '864px', transform: 'none' };
+                    }
+                } else if (viewportWidth >= 1920) {
                     positions = { top: '290px', left: '864px', transform: 'none' };
                 } else if (viewportWidth >= 1600) {
                     positions = { top: '290px', left: '720px', transform: 'none' };
