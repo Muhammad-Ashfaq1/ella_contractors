@@ -139,7 +139,7 @@
             this.config.steps = [
                 {
                     id: 'welcome',
-                    title: 'Welcome to Estimates',
+                    title: 'Welcome to Estimates.....',
                     content: 'Welcome to the Estimates module! This quick tour will help you understand how to create, manage, and send estimates to your leads and clients.',
                     target: null,
                     position: 'center',
