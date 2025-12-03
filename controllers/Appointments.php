@@ -11,6 +11,12 @@ class Appointments extends AdminController
         $this->load->model('clients_model');
         $this->load->model('leads_model');
         $this->load->model('misc_model');
+        
+        // Load calendar sync helper
+        $calendar_helper_path = module_dir_path('ella_contractors', 'helpers/calendar_sync_helper.php');
+        if (file_exists($calendar_helper_path)) {
+            require_once($calendar_helper_path);
+        }
     }
     
     
@@ -426,8 +432,9 @@ class Appointments extends AdminController
                     // Update reminder tracking record
                     $this->appointment_reminder_model->sync_from_appointment($appointment_id, $data);
                     
-                    // Sync to Google Calendar if staff has connected
-                    $this->sync_to_google_calendar($appointment_id, 'update');
+                    // Sync to calendars (Google and Outlook) if staff has connected
+                    $this->sync_to_calendar($appointment_id, 'update', 'google');
+                    $this->sync_to_calendar($appointment_id, 'update', 'outlook');
                     
                     echo json_encode([
                         'success' => true,
@@ -473,8 +480,9 @@ class Appointments extends AdminController
                     // Create reminder tracking record
                     $this->appointment_reminder_model->sync_from_appointment($appointment_id, $data);
                     
-                    // Sync to Google Calendar if staff has connected
-                    $this->sync_to_google_calendar($appointment_id, 'create');
+                    // Sync to calendars (Google and Outlook) if staff has connected
+                    $this->sync_to_calendar($appointment_id, 'create', 'google');
+                    $this->sync_to_calendar($appointment_id, 'create', 'outlook');
                     
                     echo json_encode([
                         'success' => true,
@@ -517,9 +525,10 @@ class Appointments extends AdminController
         $appointment = $this->appointments_model->get_appointment($id);
         $staff_id = $appointment ? $appointment->created_by : null;
         
-        // Sync delete to Google Calendar before deleting from database
+        // Sync delete to calendars (Google and Outlook) before deleting from database
         if ($appointment && $staff_id) {
-            $this->sync_to_google_calendar($id, 'delete');
+            $this->sync_to_calendar($id, 'delete', 'google');
+            $this->sync_to_calendar($id, 'delete', 'outlook');
         }
         
         if ($this->appointments_model->delete_appointment($id)) {
@@ -2640,153 +2649,57 @@ startxref
     }
 
     /**
-     * Sync appointment to Google Calendar
-     * Handles sync for creator and all attendees who have Google Calendar connected
-     * 
-     * @param int $appointment_id Appointment ID
-     * @param string $action Action: 'create', 'update', or 'delete'
-     * @return bool Success status
+     * Sync appointment to calendar (Google or Outlook)
+     * Wrapper for calendar_sync_helper functions
      */
-    private function sync_to_google_calendar($appointment_id, $action = 'create')
+    private function sync_to_calendar($appointment_id, $action = 'create', $provider = 'google')
     {
-        // Load Google Calendar sync library
-        $this->load->library('ella_contractors/Google_calendar_sync');
-
-        // Get appointment data
-        $appointment = $this->appointments_model->get_appointment($appointment_id);
-        if (!$appointment || $appointment->source !== 'ella_contractor') {
-            return false;
-        }
-
-        try {
-            // Get all staff who should have this appointment in their calendar
-            $staff_to_sync = [];
-            
-            // Add creator
-            if (!empty($appointment->created_by)) {
-                $staff_to_sync[] = $appointment->created_by;
-            }
-            
-            // Add attendees
-            $attendees = $this->appointments_model->get_appointment_attendees($appointment_id);
-            foreach ($attendees as $attendee) {
-                if (!empty($attendee['staffid']) && !in_array($attendee['staffid'], $staff_to_sync)) {
-                    $staff_to_sync[] = $attendee['staffid'];
-                }
-            }
-
-            // Sync for each connected staff member
-            $synced_count = 0;
-            foreach ($staff_to_sync as $staff_id) {
-                // Check if staff has Google Calendar connected
-                $status = $this->google_calendar_sync->get_connection_status($staff_id);
-                if (!$status || !$status['connected']) {
-                    continue; // Skip if not connected
-                }
-
-                // Perform sync based on action
-                $result = false;
-                switch ($action) {
-                    case 'create':
-                        $result = $this->google_calendar_sync->create_event($appointment_id, $staff_id);
-                        break;
-                    
-                    case 'update':
-                        // Check if appointment status changed to cancelled
-                        if (isset($appointment->appointment_status) && $appointment->appointment_status === 'cancelled') {
-                            $result = $this->google_calendar_sync->delete_event($appointment_id, $staff_id);
-                        } else {
-                            $result = $this->google_calendar_sync->update_event($appointment_id, $staff_id);
-                        }
-                        break;
-                    
-                    case 'delete':
-                        $result = $this->google_calendar_sync->delete_event($appointment_id, $staff_id);
-                        break;
-                    
-                    default:
-                        continue 2; // Skip to next staff
-                }
-
-                if ($result !== false) {
-                    $synced_count++;
-                }
-            }
-
-            return $synced_count > 0;
-        } catch (Exception $e) {
-            log_message('error', 'Google Calendar sync error: ' . $e->getMessage());
-            return false;
-        }
+        return sync_appointment_to_calendar($this, $appointment_id, $action, $provider);
     }
 
     /**
-     * Handle assignee change - sync to Google Calendar
-     * This is called when attendees are updated
+     * Handle assignee change - sync to calendar (Google or Outlook)
+     * Wrapper for calendar_sync_helper functions
+     */
+    private function sync_calendar_assignee_change($appointment_id, $old_assignees, $new_assignees, $provider = 'google')
+    {
+        sync_calendar_assignee_change_helper($this, $appointment_id, $old_assignees, $new_assignees, $provider);
+    }
+    
+    /**
+     * Wrapper: Sync appointment to Google Calendar
+     * @deprecated Use sync_to_calendar($appointment_id, $action, 'google') instead
+     */
+    private function sync_to_google_calendar($appointment_id, $action = 'create')
+    {
+        return $this->sync_to_calendar($appointment_id, $action, 'google');
+    }
+    
+    /**
+     * Wrapper: Sync appointment to Outlook Calendar
+     * @deprecated Use sync_to_calendar($appointment_id, $action, 'outlook') instead
+     */
+    private function sync_to_outlook_calendar($appointment_id, $action = 'create')
+    {
+        return $this->sync_to_calendar($appointment_id, $action, 'outlook');
+    }
+    
+    /**
+     * Wrapper: Handle assignee change for Google Calendar
+     * @deprecated Use sync_calendar_assignee_change($appointment_id, $old, $new, 'google') instead
      */
     private function sync_assignee_change($appointment_id, $old_assignees, $new_assignees)
     {
-        // Load Google Calendar sync library
-        $this->load->library('ella_contractors/Google_calendar_sync');
-
-        $appointment = $this->appointments_model->get_appointment($appointment_id);
-        if (!$appointment || $appointment->source !== 'ella_contractor') {
-            return;
-        }
-
-        // Get old and new staff IDs
-        $old_staff_ids = [];
-        if (!empty($old_assignees)) {
-            $old_staff_ids = array_column($old_assignees, 'staffid');
-        }
-        // Always include creator in old list
-        if (!empty($appointment->created_by) && !in_array($appointment->created_by, $old_staff_ids)) {
-            $old_staff_ids[] = $appointment->created_by;
-        }
-
-        $new_staff_ids = [];
-        if (!empty($new_assignees)) {
-            $new_staff_ids = array_column($new_assignees, 'staffid');
-        }
-        // Always include creator in new list
-        if (!empty($appointment->created_by) && !in_array($appointment->created_by, $new_staff_ids)) {
-            $new_staff_ids[] = $appointment->created_by;
-        }
-
-        // Find removed staff (need to delete from their calendars, but not creator)
-        $removed_staff = array_diff($old_staff_ids, $new_staff_ids);
-        foreach ($removed_staff as $staff_id) {
-            // Don't delete from creator's calendar (they should always have it)
-            if ($staff_id == $appointment->created_by) {
-                continue;
-            }
-            
-            $status = $this->google_calendar_sync->get_connection_status($staff_id);
-            if ($status && $status['connected']) {
-                $this->google_calendar_sync->delete_event($appointment_id, $staff_id);
-            }
-        }
-
-        // Find added staff (need to create in their calendars)
-        $added_staff = array_diff($new_staff_ids, $old_staff_ids);
-        foreach ($added_staff as $staff_id) {
-            $status = $this->google_calendar_sync->get_connection_status($staff_id);
-            if ($status && $status['connected']) {
-                // Check if event already exists for this staff (should not, but safety check)
-                $existing_event_id = null;
-                if ($staff_id == $appointment->created_by && !empty($appointment->google_event_id)) {
-                    $existing_event_id = $appointment->google_event_id;
-                }
-                
-                if ($existing_event_id) {
-                    // Update existing event
-                    $this->google_calendar_sync->update_event($appointment_id, $staff_id);
-                } else {
-                    // Create new event
-                    $this->google_calendar_sync->create_event($appointment_id, $staff_id);
-                }
-            }
-        }
+        $this->sync_calendar_assignee_change($appointment_id, $old_assignees, $new_assignees, 'google');
+    }
+    
+    /**
+     * Wrapper: Handle assignee change for Outlook Calendar
+     * @deprecated Use sync_calendar_assignee_change($appointment_id, $old, $new, 'outlook') instead
+     */
+    private function sync_outlook_assignee_change($appointment_id, $old_assignees, $new_assignees)
+    {
+        $this->sync_calendar_assignee_change($appointment_id, $old_assignees, $new_assignees, 'outlook');
     }
 
     

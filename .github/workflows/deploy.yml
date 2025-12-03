@@ -3,8 +3,8 @@ name: Deploy Ella Contractors Module
 on:
   push:
     branches:
-      - main
-      # - feature/estimates-tooltips
+      - feature/out-look-integration
+      # - main
     paths:
       - '**'
 
