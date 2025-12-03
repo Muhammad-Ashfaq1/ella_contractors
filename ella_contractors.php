@@ -29,6 +29,11 @@ hooks()->add_action('after_cron_run', 'ella_contractors_after_cron_run');
 register_activation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_activate_module');
 register_deactivation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_deactivate_module');
 
+// Add settings tab to main CRM settings page
+if (is_admin()) {
+    hooks()->add_action('admin_init', 'ella_contractors_add_settings_tab');
+}
+
 /**
  * Initialize module menu
  */
@@ -171,6 +176,19 @@ function ella_contractors_load_helpers() {
     if (file_exists($reminder_helper_path)) {
         require_once($reminder_helper_path);
     }
+}
+
+/**
+ * Add EllaContractors settings tab to main CRM settings page
+ */
+function ella_contractors_add_settings_tab()
+{
+    $CI = &get_instance();
+    $CI->app_tabs->add_settings_tab('ella_contractors', [
+        'name'     => 'EllaContractors',
+        'view'     => 'ella_contractors/settings/calendar_integration',
+        'position' => 91, // After Google settings (90), before Misc (95)
+    ]);
 }
 
 function ella_contractors_activate_module() {
