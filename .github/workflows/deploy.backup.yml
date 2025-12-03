@@ -16,12 +16,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
         
-      - name: Setup SSH Key
+      - name: Install sshpass
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H 34.224.171.98 >> ~/.ssh/known_hosts
+          sudo apt-get update
+          sudo apt-get install -y sshpass
           
       - name: Deploy Module to CRM
         run: |
@@ -31,11 +29,12 @@ jobs:
           mkdir -p ./deploy_temp
           rsync -av --exclude='.git/' --exclude='.github/' --exclude='.DS_Store' --exclude='*.log' --exclude='node_modules/' --exclude='vendor/' --exclude='deploy_temp/' ./ ./deploy_temp/
           
-          # Deploy using SSH key authentication
-          rsync -avz --no-times --no-perms --chmod=Du=rwx,Dg=rx,Fu=rw,Fg=r -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" ./deploy_temp/ awt-crm-ashfaq@34.224.171.98:~/htdocs/crm.allwetrade.com/modules/ella_contractors/
+          # Deploy only the clean module files with proper SSH options and no deletion
+          sshpass -p "gAYpe90UoL1RUgck0iDk" rsync -avz --no-times --no-perms --chmod=Du=rwx,Dg=rx,Fu=rw,Fg=r -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ./deploy_temp/ awt-crm-ashfaq@34.224.171.98:~/htdocs/crm.allwetrade.com/modules/ella_contractors/
           
           # Clean up temp directory
           rm -rf ./deploy_temp
           
       - name: Completion Message
         run: echo "Module deployed successfully!"
+
