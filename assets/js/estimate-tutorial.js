@@ -1155,6 +1155,7 @@
 
     // Initialize when DOM is ready
     $(document).ready(function() {
+        console.log('EstimateTutorial initialized');
         // Only initialize if we're on the proposals/estimates listing page
         // Check for key elements that exist on the proposals manage page
         if ($('.table-proposals').length || $('.panel-body._buttons .btn-info').length) {
