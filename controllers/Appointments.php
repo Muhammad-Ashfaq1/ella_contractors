@@ -2663,8 +2663,8 @@ startxref
      */
     private function sync_calendar_assignee_change($appointment_id, $old_assignees, $new_assignees, $provider = 'google')
     {
-        sync_calendar_assignee_change_helper($this, $appointment_id, $old_assignees, $new_assignees, $provider);
-            }
+        sync_calendar_assignee_change($this, $appointment_id, $old_assignees, $new_assignees, $provider);
+    }
 
     /**
      * Wrapper: Sync appointment to Google Calendar
