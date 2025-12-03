@@ -2664,8 +2664,8 @@ startxref
     private function sync_calendar_assignee_change($appointment_id, $old_assignees, $new_assignees, $provider = 'google')
     {
         sync_calendar_assignee_change_helper($this, $appointment_id, $old_assignees, $new_assignees, $provider);
-    }
-    
+            }
+
     /**
      * Wrapper: Sync appointment to Google Calendar
      * @deprecated Use sync_to_calendar($appointment_id, $action, 'google') instead
@@ -2682,7 +2682,7 @@ startxref
     private function sync_to_outlook_calendar($appointment_id, $action = 'create')
     {
         return $this->sync_to_calendar($appointment_id, $action, 'outlook');
-    }
+                }
     
     /**
      * Wrapper: Handle assignee change for Google Calendar
@@ -2691,7 +2691,7 @@ startxref
     private function sync_assignee_change($appointment_id, $old_assignees, $new_assignees)
     {
         $this->sync_calendar_assignee_change($appointment_id, $old_assignees, $new_assignees, 'google');
-    }
+        }
     
     /**
      * Wrapper: Handle assignee change for Outlook Calendar

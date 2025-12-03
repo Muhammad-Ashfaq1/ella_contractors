@@ -4,7 +4,7 @@
     "type": "project",
     "require": {
         "php": ">=7.4",
-        "google/apiclient": "^2.0",
+        "google/apiclient": "^2.12.1",
         "tecnickcom/tcpdf": "^6.4",
         "phpoffice/phpspreadsheet": "^1.24",
         "phpoffice/phppresentation": "^1.0",
@@ -22,8 +22,14 @@
         }
     },
     "scripts": {
+        "pre-autoload-dump": "Google\\Task\\Composer::cleanup",
         "post-install-cmd": [
             "echo 'EllaContractors dependencies installed successfully'"
+        ]
+    },
+    "extra": {
+        "google/apiclient-services": [
+            "Calendar"
         ]
     },
     "config": {
