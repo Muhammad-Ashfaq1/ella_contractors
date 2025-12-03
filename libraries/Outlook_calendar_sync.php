@@ -465,7 +465,17 @@ class Outlook_calendar_sync
             // Build event data
             $event_data = $this->build_event_data($appointment);
 
-            // Create event via Graph API
+            // Search for existing event before creating (duplicate prevention)
+            $existing_event_id = $this->search_existing_event($staff_id, $event_data);
+            
+            if ($existing_event_id) {
+                // Event already exists → save mapping and update it instead of creating duplicate
+                log_message('info', 'Outlook Calendar: Found existing event for appointment ' . $appointment_id . ' (staff ' . $staff_id . '), updating instead of creating - Event ID: ' . $existing_event_id);
+                $this->save_event_mapping($appointment_id, $staff_id, $existing_event_id, 'primary', null);
+                return $this->update_event($appointment_id, $staff_id);
+            }
+
+            // No existing event found → proceed with create
             $response = $this->graph_api_request('POST', '/me/events', $staff_id, $event_data);
 
             if ($response && isset($response['id'])) {
@@ -900,6 +910,80 @@ class Outlook_calendar_sync
         $CI->db->where('rel_type', 'appointment');
         $CI->db->where('rel_id', $appointment_id);
         return $CI->db->delete(db_prefix() . 'appointment_outlook_events');
+    }
+    
+    /**
+     * Search for existing event in Outlook Calendar by matching appointment details
+     * This prevents duplicate events when mappings are lost or don't exist yet
+     * 
+     * @param int $staff_id Staff ID
+     * @param array $event_data Event data to match (from build_event_data)
+     * @return string|null Event ID if found, null otherwise
+     */
+    private function search_existing_event($staff_id, $event_data)
+    {
+        try {
+            // Extract search criteria from event data
+            $subject = $event_data['subject'];
+            $start_time = $event_data['start']['dateTime'];
+            $timezone = $event_data['start']['timeZone'];
+            
+            // Parse start time
+            $start_datetime = new DateTime($start_time);
+            
+            // Define search window: ±2 minutes tolerance to account for timing variations
+            $search_start = clone $start_datetime;
+            $search_start->modify('-2 minutes');
+            
+            $search_end = clone $start_datetime;
+            $search_end->modify('+2 minutes');
+            
+            // Format times for Microsoft Graph API query
+            $filter_start = $search_start->format('Y-m-d\TH:i:s');
+            $filter_end = $search_end->format('Y-m-d\TH:i:s');
+            
+            // Build Graph API endpoint with calendarView query
+            // calendarView expands recurring events and filters by time range
+            $endpoint = '/me/calendarView?startDateTime=' . urlencode($filter_start) . 
+                        '&endDateTime=' . urlencode($filter_end) . 
+                        '&$top=50';
+            
+            // Query events via Microsoft Graph API
+            $response = $this->graph_api_request('GET', $endpoint, $staff_id, null);
+            
+            if (!$response || !isset($response['value'])) {
+                return null;
+            }
+            
+            // Search for matching event by subject (title) and start time
+            foreach ($response['value'] as $event) {
+                // Match by subject (title) - must be exact match
+                if (!isset($event['subject']) || $event['subject'] !== $subject) {
+                    continue;
+                }
+                
+                // Match by start time (within 2-minute tolerance)
+                if (!isset($event['start']['dateTime'])) {
+                    continue;
+                }
+                
+                $event_start_dt = new DateTime($event['start']['dateTime']);
+                $time_diff = abs($event_start_dt->getTimestamp() - $start_datetime->getTimestamp());
+                
+                // If time difference is within 2 minutes (120 seconds), consider it a match
+                if ($time_diff <= 120) {
+                    log_message('info', 'Outlook Calendar: Found existing event matching appointment details - Event ID: ' . $event['id'] . ', Subject: ' . $subject);
+                    return $event['id'];
+                }
+            }
+            
+            // No matching event found
+            return null;
+        } catch (Exception $e) {
+            // On search error, log and return null (safe to proceed with create)
+            log_message('error', 'Outlook Calendar: search_existing_event failed - ' . $e->getMessage());
+            return null;
+        }
     }
 }
 

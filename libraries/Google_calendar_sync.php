@@ -471,7 +471,17 @@ class Google_calendar_sync
             $event_data = $this->build_event_data($appointment);
             $event = new Google_Service_Calendar_Event($event_data);
 
-            // Insert event
+            // Search for existing event before creating (duplicate prevention)
+            $existing_event_id = $this->search_existing_event($service, $calendar_id, $event_data);
+            
+            if ($existing_event_id) {
+                // Event already exists → save mapping and update it instead of creating duplicate
+                log_message('info', 'Google Calendar: Found existing event for appointment ' . $appointment_id . ' (staff ' . $staff_id . '), updating instead of creating - Event ID: ' . $existing_event_id);
+                $this->save_event_mapping($appointment_id, $staff_id, $existing_event_id, $calendar_id);
+                return $this->update_event($appointment_id, $staff_id);
+            }
+
+            // No existing event found → proceed with create
             $created_event = $service->events->insert($calendar_id, $event, [
                 'conferenceDataVersion' => 1, // Enable Google Meet links
                 'sendUpdates' => 'all', // Send notifications to attendees
@@ -919,5 +929,75 @@ class Google_calendar_sync
         $CI->db->where('rel_type', 'appointment');
         $CI->db->where('rel_id', $appointment_id);
         return $CI->db->delete(db_prefix() . 'appointment_google_events');
+    }
+    
+    /**
+     * Search for existing event in Google Calendar by matching appointment details
+     * This prevents duplicate events when mappings are lost or don't exist yet
+     * 
+     * @param Google_Service_Calendar $service Google Calendar service instance
+     * @param string $calendar_id Calendar ID
+     * @param array $event_data Event data to match (from build_event_data)
+     * @return string|null Event ID if found, null otherwise
+     */
+    private function search_existing_event($service, $calendar_id, $event_data)
+    {
+        try {
+            // Extract search criteria from event data
+            $summary = $event_data['summary'];
+            $start_time = $event_data['start']->getDateTime();
+            $end_time = $event_data['end']->getDateTime();
+            
+            // Parse start/end times
+            $start_datetime = new DateTime($start_time);
+            $end_datetime = new DateTime($end_time);
+            
+            // Define search window: ±2 minutes tolerance to account for timing variations
+            $search_start = clone $start_datetime;
+            $search_start->modify('-2 minutes');
+            
+            $search_end = clone $start_datetime;
+            $search_end->modify('+2 minutes');
+            
+            // Query events in the time window from Google Calendar
+            $events = $service->events->listEvents($calendar_id, [
+                'timeMin' => $search_start->format(DateTime::ATOM),
+                'timeMax' => $search_end->format(DateTime::ATOM),
+                'singleEvents' => true,
+                'orderBy' => 'startTime',
+                'maxResults' => 50
+            ]);
+            
+            // Search for matching event by summary (title) and start time
+            foreach ($events->getItems() as $event) {
+                // Match by summary (title) - must be exact match
+                if ($event->getSummary() !== $summary) {
+                    continue;
+                }
+                
+                // Match by start time (within 2-minute tolerance)
+                $event_start = $event->getStart()->getDateTime();
+                if (!$event_start) {
+                    // Handle all-day events
+                    $event_start = $event->getStart()->getDate();
+                }
+                
+                $event_start_dt = new DateTime($event_start);
+                $time_diff = abs($event_start_dt->getTimestamp() - $start_datetime->getTimestamp());
+                
+                // If time difference is within 2 minutes (120 seconds), consider it a match
+                if ($time_diff <= 120) {
+                    log_message('info', 'Google Calendar: Found existing event matching appointment details - Event ID: ' . $event->getId() . ', Summary: ' . $summary);
+                    return $event->getId();
+                }
+            }
+            
+            // No matching event found
+            return null;
+        } catch (Exception $e) {
+            // On search error, log and return null (safe to proceed with create)
+            log_message('error', 'Google Calendar: search_existing_event failed - ' . $e->getMessage());
+            return null;
+        }
     }
 }
