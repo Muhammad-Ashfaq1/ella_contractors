@@ -18,12 +18,10 @@
     var EstimateTutorial = {
         // Configuration
         config: {
-            storageKey: 'ella_contractors_estimate_tutorial_completed',
-            storageKeyDismissed: 'ella_contractors_estimate_tutorial_dismissed',
             tutorialId: 'estimates_tutorial',
             currentStep: 0,
             steps: [],
-            shouldShow: true // Default to showing tutorial
+            shouldShow: true // Default to showing tutorial (server-side controlled)
         },
 
         // State
@@ -105,13 +103,7 @@
          * @returns {boolean}
          */
         shouldShowTutorial: function() {
-            // Check localStorage first (client-side)
-            var dismissed = localStorage.getItem(this.config.storageKeyDismissed);
-            if (dismissed === 'true') {
-                return false;
-            }
-
-            // Check server-side preference
+            // Check server-side preference (database-driven, no localStorage)
             var self = this;
             $.ajax({
                 url: admin_url + 'ella_contractors/appointments/check_estimate_tutorial_status',
@@ -121,6 +113,8 @@
                 success: function(response) {
                     if (response && response.show_tutorial === false) {
                         self.config.shouldShow = false;
+                    } else {
+                        self.config.shouldShow = true;
                     }
                 },
                 error: function() {
@@ -1097,7 +1091,23 @@
          * Complete tutorial
          */
         complete: function() {
-            localStorage.setItem(this.config.storageKey, 'true');
+            // Save tutorial completion preference to server (database)
+            $.ajax({
+                url: admin_url + 'ella_contractors/appointments/save_estimate_tutorial_preference',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    dismissed: 1,
+                    [csrf_token_name]: csrf_hash
+                },
+                success: function(response) {
+                    console.log('Estimate tutorial preference saved:', response);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Failed to save estimate tutorial preference:', error);
+                }
+            });
+            
             this.cleanup();
             this.state.isActive = false;
         },
@@ -1106,12 +1116,35 @@
          * Restart tutorial
          */
         restart: function() {
-            localStorage.removeItem(this.config.storageKey);
-            localStorage.removeItem(this.config.storageKeyDismissed);
-            this.cleanup();
-            this.state.isActive = false;
-            this.state.currentStepIndex = 0;
-            this.start();
+            var self = this;
+            
+            // Reset tutorial preference on server (database)
+            $.ajax({
+                url: admin_url + 'ella_contractors/appointments/reset_estimate_tutorial',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    [csrf_token_name]: csrf_hash
+                },
+                success: function(response) {
+                    console.log('Estimate tutorial reset:', response);
+                    // Restart tutorial after server reset
+                    self.cleanup();
+                    self.state.isActive = false;
+                    self.state.currentStepIndex = 0;
+                    self.config.shouldShow = true;
+                    self.start();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Failed to reset estimate tutorial:', error);
+                    // Still attempt to restart locally
+                    self.cleanup();
+                    self.state.isActive = false;
+                    self.state.currentStepIndex = 0;
+                    self.config.shouldShow = true;
+                    self.start();
+                }
+            });
         },
 
         /**
