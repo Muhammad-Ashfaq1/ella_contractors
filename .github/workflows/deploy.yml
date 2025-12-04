@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - feature/out-look-integration
-      # - main
     paths:
       - '**'
 
@@ -14,28 +13,46 @@ jobs:
     
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
-        
+        uses: actions/checkout@v4  # Updated to v4 (latest)
+
+      - name: Install SSH client
+        run: sudo apt-get update && sudo apt-get install -y rsync openssh-client
+
       - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY_ALLWETRADE }}" > ~/.ssh/allwetrade
+          chmod 600 ~/.ssh/allwetrade
+          # Optional: add to known hosts to avoid prompt
           ssh-keyscan -H 34.224.171.98 >> ~/.ssh/known_hosts
-          
+
       - name: Deploy Module to CRM
         run: |
-          echo "Deploying Ella Contractors module..."
+          echo "Deploying Ella Contractors module via secure key..."
           
-          # Create a clean deployment directory (excluding git files and deploy_temp)
+          # Create clean temp directory
           mkdir -p ./deploy_temp
-          rsync -av --exclude='.git/' --exclude='.github/' --exclude='.DS_Store' --exclude='*.log' --exclude='node_modules/' --exclude='vendor/' --exclude='deploy_temp/' ./ ./deploy_temp/
-          
-          # Deploy using SSH key authentication
-          rsync -avz --no-times --no-perms --chmod=Du=rwx,Dg=rx,Fu=rw,Fg=r -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" ./deploy_temp/ awt-crm-ashfaq@34.224.171.98:~/htdocs/crm.allwetrade.com/modules/ella_contractors/
-          
-          # Clean up temp directory
+          rsync -av \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.DS_Store' \
+            --exclude='*.log' \
+            --exclude='node_modules/' \
+            --exclude='vendor/' \
+            --exclude='deploy_temp/' \
+            ./ ./deploy_temp/
+
+          # Deploy with your key (no password!)
+          rsync -avz \
+            --no-times \
+            --no-perms \
+            --chmod=Du=rwx,Dg=rx,Fu=rw,Fg=r \
+            -e "ssh -i ~/.ssh/allwetrade -o StrictHostKeyChecking=no" \
+            ./deploy_temp/ \
+            awt-crm-ashfaq@34.224.171.98:~/htdocs/crm.allwetrade.com/modules/ella_contractors/
+
+          # Cleanup
           rm -rf ./deploy_temp
-          
+
       - name: Completion Message
-        run: echo "Module deployed successfully!"
+        run: echo "Ella Contractors module deployed successfully via SSH key!"
