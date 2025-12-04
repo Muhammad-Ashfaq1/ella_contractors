@@ -569,5 +569,3 @@ function disconnectOutlookCalendar() {
 // END CALENDAR INTEGRATION (DYNAMIC)
 // ========================================
 </script>
-
-

@@ -606,7 +606,7 @@ class Appointments extends AdminController
      */
     private function handle_attendees($appointment_id)
     {
-        // Get existing attendees for comparison (for Google Calendar sync)
+        // Get existing attendees for comparison (for calendar sync)
         $old_attendees = $this->appointments_model->get_appointment_attendees($appointment_id);
         
         $attendees = $this->input->post('attendees');
@@ -623,9 +623,10 @@ class Appointments extends AdminController
             // Get new attendees for comparison
             $new_attendees = $this->appointments_model->get_appointment_attendees($appointment_id);
             
-            // Sync assignee changes to Google Calendar
+            // Sync assignee changes to both Google Calendar and Outlook Calendar
             if (!empty($old_attendees) || !empty($new_attendees)) {
                 $this->sync_assignee_change($appointment_id, $old_attendees, $new_attendees);
+                $this->sync_outlook_assignee_change($appointment_id, $old_attendees, $new_attendees);
             }
         }
     }
