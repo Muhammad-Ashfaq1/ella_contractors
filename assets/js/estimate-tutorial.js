@@ -18,10 +18,12 @@
     var EstimateTutorial = {
         // Configuration
         config: {
+            storageKey: 'ella_contractors_estimate_tutorial_completed',
+            storageKeyDismissed: 'ella_contractors_estimate_tutorial_dismissed',
             tutorialId: 'estimates_tutorial',
             currentStep: 0,
             steps: [],
-            shouldShow: true // Default to showing tutorial (server-side controlled)
+            shouldShow: true // Default to showing tutorial
         },
 
         // State
@@ -83,11 +85,11 @@
                 }
             });
 
+            // Always load tutorial steps (needed for restart functionality)
+            this.loadTutorialSteps();
+            
             // Check if tutorial should be shown
             if (this.shouldShowTutorial()) {
-                // Load tutorial steps configuration
-                this.loadTutorialSteps();
-                
                 // Wait for page to be fully loaded
                 $(document).ready(function() {
                     // Small delay to ensure all elements are rendered
@@ -103,7 +105,13 @@
          * @returns {boolean}
          */
         shouldShowTutorial: function() {
-            // Check server-side preference (database-driven, no localStorage)
+            // Check localStorage first (instant client-side check)
+            var dismissed = localStorage.getItem(this.config.storageKeyDismissed);
+            if (dismissed === 'true') {
+                return false;
+            }
+
+            // Check server-side preference (database for cross-device persistence)
             var self = this;
             $.ajax({
                 url: admin_url + 'ella_contractors/appointments/check_estimate_tutorial_status',
@@ -113,8 +121,8 @@
                 success: function(response) {
                     if (response && response.show_tutorial === false) {
                         self.config.shouldShow = false;
-                    } else {
-                        self.config.shouldShow = true;
+                        // Sync to localStorage for future instant checks
+                        localStorage.setItem(self.config.storageKeyDismissed, 'true');
                     }
                 },
                 error: function() {
@@ -1064,7 +1072,7 @@
             // Skip button
             this.state.tooltip.find('.tutorial-btn-skip').on('click', function(e) {
                 e.preventDefault();
-                self.complete();
+                self.skip();
             });
 
         },
@@ -1091,7 +1099,29 @@
          * Complete tutorial
          */
         complete: function() {
-            // Save tutorial completion preference to server (database)
+            this.dismiss(false);
+        },
+
+        /**
+         * Skip tutorial
+         */
+        skip: function() {
+            this.dismiss(true);
+        },
+
+        /**
+         * Dismiss tutorial (used by complete and skip)
+         * @param {boolean} dontShowAgain - Permanent dismissal flag
+         */
+        dismiss: function(dontShowAgain) {
+            // Save preference locally first (instant)
+            if (dontShowAgain) {
+                localStorage.setItem(this.config.storageKeyDismissed, 'true');
+            } else {
+                localStorage.setItem(this.config.storageKey, 'true');
+            }
+
+            // Save to server (database for cross-device persistence)
             $.ajax({
                 url: admin_url + 'ella_contractors/appointments/save_estimate_tutorial_preference',
                 type: 'POST',
@@ -1101,10 +1131,10 @@
                     [csrf_token_name]: csrf_hash
                 },
                 success: function(response) {
-                    console.log('Estimate tutorial preference saved:', response);
+                    console.log('Estimate tutorial preference saved to server:', response);
                 },
                 error: function(xhr, status, error) {
-                    console.error('Failed to save estimate tutorial preference:', error);
+                    console.error('Failed to save estimate tutorial preference to server:', error);
                 }
             });
             
@@ -1114,37 +1144,20 @@
 
         /**
          * Restart tutorial
+         * Note: localStorage clearing and server reset should be done by the caller
+         * This method just restarts the tutorial UI flow
          */
         restart: function() {
-            var self = this;
+            // Cleanup current tutorial state
+            this.cleanup();
             
-            // Reset tutorial preference on server (database)
-            $.ajax({
-                url: admin_url + 'ella_contractors/appointments/reset_estimate_tutorial',
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    [csrf_token_name]: csrf_hash
-                },
-                success: function(response) {
-                    console.log('Estimate tutorial reset:', response);
-                    // Restart tutorial after server reset
-                    self.cleanup();
-                    self.state.isActive = false;
-                    self.state.currentStepIndex = 0;
-                    self.config.shouldShow = true;
-                    self.start();
-                },
-                error: function(xhr, status, error) {
-                    console.error('Failed to reset estimate tutorial:', error);
-                    // Still attempt to restart locally
-                    self.cleanup();
-                    self.state.isActive = false;
-                    self.state.currentStepIndex = 0;
-                    self.config.shouldShow = true;
-                    self.start();
-                }
-            });
+            // Reset state
+            this.state.isActive = false;
+            this.state.currentStepIndex = 0;
+            this.config.shouldShow = true;
+            
+            // Start from beginning (steps already loaded in init)
+            this.start();
         },
 
         /**
