@@ -21,7 +21,7 @@ class Google_calendar_sync
         $this->table_name = db_prefix() . 'staff_google_calendar_tokens';
 
         // Load Google API client if not already loaded
-        if (!class_exists('Google_Client')) {
+        if (!class_exists('Google_Client') && !class_exists('Google\Client')) {
             try {
                 // Try to load from EllaContractors' own vendor first
                 $ella_vendor = module_dir_path('ella_contractors', 'vendor/autoload.php');
@@ -49,9 +49,23 @@ class Google_calendar_sync
                     }
                 }
                 
-                // Verify the class is now available
+                // Verify the class is now available (check both namespaced and aliased versions)
+                if (!class_exists('Google_Client') && !class_exists('Google\Client')) {
+                    throw new Exception('Google_Client class not available after loading autoload.php. Please run: cd modules/ella_contractors && composer dump-autoload');
+                }
+                
+                // If only namespaced version exists, manually load aliases
+                if (!class_exists('Google_Client') && class_exists('Google\Client')) {
+                    $aliases_file = module_dir_path('ella_contractors', 'vendor/google/apiclient/src/aliases.php');
+                    if (file_exists($aliases_file)) {
+                        require_once($aliases_file);
+                        log_message('info', 'Google Calendar: Manually loaded aliases.php');
+                    }
+                }
+                
+                // Final verification
                 if (!class_exists('Google_Client')) {
-                    throw new Exception('Google_Client class not available after loading autoload.php');
+                    throw new Exception('Google_Client alias not created. Composer autoload may need regeneration.');
                 }
             } catch (Exception $e) {
                 log_message('error', 'Google Calendar: Failed to load Google API Client - ' . $e->getMessage());
