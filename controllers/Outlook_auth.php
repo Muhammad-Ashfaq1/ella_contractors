@@ -36,28 +36,53 @@ class Outlook_auth extends AdminController
         $staff_id = get_staff_user_id();
 
         if ($error) {
-            $this->_close_popup('error', 'Authentication failed: ' . ($this->input->get('error_description') ?: $error));
+            $error_desc = $this->input->get('error_description') ?: $error;
+            log_message('error', 'Outlook Calendar OAuth error: ' . $error . ' - ' . $error_desc);
+            $this->_close_popup('error', 'Authentication failed: ' . $error_desc);
             return;
         }
 
         if (!$code) {
+            log_message('error', 'Outlook Calendar: Missing authorization code in callback');
             $this->_close_popup('error', 'Missing authorization code.');
             return;
         }
 
-        $tokens = $this->outlook_calendar_sync->exchange_code_for_tokens($code, $staff_id);
+        // Check if credentials are configured
+        $client_id = get_option('outlook_calendar_client_id');
+        $client_secret = get_option('outlook_calendar_client_secret');
+        
+        if (empty($client_id) || empty($client_secret)) {
+            log_message('error', 'Outlook Calendar: Client ID or Secret not configured');
+            $this->_close_popup('error', 'Outlook Calendar credentials not configured. Please configure them in Settings → Outlook Calendar.');
+            return;
+        }
 
-        if ($tokens && isset($tokens['access_token'])) {
-            $saved = $this->outlook_calendar_sync->save_tokens($staff_id, $tokens);
+        try {
+            $tokens = $this->outlook_calendar_sync->exchange_code_for_tokens($code, $staff_id);
 
-            if ($saved) {
-                $this->outlook_calendar_sync->sync_all_appointments($staff_id);
-                $this->_close_popup('success', 'Outlook Calendar connected successfully!');
+            if ($tokens && isset($tokens['access_token'])) {
+                $saved = $this->outlook_calendar_sync->save_tokens($staff_id, $tokens);
+
+                if ($saved) {
+                    // Sync all appointments in background
+                    $sync_result = $this->outlook_calendar_sync->sync_all_appointments($staff_id);
+                    log_message('info', 'Outlook Calendar connected for staff ' . $staff_id . ' - Synced: ' . ($sync_result['synced'] ?? 0));
+                    
+                    $this->_close_popup('success', 'Outlook Calendar connected successfully!');
+                } else {
+                    log_message('error', 'Outlook Calendar: Failed to save tokens for staff ' . $staff_id);
+                    $this->_close_popup('error', 'Failed to save credentials. Please try again.');
+                }
             } else {
-                $this->_close_popup('error', 'Failed to save credentials.');
+                // Get more details from logs
+                log_message('error', 'Outlook Calendar: Token exchange returned empty or invalid data for staff ' . $staff_id);
+                $this->_close_popup('error', 'Failed to obtain access tokens. Please check: 1) Client ID and Secret are correct, 2) Redirect URI matches Azure Portal, 3) API permissions are granted.');
             }
-        } else {
-            $this->_close_popup('error', 'Failed to obtain access tokens.');
+        } catch (Exception $e) {
+            log_message('error', 'Outlook Calendar callback exception: ' . $e->getMessage());
+            log_message('error', 'Outlook Calendar callback trace: ' . $e->getTraceAsString());
+            $this->_close_popup('error', 'An error occurred: ' . $e->getMessage());
         }
     }
 
