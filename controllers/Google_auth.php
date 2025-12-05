@@ -11,6 +11,8 @@ class Google_auth extends AdminController
             $this->load->library('ella_contractors/Google_calendar_sync');
         } catch (Exception $e) {
             log_message('error', 'Google_auth: Failed to load Google_calendar_sync library - ' . $e->getMessage());
+            log_message('error', 'Google_auth: Exception trace - ' . $e->getTraceAsString());
+            // Don't set library property, so we can check and show proper error later
         }
     }
 
@@ -34,7 +36,31 @@ class Google_auth extends AdminController
 
         // Check if library loaded successfully
         if (!isset($this->google_calendar_sync)) {
-            set_alert('danger', 'Google Calendar library not loaded. Please ensure Appointly module is installed (for Google API client library).');
+            // Try to load it one more time with better error reporting
+            try {
+                $this->load->library('ella_contractors/Google_calendar_sync');
+            } catch (Exception $e) {
+                $error_msg = 'Google Calendar library failed to load: ' . $e->getMessage();
+                log_message('error', 'Google_auth connect: ' . $error_msg);
+                
+                // Provide helpful error message based on the exception
+                if (strpos($e->getMessage(), 'composer install') !== false) {
+                    $user_msg = 'Google Calendar API client library not installed. Please run: <code>cd modules/ella_contractors && composer install</code>';
+                } elseif (strpos($e->getMessage(), 'Google_Client') !== false) {
+                    $user_msg = 'Google Calendar API client library not properly loaded. Please run: <code>cd modules/ella_contractors && composer dump-autoload</code>';
+                } else {
+                    $user_msg = 'Google Calendar library error: ' . htmlspecialchars($e->getMessage());
+                }
+                
+                set_alert('danger', $user_msg);
+                redirect(admin_url('ella_contractors/appointments'));
+                return;
+            }
+        }
+        
+        // Final check after retry
+        if (!isset($this->google_calendar_sync)) {
+            set_alert('danger', 'Google Calendar library not available. Please check server logs for details.');
             redirect(admin_url('ella_contractors/appointments'));
             return;
         }

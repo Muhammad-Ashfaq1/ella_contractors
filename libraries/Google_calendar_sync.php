@@ -26,10 +26,14 @@ class Google_calendar_sync
                 // Try to load from EllaContractors' own vendor first
                 $ella_vendor = module_dir_path('ella_contractors', 'vendor/autoload.php');
                 
+                // Log the path for debugging
+                log_message('debug', 'Google Calendar: Checking vendor path: ' . $ella_vendor);
+                
                 if (file_exists($ella_vendor)) {
                     require_once($ella_vendor);
                     log_message('info', 'Google Calendar: Loaded Google API Client from EllaContractors vendor');
                 } else {
+                    log_message('debug', 'Google Calendar: EllaContractors vendor not found at: ' . $ella_vendor);
                     // Fallback to Appointly vendor if needed
                     $appointly_vendor = module_dir_path('appointly', 'vendor/autoload.php');
                     
