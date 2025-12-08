@@ -25,104 +25,156 @@ class Google_calendar_sync
             try {
                 $vendor_loaded = false;
                 $aliases_loaded = false;
+                $loaded_from = '';
                 
-                // Try to load from EllaContractors' own vendor first
-                $ella_vendor = module_dir_path('ella_contractors', 'vendor/autoload.php');
+                // Get absolute module path using realpath for better reliability
+                $module_base = module_dir_path('ella_contractors', '');
+                if (!$module_base || !is_dir($module_base)) {
+                    // Fallback: try to construct path manually
+                    $module_base = APPPATH . '../modules/ella_contractors/';
+                }
+                $module_base = rtrim(realpath($module_base) ?: $module_base, '/\\') . DIRECTORY_SEPARATOR;
                 
-                // Log the path for debugging
-                log_message('debug', 'Google Calendar: Checking vendor path: ' . $ella_vendor);
+                // Define all possible vendor paths to try (in order of preference)
+                $vendor_paths = [
+                    [
+                        'path' => $module_base . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php',
+                        'name' => 'EllaContractors module vendor'
+                    ],
+                    [
+                        'path' => module_dir_path('ella_contractors', 'vendor/autoload.php'),
+                        'name' => 'EllaContractors module_dir_path'
+                    ],
+                    [
+                        'path' => module_dir_path('appointly', 'vendor/autoload.php'),
+                        'name' => 'Appointly module vendor'
+                    ],
+                    [
+                        'path' => FCPATH . 'vendor/autoload.php',
+                        'name' => 'Global application vendor'
+                    ],
+                    [
+                        'path' => APPPATH . '../vendor/autoload.php',
+                        'name' => 'Application parent vendor'
+                    ]
+                ];
                 
-                if (file_exists($ella_vendor)) {
-                    require_once($ella_vendor);
-                    $vendor_loaded = true;
-                    log_message('info', 'Google Calendar: Loaded autoload.php from EllaContractors vendor');
+                // Try each vendor path
+                foreach ($vendor_paths as $vendor_info) {
+                    $vendor_path = realpath($vendor_info['path']) ?: $vendor_info['path'];
                     
-                    // Explicitly load aliases.php after autoloader
-                    $aliases_file = module_dir_path('ella_contractors', 'vendor/google/apiclient/src/aliases.php');
-                    if (file_exists($aliases_file)) {
-                        require_once($aliases_file);
-                        $aliases_loaded = true;
-                        log_message('info', 'Google Calendar: Explicitly loaded aliases.php');
-                    }
-                } else {
-                    log_message('debug', 'Google Calendar: EllaContractors vendor not found at: ' . $ella_vendor);
-                    // Fallback to Appointly vendor if needed
-                    $appointly_vendor = module_dir_path('appointly', 'vendor/autoload.php');
-                    
-                    if (file_exists($appointly_vendor)) {
-                        require_once($appointly_vendor);
-                        $vendor_loaded = true;
-                        log_message('info', 'Google Calendar: Loaded autoload.php from Appointly vendor (fallback)');
-                        
-                        // Try to load aliases from Appointly vendor
-                        $aliases_file = module_dir_path('appointly', 'vendor/google/apiclient/src/aliases.php');
-                        if (file_exists($aliases_file)) {
-                            require_once($aliases_file);
-                            $aliases_loaded = true;
-                            log_message('info', 'Google Calendar: Loaded aliases.php from Appointly vendor');
+                    if ($vendor_path && file_exists($vendor_path) && is_readable($vendor_path)) {
+                        try {
+                            require_once($vendor_path);
+                            $vendor_loaded = true;
+                            $loaded_from = $vendor_info['name'];
+                            log_message('info', 'Google Calendar: Loaded autoload.php from ' . $vendor_info['name'] . ' at: ' . $vendor_path);
+                            break;
+                        } catch (Exception $e) {
+                            log_message('debug', 'Google Calendar: Failed to load from ' . $vendor_info['name'] . ' - ' . $e->getMessage());
+                            continue;
                         }
                     } else {
-                        // Try global vendor as last resort
-                        $global_vendor = FCPATH . 'vendor/autoload.php';
-                        if (file_exists($global_vendor)) {
-                            require_once($global_vendor);
-                            $vendor_loaded = true;
-                            log_message('info', 'Google Calendar: Loaded autoload.php from global vendor (fallback)');
-                        } else {
-                            log_message('error', 'Google Calendar: Google API Client library not found. Please run: cd modules/ella_contractors && composer install');
-                            throw new Exception('Google API Client library not found. Please run composer install in ella_contractors module.');
-                        }
+                        log_message('debug', 'Google Calendar: Vendor path not found or not readable: ' . $vendor_path);
                     }
+                }
+                
+                // If vendor wasn't loaded, throw exception with helpful message
+                if (!$vendor_loaded) {
+                    $error_msg = 'Google API Client library not found. Please run the following commands:' . PHP_EOL;
+                    $error_msg .= '  cd ' . $module_base . PHP_EOL;
+                    $error_msg .= '  composer install' . PHP_EOL;
+                    $error_msg .= '  composer dump-autoload' . PHP_EOL;
+                    $error_msg .= PHP_EOL . 'Checked paths:' . PHP_EOL;
+                    foreach ($vendor_paths as $vp) {
+                        $error_msg .= '  - ' . $vp['name'] . ': ' . $vp['path'] . PHP_EOL;
+                    }
+                    log_message('error', 'Google Calendar: ' . $error_msg);
+                    throw new Exception($error_msg);
                 }
                 
                 // Verify the class is now available (check both namespaced and aliased versions)
-                $has_namespaced = class_exists('Google\Client');
-                $has_aliased = class_exists('Google_Client');
+                $has_namespaced = class_exists('Google\Client', false);
+                $has_aliased = class_exists('Google_Client', false);
                 
-                log_message('debug', 'Google Calendar: Class check - Google\Client: ' . ($has_namespaced ? 'YES' : 'NO') . ', Google_Client: ' . ($has_aliased ? 'YES' : 'NO'));
+                log_message('debug', 'Google Calendar: Class check after vendor load - Google\Client: ' . ($has_namespaced ? 'YES' : 'NO') . ', Google_Client: ' . ($has_aliased ? 'YES' : 'NO'));
                 
+                // If neither class exists, the autoloader might need to be called explicitly
                 if (!$has_namespaced && !$has_aliased) {
-                    throw new Exception('Google_Client class not available after loading autoload.php. Vendor loaded: ' . ($vendor_loaded ? 'YES' : 'NO') . ', Aliases loaded: ' . ($aliases_loaded ? 'YES' : 'NO'));
+                    // Try to trigger autoloader
+                    if (function_exists('spl_autoload_functions')) {
+                        $autoloaders = spl_autoload_functions();
+                        if (!empty($autoloaders)) {
+                            // Try to autoload the class
+                            try {
+                                $test = class_exists('Google\Client');
+                            } catch (Exception $e) {
+                                // Ignore autoload errors
+                            }
+                        }
+                    }
+                    
+                    // Re-check after autoload attempt
+                    $has_namespaced = class_exists('Google\Client', false);
+                    $has_aliased = class_exists('Google_Client', false);
+                    
+                    if (!$has_namespaced && !$has_aliased) {
+                        throw new Exception('Google_Client class not available after loading autoload.php from ' . $loaded_from . '. Please run: cd ' . $module_base . ' && composer install && composer dump-autoload');
+                    }
                 }
                 
-                // If only namespaced version exists, try to manually load aliases
+                // If only namespaced version exists, try to load aliases or create alias
                 if (!$has_aliased && $has_namespaced) {
                     // Try multiple possible locations for aliases.php
                     $possible_aliases = [
+                        $module_base . 'vendor/google/apiclient/src/aliases.php',
                         module_dir_path('ella_contractors', 'vendor/google/apiclient/src/aliases.php'),
                         module_dir_path('appointly', 'vendor/google/apiclient/src/aliases.php'),
-                        FCPATH . 'vendor/google/apiclient/src/aliases.php'
+                        FCPATH . 'vendor/google/apiclient/src/aliases.php',
+                        APPPATH . '../vendor/google/apiclient/src/aliases.php'
                     ];
                     
                     foreach ($possible_aliases as $aliases_file) {
-                        if (file_exists($aliases_file)) {
-                            require_once($aliases_file);
-                            log_message('info', 'Google Calendar: Manually loaded aliases.php from: ' . $aliases_file);
-                            $aliases_loaded = true;
-                            break;
+                        $aliases_path = realpath($aliases_file) ?: $aliases_file;
+                        if ($aliases_path && file_exists($aliases_path) && is_readable($aliases_path)) {
+                            try {
+                                require_once($aliases_path);
+                                $aliases_loaded = true;
+                                log_message('info', 'Google Calendar: Manually loaded aliases.php from: ' . $aliases_path);
+                                break;
+                            } catch (Exception $e) {
+                                log_message('debug', 'Google Calendar: Failed to load aliases from ' . $aliases_path . ' - ' . $e->getMessage());
+                                continue;
+                            }
                         }
                     }
                 }
                 
-                // Final verification - if still no alias, we'll use namespaced version
-                if (!class_exists('Google_Client')) {
-                    if (class_exists('Google\Client')) {
-                        // Create a simple alias ourselves as last resort
+                // Final verification - if still no alias, create one from namespaced version
+                if (!class_exists('Google_Client', false)) {
+                    if (class_exists('Google\Client', false)) {
+                        // Create alias ourselves as last resort
                         if (!class_exists('Google_Client', false)) {
                             class_alias('Google\Client', 'Google_Client');
-                            log_message('info', 'Google Calendar: Created manual class alias for Google_Client');
+                            log_message('info', 'Google Calendar: Created manual class alias for Google_Client from Google\Client');
                         }
                     } else {
-                        throw new Exception('Google_Client class not available. Vendor loaded: ' . ($vendor_loaded ? 'YES' : 'NO') . ', Aliases loaded: ' . ($aliases_loaded ? 'YES' : 'NO'));
+                        // Try one more time with autoloading enabled
+                        if (class_exists('Google\Client')) {
+                            class_alias('Google\Client', 'Google_Client');
+                            log_message('info', 'Google Calendar: Created manual class alias for Google_Client (with autoload)');
+                        } else {
+                            throw new Exception('Google_Client class not available after all attempts. Vendor loaded from: ' . $loaded_from . ', Aliases loaded: ' . ($aliases_loaded ? 'YES' : 'NO') . '. Please run: cd ' . $module_base . ' && composer dump-autoload');
+                        }
                     }
                 }
                 
-                // Final check
-                if (!class_exists('Google_Client')) {
-                    throw new Exception('Google_Client alias not created after all attempts.');
+                // Final verification check
+                if (!class_exists('Google_Client', false) && !class_exists('Google_Client')) {
+                    throw new Exception('Google_Client alias not created after all attempts. Please run: cd ' . $module_base . ' && composer dump-autoload');
                 }
                 
-                log_message('info', 'Google Calendar: Google_Client class successfully loaded');
+                log_message('info', 'Google Calendar: Google_Client class successfully loaded (vendor: ' . $loaded_from . ', aliases: ' . ($aliases_loaded ? 'YES' : 'NO') . ')');
             } catch (Exception $e) {
                 log_message('error', 'Google Calendar: Failed to load Google API Client - ' . $e->getMessage());
                 log_message('error', 'Google Calendar: Stack trace - ' . $e->getTraceAsString());

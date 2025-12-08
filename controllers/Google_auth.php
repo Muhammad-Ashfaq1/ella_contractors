@@ -43,14 +43,30 @@ class Google_auth extends AdminController
                 $error_msg = 'Google Calendar library failed to load: ' . $e->getMessage();
                 log_message('error', 'Google_auth connect: ' . $error_msg);
                 
+                // Extract module path for clearer instructions
+                $module_path = module_dir_path('ella_contractors', '');
+                $module_path = realpath($module_path) ?: $module_path;
+                $module_path = rtrim($module_path, '/\\');
+                
                 // Provide helpful error message based on the exception
-                if (strpos($e->getMessage(), 'composer install') !== false) {
-                    $user_msg = 'Google Calendar API client library not installed. Please run: <code>cd modules/ella_contractors && composer install</code>';
-                } elseif (strpos($e->getMessage(), 'Google_Client') !== false) {
-                    $user_msg = 'Google Calendar API client library not properly loaded. Please run: <code>cd modules/ella_contractors && composer dump-autoload</code>';
+                $user_msg = '';
+                if (strpos($e->getMessage(), 'composer install') !== false || strpos($e->getMessage(), 'not found') !== false) {
+                    $user_msg = '<strong>Google Calendar API client library not installed.</strong><br><br>';
+                    $user_msg .= 'Please run these commands on your server:<br>';
+                    $user_msg .= '<pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 10px;">cd ' . htmlspecialchars($module_path) . '
+composer install
+composer dump-autoload</pre>';
+                } elseif (strpos($e->getMessage(), 'Google_Client') !== false || strpos($e->getMessage(), 'not available') !== false) {
+                    $user_msg = '<strong>Google Calendar API client library not properly loaded.</strong><br><br>';
+                    $user_msg .= 'Please run these commands on your server:<br>';
+                    $user_msg .= '<pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 10px;">cd ' . htmlspecialchars($module_path) . '
+composer dump-autoload</pre>';
                 } else {
-                    $user_msg = 'Google Calendar library error: ' . htmlspecialchars($e->getMessage());
+                    $user_msg = '<strong>Google Calendar library error:</strong><br>' . htmlspecialchars($e->getMessage());
                 }
+                
+                // Add troubleshooting info
+                $user_msg .= '<br><br><small>If the issue persists, check server logs for detailed error messages.</small>';
                 
                 set_alert('danger', $user_msg);
                 redirect(admin_url('ella_contractors/appointments'));
@@ -206,10 +222,24 @@ class Google_auth extends AdminController
                     $this->load->library('ella_contractors/Google_calendar_sync');
                 } catch (Exception $lib_e) {
                     log_message('error', 'Google Calendar: Failed to load library - ' . $lib_e->getMessage());
+                    
+                    // Provide helpful error message
+                    $module_path = module_dir_path('ella_contractors', '');
+                    $module_path = realpath($module_path) ?: $module_path;
+                    $module_path = rtrim($module_path, '/\\');
+                    
+                    $error_detail = 'Failed to load Google Calendar library. ';
+                    if (strpos($lib_e->getMessage(), 'composer') !== false || strpos($lib_e->getMessage(), 'not found') !== false) {
+                        $error_detail .= 'Please run: cd ' . $module_path . ' && composer install && composer dump-autoload';
+                    } else {
+                        $error_detail .= $lib_e->getMessage();
+                    }
+                    
                     echo json_encode([
                         'connected' => false,
-                        'error' => 'Failed to load Google Calendar library: ' . $lib_e->getMessage(),
-                        'message' => 'Library error'
+                        'error' => $error_detail,
+                        'message' => 'Library error',
+                        'troubleshooting' => 'Run: cd ' . $module_path . ' && composer dump-autoload'
                     ]);
                     exit;
                 }
