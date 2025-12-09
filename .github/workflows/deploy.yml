@@ -3,7 +3,8 @@ name: Deploy Ella Contractors Module
 on:
   push:
     branches:
-      - feature/out-look-integration
+      # - feature/out-look-integration
+      - calendar-proxy
     paths:
       - '**'
 
