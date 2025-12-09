@@ -264,33 +264,39 @@
             if (step.waitForElement && step.target) {
                 var element = $(step.target);
                 if (element.length === 0) {
-                    if (step.optional) {
-                        // Skip optional step
-                        this.next();
-                        return;
-                    }
                     // Wait for element to appear
                     var attempts = 0;
-                    var maxAttempts = 20; // 10 seconds max wait
+                    var maxAttempts = 2; // 200ms max wait (2 attempts * 100ms)
+                    var self = this;
                     var checkElement = setInterval(function() {
                         attempts++;
                         var el = $(step.target);
                         if (el.length > 0) {
                             clearInterval(checkElement);
-                            ServiceItemsTutorial.showStep(stepIndex);
+                            // Element found, show the step
+                            self.showStep(stepIndex);
                         } else if (attempts >= maxAttempts) {
                             clearInterval(checkElement);
-                            if (step.optional) {
-                                ServiceItemsTutorial.next();
-                            } else {
-                                ServiceItemsTutorial.complete();
-                            }
+                            // Element not found after timeout - show step anyway (centered)
+                            // This ensures all steps are shown even if elements are missing
+                            self.showStepContent(step, stepIndex, false);
                         }
-                    }, 500);
+                    }, 100);
                     return;
                 }
             }
 
+            // Element exists or no target - show step normally
+            this.showStepContent(step, stepIndex, true);
+        },
+
+        /**
+         * Show step content (tooltip and overlay)
+         * @param {object} step
+         * @param {number} stepIndex
+         * @param {boolean} elementExists - Whether the target element exists
+         */
+        showStepContent: function(step, stepIndex, elementExists) {
             // Remove previous overlay and tooltip
             this.cleanup();
 
@@ -300,9 +306,13 @@
             // Create and show tooltip
             this.createTooltip(step, stepIndex);
 
-            // Highlight target element if specified
-            if (step.target && step.highlight) {
+            // Highlight target element if specified and element exists
+            if (step.target && step.highlight && elementExists) {
                 this.highlightElement(step.target);
+            } else if (step.target && !elementExists) {
+                // If element doesn't exist, center the tooltip
+                step.position = 'center';
+                this.centerTooltip();
             }
         },
 
@@ -388,8 +398,513 @@
          * @param {object} step
          */
         positionTooltip: function(step) {
+            if (!this.state.tooltip) {
+                return;
+            }
+
+            var tooltip = this.state.tooltip;
+            var position = step.position || 'bottom';
+
+            // Remove all arrow classes first
+            tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right tutorial-arrow-top-right');
+
+            // CUSTOM POSITIONING: Responsive override for specific steps
+            // Get viewport dimensions for responsive positioning
+            var viewportWidth = $(window).width();
+            var viewportHeight = $(window).height();
+
+            // Custom positioning for 'new_service_item_button' step
+            if (step.id === 'new_service_item_button') {
+                tooltip.addClass('tutorial-arrow-top'); // Arrow at top pointing up to button
+                
+                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
+                }
+                
+                var positions;
+                if (viewportWidth > 1920) {
+                    // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - $(window).scrollLeft();
+                        
+                        // Position below target (arrow-top points up)
+                        var topPos = viewportTop + targetHeight + spacing;
+                        var leftPos = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        
+                        // Viewport overflow checks
+                        if (leftPos < 10) {
+                            leftPos = 10;
+                        } else if (leftPos + tooltipWidth > viewportWidth - 10) {
+                            leftPos = viewportWidth - tooltipWidth - 10;
+                        }
+                        
+                        if (topPos + tooltipHeight > viewportHeight - 10) {
+                            topPos = viewportTop - tooltipHeight - spacing;
+                            if (topPos < 10) {
+                                topPos = 10;
+                            }
+                        }
+                        
+                        positions = { top: topPos + 'px', left: leftPos + 'px' };
+                    } else {
+                        positions = { top: '180px', left: '180px' };
+                    }
+                } else if (viewportWidth >= 1920) {
+                    positions = { top: '180px', left: '180px' };
+                } else if (viewportWidth >= 1800) {
+                    positions = { top: '180px', left: '160px' };
+                } else if (viewportWidth >= 1600) {
+                    positions = { top: '180px', left: '140px' };
+                } else if (viewportWidth >= 1440) {
+                    positions = { top: '180px', left: '120px' };
+                } else if (viewportWidth >= 1370) {
+                    positions = { top: '180px', left: '100px' };
+                } else if (viewportWidth >= 1280) {
+                    positions = { top: '180px', left: '80px' };
+                } else if (viewportWidth >= 1024) {
+                    positions = { top: '180px', left: '60px' };
+                } else if (viewportWidth >= 768) {
+                    positions = { top: '220px', left: '40px' };
+                } else {
+                    positions = { top: '200px', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                var cssProps = {
+                    position: 'fixed',
+                    top: positions.top,
+                    transform: positions.transform || 'none',
+                    zIndex: 1041,
+                    visibility: 'visible',
+                    opacity: 1
+                };
+                
+                if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto';
+                }
+                
+                tooltip.css(cssProps);
+                
+                if (wasHidden) {
+                    setTimeout(function() {
+                        tooltip.css({
+                            visibility: 'visible',
+                            opacity: 1
+                        });
+                    }, 10);
+                }
+                return;
+            }
+
+            // Custom positioning for 'categories_button' step
+            if (step.id === 'categories_button') {
+                tooltip.addClass('tutorial-arrow-top');
+                
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
+                }
+                
+                var positions;
+                if (viewportWidth > 1920) {
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - $(window).scrollLeft();
+                        
+                        var topPos = viewportTop + targetHeight + spacing;
+                        var leftPos = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        
+                        if (leftPos < 10) {
+                            leftPos = 10;
+                        } else if (leftPos + tooltipWidth > viewportWidth - 10) {
+                            leftPos = viewportWidth - tooltipWidth - 10;
+                        }
+                        
+                        if (topPos + tooltipHeight > viewportHeight - 10) {
+                            topPos = viewportTop - tooltipHeight - spacing;
+                            if (topPos < 10) {
+                                topPos = 10;
+                            }
+                        }
+                        
+                        positions = { top: topPos + 'px', left: leftPos + 'px' };
+                    } else {
+                        positions = { top: '200px', left: '200px' };
+                    }
+                } else if (viewportWidth >= 1920) {
+                    positions = { top: '200px', left: '200px' };
+                } else if (viewportWidth >= 1800) {
+                    positions = { top: '200px', left: '180px' };
+                } else if (viewportWidth >= 1600) {
+                    positions = { top: '200px', left: '160px' };
+                } else if (viewportWidth >= 1440) {
+                    positions = { top: '200px', left: '140px' };
+                } else if (viewportWidth >= 1380) {
+                    positions = { top: '150px', left: '80px' };
+                } else if (viewportWidth >= 1280) {
+                    positions = { top: '130px', left: '60px' };
+                } else if (viewportWidth >= 1024) {
+                    positions = { top: '220px', left: '40px' };
+                } else if (viewportWidth >= 768) {
+                    positions = { top: '240px', left: '20px' };
+                } else {
+                    positions = { top: '200px', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                var cssProps = {
+                    position: 'fixed',
+                    top: positions.top,
+                    transform: positions.transform || 'none',
+                    zIndex: 1041,
+                    visibility: 'visible',
+                    opacity: 1
+                };
+                
+                if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto';
+                }
+                
+                tooltip.css(cssProps);
+                
+                if (wasHidden) {
+                    setTimeout(function() {
+                        tooltip.css({
+                            visibility: 'visible',
+                            opacity: 1
+                        });
+                    }, 10);
+                }
+                return;
+            }
+
+            // Custom positioning for 'import_button' step
+            if (step.id === 'import_button') {
+                tooltip.addClass('tutorial-arrow-top');
+                
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
+                }
+                
+                var positions;
+                if (viewportWidth > 1920) {
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - $(window).scrollLeft();
+                        
+                        var topPos = viewportTop + targetHeight + spacing;
+                        var leftPos = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        
+                        if (leftPos < 10) {
+                            leftPos = 10;
+                        } else if (leftPos + tooltipWidth > viewportWidth - 10) {
+                            leftPos = viewportWidth - tooltipWidth - 10;
+                        }
+                        
+                        if (topPos + tooltipHeight > viewportHeight - 10) {
+                            topPos = viewportTop - tooltipHeight - spacing;
+                            if (topPos < 10) {
+                                topPos = 10;
+                            }
+                        }
+                        
+                        positions = { top: topPos + 'px', left: leftPos + 'px' };
+                    } else {
+                        positions = { top: '200px', left: '240px' };
+                    }
+                } else if (viewportWidth >= 1920) {
+                    positions = { top: '200px', left: '240px' };
+                } else if (viewportWidth >= 1800) {
+                    positions = { top: '200px', left: '220px' };
+                } else if (viewportWidth >= 1600) {
+                    positions = { top: '200px', left: '180px' };
+                } else if (viewportWidth >= 1440) {
+                    positions = { top: '200px', left: '140px' };
+                } else if (viewportWidth >= 1370) {
+                    positions = { top: '200px', left: '100px' };
+                } else if (viewportWidth >= 1280) {
+                    positions = { top: '200px', left: '80px' };
+                } else if (viewportWidth >= 1024) {
+                    positions = { top: '220px', left: '60px' };
+                } else if (viewportWidth >= 768) {
+                    positions = { top: '240px', left: '40px' };
+                } else {
+                    positions = { top: '200px', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                var cssProps = {
+                    position: 'fixed',
+                    top: positions.top,
+                    transform: positions.transform || 'none',
+                    zIndex: 1041,
+                    visibility: 'visible',
+                    opacity: 1
+                };
+                
+                if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto';
+                }
+                
+                tooltip.css(cssProps);
+                
+                if (wasHidden) {
+                    setTimeout(function() {
+                        tooltip.css({
+                            visibility: 'visible',
+                            opacity: 1
+                        });
+                    }, 10);
+                }
+                return;
+            }
+
+            // Custom positioning for 'service_items_table' step
+            if (step.id === 'service_items_table') {
+                tooltip.addClass('tutorial-arrow-bottom');
+                
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
+                }
+                
+                var positions;
+                if (viewportWidth > 1920) {
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - $(window).scrollLeft();
+                        
+                        var topPos = viewportTop - tooltipHeight - spacing;
+                        var leftPos = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
+                        
+                        if (leftPos < 10) {
+                            leftPos = 10;
+                        } else if (leftPos + tooltipWidth > viewportWidth - 10) {
+                            leftPos = viewportWidth - tooltipWidth - 10;
+                        }
+                        
+                        if (topPos < 10) {
+                            topPos = viewportTop + targetHeight + spacing;
+                            if (topPos + tooltipHeight > viewportHeight - 10) {
+                                topPos = viewportHeight - tooltipHeight - 10;
+                            }
+                        }
+                        
+                        positions = { top: topPos + 'px', left: leftPos + 'px' };
+                    } else {
+                        positions = { top: '150px', left: '400px' };
+                    }
+                } else if (viewportWidth >= 1920) {
+                    positions = { top: '150px', left: '400px' };
+                } else if (viewportWidth >= 1800) {
+                    positions = { top: '150px', left: '380px' };
+                } else if (viewportWidth >= 1600) {
+                    positions = { top: '150px', left: '360px' };
+                } else if (viewportWidth >= 1440) {
+                    positions = { top: '150px', left: '340px' };
+                } else if (viewportWidth >= 1370) {
+                    positions = { top: '150px', left: '320px' };
+                } else if (viewportWidth >= 1280) {
+                    positions = { top: '150px', left: '300px' };
+                } else if (viewportWidth >= 1024) {
+                    positions = { top: '170px', left: '280px' };
+                } else if (viewportWidth >= 768) {
+                    positions = { top: '190px', left: '260px' };
+                } else {
+                    positions = { top: '150px', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                var cssProps = {
+                    position: 'fixed',
+                    top: positions.top,
+                    transform: positions.transform || 'none',
+                    zIndex: 1041,
+                    visibility: 'visible',
+                    opacity: 1
+                };
+                
+                if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto';
+                }
+                
+                tooltip.css(cssProps);
+                
+                if (wasHidden) {
+                    setTimeout(function() {
+                        tooltip.css({
+                            visibility: 'visible',
+                            opacity: 1
+                        });
+                    }, 10);
+                }
+                return;
+            }
+
+            // Custom positioning for 'table_actions' step
+            if (step.id === 'table_actions') {
+                tooltip.addClass('tutorial-arrow-left');
+                
+                var wasHidden = tooltip.css('visibility') === 'hidden';
+                if (wasHidden) {
+                    tooltip.css({
+                        position: 'fixed',
+                        top: '-9999px',
+                        left: '-9999px',
+                        visibility: 'visible',
+                        opacity: 0
+                    });
+                }
+                
+                var positions;
+                if (viewportWidth > 1920) {
+                    var target = $(step.target);
+                    if (target.length > 0) {
+                        var targetOffset = target.offset();
+                        var targetWidth = target.outerWidth();
+                        var targetHeight = target.outerHeight();
+                        var scrollTop = $(window).scrollTop();
+                        var scrollLeft = $(window).scrollLeft();
+                        var tooltipWidth = tooltip.outerWidth();
+                        var tooltipHeight = tooltip.outerHeight();
+                        var spacing = 20;
+                        
+                        var viewportTop = targetOffset.top - scrollTop;
+                        var viewportLeft = targetOffset.left - scrollLeft;
+                        
+                        var topPos = viewportTop + (targetHeight / 2) - (tooltipHeight / 2);
+                        var leftPos = viewportLeft + targetWidth + spacing;
+                        
+                        if (leftPos + tooltipWidth > viewportWidth - 10) {
+                            leftPos = viewportLeft - tooltipWidth - spacing;
+                            if (leftPos < 10) {
+                                leftPos = 10;
+                            }
+                        }
+                        
+                        if (topPos < 10) {
+                            topPos = 10;
+                        } else if (topPos + tooltipHeight > viewportHeight - 10) {
+                            topPos = viewportHeight - tooltipHeight - 10;
+                        }
+                        
+                        positions = { top: topPos + 'px', left: leftPos + 'px' };
+                    } else {
+                        positions = { top: '300px', left: '600px' };
+                    }
+                } else if (viewportWidth >= 1920) {
+                    positions = { top: '300px', left: '600px' };
+                } else if (viewportWidth >= 1800) {
+                    positions = { top: '300px', left: '580px' };
+                } else if (viewportWidth >= 1600) {
+                    positions = { top: '300px', left: '560px' };
+                } else if (viewportWidth >= 1440) {
+                    positions = { top: '300px', left: '540px' };
+                } else if (viewportWidth >= 1370) {
+                    positions = { top: '300px', left: '520px' };
+                } else if (viewportWidth >= 1280) {
+                    positions = { top: '300px', left: '500px' };
+                } else if (viewportWidth >= 1024) {
+                    positions = { top: '320px', left: '480px' };
+                } else if (viewportWidth >= 768) {
+                    positions = { top: '340px', left: '460px' };
+                } else {
+                    positions = { top: '300px', left: '50%', transform: 'translateX(-50%)' };
+                }
+                
+                var cssProps = {
+                    position: 'fixed',
+                    top: positions.top,
+                    transform: positions.transform || 'none',
+                    zIndex: 1041,
+                    visibility: 'visible',
+                    opacity: 1
+                };
+                
+                if (positions.left) {
+                    cssProps.left = positions.left;
+                    cssProps.right = 'auto';
+                }
+                
+                tooltip.css(cssProps);
+                
+                if (wasHidden) {
+                    setTimeout(function() {
+                        tooltip.css({
+                            visibility: 'visible',
+                            opacity: 1
+                        });
+                    }, 10);
+                }
+                return;
+            }
+
+            // Default positioning for steps without custom positioning
             if (!step.target || step.position === 'center') {
-                // Center on screen
                 this.centerTooltip();
                 return;
             }
@@ -401,9 +916,9 @@
             }
 
             // Ensure tooltip is visible for measurements
-            var wasHidden = this.state.tooltip.css('visibility') === 'hidden' || this.state.tooltip.css('opacity') === '0';
+            var wasHidden = tooltip.css('visibility') === 'hidden';
             if (wasHidden) {
-                this.state.tooltip.css({
+                tooltip.css({
                     position: 'fixed',
                     top: '-9999px',
                     left: '-9999px',
@@ -415,8 +930,8 @@
             var targetOffset = $target.offset();
             var targetWidth = $target.outerWidth();
             var targetHeight = $target.outerHeight();
-            var tooltipWidth = this.state.tooltip.outerWidth();
-            var tooltipHeight = this.state.tooltip.outerHeight();
+            var tooltipWidth = tooltip.outerWidth();
+            var tooltipHeight = tooltip.outerHeight();
             var windowWidth = $(window).width();
             var windowHeight = $(window).height();
             var scrollTop = $(window).scrollTop();
@@ -433,7 +948,6 @@
                     position.top = viewportTop - tooltipHeight - spacing;
                     position.left = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
                     arrowClass = 'tutorial-arrow-bottom';
-                    // If not enough space above, position below instead
                     if (position.top < 10) {
                         position.top = viewportTop + targetHeight + spacing;
                         arrowClass = 'tutorial-arrow-top';
@@ -443,7 +957,6 @@
                     position.top = viewportTop + targetHeight + spacing;
                     position.left = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
                     arrowClass = 'tutorial-arrow-top';
-                    // If not enough space below, position above instead
                     if (position.top + tooltipHeight > windowHeight - 10) {
                         position.top = viewportTop - tooltipHeight - spacing;
                         arrowClass = 'tutorial-arrow-bottom';
@@ -456,7 +969,6 @@
                     position.top = viewportTop + (targetHeight / 2) - (tooltipHeight / 2);
                     position.left = viewportLeft - tooltipWidth - spacing;
                     arrowClass = 'tutorial-arrow-right';
-                    // If not enough space on left, position on right instead
                     if (position.left < 10) {
                         position.left = viewportLeft + targetWidth + spacing;
                         arrowClass = 'tutorial-arrow-left';
@@ -466,7 +978,6 @@
                     position.top = viewportTop + (targetHeight / 2) - (tooltipHeight / 2);
                     position.left = viewportLeft + targetWidth + spacing;
                     arrowClass = 'tutorial-arrow-left';
-                    // If not enough space on right, position on left instead
                     if (position.left + tooltipWidth > windowWidth - 10) {
                         position.left = viewportLeft - tooltipWidth - spacing;
                         arrowClass = 'tutorial-arrow-right';
@@ -477,26 +988,21 @@
                     break;
             }
 
-            // Adjust for viewport boundaries (horizontal)
+            // Adjust for viewport boundaries
             if (position.left < 10) {
                 position.left = 10;
             } else if (position.left + tooltipWidth > windowWidth - 10) {
                 position.left = windowWidth - tooltipWidth - 10;
             }
 
-            // Adjust for viewport boundaries (vertical)
             if (position.top < 10) {
                 position.top = 10;
             } else if (position.top + tooltipHeight > windowHeight - 10) {
                 position.top = windowHeight - tooltipHeight - 10;
             }
 
-            // Convert viewport-relative to absolute positioning
-            var absoluteTop = position.top + scrollTop;
-            var absoluteLeft = position.left + scrollLeft;
-
-            // Apply position with fixed positioning
-            this.state.tooltip.css({
+            // Apply position
+            tooltip.css({
                 position: 'fixed',
                 top: position.top + 'px',
                 left: position.left + 'px',
@@ -504,12 +1010,9 @@
                 opacity: 1
             });
 
-            // Remove all arrow classes first
-            this.state.tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right tutorial-arrow-top-right');
-
             // Add arrow class
             if (arrowClass) {
-                this.state.tooltip.addClass(arrowClass);
+                tooltip.addClass(arrowClass);
             }
 
             // Store target element for highlighting
