@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/out-look-integration
+      # - main
     paths:
       - '**'
 
