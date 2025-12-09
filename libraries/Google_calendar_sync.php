@@ -10,9 +10,20 @@
 // Load Google API client autoloader from EllaContractors module's own vendor folder
 // Use only ella_contractors module vendor, no fallback to other modules
 $ella_vendor_autoload = module_dir_path('ella_contractors', 'vendor/autoload.php');
+$autoload_loaded = false;
+$autoload_error = null;
 
 if ($ella_vendor_autoload && file_exists($ella_vendor_autoload)) {
-    require_once($ella_vendor_autoload);
+    try {
+        require_once($ella_vendor_autoload);
+        $autoload_loaded = true;
+    } catch (Exception $e) {
+        $autoload_error = $e->getMessage();
+        log_message('error', 'Google Calendar: Failed to load autoload.php - ' . $autoload_error);
+    } catch (Error $e) {
+        $autoload_error = $e->getMessage();
+        log_message('error', 'Google Calendar: Failed to load autoload.php - ' . $autoload_error);
+    }
 } else {
     // Log warning but don't throw yet - will throw in constructor if class not available
     log_message('warning', 'Google Calendar: EllaContractors vendor/autoload.php not found at: ' . ($ella_vendor_autoload ?: 'null'));
@@ -34,6 +45,31 @@ class Google_calendar_sync
         $this->redirect_uri = get_option('google_calendar_redirect_uri') ?: site_url('ella_contractors/google_callback');
         $this->table_name = db_prefix() . 'staff_google_calendar_tokens';
 
+        // Check if autoloader failed to load (PHP version mismatch, etc.)
+        global $autoload_error;
+        if ($autoload_error) {
+            $module_base = module_dir_path('ella_contractors', '');
+            $module_base = realpath($module_base) ?: $module_base;
+            $module_base = rtrim($module_base, '/\\');
+            
+            // Check if it's a PHP version issue
+            $php_version_issue = false;
+            if (strpos($autoload_error, 'PHP version') !== false || strpos($autoload_error, 'require a PHP version') !== false) {
+                $php_version_issue = true;
+                $current_php = PHP_VERSION;
+                $error_msg = 'PHP version mismatch detected. ';
+                $error_msg .= 'Server is running PHP ' . $current_php . ', but some Composer dependencies require PHP >= 8.3.0. ';
+                $error_msg .= 'Please either upgrade PHP to 8.3+ or update composer.json to use package versions compatible with PHP ' . $current_php . '. ';
+                $error_msg .= 'Module path: ' . $module_base;
+            } else {
+                $error_msg = 'Failed to load Composer autoloader: ' . $autoload_error . '. ';
+                $error_msg .= 'Module path: ' . $module_base;
+            }
+            
+            log_message('error', 'Google Calendar: ' . $error_msg);
+            throw new Exception($error_msg);
+        }
+        
         // Verify Google_Client is available (autoloader should have loaded it from ella_contractors vendor)
         if (!class_exists('Google_Client') && !class_exists('Google\Client')) {
             $module_base = module_dir_path('ella_contractors', '');
