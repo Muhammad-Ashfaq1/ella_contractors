@@ -127,7 +127,16 @@ class Outlook_calendar_sync
                 // Try to parse error details
                 $error_data = json_decode($response, true);
                 if ($error_data && isset($error_data['error'])) {
-                    log_message('error', 'Outlook Calendar: Error details - ' . $error_data['error'] . ': ' . ($error_data['error_description'] ?? 'No description'));
+                    $error_code = $error_data['error'];
+                    $error_desc = $error_data['error_description'] ?? 'No description';
+                    log_message('error', 'Outlook Calendar: Error details - ' . $error_code . ': ' . $error_desc);
+                    
+                    // Store error in session for better user feedback
+                    $CI = &get_instance();
+                    if (!isset($CI->session)) {
+                        $CI->load->library('session');
+                    }
+                    $CI->session->set_flashdata('outlook_error', $error_code . ': ' . $error_desc);
                 }
                 
                 return false;

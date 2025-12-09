@@ -75,9 +75,15 @@ class Outlook_auth extends AdminController
                     $this->_close_popup('error', 'Failed to save credentials. Please try again.');
                 }
             } else {
-                // Get more details from logs
+                // Get more details from logs - check the last error response
                 log_message('error', 'Outlook Calendar: Token exchange returned empty or invalid data for staff ' . $staff_id);
-                $this->_close_popup('error', 'Failed to obtain access tokens. Please check: 1) Client ID and Secret are correct, 2) Redirect URI matches Azure Portal, 3) API permissions are granted.');
+                
+                // Try to get more specific error from the library
+                $error_msg = 'Failed to obtain access tokens. ';
+                $error_msg .= 'Common issues: 1) Client ID and Secret are correct, 2) Redirect URI matches Azure Portal exactly (including http/https), 3) API permissions are granted and admin consent is given. ';
+                $error_msg .= 'Check application logs for detailed error message.';
+                
+                $this->_close_popup('error', $error_msg);
             }
         } catch (Exception $e) {
             log_message('error', 'Outlook Calendar callback exception: ' . $e->getMessage());
