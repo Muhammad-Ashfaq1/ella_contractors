@@ -137,8 +137,15 @@ class Outlook_auth extends AdminController
 
     private function _close_popup($type, $message)
     {
-        echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Outlook Calendar</title><style>body{font-family:Arial;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:' . ($type === 'success' ? '#4caf50' : '#f44336') . ';color:white}.container{text-align:center;padding:20px}</style></head><body><div class="container"><h2>' . ($type === 'success' ? '✓ Success!' : '✗ Error') . '</h2><p>' . htmlspecialchars($message) . '</p><p>Closing...</p></div><script>if(window.opener){window.opener.postMessage({type:"outlook_calendar_auth_' . $type . '",message:"' . addslashes($message) . '"},window.location.origin);}setTimeout(function(){window.close();},'.($type==='success'?'1500':'3000').');</script></body></html>';
-        exit;
+        // Store message in session flash data
+        if ($type === 'success') {
+            set_alert('success', $message);
+        } else {
+            set_alert('danger', $message);
+        }
+        
+        // Redirect back to appointments page
+        redirect(admin_url('ella_contractors/appointments'));
     }
 }
 

@@ -192,7 +192,7 @@ $(document).on('click', '[id$="-calendar-connect-btn"]', function(e) {
 });
 
 /**
- * Open calendar OAuth popup (dynamic)
+ * Open calendar OAuth - redirects in same window (no popup)
  * @param {string} provider - 'google' or 'outlook'
  */
 function openCalendarAuthPopup(provider) {
@@ -202,32 +202,9 @@ function openCalendarAuthPopup(provider) {
         return;
     }
 
+    // Redirect in same window instead of popup
     var authUrl = admin_url + config.authUrl + '/connect';
-    var width = 600;
-    var height = 700;
-    var left = (screen.width / 2) - (width / 2);
-    var top = (screen.height / 2) - (height / 2);
-    
-    calendarAuthPopups[provider] = window.open(
-        authUrl,
-        config.windowName,
-        'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes'
-    );
-    
-    if (!calendarAuthPopups[provider]) {
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                title: 'Popup Blocked',
-                text: 'Please allow popups for this site to connect to ' + config.name + '.',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-        } else {
-            alert('Please allow popups for this site to connect to ' + config.name + '.');
-        }
-    } else if (!calendarAuthPopups[provider].closed) {
-        calendarAuthPopups[provider].focus();
-    }
+    window.location.href = authUrl;
 }
 
 /**
@@ -246,86 +223,19 @@ function openOutlookAuthPopup() {
 }
 
 /**
- * Listen for OAuth callback messages (dynamic - handles both Google and Outlook)
+ * Check for calendar auth status on page load (after redirect from OAuth)
+ * This handles the case when user returns from OAuth callback
  */
-window.addEventListener('message', function(event) {
-    // Verify origin for security
-    if (event.origin !== window.location.origin) {
-        return;
-    }
+$(document).ready(function() {
+    // Check if we just returned from OAuth (URL might have params, but we'll check status anyway)
+    // The success/error message will be shown via set_alert() from the controller
     
-    if (!event.data || !event.data.type) {
-        return;
-    }
-    
-    // Extract provider from message type (google_calendar_auth_success → google)
-    var messageType = event.data.type;
-    var provider = null;
-    
-    if (messageType.indexOf('google_calendar') === 0) {
-        provider = 'google';
-    } else if (messageType.indexOf('outlook_calendar') === 0) {
-        provider = 'outlook';
-    }
-    
-    if (!provider) {
-        return;
-    }
-    
-    var config = calendarProviders[provider];
-    var isSuccess = messageType.indexOf('_success') !== -1;
-    var isError = messageType.indexOf('_error') !== -1;
-    
-    // Handle success
-    if (isSuccess) {
-        console.log(config.name + ' authentication successful');
-        
-        // Close popup if still open
-        if (calendarAuthPopups[provider] && !calendarAuthPopups[provider].closed) {
-            calendarAuthPopups[provider].close();
-        }
-        
-        // Refresh connection status
-        setTimeout(function() {
-            checkCalendarStatus(provider);
-        }, 1000);
-        
-        // Show success message
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                title: 'Success!',
-                text: event.data.message || (config.name + ' connected successfully. Your appointments will now sync automatically.'),
-                icon: 'success',
-                timer: 2000,
-                showConfirmButton: false
-            });
-        } else {
-            alert_float('success', event.data.message || (config.name + ' connected successfully!'));
-        }
-    }
-    
-    // Handle error
-    if (isError) {
-        console.error(config.name + ' authentication failed:', event.data.message);
-        
-        // Close popup if still open
-        if (calendarAuthPopups[provider] && !calendarAuthPopups[provider].closed) {
-            calendarAuthPopups[provider].close();
-        }
-        
-        // Show error message
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                title: 'Authentication Failed',
-                text: event.data.message || ('Failed to connect ' + config.name + '. Please try again.'),
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-        } else {
-            alert_float('danger', event.data.message || ('Failed to connect ' + config.name));
-        }
-    }
-}, false);
+    // Refresh calendar statuses after page load (in case connection was just established)
+    setTimeout(function() {
+        checkCalendarStatus('google');
+        checkCalendarStatus('outlook');
+    }, 500);
+});
 
 /**
  * Sync Now button click (dynamic - handles both Google and Outlook)
@@ -513,45 +423,6 @@ function disconnectCalendar(provider) {
             }
         }
     });
-}
-
-/**
- * Open calendar OAuth popup (dynamic)
- * @param {string} provider - 'google' or 'outlook'
- */
-function openCalendarAuthPopup(provider) {
-    var config = calendarProviders[provider];
-    if (!config) {
-        console.error('Invalid calendar provider:', provider);
-        return;
-    }
-
-    var authUrl = admin_url + config.authUrl + '/connect';
-    var width = 600;
-    var height = 700;
-    var left = (screen.width / 2) - (width / 2);
-    var top = (screen.height / 2) - (height / 2);
-    
-    calendarAuthPopups[provider] = window.open(
-        authUrl,
-        config.windowName,
-        'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes'
-    );
-    
-    if (!calendarAuthPopups[provider]) {
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                title: 'Popup Blocked',
-                text: 'Please allow popups for this site to connect to ' + config.name + '.',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-        } else {
-            alert('Please allow popups for this site to connect to ' + config.name + '.');
-        }
-    } else if (!calendarAuthPopups[provider].closed) {
-        calendarAuthPopups[provider].focus();
-    }
 }
 
 /**
