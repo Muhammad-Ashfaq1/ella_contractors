@@ -25,6 +25,16 @@ class Outlook_calendar_sync
     }
 
     /**
+     * Get redirect URI
+     *
+     * @return string Redirect URI
+     */
+    public function get_redirect_uri()
+    {
+        return $this->redirect_uri;
+    }
+
+    /**
      * Get authorization URL for OAuth2 flow
      *
      * @param int $staff_id Staff ID
@@ -98,9 +108,6 @@ class Outlook_calendar_sync
                 'scope' => 'openid profile offline_access User.Read Calendars.ReadWrite'
             ];
 
-            // Log the request (without sensitive data)
-            log_message('info', 'Outlook Calendar: Attempting token exchange - URL: ' . $token_url . ', Redirect URI: ' . $this->redirect_uri);
-
             $ch = curl_init($token_url);
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
@@ -122,14 +129,12 @@ class Outlook_calendar_sync
             }
 
             if ($http_code !== 200) {
-                log_message('error', 'Outlook Calendar: Token exchange failed - HTTP ' . $http_code . ' - Response: ' . $response);
-                
                 // Try to parse error details
                 $error_data = json_decode($response, true);
                 if ($error_data && isset($error_data['error'])) {
                     $error_code = $error_data['error'];
                     $error_desc = $error_data['error_description'] ?? 'No description';
-                    log_message('error', 'Outlook Calendar: Error details - ' . $error_code . ': ' . $error_desc);
+                    log_message('error', 'Outlook Calendar: Token exchange failed - ' . $error_code . ': ' . $error_desc);
                     
                     // Store error in session for better user feedback
                     $CI = &get_instance();
@@ -137,6 +142,8 @@ class Outlook_calendar_sync
                         $CI->load->library('session');
                     }
                     $CI->session->set_flashdata('outlook_error', $error_code . ': ' . $error_desc);
+                } else {
+                    log_message('error', 'Outlook Calendar: Token exchange failed - HTTP ' . $http_code);
                 }
                 
                 return false;
@@ -155,11 +162,9 @@ class Outlook_calendar_sync
             }
 
             if (!isset($token_data['access_token'])) {
-                log_message('error', 'Outlook Calendar: No access_token in response - ' . json_encode($token_data));
+                log_message('error', 'Outlook Calendar: No access_token in response');
                 return false;
             }
-
-            log_message('info', 'Outlook Calendar: Token exchange successful for staff ' . $staff_id);
 
             // Calculate expires_at
             $expires_in = isset($token_data['expires_in']) ? (int)$token_data['expires_in'] : 3600;

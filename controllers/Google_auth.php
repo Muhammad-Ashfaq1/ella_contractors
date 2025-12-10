@@ -115,14 +115,20 @@ composer dump-autoload</pre>';
         $error = $this->input->get('error');
         $staff_id = get_staff_user_id();
 
-        // Handle OAuth errors
+        // Handle OAuth errors - always redirect back
         if ($error) {
             $error_message = $this->input->get('error_description') ?: 'Authentication was cancelled or failed.';
-            $this->_close_popup_with_message('error', 'Google Calendar connection failed: ' . $error_message);
+            
+            $user_message = 'Google Calendar connection failed: ' . $error_message;
+            if (stripos($error_message, 'access_denied') !== false) {
+                $user_message = 'Google Calendar connection was cancelled. Please try again when ready.';
+            }
+            
+            $this->_close_popup_with_message('error', $user_message);
             return;
         }
 
-        // Handle missing authorization code
+        // Handle missing authorization code - always redirect back
         if (!$code) {
             $this->_close_popup_with_message('error', 'Missing authorization code. Please try connecting again.');
             return;
@@ -142,14 +148,17 @@ composer dump-autoload</pre>';
 
                     $this->_close_popup_with_message('success', 'Google Calendar connected successfully!');
                 } else {
+                    log_message('error', 'Google Calendar: Failed to save tokens');
                     $this->_close_popup_with_message('error', 'Failed to save Google Calendar credentials. Please try again.');
                 }
             } else {
-                $this->_close_popup_with_message('error', 'Failed to obtain access tokens from Google. Please try again.');
+                $this->_close_popup_with_message('error', 'Failed to obtain access tokens from Google. Please check your Google Cloud Console settings and try again.');
             }
         } catch (Exception $e) {
-            log_message('error', 'Google Calendar OAuth callback error: ' . $e->getMessage());
-            $this->_close_popup_with_message('error', 'An error occurred during Google Calendar connection: ' . $e->getMessage());
+            log_message('error', 'Google Calendar OAuth callback exception: ' . $e->getMessage());
+            
+            $error_msg = 'An error occurred during Google Calendar connection: ' . $e->getMessage();
+            $this->_close_popup_with_message('error', $error_msg);
         }
     }
 
