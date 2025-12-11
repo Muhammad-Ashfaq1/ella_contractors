@@ -2152,7 +2152,7 @@ startxref
         }
         
         $appointment_id = $this->input->post('appointment_id');
-        $field = $this->input->post('field'); // 'send_reminder' or 'reminder_48h'
+        $field = $this->input->post('field'); // 'send_reminder', 'reminder_48h', 'reminder_same_day', 'staff_reminder_48h', 'staff_reminder_same_day'
         $value = $this->input->post('value'); // 0 or 1
         
         // Validate inputs
@@ -2164,8 +2164,16 @@ startxref
             return;
         }
         
-        // Validate field name for security
-        if (!in_array($field, ['send_reminder', 'reminder_48h'])) {
+        // Validate field name for security - allow all reminder fields
+        $allowed_fields = [
+            'send_reminder',
+            'reminder_48h',
+            'reminder_same_day',
+            'staff_reminder_48h',
+            'staff_reminder_same_day'
+        ];
+        
+        if (!in_array($field, $allowed_fields)) {
             echo json_encode([
                 'success' => false,
                 'message' => 'Invalid field name'
@@ -2189,7 +2197,14 @@ startxref
         
         if ($result) {
             // Log activity
-            $reminder_type = $field === 'send_reminder' ? 'Instant reminder' : '48-hour reminder';
+            $reminder_type_map = [
+                'send_reminder' => 'Instant reminder',
+                'reminder_48h' => '48-hour reminder (Client)',
+                'reminder_same_day' => 'Same day reminder (Client)',
+                'staff_reminder_48h' => '48-hour reminder (Staff)',
+                'staff_reminder_same_day' => 'Same day reminder (Staff)'
+            ];
+            $reminder_type = isset($reminder_type_map[$field]) ? $reminder_type_map[$field] : $field;
             $action = $value ? 'enabled' : 'disabled';
             
             $this->appointments_model->add_activity_log(
@@ -2202,6 +2217,9 @@ startxref
                     'value' => $value
                 ]
             );
+            
+            // Also update the reminder tracking record
+            $this->appointment_reminder_model->sync_from_appointment($appointment_id, $update_data);
             
             echo json_encode([
                 'success' => true,
