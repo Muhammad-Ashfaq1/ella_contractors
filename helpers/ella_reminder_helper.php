@@ -585,7 +585,7 @@ function ella_send_reminder_sms($appointment_id, $stage)
     }
 
     $stage   = strtolower($stage);
-    $type    = $stage === 'staff_48h' ? 'staff' : 'client';
+    $type    = ($stage === 'staff_48h' || $stage === 'staff_same_day') ? 'staff' : 'client';
     $context = $stage;
 
     if ($type === 'staff') {
