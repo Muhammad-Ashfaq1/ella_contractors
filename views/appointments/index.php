@@ -1182,8 +1182,162 @@ function resetAppointmentModal() {
     // Reset reminder checkboxes to default (checked)
     $('#send_reminder').prop('checked', true);
     $('#reminder_48h').prop('checked', true);
+    $('#reminder_same_day').prop('checked', false);
+    $('#staff_reminder_same_day').prop('checked', false);
     $('#reminder_channel_both').prop('checked', true);
 }
+
+// Template Preview/Edit Functionality
+$(document).on('click', '.reminder-template-preview', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    var $icon = $(this);
+    var reminderStage = $icon.data('reminder-stage');
+    var templateType = $icon.data('template-type');
+    var recipientType = $icon.data('recipient-type');
+    var appointmentId = $('#appointment_id').val() || null;
+    
+    // Show loading
+    $('#reminderTemplateModal').modal('show');
+    $('#template_content').val('Loading...');
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_reminder_template_preview',
+        type: 'POST',
+        data: {
+            reminder_stage: reminderStage,
+            template_type: templateType,
+            recipient_type: recipientType,
+            appointment_id: appointmentId,
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success && response.template) {
+                var template = response.template;
+                $('#template_id').val(template.id);
+                $('#template_name').val(template.name);
+                $('#template_subject').val(template.subject || '');
+                $('#template_content').val(template.content);
+                $('#template_reminder_stage').val(reminderStage);
+                $('#template_type').val(templateType);
+                $('#template_recipient_type').val(recipientType);
+                
+                // Update reminder type display
+                var reminderTypeText = '';
+                if (reminderStage === 'client_instant') reminderTypeText = ' - Client Instant Confirmation';
+                else if (reminderStage === 'client_48h') reminderTypeText = ' - Client 48-Hour Reminder';
+                else if (reminderStage === 'client_same_day') reminderTypeText = ' - Client Same Day Reminder';
+                else if (reminderStage === 'staff_48h') reminderTypeText = ' - Staff 48-Hour Reminder';
+                else if (reminderStage === 'staff_same_day') reminderTypeText = ' - Staff Same Day Reminder';
+                $('#template_reminder_type_display').text(reminderTypeText);
+                
+                // Show/hide subject field based on template type
+                if (templateType === 'email') {
+                    $('#template_subject_group').show();
+                    // Update preview with rendered HTML
+                    updateTemplatePreview(template.content);
+                } else {
+                    $('#template_subject_group').hide();
+                    $('#template_preview_container').html('<div class="alert alert-info"><strong>SMS Template:</strong> This is a text message template. The preview shows the actual message that will be sent.</div><pre style="background: #f5f5f5; padding: 15px; border-radius: 4px; white-space: pre-wrap;">' + escapeHtml(template.content) + '</pre>');
+                }
+            } else {
+                alert_float('danger', response.message || 'Failed to load template');
+                $('#reminderTemplateModal').modal('hide');
+            }
+        },
+        error: function() {
+            alert_float('danger', 'Error loading template');
+            $('#reminderTemplateModal').modal('hide');
+        }
+    });
+});
+
+// Update template preview when content changes
+function updateTemplatePreview(htmlContent) {
+    // Create an iframe to render the HTML safely
+    var previewContainer = $('#template_preview_container');
+    previewContainer.html('<iframe id="template_preview_iframe" style="width: 100%; height: 600px; border: 1px solid #ddd; background: white;"></iframe>');
+    
+    var iframe = document.getElementById('template_preview_iframe');
+    var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(htmlContent);
+    iframeDoc.close();
+}
+
+// Update preview when content changes in edit tab
+$('#template_content').on('input', function() {
+    if ($('#template-preview-tab').hasClass('active')) {
+        var content = $(this).val();
+        if ($('#template_type').val() === 'email') {
+            updateTemplatePreview(content);
+        }
+    }
+});
+
+// Update preview when switching to preview tab
+$('a[href="#template-preview-tab"]').on('shown.bs.tab', function() {
+    var content = $('#template_content').val();
+    if ($('#template_type').val() === 'email') {
+        updateTemplatePreview(content);
+    }
+});
+
+// Toggle merge fields help
+$('#toggle_merge_fields_help').on('click', function() {
+    $('#merge_fields_help').slideToggle();
+    var btnText = $(this).find('i').hasClass('fa-question-circle') ? 
+        '<i class="fa fa-times-circle"></i> Hide Available Fields' : 
+        '<i class="fa fa-question-circle"></i> Show Available Fields';
+    $(this).html(btnText);
+});
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    var map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+// Save Template
+$('#saveTemplateBtn').on('click', function() {
+    var formData = {
+        id: $('#template_id').val(),
+        template_name: $('#template_name').val(),
+        template_type: $('#template_type').val(),
+        reminder_stage: $('#template_reminder_stage').val(),
+        recipient_type: $('#template_recipient_type').val(),
+        subject: $('#template_subject').val(),
+        content: $('#template_content').val(),
+        is_active: $('#template_is_active').is(':checked') ? 1 : 0,
+        [csrf_token_name]: csrf_hash
+    };
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/save_reminder_template',
+        type: 'POST',
+        data: formData,
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                alert_float('success', response.message);
+                $('#reminderTemplateModal').modal('hide');
+            } else {
+                alert_float('danger', response.message || 'Failed to save template');
+            }
+        },
+        error: function() {
+            alert_float('danger', 'Error saving template');
+        }
+    });
+});
 
 function deleteAppointment(appointmentId) {
     if (confirm('Are you sure you want to delete this appointment?')) {

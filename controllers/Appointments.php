@@ -7,6 +7,7 @@ class Appointments extends AdminController
         parent::__construct();
         $this->load->model('ella_contractors/Ella_appointments_model', 'appointments_model');
         $this->load->model('ella_contractors/Appointment_reminder_model', 'appointment_reminder_model');
+        $this->load->model('ella_contractors/Reminder_template_model', 'reminder_template_model');
         $this->load->model('staff_model');
         $this->load->model('clients_model');
         $this->load->model('leads_model');
@@ -405,7 +406,9 @@ class Appointments extends AdminController
             'source' => 'ella_contractor',
             'send_reminder' => $this->input->post('send_reminder') ? 1 : 0,
             'reminder_48h' => $this->input->post('reminder_48h') ? 1 : 0,
+            'reminder_same_day' => $this->input->post('reminder_same_day') ? 1 : 0,
             'staff_reminder_48h' => $this->input->post('staff_reminder_48h') ? 1 : 0,
+            'staff_reminder_same_day' => $this->input->post('staff_reminder_same_day') ? 1 : 0,
             'reminder_channel' => $this->normalize_reminder_channel($this->input->post('reminder_channel'))
         ];
         
@@ -2802,6 +2805,271 @@ startxref
     private function sync_outlook_assignee_change($appointment_id, $old_assignees, $new_assignees)
     {
         $this->sync_calendar_assignee_change($appointment_id, $old_assignees, $new_assignees, 'outlook');
+    }
+
+    /**
+     * Get reminder template preview (AJAX)
+     * Creates default template if none exists
+     */
+    public function get_reminder_template_preview()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $reminder_stage = $this->input->post('reminder_stage');
+        $template_type = $this->input->post('template_type'); // 'email' or 'sms'
+        $recipient_type = $this->input->post('recipient_type'); // 'client' or 'staff'
+        $appointment_id = $this->input->post('appointment_id');
+
+        if (!$reminder_stage || !$template_type || !$recipient_type) {
+            echo json_encode(['success' => false, 'message' => 'Missing required parameters']);
+            return;
+        }
+
+        $template = $this->reminder_template_model->get_by_stage($reminder_stage, $template_type, $recipient_type);
+        
+        // If template doesn't exist, create a default one
+        if (!$template) {
+            $template = $this->create_default_template($reminder_stage, $template_type, $recipient_type);
+            
+            if (!$template) {
+                echo json_encode(['success' => false, 'message' => 'Failed to create default template']);
+                return;
+            }
+        }
+
+        // If appointment_id provided, parse template with actual data
+        $preview_content = $template->content;
+        $preview_subject = $template->subject;
+        
+        if ($appointment_id) {
+            $appointment = $this->appointments_model->get_appointment($appointment_id);
+            if ($appointment) {
+                $preview_content = $this->parse_template($template->content, $appointment, $recipient_type);
+                if ($template->subject) {
+                    $preview_subject = $this->parse_template($template->subject, $appointment, $recipient_type);
+                }
+            }
+        }
+
+        echo json_encode([
+            'success' => true,
+            'template' => [
+                'id' => $template->id,
+                'name' => $template->template_name,
+                'subject' => $preview_subject,
+                'content' => $preview_content,
+                'type' => $template->template_type
+            ]
+        ]);
+    }
+
+    /**
+     * Create default template if none exists
+     */
+    private function create_default_template($reminder_stage, $template_type, $recipient_type)
+    {
+        // Load email templates helper
+        $email_templates_helper = module_dir_path('ella_contractors', 'helpers/ella_email_templates_helper.php');
+        if (file_exists($email_templates_helper) && !function_exists('ella_get_client_reminder_template')) {
+            require_once($email_templates_helper);
+        }
+        
+        // Define default templates
+        $default_templates = [
+            'client_instant' => [
+                'email' => [
+                    'name' => 'Client Instant Email',
+                    'subject' => 'Appointment Confirmation: {appointment_subject}',
+                    'content' => function_exists('ella_get_client_reminder_template') ? ella_get_client_reminder_template() : $this->get_fallback_client_email_template()
+                ],
+                'sms' => [
+                    'name' => 'Client Instant SMS',
+                    'subject' => null,
+                    'content' => 'Appointment Confirmed: {appointment_subject} on {appointment_date} at {appointment_time}. Location: {appointment_location}'
+                ]
+            ],
+            'client_48h' => [
+                'email' => [
+                    'name' => 'Client 48h Email',
+                    'subject' => 'Appointment Reminder: {appointment_subject}',
+                    'content' => function_exists('ella_get_client_reminder_template') ? ella_get_client_reminder_template() : $this->get_fallback_client_email_template()
+                ],
+                'sms' => [
+                    'name' => 'Client 48h SMS',
+                    'subject' => null,
+                    'content' => 'Reminder: {appointment_subject} on {appointment_date} at {appointment_time}. Location: {appointment_location}'
+                ]
+            ],
+            'client_same_day' => [
+                'email' => [
+                    'name' => 'Client Same Day Email',
+                    'subject' => 'Reminder: Your Appointment Today - {appointment_subject}',
+                    'content' => function_exists('ella_get_client_reminder_template') ? ella_get_client_reminder_template() : $this->get_fallback_client_email_template()
+                ],
+                'sms' => [
+                    'name' => 'Client Same Day SMS',
+                    'subject' => null,
+                    'content' => 'Reminder: Your appointment {appointment_subject} is today at {appointment_time}. Location: {appointment_location}'
+                ]
+            ],
+            'staff_48h' => [
+                'email' => [
+                    'name' => 'Staff 48h Email',
+                    'subject' => 'Your Appointment Reminder: {appointment_subject}',
+                    'content' => function_exists('ella_get_staff_reminder_template') ? ella_get_staff_reminder_template() : $this->get_fallback_staff_email_template()
+                ],
+                'sms' => [
+                    'name' => 'Staff 48h SMS',
+                    'subject' => null,
+                    'content' => 'Reminder: {appointment_subject} with {client_name} on {appointment_date} at {appointment_time}'
+                ]
+            ],
+            'staff_same_day' => [
+                'email' => [
+                    'name' => 'Staff Same Day Email',
+                    'subject' => 'Reminder: Appointment Today - {appointment_subject}',
+                    'content' => function_exists('ella_get_staff_reminder_template') ? ella_get_staff_reminder_template() : $this->get_fallback_staff_email_template()
+                ],
+                'sms' => [
+                    'name' => 'Staff Same Day SMS',
+                    'subject' => null,
+                    'content' => 'Reminder: Appointment {appointment_subject} with {client_name} is today at {appointment_time}. Location: {appointment_location}'
+                ]
+            ]
+        ];
+        
+        if (!isset($default_templates[$reminder_stage][$template_type])) {
+            return false;
+        }
+        
+        $default = $default_templates[$reminder_stage][$template_type];
+        
+        $data = [
+            'template_name' => $default['name'],
+            'template_type' => $template_type,
+            'reminder_stage' => $reminder_stage,
+            'recipient_type' => $recipient_type,
+            'subject' => $default['subject'],
+            'content' => is_callable($default['content']) ? $default['content']() : $default['content'],
+            'is_active' => 1,
+            'created_by' => get_staff_user_id() ?: 0
+        ];
+        
+        $template_id = $this->reminder_template_model->create($data);
+        
+        if ($template_id) {
+            return $this->reminder_template_model->get($template_id);
+        }
+        
+        return false;
+    }
+
+    /**
+     * Get fallback client email template
+     */
+    private function get_fallback_client_email_template()
+    {
+        return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family: Arial; padding: 20px;"><h2>Appointment Confirmation</h2><p>Dear {client_name},</p><p>This is a confirmation of your upcoming appointment.</p><p><strong>Appointment:</strong> {appointment_subject}<br><strong>Date:</strong> {appointment_date}<br><strong>Time:</strong> {appointment_time}<br><strong>Location:</strong> {appointment_location}</p><p>{appointment_notes}</p><p>{presentation_block}</p><p>Best regards,<br>{company_name}</p></body></html>';
+    }
+
+    /**
+     * Get fallback staff email template
+     */
+    private function get_fallback_staff_email_template()
+    {
+        return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family: Arial; padding: 20px;"><h2>Appointment Reminder</h2><p>Hi {staff_name},</p><p>This is a reminder about your upcoming appointment.</p><p><strong>Appointment:</strong> {appointment_subject}<br><strong>Client:</strong> {client_name}<br><strong>Date:</strong> {appointment_date}<br><strong>Time:</strong> {appointment_time}<br><strong>Location:</strong> {appointment_location}</p><p><strong>Notes:</strong><br>{appointment_notes}</p><p>{presentation_block}</p><p><a href="{crm_link}">View in CRM</a></p><p>Best regards,<br>{company_name} CRM</p></body></html>';
+    }
+
+    /**
+     * Save reminder template (AJAX)
+     */
+    public function save_reminder_template()
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            ajax_access_denied();
+        }
+
+        $id = $this->input->post('id');
+        $data = [
+            'template_name' => $this->input->post('template_name'),
+            'template_type' => $this->input->post('template_type'),
+            'reminder_stage' => $this->input->post('reminder_stage'),
+            'recipient_type' => $this->input->post('recipient_type'),
+            'subject' => $this->input->post('subject'),
+            'content' => $this->input->post('content'),
+            'is_active' => $this->input->post('is_active') ? 1 : 0
+        ];
+
+        if ($id) {
+            $result = $this->reminder_template_model->update($id, $data);
+            $message = $result ? 'Template updated successfully' : 'Failed to update template';
+        } else {
+            $id = $this->reminder_template_model->create($data);
+            $result = $id > 0;
+            $message = $result ? 'Template created successfully' : 'Failed to create template';
+        }
+
+        echo json_encode([
+            'success' => $result,
+            'message' => $message,
+            'id' => $id
+        ]);
+    }
+
+    /**
+     * Parse template with appointment data
+     */
+    private function parse_template($template, $appointment, $recipient_type = 'client')
+    {
+        $CI = &get_instance();
+        $CI->load->model('leads_model');
+        $CI->load->model('clients_model');
+
+        // Get client/lead name
+        $client_or_lead_name = 'Valued Customer';
+        if (!empty($appointment->contact_id)) {
+            if (!empty($appointment->lead_name)) {
+                $client_or_lead_name = $appointment->lead_name;
+            } else {
+                $client = $CI->clients_model->get($appointment->contact_id);
+                if ($client) {
+                    $client_or_lead_name = $client->company ?: trim(($client->firstname ?? '') . ' ' . ($client->lastname ?? ''));
+                }
+            }
+        }
+
+        // Get presentation block for staff same-day reminders
+        $presentation_block = '';
+        if ($recipient_type === 'staff' && in_array($appointment->reminder_stage ?? '', ['staff_same_day'])) {
+            if (!function_exists('ella_get_presentation_links_for_email')) {
+                require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
+            }
+            $presentations_for_email = ella_get_presentation_links_for_email($appointment->id);
+            $presentation_block = ella_build_presentation_block_html($presentations_for_email);
+        }
+
+        $replacements = [
+            '{appointment_subject}' => htmlspecialchars($appointment->subject ?? ''),
+            '{appointment_date}' => $appointment->date ? date('F j, Y', strtotime($appointment->date)) : '',
+            '{appointment_time}' => $appointment->start_hour ? date('g:i A', strtotime($appointment->start_hour)) : '',
+            '{appointment_location}' => htmlspecialchars($appointment->address ?: 'Online/Phone Call'),
+            '{client_name}' => htmlspecialchars($client_or_lead_name),
+            '{staff_name}' => get_staff_full_name($appointment->created_by ?? 0),
+            '{company_name}' => get_option('companyname') ?: 'Our Company',
+            '{company_phone}' => get_option('company_phone_number') ?: '',
+            '{company_email}' => get_option('company_email') ?: '',
+            '{crm_link}' => $recipient_type === 'staff' ? admin_url('ella_contractors/appointments/view/' . $appointment->id) : '',
+            '{appointment_notes}' => !empty($appointment->notes) ? nl2br(htmlspecialchars($appointment->notes)) : 'No additional notes',
+            '{presentation_block}' => $presentation_block,
+        ];
+
+        foreach ($replacements as $key => $value) {
+            $template = str_replace($key, $value, $template);
+        }
+
+        return $template;
     }
 
     
