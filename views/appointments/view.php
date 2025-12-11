@@ -433,23 +433,6 @@ html {
                                             
                                             <div class="checkbox checkbox-primary">
                                                 <input type="checkbox" 
-                                                       id="send_reminder_toggle" 
-                                                       data-appointment-id="<?php echo $appointment->id; ?>"
-                                                       data-field="send_reminder"
-                                                       <?php echo (isset($appointment->send_reminder) && $appointment->send_reminder == 1) ? 'checked' : ''; ?>>
-                                                <label for="send_reminder_toggle">
-                                                    Appointment Creation Notice
-                                                    <i class="fa fa-info-circle text-info reminder-template-preview" 
-                                                       data-reminder-stage="client_instant" 
-                                                       data-template-type="email" 
-                                                       data-recipient-type="client"
-                                                       style="cursor: pointer; margin-left: 5px;" 
-                                                       title="Preview/Edit Email Template"></i>
-                                                </label>
-                                            </div>
-                                            
-                                            <div class="checkbox checkbox-primary">
-                                                <input type="checkbox" 
                                                        id="reminder_48h_toggle" 
                                                        data-appointment-id="<?php echo $appointment->id; ?>"
                                                        data-field="reminder_48h"
@@ -1059,7 +1042,6 @@ $(document).ready(function() {
         
         // Get friendly name for the reminder
         var fieldNames = {
-            'send_reminder': 'Appointment Creation Notice',
             'reminder_48h': '2 Day Notice (Client)',
             'reminder_same_day': 'Same Day Reminder (Client)',
             'staff_reminder_48h': '2 Day Notice (Staff)',
