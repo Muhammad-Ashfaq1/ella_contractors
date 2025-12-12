@@ -2857,7 +2857,30 @@ startxref
             }
         }
 
-        // If appointment_id provided, parse template with actual data
+        // Extract which fields are currently in the template
+        $available_fields = [
+            '{appointment_subject}',
+            '{appointment_date}',
+            '{appointment_time}',
+            '{appointment_location}',
+            '{client_name}',
+            '{staff_name}',
+            '{company_name}',
+            '{company_phone}',
+            '{company_email}',
+            '{appointment_notes}',
+            '{presentation_block}',
+            '{crm_link}'
+        ];
+        
+        $included_fields = [];
+        foreach ($available_fields as $field) {
+            if (strpos($template->content, $field) !== false || strpos($template->subject, $field) !== false) {
+                $included_fields[] = $field;
+            }
+        }
+        
+        // If appointment_id provided, parse template with actual data for preview
         $preview_content = $template->content;
         $preview_subject = $template->subject;
         
@@ -2869,6 +2892,13 @@ startxref
                     $preview_subject = $this->parse_template($template->subject, $appointment, $recipient_type);
                 }
             }
+        } else {
+            // For preview without appointment, highlight fields with yellow background
+            foreach ($available_fields as $field) {
+                $field_name = trim($field, '{}');
+                $preview_content = str_replace($field, '<span style="background: #fff3cd; padding: 2px 5px; border-radius: 3px; font-weight: bold;">' . $field . '</span>', $preview_content);
+                $preview_subject = str_replace($field, '<span style="background: #fff3cd; padding: 2px 5px; border-radius: 3px; font-weight: bold;">' . $field . '</span>', $preview_subject);
+            }
         }
 
         echo json_encode([
@@ -2878,7 +2908,10 @@ startxref
                 'name' => $template->template_name,
                 'subject' => $preview_subject,
                 'content' => $preview_content,
-                'type' => $template->template_type
+                'original_subject' => $template->subject,
+                'original_content' => $template->content,
+                'type' => $template->template_type,
+                'included_fields' => $included_fields
             ]
         ]);
     }
@@ -3010,13 +3043,26 @@ startxref
         }
 
         $id = $this->input->post('id');
+        
+        // Get content from either direct input or from template_structure
+        $content = $this->input->post('content');
+        $template_structure = $this->input->post('template_structure');
+        
+        // If template_structure is provided, rebuild content from it
+        if ($template_structure) {
+            $structure = json_decode($template_structure, true);
+            if ($structure && isset($structure['html'])) {
+                $content = $structure['html'];
+            }
+        }
+        
         $data = [
             'template_name' => $this->input->post('template_name'),
             'template_type' => $this->input->post('template_type'),
             'reminder_stage' => $this->input->post('reminder_stage'),
             'recipient_type' => $this->input->post('recipient_type'),
             'subject' => $this->input->post('subject'),
-            'content' => $this->input->post('content'),
+            'content' => $content,
             'is_active' => $this->input->post('is_active') ? 1 : 0
         ];
 
