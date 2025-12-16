@@ -53,6 +53,11 @@ class Outlook_auth extends AdminController
                 $user_message .= 'Under "Supported account types", select "Accounts in any organizational directory and personal Microsoft accounts".';
             } elseif (stripos($error_desc, 'redirect_uri_mismatch') !== false) {
                 $user_message = 'Redirect URI Mismatch: The redirect URI in Azure Portal must exactly match: ' . $this->outlook_calendar_sync->get_redirect_uri();
+            } elseif (stripos($error_desc, 'Proof Key for Code Exchange') !== false || stripos($error_desc, 'PKCE') !== false) {
+                $user_message = 'PKCE Error: Your redirect URI is configured as "Single-page application" in Azure Portal, but this requires PKCE. ';
+                $user_message .= 'SOLUTION: Go to Azure Portal → App Registrations → Your App → Authentication → ';
+                $user_message .= 'Delete the SPA redirect URI and add it as "Web" type instead. ';
+                $user_message .= 'The redirect URI should be: ' . $this->outlook_calendar_sync->get_redirect_uri();
             }
             
             $this->_close_popup('error', $user_message);
