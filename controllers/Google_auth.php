@@ -115,14 +115,20 @@ composer dump-autoload</pre>';
         $error = $this->input->get('error');
         $staff_id = get_staff_user_id();
 
-        // Handle OAuth errors
+        // Handle OAuth errors - always redirect back
         if ($error) {
             $error_message = $this->input->get('error_description') ?: 'Authentication was cancelled or failed.';
-            $this->_close_popup_with_message('error', 'Google Calendar connection failed: ' . $error_message);
+            
+            $user_message = 'Google Calendar connection failed: ' . $error_message;
+            if (stripos($error_message, 'access_denied') !== false) {
+                $user_message = 'Google Calendar connection was cancelled. Please try again when ready.';
+            }
+            
+            $this->_close_popup_with_message('error', $user_message);
             return;
         }
 
-        // Handle missing authorization code
+        // Handle missing authorization code - always redirect back
         if (!$code) {
             $this->_close_popup_with_message('error', 'Missing authorization code. Please try connecting again.');
             return;
@@ -142,14 +148,17 @@ composer dump-autoload</pre>';
 
                     $this->_close_popup_with_message('success', 'Google Calendar connected successfully!');
                 } else {
+                    log_message('error', 'Google Calendar: Failed to save tokens');
                     $this->_close_popup_with_message('error', 'Failed to save Google Calendar credentials. Please try again.');
                 }
             } else {
-                $this->_close_popup_with_message('error', 'Failed to obtain access tokens from Google. Please try again.');
+                $this->_close_popup_with_message('error', 'Failed to obtain access tokens from Google. Please check your Google Cloud Console settings and try again.');
             }
         } catch (Exception $e) {
-            log_message('error', 'Google Calendar OAuth callback error: ' . $e->getMessage());
-            $this->_close_popup_with_message('error', 'An error occurred during Google Calendar connection: ' . $e->getMessage());
+            log_message('error', 'Google Calendar OAuth callback exception: ' . $e->getMessage());
+            
+            $error_msg = 'An error occurred during Google Calendar connection: ' . $e->getMessage();
+            $this->_close_popup_with_message('error', $error_msg);
         }
     }
 
@@ -309,80 +318,21 @@ composer dump-autoload</pre>';
     }
 
     /**
-     * Close popup window and send message to parent
+     * Redirect to appointments page with message
      * 
      * @param string $type - 'success' or 'error'
      * @param string $message - Message to display
      */
     private function _close_popup_with_message($type, $message)
     {
-        // Output HTML that sends postMessage to opener and closes the popup
-        $html = '<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Google Calendar Connection</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background: ' . ($type === 'success' ? '#4caf50' : '#f44336') . ';
-            color: white;
-        }
-        .message-container {
-            text-align: center;
-            padding: 20px;
-        }
-        .message-container h2 {
-            margin-bottom: 10px;
-        }
-        .message-container p {
-            font-size: 16px;
-        }
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid white;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
-</head>
-<body>
-    <div class="message-container">
-        <h2>' . ($type === 'success' ? '✓ Success!' : '✗ Error') . '</h2>
-        <p>' . htmlspecialchars($message) . '</p>
-        <div class="spinner"></div>
-        <p style="font-size: 14px; margin-top: 15px;">Closing window...</p>
-    </div>
-    <script>
-        // Send message to parent window
-        if (window.opener) {
-            window.opener.postMessage({
-                type: "' . ($type === 'success' ? 'google_calendar_auth_success' : 'google_calendar_auth_error') . '",
-                message: "' . addslashes($message) . '"
-            }, window.location.origin);
+        // Store message in session flash data
+        if ($type === 'success') {
+            set_alert('success', $message);
+        } else {
+            set_alert('danger', $message);
         }
         
-        // Close popup after a short delay
-        setTimeout(function() {
-            window.close();
-        }, ' . ($type === 'success' ? '1500' : '3000') . ');
-    </script>
-</body>
-</html>';
-
-        echo $html;
-        exit;
+        // Redirect back to appointments page
+        redirect(admin_url('ella_contractors/appointments'));
     }
 }

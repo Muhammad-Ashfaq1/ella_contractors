@@ -1182,8 +1182,301 @@ function resetAppointmentModal() {
     // Reset reminder checkboxes to default (checked)
     $('#send_reminder').prop('checked', true);
     $('#reminder_48h').prop('checked', true);
+    $('#reminder_same_day').prop('checked', false);
+    $('#staff_reminder_same_day').prop('checked', false);
     $('#reminder_channel_both').prop('checked', true);
 }
+
+// Template Preview/Edit Functionality - User-Friendly Version
+var currentTemplateData = null;
+
+$(document).on('click', '.reminder-template-preview', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    var $icon = $(this);
+    var reminderStage = $icon.data('reminder-stage');
+    var templateType = $icon.data('template-type');
+    var recipientType = $icon.data('recipient-type');
+    var appointmentId = $('#appointment_id').val() || null;
+    
+    // Show loading
+    $('#reminderTemplateModal').modal('show');
+    $('#template_preview_container').html('<p class="text-center text-muted"><i class="fa fa-spinner fa-spin"></i> Loading template...</p>');
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_reminder_template_preview',
+        type: 'POST',
+        data: {
+            reminder_stage: reminderStage,
+            template_type: templateType,
+            recipient_type: recipientType,
+            appointment_id: appointmentId,
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success && response.template) {
+                var template = response.template;
+                currentTemplateData = {
+                    original_content: template.original_content || template.content,
+                    original_subject: template.original_subject || template.subject,
+                    included_fields: template.included_fields || []
+                };
+                
+                $('#template_id').val(template.id);
+                $('#template_name').val(template.name);
+                $('#template_subject').val(template.original_subject || template.subject || '');
+                $('#template_reminder_stage').val(reminderStage);
+                $('#template_type').val(templateType);
+                $('#template_recipient_type').val(recipientType);
+                
+                // Update reminder type display
+                var reminderTypeText = '';
+                if (reminderStage === 'client_instant') reminderTypeText = ' - Client Instant Confirmation';
+                else if (reminderStage === 'client_48h') reminderTypeText = ' - Client 48-Hour Reminder';
+                else if (reminderStage === 'client_same_day') reminderTypeText = ' - Client Same Day Reminder';
+                else if (reminderStage === 'staff_48h') reminderTypeText = ' - Staff 48-Hour Reminder';
+                else if (reminderStage === 'staff_same_day') reminderTypeText = ' - Staff Same Day Reminder';
+                $('#template_reminder_type_display').text(reminderTypeText);
+                
+                // Show/hide staff-only fields
+                if (recipientType === 'staff') {
+                    $('#field_presentation_block_wrapper').show();
+                    $('#field_crm_link_wrapper').show();
+                } else {
+                    $('#field_presentation_block_wrapper').hide();
+                    $('#field_crm_link_wrapper').hide();
+                }
+                
+                // Set checkboxes based on included fields
+                $('input[data-field]').each(function() {
+                    var field = $(this).data('field');
+                    $(this).prop('checked', currentTemplateData.included_fields.indexOf(field) !== -1);
+                });
+                
+                // Show subject field for email
+                if (templateType === 'email') {
+                    $('#template_subject_group').show();
+                } else {
+                    $('#template_subject_group').hide();
+                }
+                
+                // Build and display preview
+                rebuildTemplatePreview();
+            } else {
+                alert_float('danger', response.message || 'Failed to load template');
+                $('#reminderTemplateModal').modal('hide');
+            }
+        },
+        error: function() {
+            alert_float('danger', 'Error loading template');
+            $('#reminderTemplateModal').modal('hide');
+        }
+    });
+});
+
+// Rebuild template preview based on selected fields - with real-time updates
+function rebuildTemplatePreview() {
+    if (!currentTemplateData) return;
+    
+    var selectedFields = [];
+    $('input[data-field]:checked').each(function() {
+        selectedFields.push($(this).data('field'));
+    });
+    
+    // Get current content from preview or use original
+    var html = $('#template_content').val() || currentTemplateData.original_content;
+    
+    // If preview has been edited, use that as base
+    var previewHtml = $('#template_preview_container').html();
+    if (previewHtml && previewHtml !== '<p class="text-center text-muted"><i class="fa fa-spinner fa-spin"></i> Loading template...</p>') {
+        // Extract actual HTML from preview (remove highlighting)
+        var allFields = ['{appointment_subject}', '{appointment_date}', '{appointment_time}', '{appointment_location}', 
+                         '{client_name}', '{staff_name}', '{company_name}', '{company_phone}', '{company_email}', 
+                         '{appointment_notes}', '{presentation_block}', '{crm_link}'];
+        
+        allFields.forEach(function(field) {
+            var regex = new RegExp('<span[^>]*>' + field.replace(/[{}]/g, '\\$&') + '<\\/span>', 'gi');
+            previewHtml = previewHtml.replace(regex, field);
+        });
+        html = previewHtml;
+    }
+    
+    // Remove fields that are not selected - more intelligent removal
+    var allFields = ['{appointment_subject}', '{appointment_date}', '{appointment_time}', '{appointment_location}', 
+                     '{client_name}', '{staff_name}', '{company_name}', '{company_phone}', '{company_email}', 
+                     '{appointment_notes}', '{presentation_block}', '{crm_link}'];
+    
+    allFields.forEach(function(field) {
+        if (selectedFields.indexOf(field) === -1) {
+            // Remove this field from the template with context awareness
+            var fieldEscaped = field.replace(/[{}]/g, '\\$&');
+            
+            // Pattern 1: Remove field with surrounding whitespace and common separators
+            html = html.replace(new RegExp('\\s*' + fieldEscaped + '\\s*', 'g'), '');
+            
+            // Pattern 2: Remove field in common HTML patterns like <p>{field}</p>, <div>{field}</div>, etc.
+            html = html.replace(new RegExp('<[^>]+>\\s*' + fieldEscaped + '\\s*<\\/[^>]+>', 'gi'), '');
+            
+            // Pattern 3: Remove field with colons, dashes, etc. (e.g., "Date: {appointment_date}")
+            html = html.replace(new RegExp('[^>]*:?\\s*' + fieldEscaped + '\\s*[^<]*', 'gi'), '');
+            
+            // Pattern 4: Remove field standalone
+            html = html.replace(new RegExp(fieldEscaped, 'g'), '');
+        }
+    });
+    
+    // Clean up empty HTML tags and excessive whitespace
+    html = html.replace(/<p>\s*<\/p>/gi, '');
+    html = html.replace(/<div>\s*<\/div>/gi, '');
+    html = html.replace(/<td>\s*<\/td>/gi, '');
+    html = html.replace(/<tr>\s*<\/tr>/gi, '');
+    html = html.replace(/\s+/g, ' ');
+    html = html.replace(/>\s+</g, '><');
+    
+    // Highlight remaining fields with yellow background for preview
+    selectedFields.forEach(function(field) {
+        var fieldEscaped = field.replace(/[{}]/g, '\\$&');
+        var highlighted = '<span style="background: #fff3cd; padding: 2px 5px; border-radius: 3px; font-weight: bold; display: inline-block;">' + field + '</span>';
+        html = html.replace(new RegExp(fieldEscaped, 'g'), highlighted);
+    });
+    
+    // Update preview container with editable content
+    $('#template_preview_container').html(html);
+    
+    // Store the cleaned HTML (without highlighting) in hidden field for saving
+    var cleanHtml = html;
+    selectedFields.forEach(function(field) {
+        var fieldEscaped = field.replace(/[{}]/g, '\\$&');
+        var regex = new RegExp('<span[^>]*>' + fieldEscaped + '<\\/span>', 'gi');
+        cleanHtml = cleanHtml.replace(regex, field);
+    });
+    $('#template_content').val(cleanHtml);
+    
+    // Update currentTemplateData with the modified content
+    currentTemplateData.modified_content = cleanHtml;
+}
+
+// Handle field checkbox changes - with real-time preview update
+$(document).on('change', 'input[data-field]', function() {
+    // Immediately update preview
+    rebuildTemplatePreview();
+    
+    // Also update the stored content to reflect field changes
+    var cleanHtml = $('#template_preview_container').html();
+    var allFields = ['{appointment_subject}', '{appointment_date}', '{appointment_time}', '{appointment_location}', 
+                     '{client_name}', '{staff_name}', '{company_name}', '{company_phone}', '{company_email}', 
+                     '{appointment_notes}', '{presentation_block}', '{crm_link}'];
+    
+    // Remove highlighting
+    allFields.forEach(function(field) {
+        var regex = new RegExp('<span[^>]*>' + field.replace(/[{}]/g, '\\$&') + '<\\/span>', 'gi');
+        cleanHtml = cleanHtml.replace(regex, field);
+    });
+    
+    // Update stored content
+    $('#template_content').val(cleanHtml);
+    if (currentTemplateData) {
+        currentTemplateData.modified_content = cleanHtml;
+    }
+});
+
+// Handle preview content editing - with real-time updates
+var previewEditTimeout = null;
+$(document).on('input paste', '#template_preview_container', function() {
+    // Debounce to avoid too many updates
+    clearTimeout(previewEditTimeout);
+    
+    previewEditTimeout = setTimeout(function() {
+        // Extract HTML from contenteditable div
+        var html = $('#template_preview_container').html();
+        
+        // Remove highlighting spans and restore original field placeholders
+        var allFields = ['{appointment_subject}', '{appointment_date}', '{appointment_time}', '{appointment_location}', 
+                         '{client_name}', '{staff_name}', '{company_name}', '{company_phone}', '{company_email}', 
+                         '{appointment_notes}', '{presentation_block}', '{crm_link}'];
+        
+        var cleanHtml = html;
+        allFields.forEach(function(field) {
+            var regex = new RegExp('<span[^>]*>' + field.replace(/[{}]/g, '\\$&') + '<\\/span>', 'gi');
+            cleanHtml = cleanHtml.replace(regex, field);
+        });
+        
+        // Update hidden content field immediately
+        $('#template_content').val(cleanHtml);
+        
+        // Update currentTemplateData
+        if (currentTemplateData) {
+            currentTemplateData.modified_content = cleanHtml;
+        }
+        
+        // Re-apply highlighting for selected fields
+        var selectedFields = [];
+        $('input[data-field]:checked').each(function() {
+            selectedFields.push($(this).data('field'));
+        });
+        
+        var highlightedHtml = cleanHtml;
+        selectedFields.forEach(function(field) {
+            var fieldEscaped = field.replace(/[{}]/g, '\\$&');
+            var highlighted = '<span style="background: #fff3cd; padding: 2px 5px; border-radius: 3px; font-weight: bold; display: inline-block;">' + field + '</span>';
+            highlightedHtml = highlightedHtml.replace(new RegExp(fieldEscaped, 'g'), highlighted);
+        });
+        
+        // Update preview with highlighting (preserve cursor position if possible)
+        var $container = $('#template_preview_container');
+        var scrollTop = $container.scrollTop();
+        $container.html(highlightedHtml);
+        $container.scrollTop(scrollTop);
+    }, 300); // 300ms debounce
+});
+
+// Save Template
+$(document).on('click', '#saveTemplateBtn', function() {
+    // Get HTML from editable preview
+    var previewHtml = $('#template_preview_container').html();
+    
+    // Remove highlighting and restore field placeholders
+    var allFields = ['{appointment_subject}', '{appointment_date}', '{appointment_time}', '{appointment_location}', 
+                     '{client_name}', '{staff_name}', '{company_name}', '{company_phone}', '{company_email}', 
+                     '{appointment_notes}', '{presentation_block}', '{crm_link}'];
+    
+    allFields.forEach(function(field) {
+        var regex = new RegExp('<span[^>]*>' + field.replace(/[{}]/g, '\\$&') + '<\\/span>', 'gi');
+        previewHtml = previewHtml.replace(regex, field);
+    });
+    
+    var formData = {
+        id: $('#template_id').val(),
+        template_name: $('#template_name').val(),
+        template_type: $('#template_type').val(),
+        reminder_stage: $('#template_reminder_stage').val(),
+        recipient_type: $('#template_recipient_type').val(),
+        subject: $('#template_subject').val(),
+        content: previewHtml,
+        is_active: $('#template_is_active').is(':checked') ? 1 : 0,
+        [csrf_token_name]: csrf_hash
+    };
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/save_reminder_template',
+        type: 'POST',
+        data: formData,
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                alert_float('success', response.message);
+                $('#reminderTemplateModal').modal('hide');
+            } else {
+                alert_float('danger', response.message || 'Failed to save template');
+            }
+        },
+        error: function() {
+            alert_float('danger', 'Error saving template');
+        }
+    });
+});
 
 function deleteAppointment(appointmentId) {
     if (confirm('Are you sure you want to delete this appointment?')) {

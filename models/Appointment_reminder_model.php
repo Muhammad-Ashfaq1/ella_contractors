@@ -95,7 +95,9 @@ class Appointment_reminder_model extends App_Model
         $flags = [
             'client_instant_remind' => !empty($appointment_data['send_reminder']) ? 1 : 0,
             'client_48_hours'       => !empty($appointment_data['reminder_48h']) ? 1 : 0,
+            'client_same_day'        => !empty($appointment_data['reminder_same_day']) ? 1 : 0,
             'staff_48_hours'        => !empty($appointment_data['staff_reminder_48h']) ? 1 : 0,
+            'staff_same_day'         => !empty($appointment_data['staff_reminder_same_day']) ? 1 : 0,
             'client_sms_reminder'   => isset($appointment_data['reminder_channel']) && in_array($appointment_data['reminder_channel'], ['sms', 'both'], true) ? 1 : 0,
             'rel_type'              => 'appointment',
             'rel_id'                => $appointment_id,
@@ -114,8 +116,12 @@ class Appointment_reminder_model extends App_Model
         $flags['client_instant_sent']      = 0;
         $flags['client_48_hours_sent']     = 0;
         $flags['staff_48_hours_sent']      = 0;
+        $flags['client_same_day_sent']     = 0;
+        $flags['staff_same_day_sent']      = 0;
         $flags['client_sms_48_hours_sent'] = 0;
         $flags['staff_sms_48_hours_sent']  = 0;
+        $flags['client_sms_same_day_sent'] = 0;
+        $flags['staff_sms_same_day_sent']  = 0;
 
         return $this->create($flags);
     }
@@ -166,9 +172,15 @@ class Appointment_reminder_model extends App_Model
             case 'client_48_hours':
                 $data['client_48_hours_sent'] = 1;
                 break;
+            case 'client_same_day':
+                $data['client_same_day_sent'] = 1;
+                break;
             case 'staff_48h':
             case 'staff_48_hours':
                 $data['staff_48_hours_sent'] = 1;
+                break;
+            case 'staff_same_day':
+                $data['staff_same_day_sent'] = 1;
                 break;
             default:
                 // leave only generic flags
@@ -203,9 +215,15 @@ class Appointment_reminder_model extends App_Model
             case 'client_48_hours':
                 $data['client_sms_48_hours_sent'] = 1;
                 break;
+            case 'client_same_day':
+                $data['client_sms_same_day_sent'] = 1;
+                break;
             case 'staff_48h':
             case 'staff_48_hours':
                 $data['staff_sms_48_hours_sent'] = 1;
+                break;
+            case 'staff_same_day':
+                $data['staff_sms_same_day_sent'] = 1;
                 break;
             default:
                 break;

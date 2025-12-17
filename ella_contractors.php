@@ -582,6 +582,201 @@ function ella_contractors_activate_module() {
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
     }
 
+    // Create ella_reminder_templates table for editable email and SMS templates
+    if (!$CI->db->table_exists(db_prefix() . 'ella_reminder_templates')) {
+        // Load email templates helper before using template functions
+        $email_templates_helper = module_dir_path('ella_contractors', 'helpers/ella_email_templates_helper.php');
+        if (file_exists($email_templates_helper)) {
+            require_once($email_templates_helper);
+        }
+        
+        // Helper function to get client template with fallback
+        if (!function_exists('ella_get_client_reminder_template')) {
+            function ella_get_client_reminder_template() {
+                return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family: Arial; padding: 20px;"><h2>Appointment Confirmation</h2><p>Dear {client_name},</p><p>This is a confirmation of your upcoming appointment.</p><p><strong>Appointment:</strong> {appointment_subject}<br><strong>Date:</strong> {appointment_date}<br><strong>Time:</strong> {appointment_time}<br><strong>Location:</strong> {appointment_location}</p><p>{appointment_notes}</p><p>{presentation_block}</p><p>Best regards,<br>{company_name}</p></body></html>';
+            }
+        }
+        
+        // Helper function to get staff template with fallback
+        if (!function_exists('ella_get_staff_reminder_template')) {
+            function ella_get_staff_reminder_template() {
+                return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family: Arial; padding: 20px;"><h2>Appointment Reminder</h2><p>Hi {staff_name},</p><p>This is a reminder about your upcoming appointment.</p><p><strong>Appointment:</strong> {appointment_subject}<br><strong>Client:</strong> {client_name}<br><strong>Date:</strong> {appointment_date}<br><strong>Time:</strong> {appointment_time}<br><strong>Location:</strong> {appointment_location}</p><p><strong>Notes:</strong><br>{appointment_notes}</p><p>{presentation_block}</p><p><a href="{crm_link}">View in CRM</a></p><p>Best regards,<br>{company_name} CRM</p></body></html>';
+            }
+        }
+        
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_reminder_templates` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `template_name` varchar(255) NOT NULL,
+            `template_type` ENUM(\'email\', \'sms\') NOT NULL,
+            `reminder_stage` ENUM(\'client_instant\', \'client_48h\', \'client_same_day\', \'staff_48h\', \'staff_same_day\') NOT NULL,
+            `recipient_type` ENUM(\'client\', \'staff\') NOT NULL,
+            `subject` varchar(500) DEFAULT NULL,
+            `content` text NOT NULL,
+            `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+            `created_by` int(11) NOT NULL,
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `idx_template_type` (`template_type`),
+            KEY `idx_reminder_stage` (`reminder_stage`),
+            KEY `idx_recipient_type` (`recipient_type`),
+            KEY `idx_is_active` (`is_active`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+        
+        // Insert default templates
+        $default_templates = [
+            // Client Email Templates
+            [
+                'template_name' => 'Client Instant Email',
+                'template_type' => 'email',
+                'reminder_stage' => 'client_instant',
+                'recipient_type' => 'client',
+                'subject' => 'Appointment Confirmation: {appointment_subject}',
+                'content' => ella_get_client_reminder_template(),
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            [
+                'template_name' => 'Client 48h Email',
+                'template_type' => 'email',
+                'reminder_stage' => 'client_48h',
+                'recipient_type' => 'client',
+                'subject' => 'Appointment Reminder: {appointment_subject}',
+                'content' => ella_get_client_reminder_template(),
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            [
+                'template_name' => 'Client Same Day Email',
+                'template_type' => 'email',
+                'reminder_stage' => 'client_same_day',
+                'recipient_type' => 'client',
+                'subject' => 'Reminder: Your Appointment Today - {appointment_subject}',
+                'content' => ella_get_client_reminder_template(),
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            // Staff Email Templates
+            [
+                'template_name' => 'Staff 48h Email',
+                'template_type' => 'email',
+                'reminder_stage' => 'staff_48h',
+                'recipient_type' => 'staff',
+                'subject' => 'Your Appointment Reminder: {appointment_subject}',
+                'content' => ella_get_staff_reminder_template(),
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            [
+                'template_name' => 'Staff Same Day Email',
+                'template_type' => 'email',
+                'reminder_stage' => 'staff_same_day',
+                'recipient_type' => 'staff',
+                'subject' => 'Reminder: Appointment Today - {appointment_subject}',
+                'content' => ella_get_staff_reminder_template(),
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            // Client SMS Templates
+            [
+                'template_name' => 'Client Instant SMS',
+                'template_type' => 'sms',
+                'reminder_stage' => 'client_instant',
+                'recipient_type' => 'client',
+                'subject' => NULL,
+                'content' => 'Appointment Confirmed: {appointment_subject} on {appointment_date} at {appointment_time}. Location: {appointment_location}',
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            [
+                'template_name' => 'Client 48h SMS',
+                'template_type' => 'sms',
+                'reminder_stage' => 'client_48h',
+                'recipient_type' => 'client',
+                'subject' => NULL,
+                'content' => 'Reminder: {appointment_subject} on {appointment_date} at {appointment_time}. Location: {appointment_location}',
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            [
+                'template_name' => 'Client Same Day SMS',
+                'template_type' => 'sms',
+                'reminder_stage' => 'client_same_day',
+                'recipient_type' => 'client',
+                'subject' => NULL,
+                'content' => 'Reminder: Your appointment {appointment_subject} is today at {appointment_time}. Location: {appointment_location}',
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            // Staff SMS Templates
+            [
+                'template_name' => 'Staff 48h SMS',
+                'template_type' => 'sms',
+                'reminder_stage' => 'staff_48h',
+                'recipient_type' => 'staff',
+                'subject' => NULL,
+                'content' => 'Reminder: {appointment_subject} with {client_name} on {appointment_date} at {appointment_time}',
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            [
+                'template_name' => 'Staff Same Day SMS',
+                'template_type' => 'sms',
+                'reminder_stage' => 'staff_same_day',
+                'recipient_type' => 'staff',
+                'subject' => NULL,
+                'content' => 'Reminder: Appointment {appointment_subject} with {client_name} is today at {appointment_time}. Location: {appointment_location}',
+                'is_active' => 1,
+                'created_by' => 0
+            ]
+        ];
+        
+        foreach ($default_templates as $template) {
+            $CI->db->insert(db_prefix() . 'ella_reminder_templates', $template);
+        }
+    }
+    
+    // Add same_day reminder columns to appointments table
+    if (!$CI->db->field_exists('reminder_same_day', db_prefix() . 'appointly_appointments')) {
+        try {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `reminder_same_day` TINYINT(1) DEFAULT 0 AFTER `reminder_48h`');
+        } catch (Exception $e) {
+            // Column might already exist
+        }
+    }
+    
+    if (!$CI->db->field_exists('staff_reminder_same_day', db_prefix() . 'appointly_appointments')) {
+        try {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `staff_reminder_same_day` TINYINT(1) DEFAULT 0 AFTER `staff_reminder_48h`');
+        } catch (Exception $e) {
+            // Column might already exist
+        }
+    }
+    
+    // Add same_day reminder tracking to appointment_reminder table
+    if ($CI->db->table_exists(db_prefix() . 'appointment_reminder')) {
+        $table = db_prefix() . 'appointment_reminder';
+        $fieldsToAdd = [
+            'client_same_day' => 'ALTER TABLE `' . $table . '` ADD COLUMN `client_same_day` TINYINT(1) NOT NULL DEFAULT 0 AFTER `client_48_hours`',
+            'staff_same_day' => 'ALTER TABLE `' . $table . '` ADD COLUMN `staff_same_day` TINYINT(1) NOT NULL DEFAULT 0 AFTER `staff_48_hours`',
+            'client_same_day_sent' => 'ALTER TABLE `' . $table . '` ADD COLUMN `client_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `client_48_hours_sent`',
+            'staff_same_day_sent' => 'ALTER TABLE `' . $table . '` ADD COLUMN `staff_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `staff_48_hours_sent`',
+            'client_sms_same_day_sent' => 'ALTER TABLE `' . $table . '` ADD COLUMN `client_sms_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `client_same_day_sent`',
+            'staff_sms_same_day_sent' => 'ALTER TABLE `' . $table . '` ADD COLUMN `staff_sms_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `staff_same_day_sent`',
+        ];
+        
+        foreach ($fieldsToAdd as $field => $sql) {
+            if (!$CI->db->field_exists($field, $table)) {
+                try {
+                    $CI->db->query($sql);
+                } catch (Exception $e) {
+                    // Field might already exist
+                    log_message('error', 'EllaContractors: Failed to add column ' . $field . ' - ' . $e->getMessage());
+                }
+            }
+        }
+    }
+
     // Create appointment_reminder table to track reminder statuses
     if (!$CI->db->table_exists(db_prefix() . 'appointment_reminder')) {
         $CI->db->query('CREATE TABLE `' . db_prefix() . 'appointment_reminder` (
@@ -596,8 +791,14 @@ function ella_contractors_activate_module() {
             `client_instant_sent` TINYINT(1) NOT NULL DEFAULT 0,
             `client_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
             `staff_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
+            `client_same_day` TINYINT(1) NOT NULL DEFAULT 0,
+            `staff_same_day` TINYINT(1) NOT NULL DEFAULT 0,
+            `client_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0,
+            `staff_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0,
             `client_sms_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
             `staff_sms_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
+            `client_sms_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0,
+            `staff_sms_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0,
             `last_email_sent_at` datetime DEFAULT NULL,
             `last_sms_sent_at` datetime DEFAULT NULL,
             `rel_type` varchar(50) DEFAULT NULL,
