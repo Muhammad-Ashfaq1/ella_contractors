@@ -457,8 +457,8 @@
                 tooltip.addClass('tutorial-arrow-top'); // Arrow at top pointing up to button
                 
                 var positions;
-                if (viewportWidth > 1920) {
-                    // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
+                if (viewportWidth >= 1920) {
+                    // For screens 1920px and above, use dynamic positioning relative to target
                     var target = $(step.target);
                     if (target.length > 0) {
                         var targetOffset = target.offset();
@@ -490,24 +490,23 @@
                         
                         positions = { top: topPos + 'px', left: leftPos + 'px' };
                     } else {
-                        positions = { top: '180px', left: '180px' };
+                        // Fallback: use fixed position if target not found
+                        positions = { top: '140px', left: '110px' };
                     }
-                } else if (viewportWidth >= 1920) {
-                    positions = { top: '180px', left: '180px' };
                 } else if (viewportWidth >= 1800) {
-                    positions = { top: '180px', left: '160px' };
+                    positions = { top: '140px', left: '130px' };
                 } else if (viewportWidth >= 1600) {
-                    positions = { top: '180px', left: '140px' };
+                    positions = { top: '140px', left: '150px' };
                 } else if (viewportWidth >= 1440) {
-                    positions = { top: '180px', left: '120px' };
+                    positions = { top: '140px', left: '170px' };
                 } else if (viewportWidth >= 1370) {
-                    positions = { top: '180px', left: '100px' };
+                    positions = { top: '140px', left: '190px' };
                 } else if (viewportWidth >= 1280) {
-                    positions = { top: '180px', left: '80px' };
+                    positions = { top: '140px', left: '210px' };
                 } else if (viewportWidth >= 1024) {
-                    positions = { top: '180px', left: '60px' };
+                    positions = { top: '140px', left: '230px' };
                 } else if (viewportWidth >= 768) {
-                    positions = { top: '220px', left: '40px' };
+                    positions = { top: '220px', left: '250px' };
                 } else {
                     positions = { top: '200px', left: '50%', transform: 'translateX(-50%)' };
                 }
@@ -535,7 +534,8 @@
                 tooltip.addClass('tutorial-arrow-top');
                 
                 var positions;
-                if (viewportWidth > 1920) {
+                if (viewportWidth >= 1920) {
+                    // For screens 1920px and above, use dynamic positioning relative to target
                     var target = $(step.target);
                     if (target.length > 0) {
                         var targetOffset = target.offset();
@@ -565,24 +565,23 @@
                         
                         positions = { top: topPos + 'px', left: leftPos + 'px' };
                     } else {
-                        positions = { top: '200px', left: '200px' };
+                        // Fallback: use fixed position if target not found
+                        positions = { top: '140px', left: '270px' };
                     }
-                } else if (viewportWidth >= 1920) {
-                    positions = { top: '200px', left: '200px' };
                 } else if (viewportWidth >= 1800) {
-                    positions = { top: '200px', left: '180px' };
+                    positions = { top: '140px', left: '290px' };
                 } else if (viewportWidth >= 1600) {
-                    positions = { top: '200px', left: '160px' };
+                    positions = { top: '140px', left: '310px' };
                 } else if (viewportWidth >= 1440) {
-                    positions = { top: '200px', left: '140px' };
+                    positions = { top: '140px', left: '330px' };
                 } else if (viewportWidth >= 1380) {
-                    positions = { top: '150px', left: '80px' };
+                    positions = { top: '140px', left: '350px' };
                 } else if (viewportWidth >= 1280) {
-                    positions = { top: '130px', left: '60px' };
+                    positions = { top: '140px', left: '370px' };
                 } else if (viewportWidth >= 1024) {
-                    positions = { top: '220px', left: '40px' };
+                    positions = { top: '140px', left: '390px' };
                 } else if (viewportWidth >= 768) {
-                    positions = { top: '240px', left: '20px' };
+                    positions = { top: '140px', left: '410px' };
                 } else {
                     positions = { top: '200px', left: '50%', transform: 'translateX(-50%)' };
                 }
@@ -610,7 +609,8 @@
                 tooltip.addClass('tutorial-arrow-top');
                 
                 var positions;
-                if (viewportWidth > 1920) {
+                if (viewportWidth >= 1920) {
+                    // For screens 1920px and above, use dynamic positioning relative to target
                     var target = $(step.target);
                     if (target.length > 0) {
                         var targetOffset = target.offset();
@@ -640,28 +640,26 @@
                         
                         positions = { top: topPos + 'px', left: leftPos + 'px' };
                     } else {
-                        positions = { top: '200px', left: '240px' };
+                        // Fallback: use fixed position if target not found
+                        positions = { top: '140px', left: '640px' };
                     }
-                } else if (viewportWidth >= 1920) {
-                    positions = { top: '200px', left: '240px' };
                 } else if (viewportWidth >= 1800) {
-                    positions = { top: '200px', left: '220px' };
+                    positions = { top: '140px', left: '660px' };
                 } else if (viewportWidth >= 1600) {
-                    positions = { top: '200px', left: '180px' };
+                    positions = { top: '140px', left: '680px' };
                 } else if (viewportWidth >= 1440) {
-                    positions = { top: '200px', left: '140px' };
+                    positions = { top: '140px', left: '700px' };
                 } else if (viewportWidth >= 1370) {
-                    positions = { top: '200px', left: '100px' };
+                    positions = { top: '140px', left: '720px' };
                 } else if (viewportWidth >= 1280) {
-                    positions = { top: '200px', left: '80px' };
+                    positions = { top: '140px', left: '740px' };
                 } else if (viewportWidth >= 1024) {
-                    positions = { top: '220px', left: '60px' };
+                    positions = { top: '140px', left: '760px' };
                 } else if (viewportWidth >= 768) {
-                    positions = { top: '240px', left: '40px' };
+                    positions = { top: '140px', left: '780px' };
                 } else {
-                    positions = { top: '200px', left: '50%', transform: 'translateX(-50%)' };
+                    positions = { top: '140px', left: '50%', transform: 'translateX(-50%)' };
                 }
-                
                 var cssProps = {
                     position: 'fixed',
                     top: positions.top,
@@ -682,10 +680,11 @@
 
             // Custom positioning for 'service_items_table' step
             if (step.id === 'service_items_table') {
-                tooltip.addClass('tutorial-arrow-bottom');
+                tooltip.addClass('tutorial-arrow-top');
                 
                 var positions;
-                if (viewportWidth > 1920) {
+                if (viewportWidth >= 1920) {
+                    // For screens 1920px and above, use dynamic positioning relative to target
                     var target = $(step.target);
                     if (target.length > 0) {
                         var targetOffset = target.offset();
@@ -697,7 +696,8 @@
                         var viewportTop = targetOffset.top - scrollTop;
                         var viewportLeft = targetOffset.left - $(window).scrollLeft();
                         
-                        var topPos = viewportTop - tooltipHeight - spacing;
+                        // Position below target (arrow-top points up)
+                        var topPos = viewportTop + targetHeight + spacing;
                         var leftPos = viewportLeft + (targetWidth / 2) - (tooltipWidth / 2);
                         
                         if (leftPos < 10) {
@@ -706,37 +706,35 @@
                             leftPos = viewportWidth - tooltipWidth - 10;
                         }
                         
-                        if (topPos < 10) {
-                            topPos = viewportTop + targetHeight + spacing;
-                            if (topPos + tooltipHeight > viewportHeight - 10) {
-                                topPos = viewportHeight - tooltipHeight - 10;
+                        if (topPos + tooltipHeight > viewportHeight - 10) {
+                            topPos = viewportTop - tooltipHeight - spacing;
+                            if (topPos < 10) {
+                                topPos = 10;
                             }
                         }
                         
                         positions = { top: topPos + 'px', left: leftPos + 'px' };
                     } else {
-                        positions = { top: '150px', left: '400px' };
+                        // Fallback: use percentage if target not found
+                        positions = { top: '30%', left: '40%' };
                     }
-                } else if (viewportWidth >= 1920) {
-                    positions = { top: '150px', left: '400px' };
                 } else if (viewportWidth >= 1800) {
-                    positions = { top: '150px', left: '380px' };
+                    positions = { top: '33%', left: '40%' };
                 } else if (viewportWidth >= 1600) {
-                    positions = { top: '150px', left: '360px' };
+                    positions = { top: '36%', left: '40%' };
                 } else if (viewportWidth >= 1440) {
-                    positions = { top: '150px', left: '340px' };
+                    positions = { top: '39%', left: '40%' };
                 } else if (viewportWidth >= 1370) {
-                    positions = { top: '150px', left: '320px' };
+                    positions = { top: '42%', left: '40%' };
                 } else if (viewportWidth >= 1280) {
-                    positions = { top: '150px', left: '300px' };
+                    positions = { top: '45%', left: '40%' };
                 } else if (viewportWidth >= 1024) {
-                    positions = { top: '170px', left: '280px' };
+                    positions = { top: '48%', left: '40%' };
                 } else if (viewportWidth >= 768) {
-                    positions = { top: '190px', left: '260px' };
+                    positions = { top: '51%', left: '40%' };
                 } else {
-                    positions = { top: '150px', left: '50%', transform: 'translateX(-50%)' };
+                    positions = { top: '54%', left: '40%' };
                 }
-                
                 var cssProps = {
                     position: 'fixed',
                     top: positions.top,
@@ -761,6 +759,7 @@
                 
                 var positions;
                 if (viewportWidth > 1920) {
+                    // For screens above 1920px, use dynamic positioning relative to target
                     var target = $(step.target);
                     if (target.length > 0) {
                         var targetOffset = target.offset();
@@ -791,24 +790,33 @@
                         
                         positions = { top: topPos + 'px', left: leftPos + 'px' };
                     } else {
-                        positions = { top: '300px', left: '600px' };
+                        // Fallback: use 250px if target not found (same as 1920px)
+                        positions = { top: '200px', left: '360px' };
                     }
                 } else if (viewportWidth >= 1920) {
-                    positions = { top: '300px', left: '600px' };
+                    // Exactly 1920px: use 250px as specified
+                    positions = { top: '200px', left: '360px' };
                 } else if (viewportWidth >= 1800) {
-                    positions = { top: '300px', left: '580px' };
+                    // Proportional: (1800/1920) * 250 = 234px ≈ 230px
+                    positions = { top: '200px', left: '340px' };
                 } else if (viewportWidth >= 1600) {
-                    positions = { top: '300px', left: '560px' };
+                    // Proportional: (1600/1920) * 250 = 208px ≈ 210px
+                    positions = { top: '200px', left: '340px' };
                 } else if (viewportWidth >= 1440) {
-                    positions = { top: '300px', left: '540px' };
+                    // Proportional: (1440/1920) * 250 = 187px ≈ 190px
+                    positions = { top: '200px', left: '340px' };
                 } else if (viewportWidth >= 1370) {
-                    positions = { top: '300px', left: '520px' };
+                    // Proportional: (1370/1920) * 250 = 178px ≈ 180px
+                    positions = { top: '200px', left: '340px' };
                 } else if (viewportWidth >= 1280) {
-                    positions = { top: '300px', left: '500px' };
+                    // Proportional: (1280/1920) * 250 = 166px ≈ 170px
+                    positions = { top: '200px', left: '340px' };
                 } else if (viewportWidth >= 1024) {
-                    positions = { top: '320px', left: '480px' };
+                    // Proportional: (1024/1920) * 250 = 133px ≈ 130px
+                    positions = { top: '200px', left: '340px' };
                 } else if (viewportWidth >= 768) {
-                    positions = { top: '340px', left: '460px' };
+                    // Proportional: (768/1920) * 250 = 100px
+                    positions = { top: '200px', left: '340px' };
                 } else {
                     positions = { top: '300px', left: '50%', transform: 'translateX(-50%)' };
                 }
@@ -1145,6 +1153,17 @@
             localStorage.removeItem(this.config.storageKeyDismissed);
             this.config.shouldShow = true;
             this.state.currentStepIndex = 0;
+            
+            // Ensure steps are loaded before starting
+            if (this.config.steps.length === 0) {
+                this.loadTutorialSteps();
+            }
+            
+            // Clean up any existing tutorial state
+            this.cleanup();
+            this.state.isActive = false;
+            
+            // Start the tutorial
             this.start();
         }
     };
