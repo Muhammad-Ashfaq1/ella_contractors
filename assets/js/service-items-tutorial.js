@@ -386,11 +386,44 @@
             this.state.tooltip = $(tooltipHtml);
             $('body').append(this.state.tooltip);
 
-            // Position tooltip
-            this.positionTooltip(step);
+            // Use requestAnimationFrame to ensure tooltip is rendered before positioning
+            var self = this;
+            requestAnimationFrame(function() {
+                // Double RAF to ensure layout is complete
+                requestAnimationFrame(function() {
+                    // Position tooltip after rendering
+                    self.positionTooltip(step);
+                    
+                    // Bind events
+                    self.bindTooltipEvents(step, stepIndex);
+                });
+            });
+        },
 
-            // Bind events
-            this.bindTooltipEvents(step, stepIndex);
+        /**
+         * Ensure tooltip dimensions are calculated accurately
+         * @param {jQuery} tooltip
+         * @returns {object} Dimensions object with width and height
+         */
+        ensureTooltipDimensions: function(tooltip) {
+            // Force tooltip to be measured by positioning it off-screen with visibility
+            // Temporarily make it visible off-screen to get accurate measurements
+            tooltip.css({
+                position: 'fixed',
+                top: '-9999px',
+                left: '-9999px',
+                visibility: 'visible',
+                opacity: 0,
+                display: 'block'
+            });
+            
+            // Force browser reflow to calculate dimensions
+            tooltip[0].offsetHeight;
+            
+            var width = tooltip.outerWidth();
+            var height = tooltip.outerHeight();
+            
+            return { width: width, height: height };
         },
 
         /**
@@ -404,9 +437,15 @@
 
             var tooltip = this.state.tooltip;
             var position = step.position || 'bottom';
+            var self = this;
 
             // Remove all arrow classes first
             tooltip.removeClass('tutorial-arrow-top tutorial-arrow-bottom tutorial-arrow-left tutorial-arrow-right tutorial-arrow-top-right');
+
+            // Ensure tooltip dimensions are calculated first
+            var tooltipDims = this.ensureTooltipDimensions(tooltip);
+            var tooltipWidth = tooltipDims.width;
+            var tooltipHeight = tooltipDims.height;
 
             // CUSTOM POSITIONING: Responsive override for specific steps
             // Get viewport dimensions for responsive positioning
@@ -417,18 +456,6 @@
             if (step.id === 'new_service_item_button') {
                 tooltip.addClass('tutorial-arrow-top'); // Arrow at top pointing up to button
                 
-                // Ensure tooltip dimensions are calculated by temporarily making it visible off-screen
-                var wasHidden = tooltip.css('visibility') === 'hidden';
-                if (wasHidden) {
-                    tooltip.css({
-                        position: 'fixed',
-                        top: '-9999px',
-                        left: '-9999px',
-                        visibility: 'visible',
-                        opacity: 0
-                    });
-                }
-                
                 var positions;
                 if (viewportWidth > 1920) {
                     // Ultra-wide and 4K+ screens (above 1920px) - Dynamic positioning
@@ -438,8 +465,6 @@
                         var targetWidth = target.outerWidth();
                         var targetHeight = target.outerHeight();
                         var scrollTop = $(window).scrollTop();
-                        var tooltipWidth = tooltip.outerWidth();
-                        var tooltipHeight = tooltip.outerHeight();
                         var spacing = 20;
                         
                         var viewportTop = targetOffset.top - scrollTop;
@@ -502,32 +527,12 @@
                 }
                 
                 tooltip.css(cssProps);
-                
-                if (wasHidden) {
-                    setTimeout(function() {
-                        tooltip.css({
-                            visibility: 'visible',
-                            opacity: 1
-                        });
-                    }, 10);
-                }
                 return;
             }
 
             // Custom positioning for 'categories_button' step
             if (step.id === 'categories_button') {
                 tooltip.addClass('tutorial-arrow-top');
-                
-                var wasHidden = tooltip.css('visibility') === 'hidden';
-                if (wasHidden) {
-                    tooltip.css({
-                        position: 'fixed',
-                        top: '-9999px',
-                        left: '-9999px',
-                        visibility: 'visible',
-                        opacity: 0
-                    });
-                }
                 
                 var positions;
                 if (viewportWidth > 1920) {
@@ -537,8 +542,6 @@
                         var targetWidth = target.outerWidth();
                         var targetHeight = target.outerHeight();
                         var scrollTop = $(window).scrollTop();
-                        var tooltipWidth = tooltip.outerWidth();
-                        var tooltipHeight = tooltip.outerHeight();
                         var spacing = 20;
                         
                         var viewportTop = targetOffset.top - scrollTop;
@@ -599,32 +602,12 @@
                 }
                 
                 tooltip.css(cssProps);
-                
-                if (wasHidden) {
-                    setTimeout(function() {
-                        tooltip.css({
-                            visibility: 'visible',
-                            opacity: 1
-                        });
-                    }, 10);
-                }
                 return;
             }
 
             // Custom positioning for 'import_button' step
             if (step.id === 'import_button') {
                 tooltip.addClass('tutorial-arrow-top');
-                
-                var wasHidden = tooltip.css('visibility') === 'hidden';
-                if (wasHidden) {
-                    tooltip.css({
-                        position: 'fixed',
-                        top: '-9999px',
-                        left: '-9999px',
-                        visibility: 'visible',
-                        opacity: 0
-                    });
-                }
                 
                 var positions;
                 if (viewportWidth > 1920) {
@@ -634,8 +617,6 @@
                         var targetWidth = target.outerWidth();
                         var targetHeight = target.outerHeight();
                         var scrollTop = $(window).scrollTop();
-                        var tooltipWidth = tooltip.outerWidth();
-                        var tooltipHeight = tooltip.outerHeight();
                         var spacing = 20;
                         
                         var viewportTop = targetOffset.top - scrollTop;
@@ -696,32 +677,12 @@
                 }
                 
                 tooltip.css(cssProps);
-                
-                if (wasHidden) {
-                    setTimeout(function() {
-                        tooltip.css({
-                            visibility: 'visible',
-                            opacity: 1
-                        });
-                    }, 10);
-                }
                 return;
             }
 
             // Custom positioning for 'service_items_table' step
             if (step.id === 'service_items_table') {
                 tooltip.addClass('tutorial-arrow-bottom');
-                
-                var wasHidden = tooltip.css('visibility') === 'hidden';
-                if (wasHidden) {
-                    tooltip.css({
-                        position: 'fixed',
-                        top: '-9999px',
-                        left: '-9999px',
-                        visibility: 'visible',
-                        opacity: 0
-                    });
-                }
                 
                 var positions;
                 if (viewportWidth > 1920) {
@@ -731,8 +692,6 @@
                         var targetWidth = target.outerWidth();
                         var targetHeight = target.outerHeight();
                         var scrollTop = $(window).scrollTop();
-                        var tooltipWidth = tooltip.outerWidth();
-                        var tooltipHeight = tooltip.outerHeight();
                         var spacing = 20;
                         
                         var viewportTop = targetOffset.top - scrollTop;
@@ -793,32 +752,12 @@
                 }
                 
                 tooltip.css(cssProps);
-                
-                if (wasHidden) {
-                    setTimeout(function() {
-                        tooltip.css({
-                            visibility: 'visible',
-                            opacity: 1
-                        });
-                    }, 10);
-                }
                 return;
             }
 
             // Custom positioning for 'table_actions' step
             if (step.id === 'table_actions') {
                 tooltip.addClass('tutorial-arrow-left');
-                
-                var wasHidden = tooltip.css('visibility') === 'hidden';
-                if (wasHidden) {
-                    tooltip.css({
-                        position: 'fixed',
-                        top: '-9999px',
-                        left: '-9999px',
-                        visibility: 'visible',
-                        opacity: 0
-                    });
-                }
                 
                 var positions;
                 if (viewportWidth > 1920) {
@@ -829,8 +768,6 @@
                         var targetHeight = target.outerHeight();
                         var scrollTop = $(window).scrollTop();
                         var scrollLeft = $(window).scrollLeft();
-                        var tooltipWidth = tooltip.outerWidth();
-                        var tooltipHeight = tooltip.outerHeight();
                         var spacing = 20;
                         
                         var viewportTop = targetOffset.top - scrollTop;
@@ -891,47 +828,24 @@
                 }
                 
                 tooltip.css(cssProps);
-                
-                if (wasHidden) {
-                    setTimeout(function() {
-                        tooltip.css({
-                            visibility: 'visible',
-                            opacity: 1
-                        });
-                    }, 10);
-                }
                 return;
             }
 
             // Default positioning for steps without custom positioning
             if (!step.target || step.position === 'center') {
-                this.centerTooltip();
+                this.centerTooltip(tooltipWidth, tooltipHeight);
                 return;
             }
 
             var $target = $(step.target);
             if ($target.length === 0) {
-                this.centerTooltip();
+                this.centerTooltip(tooltipWidth, tooltipHeight);
                 return;
-            }
-
-            // Ensure tooltip is visible for measurements
-            var wasHidden = tooltip.css('visibility') === 'hidden';
-            if (wasHidden) {
-                tooltip.css({
-                    position: 'fixed',
-                    top: '-9999px',
-                    left: '-9999px',
-                    visibility: 'visible',
-                    opacity: 0
-                });
             }
 
             var targetOffset = $target.offset();
             var targetWidth = $target.outerWidth();
             var targetHeight = $target.outerHeight();
-            var tooltipWidth = tooltip.outerWidth();
-            var tooltipHeight = tooltip.outerHeight();
             var windowWidth = $(window).width();
             var windowHeight = $(window).height();
             var scrollTop = $(window).scrollTop();
@@ -1021,16 +935,25 @@
 
         /**
          * Center tooltip on screen
+         * @param {number} tooltipWidth - Optional pre-calculated width
+         * @param {number} tooltipHeight - Optional pre-calculated height
          */
-        centerTooltip: function() {
+        centerTooltip: function(tooltipWidth, tooltipHeight) {
             var windowWidth = $(window).width();
             var windowHeight = $(window).height();
-            var tooltipWidth = this.state.tooltip.outerWidth();
-            var tooltipHeight = this.state.tooltip.outerHeight();
+            
+            if (typeof tooltipWidth === 'undefined' || typeof tooltipHeight === 'undefined') {
+                tooltipWidth = this.state.tooltip.outerWidth();
+                tooltipHeight = this.state.tooltip.outerHeight();
+            }
 
             this.state.tooltip.css({
+                position: 'fixed',
                 top: (windowHeight / 2 - tooltipHeight / 2) + 'px',
-                left: (windowWidth / 2 - tooltipWidth / 2) + 'px'
+                left: (windowWidth / 2 - tooltipWidth / 2) + 'px',
+                visibility: 'visible',
+                opacity: 1,
+                zIndex: 1041
             });
         },
 
