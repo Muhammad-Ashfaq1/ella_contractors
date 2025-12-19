@@ -975,33 +975,25 @@
             }
 
             var tooltip = this.state.tooltip;
-            var tooltipWidth = tooltip.outerWidth();
-            var tooltipHeight = tooltip.outerHeight();
-            var windowWidth = $(window).width();
-            var windowHeight = $(window).height();
-            var scrollTop = $(window).scrollTop();
-            var scrollLeft = $(window).scrollLeft();
-
-            var top = scrollTop + (windowHeight / 2) - (tooltipHeight / 2);
-            var left = scrollLeft + (windowWidth / 2) - (tooltipWidth / 2);
+            
+            // Use percentage-based centering with transform for perfect centering on all screen sizes
+            var cssProps = {
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                visibility: 'visible',
+                opacity: 1,
+                zIndex: 1041
+            };
 
             if (skipTransition) {
-                tooltip.css({
-                    top: top + 'px',
-                    left: left + 'px',
-                    visibility: 'visible',
-                    opacity: 1,
-                    transition: 'none'
-                });
+                cssProps.transition = 'none';
             } else {
-                tooltip.css({
-                    top: top + 'px',
-                    left: left + 'px',
-                    visibility: 'visible',
-                    opacity: 1,
-                    transition: 'opacity 0.3s ease-out'
-                });
+                cssProps.transition = 'opacity 0.3s ease-out';
             }
+
+            tooltip.css(cssProps);
         },
 
         /**

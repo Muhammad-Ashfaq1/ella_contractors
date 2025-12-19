@@ -947,18 +947,12 @@
          * @param {number} tooltipHeight - Optional pre-calculated height
          */
         centerTooltip: function(tooltipWidth, tooltipHeight) {
-            var windowWidth = $(window).width();
-            var windowHeight = $(window).height();
-            
-            if (typeof tooltipWidth === 'undefined' || typeof tooltipHeight === 'undefined') {
-                tooltipWidth = this.state.tooltip.outerWidth();
-                tooltipHeight = this.state.tooltip.outerHeight();
-            }
-
+            // Use percentage-based centering with transform for perfect centering on all screen sizes
             this.state.tooltip.css({
                 position: 'fixed',
-                top: (windowHeight / 2 - tooltipHeight / 2) + 'px',
-                left: (windowWidth / 2 - tooltipWidth / 2) + 'px',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
                 visibility: 'visible',
                 opacity: 1,
                 zIndex: 1041
