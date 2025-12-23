@@ -803,16 +803,20 @@ class Google_calendar_sync
         }
         $description .= "\nView in CRM: " . admin_url('ella_contractors/appointments/view/' . $appointment->id);
 
-        // Build start/end datetime
+        // Build start/end datetime with proper timezone handling
         $start_datetime = $appointment->date . ' ' . ($appointment->start_hour ?? '00:00:00');
+        $crm_timezone = get_option('default_timezone') ?: 'America/Chicago';
         
         $start_class = $this->get_google_class('Service_Calendar_EventDateTime');
         if (!$start_class) {
             throw new Exception('Google_Service_Calendar_EventDateTime class not found');
         }
+        
+        // Create DateTime object in CRM timezone
+        $start_dt = new DateTime($start_datetime, new DateTimeZone($crm_timezone));
         $start = new $start_class();
-        $start->setDateTime(date('c', strtotime($start_datetime)));
-        $start->setTimeZone(get_option('default_timezone') ?: 'America/Chicago');
+        $start->setDateTime($start_dt->format('c')); // RFC3339 format with timezone
+        $start->setTimeZone($crm_timezone);
 
         // Build end datetime
         if (!empty($appointment->end_date) && !empty($appointment->end_time)) {
@@ -821,9 +825,12 @@ class Google_calendar_sync
             // Default: 1 hour duration
             $end_datetime = date('Y-m-d H:i:s', strtotime($start_datetime . ' +1 hour'));
         }
+        
+        // Create DateTime object in CRM timezone for end time
+        $end_dt = new DateTime($end_datetime, new DateTimeZone($crm_timezone));
         $end = new $start_class(); // Use same class for end
-        $end->setDateTime(date('c', strtotime($end_datetime)));
-        $end->setTimeZone(get_option('default_timezone') ?: 'America/Chicago');
+        $end->setDateTime($end_dt->format('c')); // RFC3339 format with timezone
+        $end->setTimeZone($crm_timezone);
 
         // Build location
         $location = !empty($appointment->address) ? $appointment->address : 'Online/Phone Call';

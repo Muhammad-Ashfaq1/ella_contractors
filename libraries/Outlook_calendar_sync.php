@@ -709,8 +709,12 @@ class Outlook_calendar_sync
         }
         $description .= "\nView in CRM: " . admin_url('ella_contractors/appointments/view/' . $appointment->id);
 
-        // Build start/end datetime
+        // Build start/end datetime with proper timezone handling
         $start_datetime = $appointment->date . ' ' . ($appointment->start_hour ?? '00:00:00');
+        $crm_timezone = get_option('default_timezone') ?: 'America/Chicago';
+        
+        // Create DateTime object in CRM timezone
+        $start_dt = new DateTime($start_datetime, new DateTimeZone($crm_timezone));
         
         if (!empty($appointment->end_date) && !empty($appointment->end_time)) {
             $end_datetime = $appointment->end_date . ' ' . $appointment->end_time;
@@ -718,9 +722,12 @@ class Outlook_calendar_sync
             // Default: 1 hour duration
             $end_datetime = date('Y-m-d H:i:s', strtotime($start_datetime . ' +1 hour'));
         }
+        
+        // Create DateTime object in CRM timezone for end time
+        $end_dt = new DateTime($end_datetime, new DateTimeZone($crm_timezone));
 
         // Format for Microsoft Graph API (ISO 8601)
-        $timezone = get_option('default_timezone') ?: 'America/Chicago';
+        $timezone = $crm_timezone;
 
         // Build location
         $location = !empty($appointment->address) ? $appointment->address : 'Online/Phone Call';
@@ -764,11 +771,11 @@ class Outlook_calendar_sync
                 'content' => $description
             ],
             'start' => [
-                'dateTime' => date('c', strtotime($start_datetime)),
+                'dateTime' => $start_dt->format('c'), // RFC3339 format with timezone
                 'timeZone' => $timezone
             ],
             'end' => [
-                'dateTime' => date('c', strtotime($end_datetime)),
+                'dateTime' => $end_dt->format('c'), // RFC3339 format with timezone
                 'timeZone' => $timezone
             ],
             'location' => [
