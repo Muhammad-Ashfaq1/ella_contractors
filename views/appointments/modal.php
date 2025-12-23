@@ -382,7 +382,7 @@ button.delete-btn {
                                         </label>
                                     </div>
                                     <div class="checkbox checkbox-primary">
-                                        <input type="checkbox" name="reminder_same_day" id="reminder_same_day" value="1">
+                                        <input type="checkbox" name="reminder_same_day" id="reminder_same_day" value="1" checked>
                                         <label for="reminder_same_day">
                                             Same Day Reminder
                                             <i class="fa fa-info-circle text-info reminder-template-preview" 
@@ -409,7 +409,7 @@ button.delete-btn {
                                         </label>
                                     </div>
                                     <div class="checkbox checkbox-success">
-                                        <input type="checkbox" name="staff_reminder_same_day" id="staff_reminder_same_day" value="1">
+                                        <input type="checkbox" name="staff_reminder_same_day" id="staff_reminder_same_day" value="1" checked>
                                         <label for="staff_reminder_same_day">
                                             Same Day Reminder
                                             <i class="fa fa-info-circle text-info reminder-template-preview" 

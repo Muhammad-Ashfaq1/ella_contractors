@@ -1517,9 +1517,12 @@ function resetAppointmentModal() {
         $('#modal-presentation-list').html('<p style="text-align: center; color: #778485; margin: 10px 0;">None</p>');
     }
     
-    // Reset reminder checkboxes to default (checked)
+    // Reset reminder checkboxes to default (all checked)
     $('#send_reminder').prop('checked', true);
     $('#reminder_48h').prop('checked', true);
+    $('#reminder_same_day').prop('checked', true);
+    $('#staff_reminder_48h').prop('checked', true);
+    $('#staff_reminder_same_day').prop('checked', true);
     // Reminder channel defaults to 'both' (Email + SMS) via hidden field
     $('input[name="reminder_channel"]').val('both');
 }
