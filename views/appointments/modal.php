@@ -249,9 +249,28 @@ button.delete-btn {
   padding-left: 5px !important;
   cursor: pointer !important;
 }
+
+/* Fix modal backdrop - make it lighter and semi-transparent */
+#appointmentModal.modal.fade.in {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.modal-backdrop.in {
+  opacity: 0.5 !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Ensure modal stays on top of backdrop */
+#appointmentModal {
+  z-index: 1050 !important;
+}
+
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
 </style>
 
-<div class="modal fade" id="appointmentModal" tabindex="-1" role="dialog" aria-labelledby="appointmentModalLabel">
+<div class="modal fade" id="appointmentModal" tabindex="-1" role="dialog" aria-labelledby="appointmentModalLabel" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">

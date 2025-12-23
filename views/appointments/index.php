@@ -630,7 +630,11 @@ $(document).ready(function() {
     // New appointment button click handler
     $('#new-appointment').on('click', function() {
         openNewAppointmentModal();
-        $('#appointmentModal').modal('show');
+        $('#appointmentModal').modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true
+        });
     });
     
     // Check for edit parameter in URL
@@ -838,7 +842,11 @@ function openNewAppointmentModal(appointmentId = null) {
     if (!appointmentId) {
         // Reload staff members for attendees dropdown
         loadStaffForAttendees();
-        $('#appointmentModal').modal('show');
+        $('#appointmentModal').modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true
+        });
     } else {
         // For editing, use the dedicated function that loads data first
         loadAppointmentDataAndShowModal(appointmentId);
@@ -1111,7 +1119,11 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 }
                 
                 // Show modal after data is loaded
-                $('#appointmentModal').modal('show');
+                $('#appointmentModal').modal({
+                    backdrop: 'static',
+                    keyboard: false,
+                    show: true
+                });
                 
             } else {
                 alert_float('danger', response.message);

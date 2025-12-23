@@ -1538,7 +1538,11 @@ function openAppointmentModal(appointmentId = null) {
     
     // Show modal immediately for new appointments
     if (!appointmentId) {
-        $('#appointmentModal').modal('show');
+        $('#appointmentModal').modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true
+        });
     } else {
         // For editing, use the dedicated function that loads data first
         loadAppointmentDataAndShowModal(appointmentId);
@@ -1843,7 +1847,11 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 $('#saveAppointment').text('Save Appointment');
                 
                 // Show modal after data is loaded
-                $('#appointmentModal').modal('show');
+                $('#appointmentModal').modal({
+                    backdrop: 'static',
+                    keyboard: false,
+                    show: true
+                });
                 
             } else {
                 alert_float('danger', response.message);
