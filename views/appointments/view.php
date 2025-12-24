@@ -1994,15 +1994,22 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    alert_float('success', response.message);
+                    // Close modal first
                     $('#appointmentModal').modal('hide');
                     resetAppointmentModal();
-                    // Refresh attendees display
-                    loadAttendeesDisplay(<?php echo $appointment->id; ?>);
-                    // Reload the page to show updated data
-                    window.location.reload();
+                    
+                    // Show success message with timeout before reload
+                    alert_float('success', response.message || 'Appointment updated successfully!', 2000);
+                    
+                    // Delay page reload to allow alert to show
+                    setTimeout(function() {
+                        // Refresh attendees display
+                        loadAttendeesDisplay(<?php echo $appointment->id; ?>);
+                        // Reload the page to show updated data
+                        window.location.reload();
+                    }, 2000); // 2 second delay allows user to see success message
                 } else {
-                    alert_float('danger', response.message);
+                    alert_float('danger', response.message || 'Failed to update appointment');
                 }
             },
             error: function(xhr, status, error) {
