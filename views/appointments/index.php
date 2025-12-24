@@ -1599,39 +1599,25 @@ $('#saveAppointment').on('click', function() {
             if (response.success) {
                 var appointmentId = response.appointment_id || $('#appointment_id').val();
                 
-                // Handle presentations if selected and centralized function exists
-                if (typeof getSelectedPresentationIds === 'function' && typeof attachMultiplePresentationsToAppointment === 'function') {
-                    var selectedPresentationIds = getSelectedPresentationIds('presentation_select', 'selected_presentation_ids');
-                    if (selectedPresentationIds && selectedPresentationIds.length > 0 && appointmentId) {
-                        attachMultiplePresentationsToAppointment(appointmentId, selectedPresentationIds, function(attachResponse) {
-                            alert_float('success', response.message);
-                            
-                            $('#appointmentModal').modal('hide');
-                            resetAppointmentModal();
-                            
-                            // Reload table maintaining sort order
-                            var table = $('.table-ella_appointments').DataTable();
-                            var currentOrder = table.order();
-                            table.ajax.reload(function() {
-                                table.order(currentOrder).draw(false);
+                // Close modal first to prevent z-index conflicts
+                $('#appointmentModal').modal('hide');
+                resetAppointmentModal();
+                
+                // Show success message after modal closes
+                setTimeout(function() {
+                    // Handle presentations if selected and centralized function exists
+                    if (typeof getSelectedPresentationIds === 'function' && typeof attachMultiplePresentationsToAppointment === 'function') {
+                        var selectedPresentationIds = getSelectedPresentationIds('presentation_select', 'selected_presentation_ids');
+                        if (selectedPresentationIds && selectedPresentationIds.length > 0 && appointmentId) {
+                            attachMultiplePresentationsToAppointment(appointmentId, selectedPresentationIds, function(attachResponse) {
+                                alert_float('success', response.message || 'Appointment saved successfully with presentations!', 5000);
                             });
-                        });
+                        } else {
+                            alert_float('success', response.message || 'Appointment saved successfully!', 4000);
+                        }
                     } else {
-                        alert_float('success', response.message);
-                        $('#appointmentModal').modal('hide');
-                        resetAppointmentModal();
-                        
-                        // Reload table maintaining sort order
-                        var table = $('.table-ella_appointments').DataTable();
-                        var currentOrder = table.order();
-                        table.ajax.reload(function() {
-                            table.order(currentOrder).draw(false);
-                        });
+                        alert_float('success', response.message || 'Appointment saved successfully!', 4000);
                     }
-                } else {
-                    alert_float('success', response.message);
-                    $('#appointmentModal').modal('hide');
-                    resetAppointmentModal();
                     
                     // Reload table maintaining sort order
                     var table = $('.table-ella_appointments').DataTable();
@@ -1639,9 +1625,9 @@ $('#saveAppointment').on('click', function() {
                     table.ajax.reload(function() {
                         table.order(currentOrder).draw(false);
                     });
-                }
+                }, 300);
             } else {
-                alert_float('danger', response.message);
+                alert_float('danger', response.message || 'Failed to save appointment');
             }
         },
         error: function(xhr, status, error) {
