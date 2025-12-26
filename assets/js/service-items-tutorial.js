@@ -1080,7 +1080,8 @@
                 url: admin_url + 'ella_contractors/appointments/save_service_items_tutorial_preference',
                 type: 'POST',
                 data: {
-                    dismissed: dismissed ? 1 : 0
+                    dismissed: dismissed ? 1 : 0,
+                    [csrf_token_name]: csrf_hash
                 },
                 dataType: 'json',
                 success: function(response) {

@@ -1670,15 +1670,79 @@
          * Skip tutorial
          */
         skip: function() {
-            this.complete(true);
+            this.dismiss(true); // Dismiss with "don't show again"
         },
 
         /**
          * Complete tutorial
          */
         complete: function() {
+            this.dismiss(false);
+        },
+
+        /**
+         * Dismiss tutorial
+         * @param {boolean} dontShowAgain - Whether to hide permanently
+         */
+        dismiss: function(dontShowAgain) {
+            // Set inactive first to ensure cleanup happens
             this.state.isActive = false;
+            
+            // Remove class from body to allow sidebar closing again
+            $('body').removeClass('tutorial-active');
+            
+            // Immediately remove all tutorial elements
             this.removeCurrentStep();
+            
+            // Force remove overlay and tooltip if they still exist (immediate removal, no animation)
+            if (this.state.overlay) {
+                this.state.overlay.stop(true, true); // Stop any animations
+                this.state.overlay.remove();
+                this.state.overlay = null;
+            }
+            if (this.state.tooltip) {
+                this.state.tooltip.stop(true, true); // Stop any animations
+                this.state.tooltip.remove();
+                this.state.tooltip = null;
+            }
+            
+            // Remove any remaining highlights
+            $('.tutorial-highlight').removeClass('tutorial-highlight');
+            
+            // Remove any tutorial overlays/tooltips that might still exist in DOM
+            $('.tutorial-overlay').remove();
+            $('.tutorial-tooltip').remove();
+            
+            // Ensure body is scrollable and interactive
+            $('body').css({
+                'overflow': '',
+                'pointer-events': ''
+            });
+            
+            // Remove any inline styles that might block interaction
+            $('html').css({
+                'overflow': '',
+                'pointer-events': ''
+            });
+
+            // Save preference
+            if (dontShowAgain) {
+                localStorage.setItem(this.config.storageKeyDismissed, 'true');
+                
+                // Save to server
+                $.ajax({
+                    url: admin_url + 'ella_contractors/appointments/save_tutorial_preference',
+                    type: 'POST',
+                    data: {
+                        dismissed: 1,
+                        [csrf_token_name]: csrf_hash
+                    },
+                    dataType: 'json'
+                });
+            } else {
+                // Mark as completed but allow restart
+                localStorage.setItem(this.config.storageKey, 'true');
+            }
         },
 
         /**
