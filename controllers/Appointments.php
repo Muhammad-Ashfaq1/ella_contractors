@@ -2090,6 +2090,9 @@ startxref
             'proposal_created' => _l('timeline_action_proposal_created'),
             'proposal_updated' => _l('timeline_action_proposal_updated'),
             'proposal_deleted' => _l('timeline_action_proposal_deleted'),
+            'estimates_created' => _l('timeline_action_estimates_created'),
+            'estimates_updated' => _l('timeline_action_estimates_updated'),
+            'estimates_deleted' => _l('timeline_action_estimates_deleted'),
             'process_completed' => _l('timeline_action_process_completed'),
             'process_failed' => _l('timeline_action_process_failed'),
             'appointment_deleted' => _l('timeline_action_deleted')
