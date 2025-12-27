@@ -1070,14 +1070,38 @@
         saveDismissPreference: function(dismissed) {
             localStorage.setItem(this.config.storageKeyDismissed, dismissed ? 'true' : 'false');
             
+            // Get CSRF token dynamically to handle all contexts
+            var csrfTokenName = '';
+            var csrfTokenHash = '';
+            
+            // Try to get CSRF token from multiple sources
+            if (typeof window.csrf_token_name !== 'undefined' && typeof window.csrf_hash !== 'undefined') {
+                csrfTokenName = window.csrf_token_name;
+                csrfTokenHash = window.csrf_hash;
+            } else if (typeof csrfData !== 'undefined' && csrfData.token_name && csrfData.hash) {
+                csrfTokenName = csrfData.token_name;
+                csrfTokenHash = csrfData.hash;
+            } else {
+                // Try to get from page variables (fallback)
+                csrfTokenName = (typeof csrf_token_name !== 'undefined') ? csrf_token_name : 'csrf_token_name';
+                csrfTokenHash = (typeof csrf_hash !== 'undefined') ? csrf_hash : '';
+            }
+            
+            // Build data object
+            var ajaxData = {
+                dismissed: dismissed ? 1 : 0
+            };
+            
+            // Add CSRF token if available
+            if (csrfTokenName && csrfTokenHash) {
+                ajaxData[csrfTokenName] = csrfTokenHash;
+            }
+            
             // Save to server
             $.ajax({
                 url: admin_url + 'ella_contractors/appointments/save_service_items_tutorial_preference',
                 type: 'POST',
-                data: {
-                    dismissed: dismissed ? 1 : 0,
-                    [csrf_token_name]: csrf_hash
-                },
+                data: ajaxData,
                 dataType: 'json',
                 success: function(response) {
                     if (response && response.success) {
