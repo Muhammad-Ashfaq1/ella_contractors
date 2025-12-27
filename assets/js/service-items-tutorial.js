@@ -980,7 +980,7 @@
 
             // Close button
             this.state.tooltip.find('.tutorial-close').on('click', function() {
-                self.complete();
+                self.skip();
             });
 
             // Back button
@@ -996,7 +996,7 @@
             // Skip button
             this.state.tooltip.find('.tutorial-btn-skip').on('click', function(e) {
                 e.preventDefault();
-                self.complete();
+                self.skip();
             });
 
             // Don't show again checkbox
@@ -1023,19 +1023,17 @@
          * Go to next step
          */
         next: function() {
-            var dontShow = false;
-            if (this.state.tooltip) {
-                var checkbox = this.state.tooltip.find('#tutorial-dont-show-again');
-                if (checkbox.length && checkbox.is(':checked')) {
-                    dontShow = true;
-                }
+            var nextIndex = this.state.currentStepIndex + 1;
+            
+            // Check if we're on the last step
+            if (nextIndex >= this.config.steps.length) {
+                // Complete the tutorial (user finished it)
+                this.complete();
+                return;
             }
-
-            if (dontShow) {
-                this.saveDismissPreference(true);
-            }
-
-            this.showStep(this.state.currentStepIndex + 1);
+            
+            // Move to next step
+            this.showStep(nextIndex);
         },
 
         /**
@@ -1046,24 +1044,21 @@
         },
 
         /**
+         * Skip tutorial
+         */
+        skip: function() {
+            // Skip means "don't show again"
+            this.saveDismissPreference(true);
+            this.cleanup();
+            this.state.isActive = false;
+        },
+
+        /**
          * Complete tutorial
          */
         complete: function() {
-            var dontShow = false;
-            if (this.state.tooltip) {
-                var checkbox = this.state.tooltip.find('#tutorial-dont-show-again');
-                if (checkbox.length && checkbox.is(':checked')) {
-                    dontShow = true;
-                }
-            }
-
-            if (dontShow) {
-                this.saveDismissPreference(true);
-            } else {
-                // Mark as completed (but not dismissed)
-                localStorage.setItem(this.config.storageKey, 'true');
-            }
-
+            // Complete means tutorial was finished (can be shown again)
+            localStorage.setItem(this.config.storageKey, 'true');
             this.cleanup();
             this.state.isActive = false;
         },
