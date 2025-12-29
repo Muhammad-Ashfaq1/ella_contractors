@@ -11,6 +11,8 @@ class Google_auth extends AdminController
             $this->load->library('ella_contractors/Google_calendar_sync');
         } catch (Exception $e) {
             log_message('error', 'Google_auth: Failed to load Google_calendar_sync library - ' . $e->getMessage());
+            log_message('error', 'Google_auth: Exception trace - ' . $e->getTraceAsString());
+            // Don't set library property, so we can check and show proper error later
         }
     }
 
@@ -34,7 +36,47 @@ class Google_auth extends AdminController
 
         // Check if library loaded successfully
         if (!isset($this->google_calendar_sync)) {
-            set_alert('danger', 'Google Calendar library not loaded. Please ensure Appointly module is installed (for Google API client library).');
+            // Try to load it one more time with better error reporting
+            try {
+                $this->load->library('ella_contractors/Google_calendar_sync');
+            } catch (Exception $e) {
+                $error_msg = 'Google Calendar library failed to load: ' . $e->getMessage();
+                log_message('error', 'Google_auth connect: ' . $error_msg);
+                
+                // Extract module path for clearer instructions
+                $module_path = module_dir_path('ella_contractors', '');
+                $module_path = realpath($module_path) ?: $module_path;
+                $module_path = rtrim($module_path, '/\\');
+                
+                // Provide helpful error message based on the exception
+                $user_msg = '';
+                if (strpos($e->getMessage(), 'composer install') !== false || strpos($e->getMessage(), 'not found') !== false) {
+                    $user_msg = '<strong>Google Calendar API client library not installed.</strong><br><br>';
+                    $user_msg .= 'Please run these commands on your server:<br>';
+                    $user_msg .= '<pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 10px;">cd ' . htmlspecialchars($module_path) . '
+composer install
+composer dump-autoload</pre>';
+                } elseif (strpos($e->getMessage(), 'Google_Client') !== false || strpos($e->getMessage(), 'not available') !== false) {
+                    $user_msg = '<strong>Google Calendar API client library not properly loaded.</strong><br><br>';
+                    $user_msg .= 'Please run these commands on your server:<br>';
+                    $user_msg .= '<pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 10px;">cd ' . htmlspecialchars($module_path) . '
+composer dump-autoload</pre>';
+                } else {
+                    $user_msg = '<strong>Google Calendar library error:</strong><br>' . htmlspecialchars($e->getMessage());
+                }
+                
+                // Add troubleshooting info
+                $user_msg .= '<br><br><small>If the issue persists, check server logs for detailed error messages.</small>';
+                
+                set_alert('danger', $user_msg);
+                redirect(admin_url('ella_contractors/appointments'));
+                return;
+            }
+        }
+        
+        // Final check after retry
+        if (!isset($this->google_calendar_sync)) {
+            set_alert('danger', 'Google Calendar library not available. Please check server logs for details.');
             redirect(admin_url('ella_contractors/appointments'));
             return;
         }
@@ -73,14 +115,20 @@ class Google_auth extends AdminController
         $error = $this->input->get('error');
         $staff_id = get_staff_user_id();
 
-        // Handle OAuth errors
+        // Handle OAuth errors - always redirect back
         if ($error) {
             $error_message = $this->input->get('error_description') ?: 'Authentication was cancelled or failed.';
-            $this->_close_popup_with_message('error', 'Google Calendar connection failed: ' . $error_message);
+            
+            $user_message = 'Google Calendar connection failed: ' . $error_message;
+            if (stripos($error_message, 'access_denied') !== false) {
+                $user_message = 'Google Calendar connection was cancelled. Please try again when ready.';
+            }
+            
+            $this->_close_popup_with_message('error', $user_message);
             return;
         }
 
-        // Handle missing authorization code
+        // Handle missing authorization code - always redirect back
         if (!$code) {
             $this->_close_popup_with_message('error', 'Missing authorization code. Please try connecting again.');
             return;
@@ -100,14 +148,17 @@ class Google_auth extends AdminController
 
                     $this->_close_popup_with_message('success', 'Google Calendar connected successfully!');
                 } else {
+                    log_message('error', 'Google Calendar: Failed to save tokens');
                     $this->_close_popup_with_message('error', 'Failed to save Google Calendar credentials. Please try again.');
                 }
             } else {
-                $this->_close_popup_with_message('error', 'Failed to obtain access tokens from Google. Please try again.');
+                $this->_close_popup_with_message('error', 'Failed to obtain access tokens from Google. Please check your Google Cloud Console settings and try again.');
             }
         } catch (Exception $e) {
-            log_message('error', 'Google Calendar OAuth callback error: ' . $e->getMessage());
-            $this->_close_popup_with_message('error', 'An error occurred during Google Calendar connection: ' . $e->getMessage());
+            log_message('error', 'Google Calendar OAuth callback exception: ' . $e->getMessage());
+            
+            $error_msg = 'An error occurred during Google Calendar connection: ' . $e->getMessage();
+            $this->_close_popup_with_message('error', $error_msg);
         }
     }
 
@@ -180,10 +231,24 @@ class Google_auth extends AdminController
                     $this->load->library('ella_contractors/Google_calendar_sync');
                 } catch (Exception $lib_e) {
                     log_message('error', 'Google Calendar: Failed to load library - ' . $lib_e->getMessage());
+                    
+                    // Provide helpful error message
+                    $module_path = module_dir_path('ella_contractors', '');
+                    $module_path = realpath($module_path) ?: $module_path;
+                    $module_path = rtrim($module_path, '/\\');
+                    
+                    $error_detail = 'Failed to load Google Calendar library. ';
+                    if (strpos($lib_e->getMessage(), 'composer') !== false || strpos($lib_e->getMessage(), 'not found') !== false) {
+                        $error_detail .= 'Please run: cd ' . $module_path . ' && composer install && composer dump-autoload';
+                    } else {
+                        $error_detail .= $lib_e->getMessage();
+                    }
+                    
                     echo json_encode([
                         'connected' => false,
-                        'error' => 'Failed to load Google Calendar library: ' . $lib_e->getMessage(),
-                        'message' => 'Library error'
+                        'error' => $error_detail,
+                        'message' => 'Library error',
+                        'troubleshooting' => 'Run: cd ' . $module_path . ' && composer dump-autoload'
                     ]);
                     exit;
                 }
@@ -253,80 +318,21 @@ class Google_auth extends AdminController
     }
 
     /**
-     * Close popup window and send message to parent
+     * Redirect to appointments page with message
      * 
      * @param string $type - 'success' or 'error'
      * @param string $message - Message to display
      */
     private function _close_popup_with_message($type, $message)
     {
-        // Output HTML that sends postMessage to opener and closes the popup
-        $html = '<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Google Calendar Connection</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background: ' . ($type === 'success' ? '#4caf50' : '#f44336') . ';
-            color: white;
-        }
-        .message-container {
-            text-align: center;
-            padding: 20px;
-        }
-        .message-container h2 {
-            margin-bottom: 10px;
-        }
-        .message-container p {
-            font-size: 16px;
-        }
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid white;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
-</head>
-<body>
-    <div class="message-container">
-        <h2>' . ($type === 'success' ? '✓ Success!' : '✗ Error') . '</h2>
-        <p>' . htmlspecialchars($message) . '</p>
-        <div class="spinner"></div>
-        <p style="font-size: 14px; margin-top: 15px;">Closing window...</p>
-    </div>
-    <script>
-        // Send message to parent window
-        if (window.opener) {
-            window.opener.postMessage({
-                type: "' . ($type === 'success' ? 'google_calendar_auth_success' : 'google_calendar_auth_error') . '",
-                message: "' . addslashes($message) . '"
-            }, window.location.origin);
+        // Store message in session flash data
+        if ($type === 'success') {
+            set_alert('success', $message);
+        } else {
+            set_alert('danger', $message);
         }
         
-        // Close popup after a short delay
-        setTimeout(function() {
-            window.close();
-        }, ' . ($type === 'success' ? '1500' : '3000') . ');
-    </script>
-</body>
-</html>';
-
-        echo $html;
-        exit;
+        // Redirect back to appointments page
+        redirect(admin_url('ella_contractors/appointments'));
     }
 }

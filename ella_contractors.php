@@ -29,6 +29,11 @@ hooks()->add_action('after_cron_run', 'ella_contractors_after_cron_run');
 register_activation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_activate_module');
 register_deactivation_hook(ELLA_CONTRACTORS_MODULE_NAME, 'ella_contractors_deactivate_module');
 
+// Add settings tab to main CRM settings page
+if (is_admin()) {
+    hooks()->add_action('admin_init', 'ella_contractors_add_settings_tab');
+}
+
 /**
  * Initialize module menu
  */
@@ -171,6 +176,19 @@ function ella_contractors_load_helpers() {
     if (file_exists($reminder_helper_path)) {
         require_once($reminder_helper_path);
     }
+}
+
+/**
+ * Add EllaContractors settings tab to main CRM settings page
+ */
+function ella_contractors_add_settings_tab()
+{
+    $CI = &get_instance();
+    $CI->app_tabs->add_settings_tab('ella_contractors', [
+        'name'     => 'EllaContractors',
+        'view'     => 'ella_contractors/settings/calendar_integration',
+        'position' => 91, // After Google settings (90), before Misc (95)
+    ]);
 }
 
 function ella_contractors_activate_module() {
@@ -564,6 +582,201 @@ function ella_contractors_activate_module() {
         ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
     }
 
+    // Create ella_reminder_templates table for editable email and SMS templates
+    if (!$CI->db->table_exists(db_prefix() . 'ella_reminder_templates')) {
+        // Load email templates helper before using template functions
+        $email_templates_helper = module_dir_path('ella_contractors', 'helpers/ella_email_templates_helper.php');
+        if (file_exists($email_templates_helper)) {
+            require_once($email_templates_helper);
+        }
+        
+        // Helper function to get client template with fallback
+        if (!function_exists('ella_get_client_reminder_template')) {
+            function ella_get_client_reminder_template() {
+                return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family: Arial; padding: 20px;"><h2>Appointment Confirmation</h2><p>Dear {client_name},</p><p>This is a confirmation of your upcoming appointment.</p><p><strong>Appointment:</strong> {appointment_subject}<br><strong>Date:</strong> {appointment_date}<br><strong>Time:</strong> {appointment_time}<br><strong>Location:</strong> {appointment_location}</p><p>{appointment_notes}</p><p>{presentation_block}</p><p>Best regards,<br>{company_name}</p></body></html>';
+            }
+        }
+        
+        // Helper function to get staff template with fallback
+        if (!function_exists('ella_get_staff_reminder_template')) {
+            function ella_get_staff_reminder_template() {
+                return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family: Arial; padding: 20px;"><h2>Appointment Reminder</h2><p>Hi {staff_name},</p><p>This is a reminder about your upcoming appointment.</p><p><strong>Appointment:</strong> {appointment_subject}<br><strong>Client:</strong> {client_name}<br><strong>Date:</strong> {appointment_date}<br><strong>Time:</strong> {appointment_time}<br><strong>Location:</strong> {appointment_location}</p><p><strong>Notes:</strong><br>{appointment_notes}</p><p>{presentation_block}</p><p><a href="{crm_link}">View in CRM</a></p><p>Best regards,<br>{company_name} CRM</p></body></html>';
+            }
+        }
+        
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'ella_reminder_templates` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `template_name` varchar(255) NOT NULL,
+            `template_type` ENUM(\'email\', \'sms\') NOT NULL,
+            `reminder_stage` ENUM(\'client_instant\', \'client_48h\', \'client_same_day\', \'staff_48h\', \'staff_same_day\') NOT NULL,
+            `recipient_type` ENUM(\'client\', \'staff\') NOT NULL,
+            `subject` varchar(500) DEFAULT NULL,
+            `content` text NOT NULL,
+            `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+            `created_by` int(11) NOT NULL,
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `idx_template_type` (`template_type`),
+            KEY `idx_reminder_stage` (`reminder_stage`),
+            KEY `idx_recipient_type` (`recipient_type`),
+            KEY `idx_is_active` (`is_active`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+        
+        // Insert default templates
+        $default_templates = [
+            // Client Email Templates
+            [
+                'template_name' => 'Client Instant Email',
+                'template_type' => 'email',
+                'reminder_stage' => 'client_instant',
+                'recipient_type' => 'client',
+                'subject' => 'Appointment Confirmation: {appointment_subject}',
+                'content' => ella_get_client_reminder_template(),
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            [
+                'template_name' => 'Client 48h Email',
+                'template_type' => 'email',
+                'reminder_stage' => 'client_48h',
+                'recipient_type' => 'client',
+                'subject' => 'Appointment Reminder: {appointment_subject}',
+                'content' => ella_get_client_reminder_template(),
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            [
+                'template_name' => 'Client Same Day Email',
+                'template_type' => 'email',
+                'reminder_stage' => 'client_same_day',
+                'recipient_type' => 'client',
+                'subject' => 'Reminder: Your Appointment Today - {appointment_subject}',
+                'content' => ella_get_client_reminder_template(),
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            // Staff Email Templates
+            [
+                'template_name' => 'Staff 48h Email',
+                'template_type' => 'email',
+                'reminder_stage' => 'staff_48h',
+                'recipient_type' => 'staff',
+                'subject' => 'Your Appointment Reminder: {appointment_subject}',
+                'content' => ella_get_staff_reminder_template(),
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            [
+                'template_name' => 'Staff Same Day Email',
+                'template_type' => 'email',
+                'reminder_stage' => 'staff_same_day',
+                'recipient_type' => 'staff',
+                'subject' => 'Reminder: Appointment Today - {appointment_subject}',
+                'content' => ella_get_staff_reminder_template(),
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            // Client SMS Templates
+            [
+                'template_name' => 'Client Instant SMS',
+                'template_type' => 'sms',
+                'reminder_stage' => 'client_instant',
+                'recipient_type' => 'client',
+                'subject' => NULL,
+                'content' => 'Appointment Confirmed: {appointment_subject} on {appointment_date} at {appointment_time}. Location: {appointment_location}',
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            [
+                'template_name' => 'Client 48h SMS',
+                'template_type' => 'sms',
+                'reminder_stage' => 'client_48h',
+                'recipient_type' => 'client',
+                'subject' => NULL,
+                'content' => 'Reminder: {appointment_subject} on {appointment_date} at {appointment_time}. Location: {appointment_location}',
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            [
+                'template_name' => 'Client Same Day SMS',
+                'template_type' => 'sms',
+                'reminder_stage' => 'client_same_day',
+                'recipient_type' => 'client',
+                'subject' => NULL,
+                'content' => 'Reminder: Your appointment {appointment_subject} is today at {appointment_time}. Location: {appointment_location}',
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            // Staff SMS Templates
+            [
+                'template_name' => 'Staff 48h SMS',
+                'template_type' => 'sms',
+                'reminder_stage' => 'staff_48h',
+                'recipient_type' => 'staff',
+                'subject' => NULL,
+                'content' => 'Reminder: {appointment_subject} with {client_name} on {appointment_date} at {appointment_time}',
+                'is_active' => 1,
+                'created_by' => 0
+            ],
+            [
+                'template_name' => 'Staff Same Day SMS',
+                'template_type' => 'sms',
+                'reminder_stage' => 'staff_same_day',
+                'recipient_type' => 'staff',
+                'subject' => NULL,
+                'content' => 'Reminder: Appointment {appointment_subject} with {client_name} is today at {appointment_time}. Location: {appointment_location}',
+                'is_active' => 1,
+                'created_by' => 0
+            ]
+        ];
+        
+        foreach ($default_templates as $template) {
+            $CI->db->insert(db_prefix() . 'ella_reminder_templates', $template);
+        }
+    }
+    
+    // Add same_day reminder columns to appointments table
+    if (!$CI->db->field_exists('reminder_same_day', db_prefix() . 'appointly_appointments')) {
+        try {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `reminder_same_day` TINYINT(1) DEFAULT 0 AFTER `reminder_48h`');
+        } catch (Exception $e) {
+            // Column might already exist
+        }
+    }
+    
+    if (!$CI->db->field_exists('staff_reminder_same_day', db_prefix() . 'appointly_appointments')) {
+        try {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `staff_reminder_same_day` TINYINT(1) DEFAULT 0 AFTER `staff_reminder_48h`');
+        } catch (Exception $e) {
+            // Column might already exist
+        }
+    }
+    
+    // Add same_day reminder tracking to appointment_reminder table
+    if ($CI->db->table_exists(db_prefix() . 'appointment_reminder')) {
+        $table = db_prefix() . 'appointment_reminder';
+        $fieldsToAdd = [
+            'client_same_day' => 'ALTER TABLE `' . $table . '` ADD COLUMN `client_same_day` TINYINT(1) NOT NULL DEFAULT 0 AFTER `client_48_hours`',
+            'staff_same_day' => 'ALTER TABLE `' . $table . '` ADD COLUMN `staff_same_day` TINYINT(1) NOT NULL DEFAULT 0 AFTER `staff_48_hours`',
+            'client_same_day_sent' => 'ALTER TABLE `' . $table . '` ADD COLUMN `client_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `client_48_hours_sent`',
+            'staff_same_day_sent' => 'ALTER TABLE `' . $table . '` ADD COLUMN `staff_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `staff_48_hours_sent`',
+            'client_sms_same_day_sent' => 'ALTER TABLE `' . $table . '` ADD COLUMN `client_sms_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `client_same_day_sent`',
+            'staff_sms_same_day_sent' => 'ALTER TABLE `' . $table . '` ADD COLUMN `staff_sms_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0 AFTER `staff_same_day_sent`',
+        ];
+        
+        foreach ($fieldsToAdd as $field => $sql) {
+            if (!$CI->db->field_exists($field, $table)) {
+                try {
+                    $CI->db->query($sql);
+                } catch (Exception $e) {
+                    // Field might already exist
+                    log_message('error', 'EllaContractors: Failed to add column ' . $field . ' - ' . $e->getMessage());
+                }
+            }
+        }
+    }
+
     // Create appointment_reminder table to track reminder statuses
     if (!$CI->db->table_exists(db_prefix() . 'appointment_reminder')) {
         $CI->db->query('CREATE TABLE `' . db_prefix() . 'appointment_reminder` (
@@ -578,8 +791,14 @@ function ella_contractors_activate_module() {
             `client_instant_sent` TINYINT(1) NOT NULL DEFAULT 0,
             `client_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
             `staff_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
+            `client_same_day` TINYINT(1) NOT NULL DEFAULT 0,
+            `staff_same_day` TINYINT(1) NOT NULL DEFAULT 0,
+            `client_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0,
+            `staff_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0,
             `client_sms_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
             `staff_sms_48_hours_sent` TINYINT(1) NOT NULL DEFAULT 0,
+            `client_sms_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0,
+            `staff_sms_same_day_sent` TINYINT(1) NOT NULL DEFAULT 0,
             `last_email_sent_at` datetime DEFAULT NULL,
             `last_sms_sent_at` datetime DEFAULT NULL,
             `rel_type` varchar(50) DEFAULT NULL,
@@ -721,6 +940,122 @@ function ella_contractors_activate_module() {
     log_message('info', 'EllaContractors: Google Calendar options initialized. Will use Appointly credentials if EllaContractors ones are not set.');
     
     // ==================== END GOOGLE CALENDAR INTEGRATION - DATABASE SETUP ====================
+    
+    // ==================== OUTLOOK CALENDAR INTEGRATION - DATABASE SETUP ====================
+    
+    // Create staff_outlook_tokens table for staff-specific Outlook Calendar connections
+    if (!$CI->db->table_exists(db_prefix() . 'staff_outlook_tokens')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'staff_outlook_tokens` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `staff_id` int(11) NOT NULL,
+            `access_token` text,
+            `refresh_token` text,
+            `expires_at` datetime DEFAULT NULL,
+            `token_type` varchar(50) DEFAULT "Bearer",
+            `scope` text,
+            `calendar_id` varchar(255) DEFAULT "primary",
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `unique_staff_id` (`staff_id`),
+            KEY `idx_staff_id` (`staff_id`),
+            KEY `idx_expires_at` (`expires_at`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+        
+        log_message('info', 'EllaContractors: staff_outlook_tokens table created successfully');
+    } else {
+        // Add missing columns if table exists but columns are missing
+        if (!$CI->db->field_exists('calendar_id', db_prefix() . 'staff_outlook_tokens')) {
+            try {
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'staff_outlook_tokens` ADD COLUMN `calendar_id` VARCHAR(255) DEFAULT "primary" AFTER `scope`');
+            } catch (Exception $e) {
+                log_message('error', 'EllaContractors: Failed to add calendar_id column to staff_outlook_tokens - ' . $e->getMessage());
+            }
+        }
+        if (!$CI->db->field_exists('token_type', db_prefix() . 'staff_outlook_tokens')) {
+            try {
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'staff_outlook_tokens` ADD COLUMN `token_type` VARCHAR(50) DEFAULT "Bearer" AFTER `expires_at`');
+            } catch (Exception $e) {
+                log_message('error', 'EllaContractors: Failed to add token_type column to staff_outlook_tokens - ' . $e->getMessage());
+            }
+        }
+        if (!$CI->db->field_exists('scope', db_prefix() . 'staff_outlook_tokens')) {
+            try {
+                $CI->db->query('ALTER TABLE `' . db_prefix() . 'staff_outlook_tokens` ADD COLUMN `scope` TEXT AFTER `token_type`');
+            } catch (Exception $e) {
+                log_message('error', 'EllaContractors: Failed to add scope column to staff_outlook_tokens - ' . $e->getMessage());
+            }
+        }
+    }
+    
+    // Add outlook_event_id and outlook_calendar_link columns to appointly_appointments table (DEPRECATED - kept for backward compatibility)
+    // NOTE: These columns are now deprecated in favor of tblappointment_outlook_events table
+    // They are kept for existing data migration and backward compatibility
+    if (!$CI->db->field_exists('outlook_event_id', db_prefix() . 'appointly_appointments')) {
+        try {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `outlook_event_id` VARCHAR(255) NULL DEFAULT NULL AFTER `google_calendar_id`');
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD INDEX `idx_outlook_event_id` (`outlook_event_id`)');
+            log_message('info', 'EllaContractors: outlook_event_id column added successfully');
+        } catch (Exception $e) {
+            log_message('error', 'EllaContractors: Failed to add outlook_event_id column - ' . $e->getMessage());
+        }
+    }
+    
+    if (!$CI->db->field_exists('outlook_calendar_link', db_prefix() . 'appointly_appointments')) {
+        try {
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD COLUMN `outlook_calendar_link` VARCHAR(255) NULL DEFAULT NULL AFTER `outlook_event_id`');
+            $CI->db->query('ALTER TABLE `' . db_prefix() . 'appointly_appointments` ADD INDEX `idx_outlook_calendar_link` (`outlook_calendar_link`)');
+            log_message('info', 'EllaContractors: outlook_calendar_link column added successfully');
+        } catch (Exception $e) {
+            log_message('error', 'EllaContractors: Failed to add outlook_calendar_link column - ' . $e->getMessage());
+        }
+    }
+    
+    // Create appointment_outlook_events junction table to track per-staff Outlook event IDs
+    // This allows each staff member to have their own Outlook Calendar event ID for the same appointment
+    // Uses Perfex CRM standard rel_type/rel_id/org_id pattern for flexibility (no foreign key constraints)
+    if (!$CI->db->table_exists(db_prefix() . 'appointment_outlook_events')) {
+        $CI->db->query('CREATE TABLE `' . db_prefix() . 'appointment_outlook_events` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `rel_type` varchar(50) DEFAULT "appointment" COMMENT "Related entity type",
+            `rel_id` int(11) NOT NULL COMMENT "Appointment ID",
+            `org_id` int(11) DEFAULT NULL COMMENT "Organization ID for multi-tenant support",
+            `staff_id` int(11) NOT NULL COMMENT "Staff member who owns this calendar event",
+            `outlook_event_id` varchar(255) NOT NULL COMMENT "Outlook Calendar event ID",
+            `outlook_calendar_id` varchar(255) DEFAULT "primary" COMMENT "Outlook Calendar ID (usually primary)",
+            `outlook_calendar_link` varchar(500) DEFAULT NULL COMMENT "Web link to event in Outlook",
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `unique_rel_staff` (`rel_type`, `rel_id`, `staff_id`),
+            KEY `idx_rel_type_id` (`rel_type`, `rel_id`),
+            KEY `idx_org_id` (`org_id`),
+            KEY `idx_staff_id` (`staff_id`),
+            KEY `idx_outlook_event_id` (`outlook_event_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=' . $CI->db->char_set . ';');
+        
+        log_message('info', 'EllaContractors: appointment_outlook_events junction table created successfully');
+    }
+    
+    // Initialize Outlook Calendar configuration options (if not exist)
+    if (get_option('outlook_calendar_client_id') === false) {
+        add_option('outlook_calendar_client_id', '');
+    }
+    if (get_option('outlook_calendar_client_secret') === false) {
+        add_option('outlook_calendar_client_secret', '');
+    }
+    if (get_option('outlook_calendar_tenant_id') === false) {
+        add_option('outlook_calendar_tenant_id', 'common');
+    }
+    if (get_option('outlook_calendar_redirect_uri') === false) {
+        // Default redirect URI
+        $redirect_uri = site_url('ella_contractors/outlook_auth/callback');
+        add_option('outlook_calendar_redirect_uri', $redirect_uri);
+    }
+    
+    log_message('info', 'EllaContractors: Outlook Calendar options initialized successfully');
+    
+    // ==================== END OUTLOOK CALENDAR INTEGRATION - DATABASE SETUP ====================
     
     // Set module version
     update_option('ella_contractors_version', '1.0.0');

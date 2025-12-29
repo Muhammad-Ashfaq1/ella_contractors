@@ -85,11 +85,11 @@
                 }
             });
 
+            // Always load tutorial steps (needed for restart functionality)
+            this.loadTutorialSteps();
+            
             // Check if tutorial should be shown
             if (this.shouldShowTutorial()) {
-                // Load tutorial steps configuration
-                this.loadTutorialSteps();
-                
                 // Wait for page to be fully loaded
                 $(document).ready(function() {
                     // Small delay to ensure all elements are rendered
@@ -105,13 +105,13 @@
          * @returns {boolean}
          */
         shouldShowTutorial: function() {
-            // Check localStorage first (client-side)
+            // Check localStorage first (instant client-side check)
             var dismissed = localStorage.getItem(this.config.storageKeyDismissed);
             if (dismissed === 'true') {
                 return false;
             }
 
-            // Check server-side preference
+            // Check server-side preference (database for cross-device persistence)
             var self = this;
             $.ajax({
                 url: admin_url + 'ella_contractors/appointments/check_estimate_tutorial_status',
@@ -121,6 +121,8 @@
                 success: function(response) {
                     if (response && response.show_tutorial === false) {
                         self.config.shouldShow = false;
+                        // Sync to localStorage for future instant checks
+                        localStorage.setItem(self.config.storageKeyDismissed, 'true');
                     }
                 },
                 error: function() {
@@ -973,33 +975,25 @@
             }
 
             var tooltip = this.state.tooltip;
-            var tooltipWidth = tooltip.outerWidth();
-            var tooltipHeight = tooltip.outerHeight();
-            var windowWidth = $(window).width();
-            var windowHeight = $(window).height();
-            var scrollTop = $(window).scrollTop();
-            var scrollLeft = $(window).scrollLeft();
-
-            var top = scrollTop + (windowHeight / 2) - (tooltipHeight / 2);
-            var left = scrollLeft + (windowWidth / 2) - (tooltipWidth / 2);
+            
+            // Use percentage-based centering with transform for perfect centering on all screen sizes
+            var cssProps = {
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                visibility: 'visible',
+                opacity: 1,
+                zIndex: 1041
+            };
 
             if (skipTransition) {
-                tooltip.css({
-                    top: top + 'px',
-                    left: left + 'px',
-                    visibility: 'visible',
-                    opacity: 1,
-                    transition: 'none'
-                });
+                cssProps.transition = 'none';
             } else {
-                tooltip.css({
-                    top: top + 'px',
-                    left: left + 'px',
-                    visibility: 'visible',
-                    opacity: 1,
-                    transition: 'opacity 0.3s ease-out'
-                });
+                cssProps.transition = 'opacity 0.3s ease-out';
             }
+
+            tooltip.css(cssProps);
         },
 
         /**
@@ -1070,7 +1064,7 @@
             // Skip button
             this.state.tooltip.find('.tutorial-btn-skip').on('click', function(e) {
                 e.preventDefault();
-                self.complete();
+                self.skip();
             });
 
         },
@@ -1097,20 +1091,64 @@
          * Complete tutorial
          */
         complete: function() {
-            localStorage.setItem(this.config.storageKey, 'true');
+            this.dismiss(false);
+        },
+
+        /**
+         * Skip tutorial
+         */
+        skip: function() {
+            this.dismiss(true);
+        },
+
+        /**
+         * Dismiss tutorial (used by complete and skip)
+         * @param {boolean} dontShowAgain - Permanent dismissal flag
+         */
+        dismiss: function(dontShowAgain) {
+            // Save preference locally first (instant)
+            if (dontShowAgain) {
+                localStorage.setItem(this.config.storageKeyDismissed, 'true');
+            } else {
+                localStorage.setItem(this.config.storageKey, 'true');
+            }
+
+            // Save to server (database for cross-device persistence)
+            $.ajax({
+                url: admin_url + 'ella_contractors/appointments/save_estimate_tutorial_preference',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    dismissed: 1,
+                    [csrf_token_name]: csrf_hash
+                },
+                success: function(response) {
+                    console.log('Estimate tutorial preference saved to server:', response);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Failed to save estimate tutorial preference to server:', error);
+                }
+            });
+            
             this.cleanup();
             this.state.isActive = false;
         },
 
         /**
          * Restart tutorial
+         * Note: localStorage clearing and server reset should be done by the caller
+         * This method just restarts the tutorial UI flow
          */
         restart: function() {
-            localStorage.removeItem(this.config.storageKey);
-            localStorage.removeItem(this.config.storageKeyDismissed);
+            // Cleanup current tutorial state
             this.cleanup();
+            
+            // Reset state
             this.state.isActive = false;
             this.state.currentStepIndex = 0;
+            this.config.shouldShow = true;
+            
+            // Start from beginning (steps already loaded in init)
             this.start();
         },
 
@@ -1155,6 +1193,7 @@
 
     // Initialize when DOM is ready
     $(document).ready(function() {
+        console.log('EstimateTutorial initialized');
         // Only initialize if we're on the proposals/estimates listing page
         // Check for key elements that exist on the proposals manage page
         if ($('.table-proposals').length || $('.panel-body._buttons .btn-info').length) {

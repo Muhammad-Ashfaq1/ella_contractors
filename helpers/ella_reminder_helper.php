@@ -204,15 +204,27 @@ function ella_send_reminder_email($appointment_id, $stage)
     }
     
     $stage = strtolower($stage);
-    $type  = $stage === 'staff_48h' ? 'staff' : 'client';
+    $type  = ($stage === 'staff_48h' || $stage === 'staff_same_day') ? 'staff' : 'client';
     $context = $stage;
     
     // Generate ICS file
     $ics_file = ella_generate_ics($appointment_id, $type);
 
-    // Prepare presentation links block
+    // Prepare presentation links block (especially for same-day staff reminders)
     $presentations_for_email = ella_get_presentation_links_for_email($appointment_id);
     $appointment->presentation_block = ella_build_presentation_block_html($presentations_for_email);
+    
+    // Load template from database
+    $CI->load->model('ella_contractors/Reminder_template_model');
+    $template_record = $CI->Reminder_template_model->get_by_stage($stage, 'email', $type);
+    
+    if (!$template_record || !$template_record->is_active) {
+        // Fallback to default template if database template not found
+        $template_record = (object)[
+            'subject' => $stage === 'client_instant' ? 'Appointment Confirmation: {appointment_subject}' : 'Appointment Reminder: {appointment_subject}',
+            'content' => $type === 'staff' ? ella_get_staff_reminder_template() : ella_get_client_reminder_template()
+        ];
+    }
     
     if ($type === 'staff') {
         // Send reminder to the staff member who created the appointment
@@ -227,9 +239,6 @@ function ella_send_reminder_email($appointment_id, $stage)
         
         $to_email = $staff->email;
         $to_name = trim($staff->firstname . ' ' . $staff->lastname);
-        $subject_prefix = 'Your Appointment Reminder: ';
-        $subject = $subject_prefix . $appointment->subject;
-        $template = 'staff_appointment_reminder';
     } else {
         // Default to the email stored on the appointment
         $to_email = $appointment->email;
@@ -256,17 +265,11 @@ function ella_send_reminder_email($appointment_id, $stage)
             log_message('error', 'EllaContractors: Cannot send client email - No recipient email address for appointment ' . $appointment_id);
             return false;
         }
-
-        $subject_prefix = 'Appointment Reminder: ';
-        if ($stage === 'client_instant') {
-            $subject_prefix = 'Appointment Confirmation: ';
-        }
-        $subject = $subject_prefix . $appointment->subject;
-        $template = 'client_appointment_reminder';
     }
 
-    // Build email body from template
-    $email_body = ella_parse_email_template($template, $appointment, $type);
+    // Parse template with appointment data
+    $email_body = ella_parse_email_template_from_db($template_record->content, $appointment, $type);
+    $subject = ella_parse_email_template_from_db($template_record->subject ?? '', $appointment, $type);
 
     // Ensure presentation links are visible even if template lacks placeholder
     if (!empty($appointment->presentation_block)
@@ -582,7 +585,7 @@ function ella_send_reminder_sms($appointment_id, $stage)
     }
 
     $stage   = strtolower($stage);
-    $type    = $stage === 'staff_48h' ? 'staff' : 'client';
+    $type    = ($stage === 'staff_48h' || $stage === 'staff_same_day') ? 'staff' : 'client';
     $context = $stage;
 
     if ($type === 'staff') {
@@ -602,7 +605,17 @@ function ella_send_reminder_sms($appointment_id, $stage)
             return false;
         }
 
-        $message = 'Reminder: ' . $appointment->subject . ' on ' . date('F j, Y g:i A', strtotime($appointment->date . ' ' . $appointment->start_hour));
+        // Load template from database
+        $CI->load->model('ella_contractors/Reminder_template_model');
+        $template_record = $CI->Reminder_template_model->get_by_stage($stage, 'sms', 'staff');
+        
+        if ($template_record && $template_record->is_active) {
+            $message = ella_parse_sms_template_from_db($template_record->content, $appointment, 'staff');
+        } else {
+            // Fallback to default message
+            $message = 'Reminder: ' . $appointment->subject . ' on ' . date('F j, Y g:i A', strtotime($appointment->date . ' ' . $appointment->start_hour));
+        }
+        
         $dispatch = ella_dispatch_sms($normalized, $message, [
             'appointment_id' => $appointment_id,
             'staff_id'       => $appointment->created_by,
@@ -659,7 +672,17 @@ function ella_send_reminder_sms($appointment_id, $stage)
         return false;
     }
 
-    $message = 'Reminder: ' . $appointment->subject . ' on ' . date('F j, Y g:i A', strtotime($appointment->date . ' ' . $appointment->start_hour));
+    // Load template from database
+    $CI->load->model('ella_contractors/Reminder_template_model');
+    $template_record = $CI->Reminder_template_model->get_by_stage($stage, 'sms', 'client');
+    
+    if ($template_record && $template_record->is_active) {
+        $message = ella_parse_sms_template_from_db($template_record->content, $appointment, 'client');
+    } else {
+        // Fallback to default message
+        $message = 'Reminder: ' . $appointment->subject . ' on ' . date('F j, Y g:i A', strtotime($appointment->date . ' ' . $appointment->start_hour));
+    }
+    
     $dispatch = ella_dispatch_sms($normalized, $message, [
         'appointment_id' => $appointment_id,
         'lead_id'        => $leadId,
@@ -887,7 +910,9 @@ function ella_run_reminder_dispatch()
             'app.reminder_channel',
             'app.send_reminder',
             'app.reminder_48h',
+            'app.reminder_same_day',
             'app.staff_reminder_48h',
+            'app.staff_reminder_same_day',
             'app.appointment_status',
             'app.source',
         ])
@@ -908,6 +933,8 @@ function ella_run_reminder_dispatch()
 
         $hoursUntil = ella_hours_until_appointment($row);
         $within48Hours = $hoursUntil !== null && $hoursUntil <= 48 && $hoursUntil >= 0;
+        $withinSameDay = $hoursUntil !== null && $hoursUntil <= 24 && $hoursUntil >= 0;
+        
         // // condition 1 client instant confirmation starts here 
         if ((int)$row->client_instant_remind === 1 && (int)$row->client_instant_sent === 0) {
             if ($sendEmail && ella_send_reminder_email($row->appointment_id, 'client_instant')) {
@@ -937,6 +964,24 @@ function ella_run_reminder_dispatch()
             }
         }
         //Condition 3 staff 48-hour reminder ends here
+        
+        //Condition 4 client same-day reminder starts here
+        if ((int)$row->client_same_day === 1 && (int)$row->client_same_day_sent === 0 && (int)$row->reminder_same_day === 1 && $withinSameDay) {
+            if ($sendEmail && ella_send_reminder_email($row->appointment_id, 'client_same_day')) {
+                $CI->appointment_reminder_model->mark_email_stage_sent($row->appointment_id, 'client_same_day');
+                $notificationsSent++;
+            }
+        }
+        //Condition 4 client same-day reminder ends here
+        
+        //Condition 5 staff same-day reminder starts here (includes presentations)
+        if ((int)$row->staff_same_day === 1 && (int)$row->staff_same_day_sent === 0 && (int)$row->staff_reminder_same_day === 1 && $withinSameDay) {
+            if ($sendEmail && ella_send_reminder_email($row->appointment_id, 'staff_same_day')) {
+                $CI->appointment_reminder_model->mark_email_stage_sent($row->appointment_id, 'staff_same_day');
+                $notificationsSent++;
+            }
+        }
+        //Condition 5 staff same-day reminder ends here
         
         // =========================
         // SMS Conditions
@@ -977,6 +1022,33 @@ function ella_run_reminder_dispatch()
         ) {
             if (ella_send_reminder_sms($row->appointment_id, 'staff_48h')) {
                 $CI->appointment_reminder_model->mark_sms_stage_sent($row->appointment_id, 'staff_48h');
+                $notificationsSent++;
+            }
+        }
+        
+        // Condition 4: Client same-day SMS reminder
+        if ($sendSms
+            && (int)$row->client_sms_reminder === 1
+            && (int)$row->client_same_day === 1
+            && (int)$row->reminder_same_day === 1
+            && (int)$row->client_sms_same_day_sent === 0
+            && $withinSameDay
+        ) {
+            if (ella_send_reminder_sms($row->appointment_id, 'client_same_day')) {
+                $CI->appointment_reminder_model->mark_sms_stage_sent($row->appointment_id, 'client_same_day');
+                $notificationsSent++;
+            }
+        }
+        
+        // Condition 5: Staff same-day SMS reminder
+        if ($sendSms
+            && (int)$row->staff_same_day === 1
+            && (int)$row->staff_reminder_same_day === 1
+            && (int)$row->staff_sms_same_day_sent === 0
+            && $withinSameDay
+        ) {
+            if (ella_send_reminder_sms($row->appointment_id, 'staff_same_day')) {
+                $CI->appointment_reminder_model->mark_sms_stage_sent($row->appointment_id, 'staff_same_day');
                 $notificationsSent++;
             }
         }

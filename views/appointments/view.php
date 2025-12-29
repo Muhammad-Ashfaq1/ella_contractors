@@ -426,27 +426,84 @@ html {
                                 <!-- Reminder Settings Section -->
                                 <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 4px;">
                                     <h5 style="margin-top: 0;">Reminder Settings</h5>
-                                
                                     
-                                    <div class="checkbox checkbox-primary">
-                                        <input type="checkbox" 
-                                               id="reminder_48h_toggle" 
-                                               data-appointment-id="<?php echo $appointment->id; ?>"
-                                               <?php echo (isset($appointment->reminder_48h) && $appointment->reminder_48h == 1) ? 'checked' : ''; ?>>
-                                        <label for="reminder_48h_toggle">
-                                            <strong>2 Day Notice</strong> - Send 48 hours before appointment
-                                        </label>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <h6 style="margin-top: 15px; margin-bottom: 10px; font-weight: bold;">Client Reminders</h6>
+                                            
+                                            <div class="checkbox checkbox-primary">
+                                                <input type="checkbox" 
+                                                       id="reminder_48h_toggle" 
+                                                       data-appointment-id="<?php echo $appointment->id; ?>"
+                                                       data-field="reminder_48h"
+                                                       <?php echo (isset($appointment->reminder_48h) && $appointment->reminder_48h == 1) ? 'checked' : ''; ?>>
+                                                <label for="reminder_48h_toggle">
+                                                    2 Day Notice
+                                                    <i class="fa fa-info-circle text-info reminder-template-preview" 
+                                                       data-reminder-stage="client_48h" 
+                                                       data-template-type="email" 
+                                                       data-recipient-type="client"
+                                                       style="cursor: pointer; margin-left: 5px;" 
+                                                       title="Preview/Edit Email Template"></i>
+                                                </label>
+                                            </div>
+                                            
+                                            <div class="checkbox checkbox-primary">
+                                                <input type="checkbox" 
+                                                       id="reminder_same_day_toggle" 
+                                                       data-appointment-id="<?php echo $appointment->id; ?>"
+                                                       data-field="reminder_same_day"
+                                                       <?php echo (isset($appointment->reminder_same_day) && $appointment->reminder_same_day == 1) ? 'checked' : ''; ?>>
+                                                <label for="reminder_same_day_toggle">
+                                                    Same Day Reminder
+                                                    <i class="fa fa-info-circle text-info reminder-template-preview" 
+                                                       data-reminder-stage="client_same_day" 
+                                                       data-template-type="email" 
+                                                       data-recipient-type="client"
+                                                       style="cursor: pointer; margin-left: 5px;" 
+                                                       title="Preview/Edit Email Template"></i>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-sm-12">
+                                            <h6 style="margin-top: 15px; margin-bottom: 10px; font-weight: bold;">My Reminder</h6>
+                                            
+                                            <div class="checkbox checkbox-success">
+                                                <input type="checkbox" 
+                                                       id="staff_reminder_48h_toggle" 
+                                                       data-appointment-id="<?php echo $appointment->id; ?>"
+                                                       data-field="staff_reminder_48h"
+                                                       <?php echo (isset($appointment->staff_reminder_48h) && $appointment->staff_reminder_48h == 1) ? 'checked' : ''; ?>>
+                                                <label for="staff_reminder_48h_toggle">
+                                                    2 Day Notice
+                                                    <i class="fa fa-info-circle text-info reminder-template-preview" 
+                                                       data-reminder-stage="staff_48h" 
+                                                       data-template-type="email" 
+                                                       data-recipient-type="staff"
+                                                       style="cursor: pointer; margin-left: 5px;" 
+                                                       title="Preview/Edit Email Template"></i>
+                                                </label>
+                                            </div>
+                                            
+                                            <div class="checkbox checkbox-success">
+                                                <input type="checkbox" 
+                                                       id="staff_reminder_same_day_toggle" 
+                                                       data-appointment-id="<?php echo $appointment->id; ?>"
+                                                       data-field="staff_reminder_same_day"
+                                                       <?php echo (isset($appointment->staff_reminder_same_day) && $appointment->staff_reminder_same_day == 1) ? 'checked' : ''; ?>>
+                                                <label for="staff_reminder_same_day_toggle">
+                                                    Same Day Reminder
+                                                    <i class="fa fa-info-circle text-info reminder-template-preview" 
+                                                       data-reminder-stage="staff_same_day" 
+                                                       data-template-type="email" 
+                                                       data-recipient-type="staff"
+                                                       style="cursor: pointer; margin-left: 5px;" 
+                                                       title="Preview/Edit Email Template (includes presentations)"></i>
+                                                </label>
+                                            </div>
+                                        </div>
                                     </div>
-
-                                    <?php 
-                                        $reminder_template_id = $this->db->get_where('tblemailtemplates', array('slug' => 'reminder-email-staff', 'type' => 'appointment'))->row()->emailtemplateid ?? 10;
-                                    ?>
-                                    
-                                    <p class="text-muted" style="margin-top: 10px; margin-bottom: 0; font-size: 12px;">
-                                        <a href="<?php echo admin_url('emails/email_template/' . $reminder_template_id); ?>" target="_blank" style="color: #7f8c8d;">
-                                            <i class="fa fa-edit"></i> Edit Reminder Template
-                                        </a>
-                                    </p>
                                 </div>
                             
                             </div>
@@ -905,21 +962,100 @@ function loadAttendeesDisplay(appointmentId) {
     });
 }
 
+// Function to open reminder template modal
+function openReminderTemplateModal(reminderStage, templateType, recipientType, appointmentId) {
+    appointmentId = appointmentId || <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
+    
+    // Show loading
+    $('#reminderTemplateModal').modal('show');
+    $('#template_content').val('Loading...');
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_reminder_template_preview',
+        type: 'POST',
+        data: {
+            reminder_stage: reminderStage,
+            template_type: templateType,
+            recipient_type: recipientType,
+            appointment_id: appointmentId,
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success && response.template) {
+                var template = response.template;
+                $('#template_id').val(template.id);
+                $('#template_name').val(template.name);
+                $('#template_subject').val(template.subject || '');
+                $('#template_content').val(template.content);
+                $('#template_reminder_stage').val(reminderStage);
+                $('#template_type').val(templateType);
+                $('#template_recipient_type').val(recipientType);
+                
+                // Update reminder type display
+                var reminderTypeText = '';
+                if (reminderStage === 'client_instant') reminderTypeText = ' - Client Instant Confirmation';
+                else if (reminderStage === 'client_48h') reminderTypeText = ' - Client 48-Hour Reminder';
+                else if (reminderStage === 'client_same_day') reminderTypeText = ' - Client Same Day Reminder';
+                else if (reminderStage === 'staff_48h') reminderTypeText = ' - Staff 48-Hour Reminder';
+                else if (reminderStage === 'staff_same_day') reminderTypeText = ' - Staff Same Day Reminder';
+                $('#template_reminder_type_display').text(reminderTypeText);
+                
+                // Show/hide subject field based on template type
+                if (templateType === 'email') {
+                    $('#template_subject_group').show();
+                    // Update preview with rendered HTML
+                    if (typeof updateTemplatePreview === 'function') {
+                        updateTemplatePreview(template.content);
+                    }
+                } else {
+                    $('#template_subject_group').hide();
+                    $('#template_preview_container').html('<div class="alert alert-info"><strong>SMS Template:</strong> This is a text message template. The preview shows the actual message that will be sent.</div><pre style="background: #f5f5f5; padding: 15px; border-radius: 4px; white-space: pre-wrap;">' + escapeHtml(template.content) + '</pre>');
+                }
+            } else {
+                alert_float('danger', response.message || 'Failed to load template');
+                $('#reminderTemplateModal').modal('hide');
+            }
+        },
+        error: function() {
+            alert_float('danger', 'Error loading template');
+            $('#reminderTemplateModal').modal('hide');
+        }
+    });
+}
+
 // Handle reminder checkbox changes in real-time
 $(document).ready(function() {
-    // Bind change event to reminder checkboxes
-    $('#reminder_48h_toggle').on('change', function() {
+    // Bind change event to all reminder checkboxes
+    $('[id$="_toggle"]').filter(function() {
+        return $(this).data('appointment-id') !== undefined;
+    }).on('change', function() {
         var $checkbox = $(this);
         var appointmentId = $checkbox.data('appointment-id');
-        var checkboxId = $checkbox.attr('id');
+        var field = $checkbox.data('field');
         var isChecked = $checkbox.is(':checked');
+        
+        if (!field) {
+            console.error('Field not specified for checkbox:', $checkbox.attr('id'));
+            return;
+        }
+        
+        // Get friendly name for the reminder
+        var fieldNames = {
+            'reminder_48h': '2 Day Notice (Client)',
+            'reminder_same_day': 'Same Day Reminder (Client)',
+            'staff_reminder_48h': '2 Day Notice (Staff)',
+            'staff_reminder_same_day': 'Same Day Reminder (Staff)'
+        };
+        var friendlyName = fieldNames[field] || field;
+        
         // Make AJAX call to update setting
         $.ajax({
             url: admin_url + 'ella_contractors/appointments/update_reminder_setting',
             type: 'POST',
             data: {
                 appointment_id: appointmentId,
-                field: 'reminder_48h',
+                field: field,
                 value: isChecked ? 1 : 0,
                 [csrf_token_name]: csrf_hash
             },
@@ -927,7 +1063,7 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     var action = isChecked ? 'enabled' : 'disabled';
-                    alert_float('success', '2 Day Notice' + ' ' + action + ' successfully');
+                    alert_float('success', friendlyName + ' ' + action + ' successfully');
                 } else {
                     alert_float('danger', response.message || 'Failed to update reminder setting');
                     // Revert checkbox state on failure
@@ -940,6 +1076,103 @@ $(document).ready(function() {
                 $checkbox.prop('checked', !isChecked);
             }
         });
+    });
+    
+    // Handle reminder template preview icon clicks
+    $(document).on('click', '.reminder-template-preview', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        var reminderStage = $(this).data('reminder-stage');
+        var templateType = $(this).data('template-type');
+        var recipientType = $(this).data('recipient-type');
+        
+        openReminderTemplateModal(reminderStage, templateType, recipientType, appointmentId);
+    });
+});
+
+// Update template preview when content changes
+function updateTemplatePreview(htmlContent) {
+    // Create an iframe to render the HTML safely
+    var previewContainer = $('#template_preview_container');
+    previewContainer.html('<iframe id="template_preview_iframe" style="width: 100%; height: 600px; border: 1px solid #ddd; background: white;"></iframe>');
+    
+    var iframe = document.getElementById('template_preview_iframe');
+    var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(htmlContent);
+    iframeDoc.close();
+}
+
+// Update preview when content changes in edit tab
+$('#template_content').on('input', function() {
+    if ($('#template-preview-tab').hasClass('active')) {
+        var content = $(this).val();
+        if ($('#template_type').val() === 'email') {
+            updateTemplatePreview(content);
+        }
+    }
+});
+
+// Update preview when switching to preview tab
+$('a[href="#template-preview-tab"]').on('shown.bs.tab', function() {
+    var content = $('#template_content').val();
+    if ($('#template_type').val() === 'email') {
+        updateTemplatePreview(content);
+    }
+});
+
+// Toggle merge fields help
+$('#toggle_merge_fields_help').on('click', function() {
+    $('#merge_fields_help').slideToggle();
+    var btnText = $(this).find('i').hasClass('fa-question-circle') ? 
+        '<i class="fa fa-times-circle"></i> Hide Available Fields' : 
+        '<i class="fa fa-question-circle"></i> Show Available Fields';
+    $(this).html(btnText);
+});
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    var map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+// Save Template
+$('#saveTemplateBtn').on('click', function() {
+    var formData = {
+        id: $('#template_id').val(),
+        template_name: $('#template_name').val(),
+        template_type: $('#template_type').val(),
+        reminder_stage: $('#template_reminder_stage').val(),
+        recipient_type: $('#template_recipient_type').val(),
+        subject: $('#template_subject').val(),
+        content: $('#template_content').val(),
+        is_active: $('#template_is_active').is(':checked') ? 1 : 0,
+        [csrf_token_name]: csrf_hash
+    };
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/save_reminder_template',
+        type: 'POST',
+        data: formData,
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                alert_float('success', response.message);
+                $('#reminderTemplateModal').modal('hide');
+            } else {
+                alert_float('danger', response.message || 'Failed to save template');
+            }
+        },
+        error: function() {
+            alert_float('danger', 'Error saving template');
+        }
     });
 });
 
@@ -1198,6 +1431,7 @@ function deleteAppointment(appointmentId) {
 
 <?php $this->load->view('appointments/modal'); ?>
 <?php $this->load->view('appointments/sms_modal'); ?>
+<?php $this->load->view('appointments/reminder_template_modal'); ?>
 
 <script>
 // Include the appointment modal functions from index.php
@@ -1283,9 +1517,12 @@ function resetAppointmentModal() {
         $('#modal-presentation-list').html('<p style="text-align: center; color: #778485; margin: 10px 0;">None</p>');
     }
     
-    // Reset reminder checkboxes to default (checked)
+    // Reset reminder checkboxes to default (all checked)
     $('#send_reminder').prop('checked', true);
     $('#reminder_48h').prop('checked', true);
+    $('#reminder_same_day').prop('checked', true);
+    $('#staff_reminder_48h').prop('checked', true);
+    $('#staff_reminder_same_day').prop('checked', true);
     // Reminder channel defaults to 'both' (Email + SMS) via hidden field
     $('input[name="reminder_channel"]').val('both');
 }
@@ -1301,7 +1538,11 @@ function openAppointmentModal(appointmentId = null) {
     
     // Show modal immediately for new appointments
     if (!appointmentId) {
-        $('#appointmentModal').modal('show');
+        $('#appointmentModal').modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true
+        });
     } else {
         // For editing, use the dedicated function that loads data first
         loadAppointmentDataAndShowModal(appointmentId);
@@ -1606,7 +1847,11 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 $('#saveAppointment').text('Save Appointment');
                 
                 // Show modal after data is loaded
-                $('#appointmentModal').modal('show');
+                $('#appointmentModal').modal({
+                    backdrop: 'static',
+                    keyboard: false,
+                    show: true
+                });
                 
             } else {
                 alert_float('danger', response.message);
@@ -1749,15 +1994,22 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    alert_float('success', response.message);
+                    // Close modal first
                     $('#appointmentModal').modal('hide');
                     resetAppointmentModal();
-                    // Refresh attendees display
-                    loadAttendeesDisplay(<?php echo $appointment->id; ?>);
-                    // Reload the page to show updated data
-                    window.location.reload();
+                    
+                    // Show success message with timeout before reload
+                    alert_float('success', response.message || 'Appointment updated successfully!', 2000);
+                    
+                    // Delay page reload to allow alert to show
+                    setTimeout(function() {
+                        // Refresh attendees display
+                        loadAttendeesDisplay(<?php echo $appointment->id; ?>);
+                        // Reload the page to show updated data
+                        window.location.reload();
+                    }, 2000); // 2 second delay allows user to see success message
                 } else {
-                    alert_float('danger', response.message);
+                    alert_float('danger', response.message || 'Failed to update appointment');
                 }
             },
             error: function(xhr, status, error) {

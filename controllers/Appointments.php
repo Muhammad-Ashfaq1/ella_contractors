@@ -7,10 +7,17 @@ class Appointments extends AdminController
         parent::__construct();
         $this->load->model('ella_contractors/Ella_appointments_model', 'appointments_model');
         $this->load->model('ella_contractors/Appointment_reminder_model', 'appointment_reminder_model');
+        $this->load->model('ella_contractors/Reminder_template_model', 'reminder_template_model');
         $this->load->model('staff_model');
         $this->load->model('clients_model');
         $this->load->model('leads_model');
         $this->load->model('misc_model');
+        
+        // Load calendar sync helper
+        $calendar_helper_path = module_dir_path('ella_contractors', 'helpers/calendar_sync_helper.php');
+        if (file_exists($calendar_helper_path)) {
+            require_once($calendar_helper_path);
+        }
     }
     
     
@@ -399,7 +406,9 @@ class Appointments extends AdminController
             'source' => 'ella_contractor',
             'send_reminder' => $this->input->post('send_reminder') ? 1 : 0,
             'reminder_48h' => $this->input->post('reminder_48h') ? 1 : 0,
+            'reminder_same_day' => $this->input->post('reminder_same_day') ? 1 : 0,
             'staff_reminder_48h' => $this->input->post('staff_reminder_48h') ? 1 : 0,
+            'staff_reminder_same_day' => $this->input->post('staff_reminder_same_day') ? 1 : 0,
             'reminder_channel' => $this->normalize_reminder_channel($this->input->post('reminder_channel'))
         ];
         
@@ -426,8 +435,9 @@ class Appointments extends AdminController
                     // Update reminder tracking record
                     $this->appointment_reminder_model->sync_from_appointment($appointment_id, $data);
                     
-                    // Sync to Google Calendar if staff has connected
-                    $this->sync_to_google_calendar($appointment_id, 'update');
+                    // Sync to calendars (Google and Outlook) if staff has connected
+                    $this->sync_to_calendar($appointment_id, 'update', 'google');
+                    $this->sync_to_calendar($appointment_id, 'update', 'outlook');
                     
                     echo json_encode([
                         'success' => true,
@@ -473,8 +483,9 @@ class Appointments extends AdminController
                     // Create reminder tracking record
                     $this->appointment_reminder_model->sync_from_appointment($appointment_id, $data);
                     
-                    // Sync to Google Calendar if staff has connected
-                    $this->sync_to_google_calendar($appointment_id, 'create');
+                    // Sync to calendars (Google and Outlook) if staff has connected
+                    $this->sync_to_calendar($appointment_id, 'create', 'google');
+                    $this->sync_to_calendar($appointment_id, 'create', 'outlook');
                     
                     echo json_encode([
                         'success' => true,
@@ -517,9 +528,10 @@ class Appointments extends AdminController
         $appointment = $this->appointments_model->get_appointment($id);
         $staff_id = $appointment ? $appointment->created_by : null;
         
-        // Sync delete to Google Calendar before deleting from database
+        // Sync delete to calendars (Google and Outlook) before deleting from database
         if ($appointment && $staff_id) {
-            $this->sync_to_google_calendar($id, 'delete');
+            $this->sync_to_calendar($id, 'delete', 'google');
+            $this->sync_to_calendar($id, 'delete', 'outlook');
         }
         
         if ($this->appointments_model->delete_appointment($id)) {
@@ -597,7 +609,7 @@ class Appointments extends AdminController
      */
     private function handle_attendees($appointment_id)
     {
-        // Get existing attendees for comparison (for Google Calendar sync)
+        // Get existing attendees for comparison (for calendar sync)
         $old_attendees = $this->appointments_model->get_appointment_attendees($appointment_id);
         
         $attendees = $this->input->post('attendees');
@@ -614,9 +626,10 @@ class Appointments extends AdminController
             // Get new attendees for comparison
             $new_attendees = $this->appointments_model->get_appointment_attendees($appointment_id);
             
-            // Sync assignee changes to Google Calendar
+            // Sync assignee changes to both Google Calendar and Outlook Calendar
             if (!empty($old_attendees) || !empty($new_attendees)) {
                 $this->sync_assignee_change($appointment_id, $old_attendees, $new_attendees);
+                $this->sync_outlook_assignee_change($appointment_id, $old_attendees, $new_attendees);
             }
         }
     }
@@ -2077,6 +2090,9 @@ startxref
             'proposal_created' => _l('timeline_action_proposal_created'),
             'proposal_updated' => _l('timeline_action_proposal_updated'),
             'proposal_deleted' => _l('timeline_action_proposal_deleted'),
+            'estimates_created' => _l('timeline_action_estimates_created'),
+            'estimates_updated' => _l('timeline_action_estimates_updated'),
+            'estimates_deleted' => _l('timeline_action_estimates_deleted'),
             'process_completed' => _l('timeline_action_process_completed'),
             'process_failed' => _l('timeline_action_process_failed'),
             'appointment_deleted' => _l('timeline_action_deleted')
@@ -2139,7 +2155,7 @@ startxref
         }
         
         $appointment_id = $this->input->post('appointment_id');
-        $field = $this->input->post('field'); // 'send_reminder' or 'reminder_48h'
+        $field = $this->input->post('field'); // 'send_reminder', 'reminder_48h', 'reminder_same_day', 'staff_reminder_48h', 'staff_reminder_same_day'
         $value = $this->input->post('value'); // 0 or 1
         
         // Validate inputs
@@ -2151,8 +2167,16 @@ startxref
             return;
         }
         
-        // Validate field name for security
-        if (!in_array($field, ['send_reminder', 'reminder_48h'])) {
+        // Validate field name for security - allow all reminder fields
+        $allowed_fields = [
+            'send_reminder',
+            'reminder_48h',
+            'reminder_same_day',
+            'staff_reminder_48h',
+            'staff_reminder_same_day'
+        ];
+        
+        if (!in_array($field, $allowed_fields)) {
             echo json_encode([
                 'success' => false,
                 'message' => 'Invalid field name'
@@ -2176,7 +2200,14 @@ startxref
         
         if ($result) {
             // Log activity
-            $reminder_type = $field === 'send_reminder' ? 'Instant reminder' : '48-hour reminder';
+            $reminder_type_map = [
+                'send_reminder' => 'Instant reminder',
+                'reminder_48h' => '48-hour reminder (Client)',
+                'reminder_same_day' => 'Same day reminder (Client)',
+                'staff_reminder_48h' => '48-hour reminder (Staff)',
+                'staff_reminder_same_day' => 'Same day reminder (Staff)'
+            ];
+            $reminder_type = isset($reminder_type_map[$field]) ? $reminder_type_map[$field] : $field;
             $action = $value ? 'enabled' : 'disabled';
             
             $this->appointments_model->add_activity_log(
@@ -2189,6 +2220,9 @@ startxref
                     'value' => $value
                 ]
             );
+            
+            // Also update the reminder tracking record
+            $this->appointment_reminder_model->sync_from_appointment($appointment_id, $update_data);
             
             echo json_encode([
                 'success' => true,
@@ -2640,153 +2674,469 @@ startxref
     }
 
     /**
-     * Sync appointment to Google Calendar
-     * Handles sync for creator and all attendees who have Google Calendar connected
+     * Check service items tutorial status for current user
+     * Returns whether tutorial should be shown
      * 
-     * @param int $appointment_id Appointment ID
-     * @param string $action Action: 'create', 'update', or 'delete'
-     * @return bool Success status
+     * @return json
      */
-    private function sync_to_google_calendar($appointment_id, $action = 'create')
+    public function check_service_items_tutorial_status()
     {
-        // Load Google Calendar sync library
-        $this->load->library('ella_contractors/Google_calendar_sync');
-
-        // Get appointment data
-        $appointment = $this->appointments_model->get_appointment($appointment_id);
-        if (!$appointment || $appointment->source !== 'ella_contractor') {
-            return false;
+        if (!is_staff_logged_in()) {
+            echo json_encode(['show_tutorial' => false]);
+            return;
         }
 
-        try {
-            // Get all staff who should have this appointment in their calendar
-            $staff_to_sync = [];
-            
-            // Add creator
-            if (!empty($appointment->created_by)) {
-                $staff_to_sync[] = $appointment->created_by;
-            }
-            
-            // Add attendees
-            $attendees = $this->appointments_model->get_appointment_attendees($appointment_id);
-            foreach ($attendees as $attendee) {
-                if (!empty($attendee['staffid']) && !in_array($attendee['staffid'], $staff_to_sync)) {
-                    $staff_to_sync[] = $attendee['staffid'];
-                }
-            }
+        $staff_id = get_staff_user_id();
+        
+        // Check user meta for tutorial dismissal
+        if (!function_exists('get_meta')) {
+            $this->load->helper('user_meta');
+        }
+        
+        $tutorial_dismissed = get_meta('staff', $staff_id, 'ella_contractors_service_items_tutorial_dismissed');
+        
+        $show_tutorial = empty($tutorial_dismissed) || $tutorial_dismissed != '1';
+        
+        echo json_encode([
+            'show_tutorial' => $show_tutorial,
+            'dismissed' => $tutorial_dismissed == '1'
+        ]);
+    }
 
-            // Sync for each connected staff member
-            $synced_count = 0;
-            foreach ($staff_to_sync as $staff_id) {
-                // Check if staff has Google Calendar connected
-                $status = $this->google_calendar_sync->get_connection_status($staff_id);
-                if (!$status || !$status['connected']) {
-                    continue; // Skip if not connected
-                }
+    /**
+     * Save service items tutorial preference (dismissed state)
+     * 
+     * @return json
+     */
+    public function save_service_items_tutorial_preference()
+    {
+        if (!is_staff_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ]);
+            return;
+        }
 
-                // Perform sync based on action
-                $result = false;
-                switch ($action) {
-                    case 'create':
-                        $result = $this->google_calendar_sync->create_event($appointment_id, $staff_id);
-                        break;
-                    
-                    case 'update':
-                        // Check if appointment status changed to cancelled
-                        if (isset($appointment->appointment_status) && $appointment->appointment_status === 'cancelled') {
-                            $result = $this->google_calendar_sync->delete_event($appointment_id, $staff_id);
-                        } else {
-                            $result = $this->google_calendar_sync->update_event($appointment_id, $staff_id);
-                        }
-                        break;
-                    
-                    case 'delete':
-                        $result = $this->google_calendar_sync->delete_event($appointment_id, $staff_id);
-                        break;
-                    
-                    default:
-                        continue 2; // Skip to next staff
-                }
-
-                if ($result !== false) {
-                    $synced_count++;
-                }
-            }
-
-            return $synced_count > 0;
-        } catch (Exception $e) {
-            log_message('error', 'Google Calendar sync error: ' . $e->getMessage());
-            return false;
+        $staff_id = get_staff_user_id();
+        $dismissed = $this->input->post('dismissed') ? 1 : 0;
+        
+        // Load user meta helper if not loaded
+        if (!function_exists('update_meta')) {
+            $this->load->helper('user_meta');
+        }
+        
+        // Save preference
+        $result = update_meta('staff', $staff_id, 'ella_contractors_service_items_tutorial_dismissed', $dismissed);
+        
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Tutorial preference saved successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to save tutorial preference'
+            ]);
         }
     }
 
     /**
-     * Handle assignee change - sync to Google Calendar
-     * This is called when attendees are updated
+     * Reset service items tutorial for current user
+     * Allows users to restart the service items tutorial
+     * 
+     * @return json
      */
-    private function sync_assignee_change($appointment_id, $old_assignees, $new_assignees)
+    public function reset_service_items_tutorial()
     {
-        // Load Google Calendar sync library
-        $this->load->library('ella_contractors/Google_calendar_sync');
-
-        $appointment = $this->appointments_model->get_appointment($appointment_id);
-        if (!$appointment || $appointment->source !== 'ella_contractor') {
+        if (!is_staff_logged_in()) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ]);
             return;
         }
 
-        // Get old and new staff IDs
-        $old_staff_ids = [];
-        if (!empty($old_assignees)) {
-            $old_staff_ids = array_column($old_assignees, 'staffid');
+        $staff_id = get_staff_user_id();
+        
+        // Load user meta helper if not loaded
+        if (!function_exists('delete_meta')) {
+            $this->load->helper('user_meta');
         }
-        // Always include creator in old list
-        if (!empty($appointment->created_by) && !in_array($appointment->created_by, $old_staff_ids)) {
-            $old_staff_ids[] = $appointment->created_by;
+        
+        // Remove tutorial dismissal preference
+        $result = delete_meta('staff', $staff_id, 'ella_contractors_service_items_tutorial_dismissed');
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Service items tutorial reset successfully. Refresh the page to see it again.'
+        ]);
+    }
+
+    /**
+     * Sync appointment to calendar (Google or Outlook)
+     * Wrapper for calendar_sync_helper functions
+     */
+    private function sync_to_calendar($appointment_id, $action = 'create', $provider = 'google')
+    {
+        return sync_appointment_to_calendar($this, $appointment_id, $action, $provider);
+    }
+
+    /**
+     * Handle assignee change - sync to calendar (Google or Outlook)
+     * Wrapper for calendar_sync_helper functions
+     */
+    private function sync_calendar_assignee_change($appointment_id, $old_assignees, $new_assignees, $provider = 'google')
+    {
+        sync_calendar_assignee_change($this, $appointment_id, $old_assignees, $new_assignees, $provider);
+    }
+
+    /**
+     * Wrapper: Sync appointment to Google Calendar
+     * @deprecated Use sync_to_calendar($appointment_id, $action, 'google') instead
+     */
+    private function sync_to_google_calendar($appointment_id, $action = 'create')
+    {
+        return $this->sync_to_calendar($appointment_id, $action, 'google');
+    }
+    
+    /**
+     * Wrapper: Sync appointment to Outlook Calendar
+     * @deprecated Use sync_to_calendar($appointment_id, $action, 'outlook') instead
+     */
+    private function sync_to_outlook_calendar($appointment_id, $action = 'create')
+    {
+        return $this->sync_to_calendar($appointment_id, $action, 'outlook');
+                }
+    
+    /**
+     * Wrapper: Handle assignee change for Google Calendar
+     * @deprecated Use sync_calendar_assignee_change($appointment_id, $old, $new, 'google') instead
+     */
+    private function sync_assignee_change($appointment_id, $old_assignees, $new_assignees)
+    {
+        $this->sync_calendar_assignee_change($appointment_id, $old_assignees, $new_assignees, 'google');
+        }
+    
+    /**
+     * Wrapper: Handle assignee change for Outlook Calendar
+     * @deprecated Use sync_calendar_assignee_change($appointment_id, $old, $new, 'outlook') instead
+     */
+    private function sync_outlook_assignee_change($appointment_id, $old_assignees, $new_assignees)
+    {
+        $this->sync_calendar_assignee_change($appointment_id, $old_assignees, $new_assignees, 'outlook');
+    }
+
+    /**
+     * Get reminder template preview (AJAX)
+     * Creates default template if none exists
+     */
+    public function get_reminder_template_preview()
+    {
+        if (!has_permission('ella_contractors', '', 'view')) {
+            ajax_access_denied();
         }
 
-        $new_staff_ids = [];
-        if (!empty($new_assignees)) {
-            $new_staff_ids = array_column($new_assignees, 'staffid');
-        }
-        // Always include creator in new list
-        if (!empty($appointment->created_by) && !in_array($appointment->created_by, $new_staff_ids)) {
-            $new_staff_ids[] = $appointment->created_by;
+        $reminder_stage = $this->input->post('reminder_stage');
+        $template_type = $this->input->post('template_type'); // 'email' or 'sms'
+        $recipient_type = $this->input->post('recipient_type'); // 'client' or 'staff'
+        $appointment_id = $this->input->post('appointment_id');
+
+        if (!$reminder_stage || !$template_type || !$recipient_type) {
+            echo json_encode(['success' => false, 'message' => 'Missing required parameters']);
+            return;
         }
 
-        // Find removed staff (need to delete from their calendars, but not creator)
-        $removed_staff = array_diff($old_staff_ids, $new_staff_ids);
-        foreach ($removed_staff as $staff_id) {
-            // Don't delete from creator's calendar (they should always have it)
-            if ($staff_id == $appointment->created_by) {
-                continue;
-            }
+        $template = $this->reminder_template_model->get_by_stage($reminder_stage, $template_type, $recipient_type);
+        
+        // If template doesn't exist, create a default one
+        if (!$template) {
+            $template = $this->create_default_template($reminder_stage, $template_type, $recipient_type);
             
-            $status = $this->google_calendar_sync->get_connection_status($staff_id);
-            if ($status && $status['connected']) {
-                $this->google_calendar_sync->delete_event($appointment_id, $staff_id);
+            if (!$template) {
+                echo json_encode(['success' => false, 'message' => 'Failed to create default template']);
+                return;
             }
         }
 
-        // Find added staff (need to create in their calendars)
-        $added_staff = array_diff($new_staff_ids, $old_staff_ids);
-        foreach ($added_staff as $staff_id) {
-            $status = $this->google_calendar_sync->get_connection_status($staff_id);
-            if ($status && $status['connected']) {
-                // Check if event already exists for this staff (should not, but safety check)
-                $existing_event_id = null;
-                if ($staff_id == $appointment->created_by && !empty($appointment->google_event_id)) {
-                    $existing_event_id = $appointment->google_event_id;
+        // Extract which fields are currently in the template
+        $available_fields = [
+            '{appointment_subject}',
+            '{appointment_date}',
+            '{appointment_time}',
+            '{appointment_location}',
+            '{client_name}',
+            '{staff_name}',
+            '{company_name}',
+            '{company_phone}',
+            '{company_email}',
+            '{appointment_notes}',
+            '{presentation_block}',
+            '{crm_link}'
+        ];
+        
+        $included_fields = [];
+        foreach ($available_fields as $field) {
+            if (strpos($template->content, $field) !== false || strpos($template->subject, $field) !== false) {
+                $included_fields[] = $field;
+            }
+        }
+        
+        // If appointment_id provided, parse template with actual data for preview
+        $preview_content = $template->content;
+        $preview_subject = $template->subject;
+        
+        if ($appointment_id) {
+            $appointment = $this->appointments_model->get_appointment($appointment_id);
+            if ($appointment) {
+                $preview_content = $this->parse_template($template->content, $appointment, $recipient_type);
+                if ($template->subject) {
+                    $preview_subject = $this->parse_template($template->subject, $appointment, $recipient_type);
                 }
-                
-                if ($existing_event_id) {
-                    // Update existing event
-                    $this->google_calendar_sync->update_event($appointment_id, $staff_id);
-                } else {
-                    // Create new event
-                    $this->google_calendar_sync->create_event($appointment_id, $staff_id);
+            }
+        } else {
+            // For preview without appointment, highlight fields with yellow background
+            foreach ($available_fields as $field) {
+                $field_name = trim($field, '{}');
+                $preview_content = str_replace($field, '<span style="background: #fff3cd; padding: 2px 5px; border-radius: 3px; font-weight: bold;">' . $field . '</span>', $preview_content);
+                $preview_subject = str_replace($field, '<span style="background: #fff3cd; padding: 2px 5px; border-radius: 3px; font-weight: bold;">' . $field . '</span>', $preview_subject);
+            }
+        }
+
+        echo json_encode([
+            'success' => true,
+            'template' => [
+                'id' => $template->id,
+                'name' => $template->template_name,
+                'subject' => $preview_subject,
+                'content' => $preview_content,
+                'original_subject' => $template->subject,
+                'original_content' => $template->content,
+                'type' => $template->template_type,
+                'included_fields' => $included_fields
+            ]
+        ]);
+    }
+
+    /**
+     * Create default template if none exists
+     */
+    private function create_default_template($reminder_stage, $template_type, $recipient_type)
+    {
+        // Load email templates helper
+        $email_templates_helper = module_dir_path('ella_contractors', 'helpers/ella_email_templates_helper.php');
+        if (file_exists($email_templates_helper) && !function_exists('ella_get_client_reminder_template')) {
+            require_once($email_templates_helper);
+        }
+        
+        // Define default templates
+        $default_templates = [
+            'client_instant' => [
+                'email' => [
+                    'name' => 'Client Instant Email',
+                    'subject' => 'Appointment Confirmation: {appointment_subject}',
+                    'content' => function_exists('ella_get_client_reminder_template') ? ella_get_client_reminder_template() : $this->get_fallback_client_email_template()
+                ],
+                'sms' => [
+                    'name' => 'Client Instant SMS',
+                    'subject' => null,
+                    'content' => 'Appointment Confirmed: {appointment_subject} on {appointment_date} at {appointment_time}. Location: {appointment_location}'
+                ]
+            ],
+            'client_48h' => [
+                'email' => [
+                    'name' => 'Client 48h Email',
+                    'subject' => 'Appointment Reminder: {appointment_subject}',
+                    'content' => function_exists('ella_get_client_reminder_template') ? ella_get_client_reminder_template() : $this->get_fallback_client_email_template()
+                ],
+                'sms' => [
+                    'name' => 'Client 48h SMS',
+                    'subject' => null,
+                    'content' => 'Reminder: {appointment_subject} on {appointment_date} at {appointment_time}. Location: {appointment_location}'
+                ]
+            ],
+            'client_same_day' => [
+                'email' => [
+                    'name' => 'Client Same Day Email',
+                    'subject' => 'Reminder: Your Appointment Today - {appointment_subject}',
+                    'content' => function_exists('ella_get_client_reminder_template') ? ella_get_client_reminder_template() : $this->get_fallback_client_email_template()
+                ],
+                'sms' => [
+                    'name' => 'Client Same Day SMS',
+                    'subject' => null,
+                    'content' => 'Reminder: Your appointment {appointment_subject} is today at {appointment_time}. Location: {appointment_location}'
+                ]
+            ],
+            'staff_48h' => [
+                'email' => [
+                    'name' => 'Staff 48h Email',
+                    'subject' => 'Your Appointment Reminder: {appointment_subject}',
+                    'content' => function_exists('ella_get_staff_reminder_template') ? ella_get_staff_reminder_template() : $this->get_fallback_staff_email_template()
+                ],
+                'sms' => [
+                    'name' => 'Staff 48h SMS',
+                    'subject' => null,
+                    'content' => 'Reminder: {appointment_subject} with {client_name} on {appointment_date} at {appointment_time}'
+                ]
+            ],
+            'staff_same_day' => [
+                'email' => [
+                    'name' => 'Staff Same Day Email',
+                    'subject' => 'Reminder: Appointment Today - {appointment_subject}',
+                    'content' => function_exists('ella_get_staff_reminder_template') ? ella_get_staff_reminder_template() : $this->get_fallback_staff_email_template()
+                ],
+                'sms' => [
+                    'name' => 'Staff Same Day SMS',
+                    'subject' => null,
+                    'content' => 'Reminder: Appointment {appointment_subject} with {client_name} is today at {appointment_time}. Location: {appointment_location}'
+                ]
+            ]
+        ];
+        
+        if (!isset($default_templates[$reminder_stage][$template_type])) {
+            return false;
+        }
+        
+        $default = $default_templates[$reminder_stage][$template_type];
+        
+        $data = [
+            'template_name' => $default['name'],
+            'template_type' => $template_type,
+            'reminder_stage' => $reminder_stage,
+            'recipient_type' => $recipient_type,
+            'subject' => $default['subject'],
+            'content' => is_callable($default['content']) ? $default['content']() : $default['content'],
+            'is_active' => 1,
+            'created_by' => get_staff_user_id() ?: 0
+        ];
+        
+        $template_id = $this->reminder_template_model->create($data);
+        
+        if ($template_id) {
+            return $this->reminder_template_model->get($template_id);
+        }
+        
+        return false;
+    }
+
+    /**
+     * Get fallback client email template
+     */
+    private function get_fallback_client_email_template()
+    {
+        return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family: Arial; padding: 20px;"><h2>Appointment Confirmation</h2><p>Dear {client_name},</p><p>This is a confirmation of your upcoming appointment.</p><p><strong>Appointment:</strong> {appointment_subject}<br><strong>Date:</strong> {appointment_date}<br><strong>Time:</strong> {appointment_time}<br><strong>Location:</strong> {appointment_location}</p><p>{appointment_notes}</p><p>{presentation_block}</p><p>Best regards,<br>{company_name}</p></body></html>';
+    }
+
+    /**
+     * Get fallback staff email template
+     */
+    private function get_fallback_staff_email_template()
+    {
+        return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family: Arial; padding: 20px;"><h2>Appointment Reminder</h2><p>Hi {staff_name},</p><p>This is a reminder about your upcoming appointment.</p><p><strong>Appointment:</strong> {appointment_subject}<br><strong>Client:</strong> {client_name}<br><strong>Date:</strong> {appointment_date}<br><strong>Time:</strong> {appointment_time}<br><strong>Location:</strong> {appointment_location}</p><p><strong>Notes:</strong><br>{appointment_notes}</p><p>{presentation_block}</p><p><a href="{crm_link}">View in CRM</a></p><p>Best regards,<br>{company_name} CRM</p></body></html>';
+    }
+
+    /**
+     * Save reminder template (AJAX)
+     */
+    public function save_reminder_template()
+    {
+        if (!has_permission('ella_contractors', '', 'edit')) {
+            ajax_access_denied();
+        }
+
+        $id = $this->input->post('id');
+        
+        // Get content from either direct input or from template_structure
+        $content = $this->input->post('content');
+        $template_structure = $this->input->post('template_structure');
+        
+        // If template_structure is provided, rebuild content from it
+        if ($template_structure) {
+            $structure = json_decode($template_structure, true);
+            if ($structure && isset($structure['html'])) {
+                $content = $structure['html'];
+            }
+        }
+        
+        $data = [
+            'template_name' => $this->input->post('template_name'),
+            'template_type' => $this->input->post('template_type'),
+            'reminder_stage' => $this->input->post('reminder_stage'),
+            'recipient_type' => $this->input->post('recipient_type'),
+            'subject' => $this->input->post('subject'),
+            'content' => $content,
+            'is_active' => $this->input->post('is_active') ? 1 : 0
+        ];
+
+        if ($id) {
+            $result = $this->reminder_template_model->update($id, $data);
+            $message = $result ? 'Template updated successfully' : 'Failed to update template';
+        } else {
+            $id = $this->reminder_template_model->create($data);
+            $result = $id > 0;
+            $message = $result ? 'Template created successfully' : 'Failed to create template';
+        }
+
+        echo json_encode([
+            'success' => $result,
+            'message' => $message,
+            'id' => $id
+        ]);
+    }
+
+    /**
+     * Parse template with appointment data
+     */
+    private function parse_template($template, $appointment, $recipient_type = 'client')
+    {
+        $CI = &get_instance();
+        $CI->load->model('leads_model');
+        $CI->load->model('clients_model');
+
+        // Get client/lead name
+        $client_or_lead_name = 'Valued Customer';
+        if (!empty($appointment->contact_id)) {
+            if (!empty($appointment->lead_name)) {
+                $client_or_lead_name = $appointment->lead_name;
+            } else {
+                $client = $CI->clients_model->get($appointment->contact_id);
+                if ($client) {
+                    $client_or_lead_name = $client->company ?: trim(($client->firstname ?? '') . ' ' . ($client->lastname ?? ''));
                 }
             }
         }
+
+        // Get presentation block for staff same-day reminders
+        $presentation_block = '';
+        if ($recipient_type === 'staff' && in_array($appointment->reminder_stage ?? '', ['staff_same_day'])) {
+            if (!function_exists('ella_get_presentation_links_for_email')) {
+                require_once(module_dir_path('ella_contractors', 'helpers/ella_reminder_helper.php'));
+            }
+            $presentations_for_email = ella_get_presentation_links_for_email($appointment->id);
+            $presentation_block = ella_build_presentation_block_html($presentations_for_email);
+        }
+
+        $replacements = [
+            '{appointment_subject}' => htmlspecialchars($appointment->subject ?? ''),
+            '{appointment_date}' => $appointment->date ? date('F j, Y', strtotime($appointment->date)) : '',
+            '{appointment_time}' => $appointment->start_hour ? date('g:i A', strtotime($appointment->start_hour)) : '',
+            '{appointment_location}' => htmlspecialchars($appointment->address ?: 'Online/Phone Call'),
+            '{client_name}' => htmlspecialchars($client_or_lead_name),
+            '{staff_name}' => get_staff_full_name($appointment->created_by ?? 0),
+            '{company_name}' => get_option('companyname') ?: 'Our Company',
+            '{company_phone}' => get_option('company_phone_number') ?: '',
+            '{company_email}' => get_option('company_email') ?: '',
+            '{crm_link}' => $recipient_type === 'staff' ? admin_url('ella_contractors/appointments/view/' . $appointment->id) : '',
+            '{appointment_notes}' => !empty($appointment->notes) ? nl2br(htmlspecialchars($appointment->notes)) : 'No additional notes',
+            '{presentation_block}' => $presentation_block,
+        ];
+
+        foreach ($replacements as $key => $value) {
+            $template = str_replace($key, $value, $template);
+        }
+
+        return $template;
     }
 
     

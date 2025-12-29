@@ -249,9 +249,28 @@ button.delete-btn {
   padding-left: 5px !important;
   cursor: pointer !important;
 }
+
+/* Fix modal backdrop - make it lighter and semi-transparent */
+#appointmentModal.modal.fade.in {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.modal-backdrop.in {
+  opacity: 0.5 !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Ensure modal stays on top of backdrop */
+#appointmentModal {
+  z-index: 1050 !important;
+}
+
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
 </style>
 
-<div class="modal fade" id="appointmentModal" tabindex="-1" role="dialog" aria-labelledby="appointmentModalLabel">
+<div class="modal fade" id="appointmentModal" tabindex="-1" role="dialog" aria-labelledby="appointmentModalLabel" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -359,20 +378,67 @@ button.delete-btn {
                                     <h5>Client Reminders</h5>
                                     <div class="checkbox checkbox-primary">
                                         <input type="checkbox" name="send_reminder" id="send_reminder" value="1" checked>
-                                        <label for="send_reminder">Appointment Creation Notice</label>
+                                        <label for="send_reminder">
+                                            Appointment Creation Notice
+                                            <i class="fa fa-info-circle text-info reminder-template-preview" 
+                                               data-reminder-stage="client_instant" 
+                                               data-template-type="email" 
+                                               data-recipient-type="client"
+                                               style="cursor: pointer; margin-left: 5px;" 
+                                               title="Preview/Edit Email Template"></i>
+                                        </label>
                                     </div>
                                     <div class="checkbox checkbox-primary">
                                         <input type="checkbox" name="reminder_48h" id="reminder_48h" value="1" checked>
-                                        <label for="reminder_48h">2 Day Notice</label>
+                                        <label for="reminder_48h">
+                                            2 Day Notice
+                                            <i class="fa fa-info-circle text-info reminder-template-preview" 
+                                               data-reminder-stage="client_48h" 
+                                               data-template-type="email" 
+                                               data-recipient-type="client"
+                                               style="cursor: pointer; margin-left: 5px;" 
+                                               title="Preview/Edit Email Template"></i>
+                                        </label>
+                                    </div>
+                                    <div class="checkbox checkbox-primary">
+                                        <input type="checkbox" name="reminder_same_day" id="reminder_same_day" value="1" checked>
+                                        <label for="reminder_same_day">
+                                            Same Day Reminder
+                                            <i class="fa fa-info-circle text-info reminder-template-preview" 
+                                               data-reminder-stage="client_same_day" 
+                                               data-template-type="email" 
+                                               data-recipient-type="client"
+                                               style="cursor: pointer; margin-left: 5px;" 
+                                               title="Preview/Edit Email Template"></i>
+                                        </label>
                                     </div>
                                 </div>
                                 <div class="col-sm-12">
                                     <h5>My Reminder</h5>
                                     <div class="checkbox checkbox-success">
                                         <input type="checkbox" name="staff_reminder_48h" id="staff_reminder_48h" value="1" checked>
-                                        <label for="staff_reminder_48h">2 Day Notice</label>
+                                        <label for="staff_reminder_48h">
+                                            2 Day Notice
+                                            <i class="fa fa-info-circle text-info reminder-template-preview" 
+                                               data-reminder-stage="staff_48h" 
+                                               data-template-type="email" 
+                                               data-recipient-type="staff"
+                                               style="cursor: pointer; margin-left: 5px;" 
+                                               title="Preview/Edit Email Template"></i>
+                                        </label>
                                     </div>
-                                    <!-- <p class="text-muted">You will receive an email reminder 48 hours before this appointment</p> -->
+                                    <div class="checkbox checkbox-success">
+                                        <input type="checkbox" name="staff_reminder_same_day" id="staff_reminder_same_day" value="1" checked>
+                                        <label for="staff_reminder_same_day">
+                                            Same Day Reminder
+                                            <i class="fa fa-info-circle text-info reminder-template-preview" 
+                                               data-reminder-stage="staff_same_day" 
+                                               data-template-type="email" 
+                                               data-recipient-type="staff"
+                                               style="cursor: pointer; margin-left: 5px;" 
+                                               title="Preview/Edit Email Template (includes presentations)"></i>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -415,4 +481,7 @@ button.delete-btn {
     </div>
 </div>
 
-
+<?php 
+// Include the reusable reminder template modal
+$this->load->view('appointments/reminder_template_modal');
+?>

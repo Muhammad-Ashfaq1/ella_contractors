@@ -82,6 +82,41 @@
                                                         <i class="fa fa-unlink" style="margin-right: 6px;"></i> Disconnect
                                                     </a>
                                                 </li>
+                                                
+                                                <!-- Outlook Calendar Integration -->
+                                                <li role="separator" class="divider"></li>
+                                                <li id="outlook-calendar-connect-item">
+                                                    <a href="#" id="outlook-calendar-connect-btn" data-toggle="tooltip" title="Connect Outlook Calendar">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="16" height="16" style="vertical-align: middle; margin-right: 6px;">
+                                                            <path fill="#03A9F4" d="M24,4C13,4,4,13,4,24s9,20,20,20s20-9,20-20S35,4,24,4z"/>
+                                                            <path fill="#FFF" d="M24,34.3c-5.7,0-10.3-4.6-10.3-10.3S18.3,13.7,24,13.7S34.3,18.3,34.3,24S29.7,34.3,24,34.3z M24,16.7 c-4,0-7.3,3.3-7.3,7.3s3.3,7.3,7.3,7.3s7.3-3.3,7.3-7.3S28,16.7,24,16.7z"/>
+                                                            <path fill="#FFF" d="M24,28c-2.2,0-4-1.8-4-4s1.8-4,4-4s4,1.8,4,4S26.2,28,24,28z M24,22c-1.1,0-2,0.9-2,2s0.9,2,2,2 s2-0.9,2-2S25.1,22,24,22z"/>
+                                                        </svg>
+                                                        Connect Outlook Calendar
+                                                    </a>
+                                                </li>
+                                                <!-- Outlook Calendar Connected Status (hidden by default) -->
+                                                <li id="outlook-calendar-connected-item" style="display:none;">
+                                                    <a href="#" class="text-success" style="cursor: default; pointer-events: none;">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="16" height="16" style="vertical-align: middle; margin-right: 6px;">
+                                                            <path fill="#4caf50" d="M24,4C13,4,4,13,4,24s9,20,20,20s20-9,20-20S35,4,24,4z"/>
+                                                            <path fill="#FFF" d="M24,34.3c-5.7,0-10.3-4.6-10.3-10.3S18.3,13.7,24,13.7S34.3,18.3,34.3,24S29.7,34.3,24,34.3z M24,16.7 c-4,0-7.3,3.3-7.3,7.3s3.3,7.3,7.3,7.3s7.3-3.3,7.3-7.3S28,16.7,24,16.7z"/>
+                                                            <path fill="#FFF" d="M24,28c-2.2,0-4-1.8-4-4s1.8-4,4-4s4,1.8,4,4S26.2,28,24,28z M24,22c-1.1,0-2,0.9-2,2s0.9,2,2,2 s2-0.9,2-2S25.1,22,24,22z"/>
+                                                        </svg>
+                                                        Outlook Calendar Connected ✓
+                                                    </a>
+                                                </li>
+                                                <li id="outlook-calendar-sync-item" style="display:none;">
+                                                    <a href="#" id="outlook-calendar-sync-now">
+                                                        <i class="fa fa-refresh" style="margin-right: 6px;"></i> Sync Now
+                                                    </a>
+                                                </li>
+                                                <li role="separator" class="divider" id="outlook-calendar-divider" style="display:none;"></li>
+                                                <li id="outlook-calendar-disconnect-item" style="display:none;">
+                                                    <a href="#" id="outlook-calendar-disconnect" style="color: #e74c3c;">
+                                                        <i class="fa fa-unlink" style="margin-right: 6px;"></i> Disconnect
+                                                    </a>
+                                                </li>
                                             </ul>
                                         </div>
                                         <!-- Filter Dropdown -->
@@ -486,8 +521,9 @@ function init_combined_ajax_search(selector) {
 }
 
 $(document).ready(function() {
-    // Check Google Calendar connection status on page load
-    checkGoogleCalendarStatus();
+    // Check calendar connection status on page load (Google and Outlook)
+    checkCalendarStatus('google');
+    checkCalendarStatus('outlook');
     
     // Initialize DataTable for appointments
     // Sort by column 4 (Scheduled datetime - combined date+time for proper chronological sorting) descending by default
@@ -594,7 +630,11 @@ $(document).ready(function() {
     // New appointment button click handler
     $('#new-appointment').on('click', function() {
         openNewAppointmentModal();
-        $('#appointmentModal').modal('show');
+        $('#appointmentModal').modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true
+        });
     });
     
     // Check for edit parameter in URL
@@ -802,7 +842,11 @@ function openNewAppointmentModal(appointmentId = null) {
     if (!appointmentId) {
         // Reload staff members for attendees dropdown
         loadStaffForAttendees();
-        $('#appointmentModal').modal('show');
+        $('#appointmentModal').modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true
+        });
     } else {
         // For editing, use the dedicated function that loads data first
         loadAppointmentDataAndShowModal(appointmentId);
@@ -1075,7 +1119,11 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 }
                 
                 // Show modal after data is loaded
-                $('#appointmentModal').modal('show');
+                $('#appointmentModal').modal({
+                    backdrop: 'static',
+                    keyboard: false,
+                    show: true
+                });
                 
             } else {
                 alert_float('danger', response.message);
@@ -1143,11 +1191,305 @@ function resetAppointmentModal() {
         $('#modal-presentation-list').html('<p style="text-align: center; color: #778485; margin: 10px 0;">None</p>');
     }
     
-    // Reset reminder checkboxes to default (checked)
+    // Reset reminder checkboxes to default (all checked)
     $('#send_reminder').prop('checked', true);
     $('#reminder_48h').prop('checked', true);
+    $('#reminder_same_day').prop('checked', true);
+    $('#staff_reminder_48h').prop('checked', true);
+    $('#staff_reminder_same_day').prop('checked', true);
     $('#reminder_channel_both').prop('checked', true);
 }
+
+// Template Preview/Edit Functionality - User-Friendly Version
+var currentTemplateData = null;
+
+$(document).on('click', '.reminder-template-preview', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    var $icon = $(this);
+    var reminderStage = $icon.data('reminder-stage');
+    var templateType = $icon.data('template-type');
+    var recipientType = $icon.data('recipient-type');
+    var appointmentId = $('#appointment_id').val() || null;
+    
+    // Show loading
+    $('#reminderTemplateModal').modal('show');
+    $('#template_preview_container').html('<p class="text-center text-muted"><i class="fa fa-spinner fa-spin"></i> Loading template...</p>');
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/get_reminder_template_preview',
+        type: 'POST',
+        data: {
+            reminder_stage: reminderStage,
+            template_type: templateType,
+            recipient_type: recipientType,
+            appointment_id: appointmentId,
+            [csrf_token_name]: csrf_hash
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success && response.template) {
+                var template = response.template;
+                currentTemplateData = {
+                    original_content: template.original_content || template.content,
+                    original_subject: template.original_subject || template.subject,
+                    included_fields: template.included_fields || []
+                };
+                
+                $('#template_id').val(template.id);
+                $('#template_name').val(template.name);
+                $('#template_subject').val(template.original_subject || template.subject || '');
+                $('#template_reminder_stage').val(reminderStage);
+                $('#template_type').val(templateType);
+                $('#template_recipient_type').val(recipientType);
+                
+                // Update reminder type display
+                var reminderTypeText = '';
+                if (reminderStage === 'client_instant') reminderTypeText = ' - Client Instant Confirmation';
+                else if (reminderStage === 'client_48h') reminderTypeText = ' - Client 48-Hour Reminder';
+                else if (reminderStage === 'client_same_day') reminderTypeText = ' - Client Same Day Reminder';
+                else if (reminderStage === 'staff_48h') reminderTypeText = ' - Staff 48-Hour Reminder';
+                else if (reminderStage === 'staff_same_day') reminderTypeText = ' - Staff Same Day Reminder';
+                $('#template_reminder_type_display').text(reminderTypeText);
+                
+                // Show/hide staff-only fields
+                if (recipientType === 'staff') {
+                    $('#field_presentation_block_wrapper').show();
+                    $('#field_crm_link_wrapper').show();
+                } else {
+                    $('#field_presentation_block_wrapper').hide();
+                    $('#field_crm_link_wrapper').hide();
+                }
+                
+                // Set checkboxes based on included fields
+                $('input[data-field]').each(function() {
+                    var field = $(this).data('field');
+                    $(this).prop('checked', currentTemplateData.included_fields.indexOf(field) !== -1);
+                });
+                
+                // Show subject field for email
+                if (templateType === 'email') {
+                    $('#template_subject_group').show();
+                } else {
+                    $('#template_subject_group').hide();
+                }
+                
+                // Build and display preview
+                rebuildTemplatePreview();
+            } else {
+                alert_float('danger', response.message || 'Failed to load template');
+                $('#reminderTemplateModal').modal('hide');
+            }
+        },
+        error: function() {
+            alert_float('danger', 'Error loading template');
+            $('#reminderTemplateModal').modal('hide');
+        }
+    });
+});
+
+// Rebuild template preview based on selected fields - with real-time updates
+function rebuildTemplatePreview() {
+    if (!currentTemplateData) return;
+    
+    var selectedFields = [];
+    $('input[data-field]:checked').each(function() {
+        selectedFields.push($(this).data('field'));
+    });
+    
+    // Get current content from preview or use original
+    var html = $('#template_content').val() || currentTemplateData.original_content;
+    
+    // If preview has been edited, use that as base
+    var previewHtml = $('#template_preview_container').html();
+    if (previewHtml && previewHtml !== '<p class="text-center text-muted"><i class="fa fa-spinner fa-spin"></i> Loading template...</p>') {
+        // Extract actual HTML from preview (remove highlighting)
+        var allFields = ['{appointment_subject}', '{appointment_date}', '{appointment_time}', '{appointment_location}', 
+                         '{client_name}', '{staff_name}', '{company_name}', '{company_phone}', '{company_email}', 
+                         '{appointment_notes}', '{presentation_block}', '{crm_link}'];
+        
+        allFields.forEach(function(field) {
+            var regex = new RegExp('<span[^>]*>' + field.replace(/[{}]/g, '\\$&') + '<\\/span>', 'gi');
+            previewHtml = previewHtml.replace(regex, field);
+        });
+        html = previewHtml;
+    }
+    
+    // Remove fields that are not selected - more intelligent removal
+    var allFields = ['{appointment_subject}', '{appointment_date}', '{appointment_time}', '{appointment_location}', 
+                     '{client_name}', '{staff_name}', '{company_name}', '{company_phone}', '{company_email}', 
+                     '{appointment_notes}', '{presentation_block}', '{crm_link}'];
+    
+    allFields.forEach(function(field) {
+        if (selectedFields.indexOf(field) === -1) {
+            // Remove this field from the template with context awareness
+            var fieldEscaped = field.replace(/[{}]/g, '\\$&');
+            
+            // Pattern 1: Remove field with surrounding whitespace and common separators
+            html = html.replace(new RegExp('\\s*' + fieldEscaped + '\\s*', 'g'), '');
+            
+            // Pattern 2: Remove field in common HTML patterns like <p>{field}</p>, <div>{field}</div>, etc.
+            html = html.replace(new RegExp('<[^>]+>\\s*' + fieldEscaped + '\\s*<\\/[^>]+>', 'gi'), '');
+            
+            // Pattern 3: Remove field with colons, dashes, etc. (e.g., "Date: {appointment_date}")
+            html = html.replace(new RegExp('[^>]*:?\\s*' + fieldEscaped + '\\s*[^<]*', 'gi'), '');
+            
+            // Pattern 4: Remove field standalone
+            html = html.replace(new RegExp(fieldEscaped, 'g'), '');
+        }
+    });
+    
+    // Clean up empty HTML tags and excessive whitespace
+    html = html.replace(/<p>\s*<\/p>/gi, '');
+    html = html.replace(/<div>\s*<\/div>/gi, '');
+    html = html.replace(/<td>\s*<\/td>/gi, '');
+    html = html.replace(/<tr>\s*<\/tr>/gi, '');
+    html = html.replace(/\s+/g, ' ');
+    html = html.replace(/>\s+</g, '><');
+    
+    // Highlight remaining fields with yellow background for preview
+    selectedFields.forEach(function(field) {
+        var fieldEscaped = field.replace(/[{}]/g, '\\$&');
+        var highlighted = '<span style="background: #fff3cd; padding: 2px 5px; border-radius: 3px; font-weight: bold; display: inline-block;">' + field + '</span>';
+        html = html.replace(new RegExp(fieldEscaped, 'g'), highlighted);
+    });
+    
+    // Update preview container with editable content
+    $('#template_preview_container').html(html);
+    
+    // Store the cleaned HTML (without highlighting) in hidden field for saving
+    var cleanHtml = html;
+    selectedFields.forEach(function(field) {
+        var fieldEscaped = field.replace(/[{}]/g, '\\$&');
+        var regex = new RegExp('<span[^>]*>' + fieldEscaped + '<\\/span>', 'gi');
+        cleanHtml = cleanHtml.replace(regex, field);
+    });
+    $('#template_content').val(cleanHtml);
+    
+    // Update currentTemplateData with the modified content
+    currentTemplateData.modified_content = cleanHtml;
+}
+
+// Handle field checkbox changes - with real-time preview update
+$(document).on('change', 'input[data-field]', function() {
+    // Immediately update preview
+    rebuildTemplatePreview();
+    
+    // Also update the stored content to reflect field changes
+    var cleanHtml = $('#template_preview_container').html();
+    var allFields = ['{appointment_subject}', '{appointment_date}', '{appointment_time}', '{appointment_location}', 
+                     '{client_name}', '{staff_name}', '{company_name}', '{company_phone}', '{company_email}', 
+                     '{appointment_notes}', '{presentation_block}', '{crm_link}'];
+    
+    // Remove highlighting
+    allFields.forEach(function(field) {
+        var regex = new RegExp('<span[^>]*>' + field.replace(/[{}]/g, '\\$&') + '<\\/span>', 'gi');
+        cleanHtml = cleanHtml.replace(regex, field);
+    });
+    
+    // Update stored content
+    $('#template_content').val(cleanHtml);
+    if (currentTemplateData) {
+        currentTemplateData.modified_content = cleanHtml;
+    }
+});
+
+// Handle preview content editing - with real-time updates
+var previewEditTimeout = null;
+$(document).on('input paste', '#template_preview_container', function() {
+    // Debounce to avoid too many updates
+    clearTimeout(previewEditTimeout);
+    
+    previewEditTimeout = setTimeout(function() {
+        // Extract HTML from contenteditable div
+        var html = $('#template_preview_container').html();
+        
+        // Remove highlighting spans and restore original field placeholders
+        var allFields = ['{appointment_subject}', '{appointment_date}', '{appointment_time}', '{appointment_location}', 
+                         '{client_name}', '{staff_name}', '{company_name}', '{company_phone}', '{company_email}', 
+                         '{appointment_notes}', '{presentation_block}', '{crm_link}'];
+        
+        var cleanHtml = html;
+        allFields.forEach(function(field) {
+            var regex = new RegExp('<span[^>]*>' + field.replace(/[{}]/g, '\\$&') + '<\\/span>', 'gi');
+            cleanHtml = cleanHtml.replace(regex, field);
+        });
+        
+        // Update hidden content field immediately
+        $('#template_content').val(cleanHtml);
+        
+        // Update currentTemplateData
+        if (currentTemplateData) {
+            currentTemplateData.modified_content = cleanHtml;
+        }
+        
+        // Re-apply highlighting for selected fields
+        var selectedFields = [];
+        $('input[data-field]:checked').each(function() {
+            selectedFields.push($(this).data('field'));
+        });
+        
+        var highlightedHtml = cleanHtml;
+        selectedFields.forEach(function(field) {
+            var fieldEscaped = field.replace(/[{}]/g, '\\$&');
+            var highlighted = '<span style="background: #fff3cd; padding: 2px 5px; border-radius: 3px; font-weight: bold; display: inline-block;">' + field + '</span>';
+            highlightedHtml = highlightedHtml.replace(new RegExp(fieldEscaped, 'g'), highlighted);
+        });
+        
+        // Update preview with highlighting (preserve cursor position if possible)
+        var $container = $('#template_preview_container');
+        var scrollTop = $container.scrollTop();
+        $container.html(highlightedHtml);
+        $container.scrollTop(scrollTop);
+    }, 300); // 300ms debounce
+});
+
+// Save Template
+$(document).on('click', '#saveTemplateBtn', function() {
+    // Get HTML from editable preview
+    var previewHtml = $('#template_preview_container').html();
+    
+    // Remove highlighting and restore field placeholders
+    var allFields = ['{appointment_subject}', '{appointment_date}', '{appointment_time}', '{appointment_location}', 
+                     '{client_name}', '{staff_name}', '{company_name}', '{company_phone}', '{company_email}', 
+                     '{appointment_notes}', '{presentation_block}', '{crm_link}'];
+    
+    allFields.forEach(function(field) {
+        var regex = new RegExp('<span[^>]*>' + field.replace(/[{}]/g, '\\$&') + '<\\/span>', 'gi');
+        previewHtml = previewHtml.replace(regex, field);
+    });
+    
+    var formData = {
+        id: $('#template_id').val(),
+        template_name: $('#template_name').val(),
+        template_type: $('#template_type').val(),
+        reminder_stage: $('#template_reminder_stage').val(),
+        recipient_type: $('#template_recipient_type').val(),
+        subject: $('#template_subject').val(),
+        content: previewHtml,
+        is_active: $('#template_is_active').is(':checked') ? 1 : 0,
+        [csrf_token_name]: csrf_hash
+    };
+    
+    $.ajax({
+        url: admin_url + 'ella_contractors/appointments/save_reminder_template',
+        type: 'POST',
+        data: formData,
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                alert_float('success', response.message);
+                $('#reminderTemplateModal').modal('hide');
+            } else {
+                alert_float('danger', response.message || 'Failed to save template');
+            }
+        },
+        error: function() {
+            alert_float('danger', 'Error saving template');
+        }
+    });
+});
 
 function deleteAppointment(appointmentId) {
     if (confirm('Are you sure you want to delete this appointment?')) {
@@ -1257,39 +1599,25 @@ $('#saveAppointment').on('click', function() {
             if (response.success) {
                 var appointmentId = response.appointment_id || $('#appointment_id').val();
                 
-                // Handle presentations if selected and centralized function exists
-                if (typeof getSelectedPresentationIds === 'function' && typeof attachMultiplePresentationsToAppointment === 'function') {
-                    var selectedPresentationIds = getSelectedPresentationIds('presentation_select', 'selected_presentation_ids');
-                    if (selectedPresentationIds && selectedPresentationIds.length > 0 && appointmentId) {
-                        attachMultiplePresentationsToAppointment(appointmentId, selectedPresentationIds, function(attachResponse) {
-                            alert_float('success', response.message);
-                            
-                            $('#appointmentModal').modal('hide');
-                            resetAppointmentModal();
-                            
-                            // Reload table maintaining sort order
-                            var table = $('.table-ella_appointments').DataTable();
-                            var currentOrder = table.order();
-                            table.ajax.reload(function() {
-                                table.order(currentOrder).draw(false);
+                // Close modal first to prevent z-index conflicts
+                $('#appointmentModal').modal('hide');
+                resetAppointmentModal();
+                
+                // Show success message after modal closes
+                setTimeout(function() {
+                    // Handle presentations if selected and centralized function exists
+                    if (typeof getSelectedPresentationIds === 'function' && typeof attachMultiplePresentationsToAppointment === 'function') {
+                        var selectedPresentationIds = getSelectedPresentationIds('presentation_select', 'selected_presentation_ids');
+                        if (selectedPresentationIds && selectedPresentationIds.length > 0 && appointmentId) {
+                            attachMultiplePresentationsToAppointment(appointmentId, selectedPresentationIds, function(attachResponse) {
+                                alert_float('success', response.message || 'Appointment saved successfully with presentations!', 5000);
                             });
-                        });
+                        } else {
+                            alert_float('success', response.message || 'Appointment saved successfully!', 4000);
+                        }
                     } else {
-                        alert_float('success', response.message);
-                        $('#appointmentModal').modal('hide');
-                        resetAppointmentModal();
-                        
-                        // Reload table maintaining sort order
-                        var table = $('.table-ella_appointments').DataTable();
-                        var currentOrder = table.order();
-                        table.ajax.reload(function() {
-                            table.order(currentOrder).draw(false);
-                        });
+                        alert_float('success', response.message || 'Appointment saved successfully!', 4000);
                     }
-                } else {
-                    alert_float('success', response.message);
-                    $('#appointmentModal').modal('hide');
-                    resetAppointmentModal();
                     
                     // Reload table maintaining sort order
                     var table = $('.table-ella_appointments').DataTable();
@@ -1297,9 +1625,9 @@ $('#saveAppointment').on('click', function() {
                     table.ajax.reload(function() {
                         table.order(currentOrder).draw(false);
                     });
-                }
+                }, 300);
             } else {
-                alert_float('danger', response.message);
+                alert_float('danger', response.message || 'Failed to save appointment');
             }
         },
         error: function(xhr, status, error) {
@@ -1792,388 +2120,21 @@ $(document).ready(function() {
 // ========================================
 
 // ========================================
-// GOOGLE CALENDAR INTEGRATION
+// CALENDAR INTEGRATION (Moved to separate file)
 // ========================================
 
-/**
- * Check Google Calendar connection status
- */
-function checkGoogleCalendarStatus() {
-    $.ajax({
-        url: admin_url + 'ella_contractors/google_auth/status',
-        type: 'GET',
-        dataType: 'json',
-        data: {
-            [csrf_token_name]: csrf_hash
-        },
-        success: function(response) {
-            if (!response) {
-                console.error('Google Calendar: Invalid response from server');
-                // Show connect button, hide connected status
-                $('#google-calendar-connect-item').show();
-                $('#google-calendar-connected-item').hide();
-                $('#google-calendar-sync-item').hide();
-                $('#google-calendar-divider').hide();
-                $('#google-calendar-disconnect-item').hide();
-                return;
-            }
+</script>
 
-            // Check for error message
-            if (response.error) {
-                // Credentials not configured or other error - show connect button
-                // (error message is informational, not blocking)
-                if (response.message !== 'Not configured') {
-                    console.warn('Google Calendar status check:', response.error);
-                }
-            }
+<!-- Include calendar integration (Google + Outlook) -->
+<?php $this->load->view('appointments/calendar_integration_js'); ?>
 
-            if (response && response.connected) {
-                // Show connected status and options
-                $('#google-calendar-connect-item').hide();
-                $('#google-calendar-connected-item').show();
-                $('#google-calendar-sync-item').show();
-                $('#google-calendar-divider').show();
-                $('#google-calendar-disconnect-item').show();
-            } else {
-                // Show connect button
-                $('#google-calendar-connect-item').show();
-                $('#google-calendar-connected-item').hide();
-                $('#google-calendar-sync-item').hide();
-                $('#google-calendar-divider').hide();
-                $('#google-calendar-disconnect-item').hide();
-            }
-        },
-        error: function(xhr, status, error) {
-            // Log error for debugging
-            console.error('Google Calendar status check failed:', {
-                status: status,
-                error: error,
-                responseText: xhr.responseText
-            });
-            
-            // On error, show connect button (don't block user)
-            $('#google-calendar-connect-item').show();
-            $('#google-calendar-connected-item').hide();
-            $('#google-calendar-sync-item').hide();
-            $('#google-calendar-divider').hide();
-            $('#google-calendar-disconnect-item').hide();
-        }
-    });
-}
-
-/**
- * Connect Google Calendar button click - Opens OAuth in popup window
- */
-var googleAuthPopup = null;
-
-$(document).on('click', '#google-calendar-connect-btn', function(e) {
-    e.preventDefault();
-    
-    // Check if Google Calendar credentials are configured
-    $.ajax({
-        url: admin_url + 'ella_contractors/google_auth/status',
-        type: 'GET',
-        dataType: 'json',
-        data: {
-            [csrf_token_name]: csrf_hash
-        },
-        success: function(response) {
-            if (!response) {
-                // Invalid response - try to connect anyway (might be a temporary error)
-                console.warn('Google Calendar: Invalid response, attempting connection anyway');
-                openGoogleAuthPopup();
-                return;
-            }
-
-            if (response && response.error && response.message === 'Not configured') {
-                // Credentials not configured
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: 'Google Calendar Not Configured',
-                        html: 'Please configure Google Calendar API credentials in <strong>Setup → Settings → Google</strong> first.<br><br><strong>Setup Steps:</strong><br>1. Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a><br>2. Create OAuth 2.0 Client ID with Calendar API enabled<br>3. Add credentials in Settings<br><br><a href="' + admin_url + 'settings?group=google" class="btn btn-sm btn-primary" style="color: white; margin-top: 10px;"><i class="fa fa-cog"></i> Go to Settings</a>',
-                        icon: 'warning',
-                        confirmButtonText: 'OK',
-                        width: '600px'
-                    });
-                } else {
-                    alert('Please configure Google Calendar API credentials in Setup → Settings → Google first.');
-                }
-            } else {
-                // Credentials configured or already connected - proceed to OAuth
-                openGoogleAuthPopup();
-            }
-        },
-        error: function(xhr, status, error) {
-            // On error, try to connect anyway (might be a temporary issue)
-            console.error('Google Calendar status check failed:', {
-                status: status,
-                error: error,
-                responseText: xhr.responseText
-            });
-            
-            // Show warning but allow user to proceed
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'Warning',
-                    text: 'Unable to verify Google Calendar configuration. Do you want to proceed anyway?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, Continue',
-                    cancelButtonText: 'Cancel'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        openGoogleAuthPopup();
-                    }
-                });
-            } else {
-                if (confirm('Unable to verify Google Calendar configuration. Do you want to proceed anyway?')) {
-                    openGoogleAuthPopup();
-                }
-            }
-        }
-    });
+<script>
+// Calendar initialization on page load
+$(document).ready(function() {
+    // Check calendar connection status (Google and Outlook)
+    checkCalendarStatus('google');
+    checkCalendarStatus('outlook');
 });
-
-/**
- * Open Google OAuth in popup window
- */
-function openGoogleAuthPopup() {
-    var authUrl = admin_url + 'ella_contractors/google_auth/connect';
-    var width = 600;
-    var height = 700;
-    var left = (screen.width / 2) - (width / 2);
-    var top = (screen.height / 2) - (height / 2);
-    
-    googleAuthPopup = window.open(
-        authUrl,
-        'GoogleAuth',
-        'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes'
-    );
-    
-    // Focus the popup
-    if (googleAuthPopup && !googleAuthPopup.closed) {
-        googleAuthPopup.focus();
-    }
-}
-
-/**
- * Listen for message from popup window when OAuth is complete
- */
-window.addEventListener('message', function(event) {
-    // Verify origin for security
-    if (event.origin !== window.location.origin) {
-        return;
-    }
-    
-    // Check if this is a Google Calendar auth success message
-    if (event.data && event.data.type === 'google_calendar_auth_success') {
-        console.log('Google Calendar authentication successful');
-        
-        // Close popup if still open
-        if (googleAuthPopup && !googleAuthPopup.closed) {
-            googleAuthPopup.close();
-        }
-        
-        // Refresh Google Calendar connection status
-        checkGoogleCalendarStatus();
-        
-        // Show success message
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                title: 'Success!',
-                text: 'Google Calendar connected successfully. Your appointments will now sync automatically.',
-                icon: 'success',
-                confirmButtonText: 'OK'
-            });
-        } else {
-            alert_float('success', 'Google Calendar connected successfully!');
-        }
-    }
-    
-    // Check if this is a Google Calendar auth error message
-    if (event.data && event.data.type === 'google_calendar_auth_error') {
-        console.error('Google Calendar authentication failed:', event.data.message);
-        
-        // Close popup if still open
-        if (googleAuthPopup && !googleAuthPopup.closed) {
-            googleAuthPopup.close();
-        }
-        
-        // Show error message
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                title: 'Authentication Failed',
-                text: event.data.message || 'Failed to connect Google Calendar. Please try again.',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-        } else {
-            alert_float('danger', event.data.message || 'Failed to connect Google Calendar');
-        }
-    }
-}, false);
-
-/**
- * Sync Now button click
- */
-$(document).on('click', '#google-calendar-sync-now', function(e) {
-    e.preventDefault();
-    
-    var $btn = $(this);
-    var originalHtml = $btn.html();
-    $btn.html('<i class="fa fa-spinner fa-spin"></i> Syncing...');
-    $btn.parent().addClass('disabled');
-    
-    $.ajax({
-        url: admin_url + 'ella_contractors/google_auth/sync_now',
-        type: 'POST',
-        dataType: 'json',
-        data: {
-            [csrf_token_name]: csrf_hash
-        },
-        success: function(response) {
-            if (response && response.success) {
-                var message = response.message;
-                if (response.synced !== undefined) {
-                    message += ' (' + response.synced + ' synced';
-                    if (response.failed > 0) {
-                        message += ', ' + response.failed + ' failed';
-                    }
-                    message += ')';
-                }
-                
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: 'Sync Complete',
-                        text: message,
-                        icon: 'success',
-                        timer: 3000,
-                        showConfirmButton: false
-                    });
-                } else {
-                    alert_float('success', message);
-                }
-            } else {
-                var errorMsg = response && response.message ? response.message : 'Failed to sync appointments';
-                
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: 'Sync Failed',
-                        text: errorMsg,
-                        icon: 'error'
-                    });
-                } else {
-                    alert_float('danger', errorMsg);
-                }
-            }
-        },
-        error: function(xhr, status, error) {
-            var errorMsg = 'An error occurred during sync. Please try again.';
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'Sync Error',
-                    text: errorMsg,
-                    icon: 'error'
-                });
-            } else {
-                alert_float('danger', errorMsg);
-            }
-        },
-        complete: function() {
-            $btn.html(originalHtml);
-            $btn.parent().removeClass('disabled');
-        }
-    });
-});
-
-/**
- * Disconnect Google Calendar button click
- */
-$(document).on('click', '#google-calendar-disconnect', function(e) {
-    e.preventDefault();
-    
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({
-            title: 'Disconnect Google Calendar?',
-            text: 'This will remove your Google Calendar connection and stop syncing appointments. Existing calendar events will not be deleted from Google Calendar.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#e74c3c',
-            cancelButtonColor: '#95a5a6',
-            confirmButtonText: 'Yes, Disconnect',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                disconnectGoogleCalendar();
-            }
-        });
-    } else {
-        if (confirm('Are you sure you want to disconnect Google Calendar? This will stop syncing appointments.')) {
-            disconnectGoogleCalendar();
-        }
-    }
-});
-
-/**
- * Disconnect Google Calendar function
- */
-function disconnectGoogleCalendar() {
-    $.ajax({
-        url: admin_url + 'ella_contractors/google_auth/disconnect',
-        type: 'POST',
-        dataType: 'json',
-        data: {
-            [csrf_token_name]: csrf_hash
-        },
-        success: function(response) {
-            if (response && response.success) {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: 'Disconnected',
-                        text: response.message,
-                        icon: 'success',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                } else {
-                    alert_float('success', response.message);
-                }
-                
-                // Update UI
-                $('#google-calendar-connect-group').show();
-                $('#google-calendar-status-group').hide();
-            } else {
-                var errorMsg = response && response.message ? response.message : 'Failed to disconnect';
-                
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: 'Error',
-                        text: errorMsg,
-                        icon: 'error'
-                    });
-                } else {
-                    alert_float('danger', errorMsg);
-                }
-            }
-        },
-        error: function(xhr, status, error) {
-            var errorMsg = 'An error occurred while disconnecting. Please try again.';
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'Error',
-                    text: errorMsg,
-                    icon: 'error'
-                });
-            } else {
-                alert_float('danger', errorMsg);
-            }
-        }
-    });
-}
-
-// ========================================
-// END GOOGLE CALENDAR INTEGRATION
-// ========================================
 </script>
 
 <!-- Include shared appointment dropzone functionality -->

@@ -85,6 +85,9 @@ $route[$module_name . '/google_status'] = 'Google_auth/status';
 $route[$module_name . '/google_disconnect'] = 'Google_auth/disconnect';
 $route[$module_name . '/google_sync_now'] = 'Google_auth/sync_now';
 
-// Settings routes
-$route[$module_name . '/settings'] = 'Settings/index';
-$route[$module_name . '/settings/save'] = 'Settings/save';
+// Outlook Calendar integration routes
+$route[$module_name . '/outlook_auth/connect'] = 'Outlook_auth/connect';
+$route[$module_name . '/outlook_auth/callback'] = 'Outlook_auth/callback';
+$route[$module_name . '/outlook_auth/disconnect'] = 'Outlook_auth/disconnect';
+$route[$module_name . '/outlook_auth/status'] = 'Outlook_auth/status';
+$route[$module_name . '/outlook_auth/sync_now'] = 'Outlook_auth/sync_now';

@@ -3,7 +3,32 @@
 /**
  * Google Calendar Sync Library for EllaContractors
  * Handles OAuth2 authentication and calendar event synchronization
+ * 
+ * Uses EllaContractors module's own vendor folder for Google API Client
  */
+
+// Load Google API client autoloader from EllaContractors module's own vendor folder
+// Use only ella_contractors module vendor, no fallback to other modules
+$ella_vendor_autoload = module_dir_path('ella_contractors', 'vendor/autoload.php');
+$autoload_loaded = false;
+$autoload_error = null;
+
+if ($ella_vendor_autoload && file_exists($ella_vendor_autoload)) {
+    try {
+        require_once($ella_vendor_autoload);
+        $autoload_loaded = true;
+    } catch (Exception $e) {
+        $autoload_error = $e->getMessage();
+        log_message('error', 'Google Calendar: Failed to load autoload.php - ' . $autoload_error);
+    } catch (Error $e) {
+        $autoload_error = $e->getMessage();
+        log_message('error', 'Google Calendar: Failed to load autoload.php - ' . $autoload_error);
+    }
+} else {
+    // Log warning but don't throw yet - will throw in constructor if class not available
+    log_message('warning', 'Google Calendar: EllaContractors vendor/autoload.php not found at: ' . ($ella_vendor_autoload ?: 'null'));
+}
+
 class Google_calendar_sync
 {
     private $client;
@@ -20,37 +45,90 @@ class Google_calendar_sync
         $this->redirect_uri = get_option('google_calendar_redirect_uri') ?: site_url('ella_contractors/google_callback');
         $this->table_name = db_prefix() . 'staff_google_calendar_tokens';
 
-        // Load Google API client if not already loaded
-        if (!class_exists('Google_Client')) {
-            try {
-                // Try to load from appointly module vendor first (reuse library)
-                $appointly_vendor = module_dir_path('appointly', 'vendor/autoload.php');
-                
-                if (file_exists($appointly_vendor)) {
-                    require_once($appointly_vendor);
-                    log_message('info', 'Google Calendar: Loaded Google API Client from Appointly vendor');
-                } else {
-                    // Try global vendor
-                    $global_vendor = FCPATH . 'vendor/autoload.php';
-                    if (file_exists($global_vendor)) {
-                        require_once($global_vendor);
-                        log_message('info', 'Google Calendar: Loaded Google API Client from global vendor');
-                    } else {
-                        log_message('error', 'Google Calendar: Google API Client library not found. Please install Appointly module or run: composer require google/apiclient:^2.0');
-                        throw new Exception('Google API Client library not found. Please ensure Appointly module is installed or install google/apiclient via Composer.');
-                    }
-                }
-                
-                // Verify the class is now available
-                if (!class_exists('Google_Client')) {
-                    throw new Exception('Google_Client class not available after loading autoload.php');
-                }
-            } catch (Exception $e) {
-                log_message('error', 'Google Calendar: Failed to load Google API Client - ' . $e->getMessage());
-                log_message('error', 'Google Calendar: Stack trace - ' . $e->getTraceAsString());
-                throw $e; // Re-throw to be caught by controller
+        // Check if autoloader failed to load (PHP version mismatch, etc.)
+        global $autoload_error;
+        if ($autoload_error) {
+            $module_base = module_dir_path('ella_contractors', '');
+            $module_base = realpath($module_base) ?: $module_base;
+            $module_base = rtrim($module_base, '/\\');
+            
+            // Check if it's a PHP version issue
+            $php_version_issue = false;
+            if (strpos($autoload_error, 'PHP version') !== false || strpos($autoload_error, 'require a PHP version') !== false) {
+                $php_version_issue = true;
+                $current_php = PHP_VERSION;
+                $error_msg = 'PHP version mismatch detected. ';
+                $error_msg .= 'Server is running PHP ' . $current_php . ', but some Composer dependencies require PHP >= 8.3.0. ';
+                $error_msg .= 'Please either upgrade PHP to 8.3+ or update composer.json to use package versions compatible with PHP ' . $current_php . '. ';
+                $error_msg .= 'Module path: ' . $module_base;
+            } else {
+                $error_msg = 'Failed to load Composer autoloader: ' . $autoload_error . '. ';
+                $error_msg .= 'Module path: ' . $module_base;
+            }
+            
+            log_message('error', 'Google Calendar: ' . $error_msg);
+            throw new Exception($error_msg);
+        }
+        
+        // Verify Google_Client is available (autoloader should have loaded it from ella_contractors vendor)
+        if (!class_exists('Google_Client') && !class_exists('Google\Client')) {
+            $module_base = module_dir_path('ella_contractors', '');
+            $module_base = realpath($module_base) ?: $module_base;
+            $module_base = rtrim($module_base, '/\\');
+            
+            $vendor_path = $module_base . '/vendor/autoload.php';
+            $package_path = $module_base . '/vendor/google/apiclient/src/Client.php';
+            
+            $error_msg = 'Google Calendar API client library not properly loaded from EllaContractors module. ';
+            
+            if (!file_exists($vendor_path)) {
+                $error_msg .= 'Vendor autoload.php not found at: ' . $vendor_path . '. ';
+            } elseif (!file_exists($package_path)) {
+                $error_msg .= 'Google API Client package not installed in vendor folder. ';
+            } else {
+                $error_msg .= 'Package files exist but class not available (autoloader issue). ';
+            }
+            
+            $error_msg .= 'Please run: cd ' . $module_base . ' && composer install && composer dump-autoload';
+            
+            log_message('error', 'Google Calendar: ' . $error_msg);
+            throw new Exception($error_msg);
+        }
+    }
+
+    /**
+     * Get Google class name (alias or namespaced)
+     * 
+     * @param string $class_name Class name without namespace (e.g., 'Client', 'Service_Calendar', 'Service_Calendar_Event')
+     * @return string|null Full class name or null if not found
+     */
+    private function get_google_class($class_name)
+    {
+        // Try alias first (e.g., Google_Client, Google_Service_Calendar)
+        $alias = 'Google_' . $class_name;
+        if (class_exists($alias)) {
+            return $alias;
+        }
+        
+        // For service classes (Service_Calendar, Service_Calendar_Event, etc.)
+        if (strpos($class_name, 'Service_') === 0) {
+            // Remove 'Service_' prefix and convert to namespace format
+            $service_part = str_replace('Service_', '', $class_name);
+            // Convert underscores to namespace separators
+            $parts = explode('_', $service_part);
+            $namespaced = 'Google\\Service\\' . implode('\\', $parts);
+            if (class_exists($namespaced)) {
+                return $namespaced;
             }
         }
+        
+        // Try generic namespaced version for other classes
+        $namespaced = 'Google\\' . str_replace('_', '\\', $class_name);
+        if (class_exists($namespaced)) {
+            return $namespaced;
+        }
+        
+        return null;
     }
 
     /**
@@ -66,13 +144,22 @@ class Google_calendar_sync
             return false;
         }
 
-        if (!class_exists('Google_Client')) {
+        // Try to use Google_Client alias first, fallback to namespaced version
+        $client_class = null;
+        if (class_exists('Google_Client')) {
+            $client_class = 'Google_Client';
+        } elseif (class_exists('Google\Client')) {
+            $client_class = 'Google\Client';
+            log_message('info', 'Google Calendar: Using namespaced Google\Client class (alias not available)');
+        }
+        
+        if (!$client_class) {
             log_message('error', 'Google Calendar: Google_Client class not found. Please ensure Google API client is installed.');
             return false;
         }
 
         try {
-            $this->client = new Google_Client();
+            $this->client = new $client_class();
             $this->client->setAccessType('offline');
             $this->client->setApprovalPrompt('force');
             $this->client->setApplicationName('EllaContractors Google Calendar Sync');
@@ -455,15 +542,37 @@ class Google_calendar_sync
         }
 
         try {
-            $service = new Google_Service_Calendar($this->client);
+            // Get service class (handle both alias and namespaced)
+            $service_class = $this->get_google_class('Service_Calendar');
+            if (!$service_class) {
+                throw new Exception('Google_Service_Calendar class not found');
+            }
+            $service = new $service_class($this->client);
+            
             $tokens = $this->get_tokens($staff_id);
             $calendar_id = $tokens['calendar_id'] ?? 'primary';
 
             // Build event data
             $event_data = $this->build_event_data($appointment);
-            $event = new Google_Service_Calendar_Event($event_data);
+            
+            // Get event class
+            $event_class = $this->get_google_class('Service_Calendar_Event');
+            if (!$event_class) {
+                throw new Exception('Google_Service_Calendar_Event class not found');
+            }
+            $event = new $event_class($event_data);
 
-            // Insert event
+            // Search for existing event before creating (duplicate prevention)
+            $existing_event_id = $this->search_existing_event($service, $calendar_id, $event_data);
+            
+            if ($existing_event_id) {
+                // Event already exists → save mapping and update it instead of creating duplicate
+                log_message('info', 'Google Calendar: Found existing event for appointment ' . $appointment_id . ' (staff ' . $staff_id . '), updating instead of creating - Event ID: ' . $existing_event_id);
+                $this->save_event_mapping($appointment_id, $staff_id, $existing_event_id, $calendar_id);
+                return $this->update_event($appointment_id, $staff_id);
+            }
+
+            // No existing event found → proceed with create
             $created_event = $service->events->insert($calendar_id, $event, [
                 'conferenceDataVersion' => 1, // Enable Google Meet links
                 'sendUpdates' => 'all', // Send notifications to attendees
@@ -532,7 +641,13 @@ class Google_calendar_sync
         }
 
         try {
-            $service = new Google_Service_Calendar($this->client);
+            // Get service class (handle both alias and namespaced)
+            $service_class = $this->get_google_class('Service_Calendar');
+            if (!$service_class) {
+                throw new Exception('Google_Service_Calendar class not found');
+            }
+            $service = new $service_class($this->client);
+            
             $tokens = $this->get_tokens($staff_id);
             $calendar_id = $event_mapping['google_calendar_id'] ?? ($tokens['calendar_id'] ?? 'primary');
 
@@ -559,11 +674,14 @@ class Google_calendar_sync
             
             // Update attendees
             if (isset($event_data['attendees'])) {
-                $attendees = [];
-                foreach ($event_data['attendees'] as $attendee) {
-                    $attendees[] = new Google_Service_Calendar_EventAttendee($attendee);
+                $attendee_class = $this->get_google_class('Service_Calendar_EventAttendee');
+                if ($attendee_class) {
+                    $attendees = [];
+                    foreach ($event_data['attendees'] as $attendee) {
+                        $attendees[] = new $attendee_class($attendee);
+                    }
+                    $existing_event->setAttendees($attendees);
                 }
-                $existing_event->setAttendees($attendees);
             }
 
             // Update event
@@ -616,7 +734,13 @@ class Google_calendar_sync
         $CI = &get_instance();
         
         try {
-            $service = new Google_Service_Calendar($this->client);
+            // Get service class (handle both alias and namespaced)
+            $service_class = $this->get_google_class('Service_Calendar');
+            if (!$service_class) {
+                throw new Exception('Google_Service_Calendar class not found');
+            }
+            $service = new $service_class($this->client);
+            
             $calendar_id = $event_mapping['google_calendar_id'] ?? 'primary';
 
             // Delete event from Google Calendar
@@ -679,11 +803,20 @@ class Google_calendar_sync
         }
         $description .= "\nView in CRM: " . admin_url('ella_contractors/appointments/view/' . $appointment->id);
 
-        // Build start/end datetime
+        // Build start/end datetime with proper timezone handling
         $start_datetime = $appointment->date . ' ' . ($appointment->start_hour ?? '00:00:00');
-        $start = new Google_Service_Calendar_EventDateTime();
-        $start->setDateTime(date('c', strtotime($start_datetime)));
-        $start->setTimeZone(get_option('default_timezone') ?: 'America/Chicago');
+        $crm_timezone = get_option('default_timezone') ?: 'America/Chicago';
+        
+        $start_class = $this->get_google_class('Service_Calendar_EventDateTime');
+        if (!$start_class) {
+            throw new Exception('Google_Service_Calendar_EventDateTime class not found');
+        }
+        
+        // Create DateTime object in CRM timezone
+        $start_dt = new DateTime($start_datetime, new DateTimeZone($crm_timezone));
+        $start = new $start_class();
+        $start->setDateTime($start_dt->format('c')); // RFC3339 format with timezone
+        $start->setTimeZone($crm_timezone);
 
         // Build end datetime
         if (!empty($appointment->end_date) && !empty($appointment->end_time)) {
@@ -692,9 +825,12 @@ class Google_calendar_sync
             // Default: 1 hour duration
             $end_datetime = date('Y-m-d H:i:s', strtotime($start_datetime . ' +1 hour'));
         }
-        $end = new Google_Service_Calendar_EventDateTime();
-        $end->setDateTime(date('c', strtotime($end_datetime)));
-        $end->setTimeZone(get_option('default_timezone') ?: 'America/Chicago');
+        
+        // Create DateTime object in CRM timezone for end time
+        $end_dt = new DateTime($end_datetime, new DateTimeZone($crm_timezone));
+        $end = new $start_class(); // Use same class for end
+        $end->setDateTime($end_dt->format('c')); // RFC3339 format with timezone
+        $end->setTimeZone($crm_timezone);
 
         // Build location
         $location = !empty($appointment->address) ? $appointment->address : 'Online/Phone Call';
@@ -911,5 +1047,75 @@ class Google_calendar_sync
         $CI->db->where('rel_type', 'appointment');
         $CI->db->where('rel_id', $appointment_id);
         return $CI->db->delete(db_prefix() . 'appointment_google_events');
+    }
+    
+    /**
+     * Search for existing event in Google Calendar by matching appointment details
+     * This prevents duplicate events when mappings are lost or don't exist yet
+     * 
+     * @param object $service Google Calendar service instance (Google_Service_Calendar or Google\Service\Calendar)
+     * @param string $calendar_id Calendar ID
+     * @param array $event_data Event data to match (from build_event_data)
+     * @return string|null Event ID if found, null otherwise
+     */
+    private function search_existing_event($service, $calendar_id, $event_data)
+    {
+        try {
+            // Extract search criteria from event data
+            $summary = $event_data['summary'];
+            $start_time = $event_data['start']->getDateTime();
+            $end_time = $event_data['end']->getDateTime();
+            
+            // Parse start/end times
+            $start_datetime = new DateTime($start_time);
+            $end_datetime = new DateTime($end_time);
+            
+            // Define search window: ±2 minutes tolerance to account for timing variations
+            $search_start = clone $start_datetime;
+            $search_start->modify('-2 minutes');
+            
+            $search_end = clone $start_datetime;
+            $search_end->modify('+2 minutes');
+            
+            // Query events in the time window from Google Calendar
+            $events = $service->events->listEvents($calendar_id, [
+                'timeMin' => $search_start->format(DateTime::ATOM),
+                'timeMax' => $search_end->format(DateTime::ATOM),
+                'singleEvents' => true,
+                'orderBy' => 'startTime',
+                'maxResults' => 50
+            ]);
+            
+            // Search for matching event by summary (title) and start time
+            foreach ($events->getItems() as $event) {
+                // Match by summary (title) - must be exact match
+                if ($event->getSummary() !== $summary) {
+                    continue;
+                }
+                
+                // Match by start time (within 2-minute tolerance)
+                $event_start = $event->getStart()->getDateTime();
+                if (!$event_start) {
+                    // Handle all-day events
+                    $event_start = $event->getStart()->getDate();
+                }
+                
+                $event_start_dt = new DateTime($event_start);
+                $time_diff = abs($event_start_dt->getTimestamp() - $start_datetime->getTimestamp());
+                
+                // If time difference is within 2 minutes (120 seconds), consider it a match
+                if ($time_diff <= 120) {
+                    log_message('info', 'Google Calendar: Found existing event matching appointment details - Event ID: ' . $event->getId() . ', Summary: ' . $summary);
+                    return $event->getId();
+                }
+            }
+            
+            // No matching event found
+            return null;
+        } catch (Exception $e) {
+            // On search error, log and return null (safe to proceed with create)
+            log_message('error', 'Google Calendar: search_existing_event failed - ' . $e->getMessage());
+            return null;
+        }
     }
 }

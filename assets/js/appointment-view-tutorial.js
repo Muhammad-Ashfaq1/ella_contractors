@@ -885,11 +885,11 @@
                 } else if (viewportWidth >= 1600) {
                     positions = { top: '350px', left: '128px', transform: 'none' };
                 } else if (viewportWidth >= 1366) {
-                    positions = { top: '350px', left: '150px', transform: 'none' };
+                    positions = { top: '350px', left: '60px', transform: 'none' };
                 } else if (viewportWidth >= 1024) {
-                    positions = { top: '350px', left: '180px', transform: 'none' };
+                    positions = { top: '350px', left: '90px', transform: 'none' };
                 } else if (viewportWidth >= 768) {
-                    positions = { top: '350px', left: '220px', transform: 'none' };
+                    positions = { top: '350px', left: '130px', transform: 'none' };
                 } else if (viewportWidth >= 640) {
                     positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
                 } else if (viewportWidth >= 480) {
@@ -986,11 +986,11 @@
                 } else if (viewportWidth >= 1600) {
                     positions = { top: '350px', left: '228px', transform: 'none' };
                 } else if (viewportWidth >= 1366) {
-                    positions = { top: '350px', left: '300px', transform: 'none' };
+                    positions = { top: '350px', left: '210px', transform: 'none' };
                 } else if (viewportWidth >= 1024) {
-                    positions = { top: '350px', left: '361px', transform: 'none' };
+                    positions = { top: '350px', left: '270px', transform: 'none' };
                 } else if (viewportWidth >= 768) {
-                    positions = { top: '350px', left: '438px', transform: 'none' };
+                    positions = { top: '350px', left: '350px', transform: 'none' };
                 } else if (viewportWidth >= 640) {
                     positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
                 } else if (viewportWidth >= 480) {
@@ -1087,11 +1087,11 @@
                 } else if (viewportWidth >= 1600) {
                     positions = { top: '350px', left: '332px', transform: 'none' };
                 } else if (viewportWidth >= 1366) {
-                    positions = { top: '350px', left: '400px', transform: 'none' };
+                    positions = { top: '350px', left: '310px', transform: 'none' };
                 } else if (viewportWidth >= 1024) {
-                    positions = { top: '350px', left: '462px', transform: 'none' };
+                    positions = { top: '350px', left: '370px', transform: 'none' };
                 } else if (viewportWidth >= 768) {
-                    positions = { top: '350px', left: '500px', transform: 'none' };
+                    positions = { top: '350px', left: '410px', transform: 'none' };
                 } else if (viewportWidth >= 640) {
                     positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
                 } else if (viewportWidth >= 480) {
@@ -1188,11 +1188,11 @@
                 } else if (viewportWidth >= 1600) {
                     positions = { top: '350px', left: '400px', transform: 'none' };
                 } else if (viewportWidth >= 1366) {
-                    positions = { top: '350px', left: '425px', transform: 'none' };
+                    positions = { top: '350px', left: '335px', transform: 'none' };
                 } else if (viewportWidth >= 1024) {
-                    positions = { top: '350px', left: '470px', transform: 'none' };
+                    positions = { top: '350px', left: '380px', transform: 'none' };
                 } else if (viewportWidth >= 768) {
-                    positions = { top: '350px', left: '500px', transform: 'none' };
+                    positions = { top: '350px', left: '410px', transform: 'none' };
                 } else if (viewportWidth >= 640) {
                     positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
                 } else if (viewportWidth >= 480) {
@@ -1289,11 +1289,11 @@
                 } else if (viewportWidth >= 1600) {
                     positions = { top: '350px', left: '560px', transform: 'none' };
                 } else if (viewportWidth >= 1366) {
-                    positions = { top: '350px', left: '580px', transform: 'none' };
+                    positions = { top: '350px', left: '490px', transform: 'none' };
                 } else if (viewportWidth >= 1024) {
-                    positions = { top: '350px', left: '600px', transform: 'none' };
+                    positions = { top: '350px', left: '510px', transform: 'none' };
                 } else if (viewportWidth >= 768) {
-                    positions = { top: '350px', left: '660px', transform: 'none' };
+                    positions = { top: '350px', left: '570px', transform: 'none' };
                 } else if (viewportWidth >= 640) {
                     positions = { top: '350px', left: '50%', transform: 'translateX(-50%)' };
                 } else if (viewportWidth >= 480) {
@@ -1670,15 +1670,79 @@
          * Skip tutorial
          */
         skip: function() {
-            this.complete(true);
+            this.dismiss(true); // Dismiss with "don't show again"
         },
 
         /**
          * Complete tutorial
          */
         complete: function() {
+            this.dismiss(false);
+        },
+
+        /**
+         * Dismiss tutorial
+         * @param {boolean} dontShowAgain - Whether to hide permanently
+         */
+        dismiss: function(dontShowAgain) {
+            // Set inactive first to ensure cleanup happens
             this.state.isActive = false;
+            
+            // Remove class from body to allow sidebar closing again
+            $('body').removeClass('tutorial-active');
+            
+            // Immediately remove all tutorial elements
             this.removeCurrentStep();
+            
+            // Force remove overlay and tooltip if they still exist (immediate removal, no animation)
+            if (this.state.overlay) {
+                this.state.overlay.stop(true, true); // Stop any animations
+                this.state.overlay.remove();
+                this.state.overlay = null;
+            }
+            if (this.state.tooltip) {
+                this.state.tooltip.stop(true, true); // Stop any animations
+                this.state.tooltip.remove();
+                this.state.tooltip = null;
+            }
+            
+            // Remove any remaining highlights
+            $('.tutorial-highlight').removeClass('tutorial-highlight');
+            
+            // Remove any tutorial overlays/tooltips that might still exist in DOM
+            $('.tutorial-overlay').remove();
+            $('.tutorial-tooltip').remove();
+            
+            // Ensure body is scrollable and interactive
+            $('body').css({
+                'overflow': '',
+                'pointer-events': ''
+            });
+            
+            // Remove any inline styles that might block interaction
+            $('html').css({
+                'overflow': '',
+                'pointer-events': ''
+            });
+
+            // Save preference
+            if (dontShowAgain) {
+                localStorage.setItem(this.config.storageKeyDismissed, 'true');
+                
+                // Save to server
+                $.ajax({
+                    url: admin_url + 'ella_contractors/appointments/save_tutorial_preference',
+                    type: 'POST',
+                    data: {
+                        dismissed: 1,
+                        [csrf_token_name]: csrf_hash
+                    },
+                    dataType: 'json'
+                });
+            } else {
+                // Mark as completed but allow restart
+                localStorage.setItem(this.config.storageKey, 'true');
+            }
         },
 
         /**
