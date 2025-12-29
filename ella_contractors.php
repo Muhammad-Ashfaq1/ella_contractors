@@ -39,7 +39,7 @@ if (is_admin()) {
  */
 function ella_contractors_init_menu() {
     $CI = &get_instance();
-    if (is_staff_logged_in() && (is_super_admin() || is_admin() || has_permission('ella_contractors', '', 'view'))) {
+    if (is_staff_logged_in() && (is_super_admin() || is_admin() || has_permission('ella_contractor', '', 'view'))) {
         $CI->app_menu->add_sidebar_menu_item('ella_contractors', [
             'slug' => 'ella_contractors',
             'name' => 'EllaContractor',

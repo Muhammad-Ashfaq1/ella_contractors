@@ -15,7 +15,7 @@ class Estimates extends AdminController
      */
     public function get_appointment_estimates($appointment_id)
     {
-        if (!has_permission('ella_contractors', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view')) {
             ajax_access_denied();
         }
 
@@ -79,7 +79,7 @@ class Estimates extends AdminController
      */
     public function get_appointment_estimates_count($appointment_id)
     {
-        if (!has_permission('ella_contractors', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view')) {
             ajax_access_denied();
         }
 

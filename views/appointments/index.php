@@ -1853,7 +1853,7 @@ function updateAppointmentStatusInPlace(appointment_id, newStatus) {
 function generateStatusHtml(status, appointment_id) {
     var statusClass = '';
     var statusLabel = '';
-    var hasPermission = <?php echo has_permission('ella_contractors', '', 'edit') ? 'true' : 'false'; ?>;
+    var hasPermission = <?php echo has_permission('ella_contractor', '', 'edit') ? 'true' : 'false'; ?>;
     
     // Determine status class and label based on status value
     switch (status) {
