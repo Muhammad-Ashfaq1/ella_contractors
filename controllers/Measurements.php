@@ -14,7 +14,7 @@ class Measurements extends AdminController
      */
     public function save()
     {
-        if (!has_permission('ella_contractors', '', 'edit')) {
+        if (!has_permission('ella_contractor', '', 'edit')) {
             ajax_access_denied();
         }
 
@@ -186,7 +186,7 @@ class Measurements extends AdminController
      */
     public function delete($id)
     {
-        if (!has_permission('ella_contractors', '', 'delete')) {
+        if (!has_permission('ella_contractor', '', 'delete')) {
                 ajax_access_denied();
         }
 
@@ -241,7 +241,7 @@ class Measurements extends AdminController
      */
     public function get_measurement($id)
     {
-        if (!has_permission('ella_contractors', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view')) {
             ajax_access_denied();
         }
 
@@ -279,7 +279,7 @@ class Measurements extends AdminController
      */
     public function get_appointment_measurements($appointment_id)
     {
-        if (!has_permission('ella_contractors', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view')) {
             ajax_access_denied();
         }
 
@@ -356,7 +356,7 @@ class Measurements extends AdminController
      */
     public function check_duplicate_category()
     {
-        if (!has_permission('ella_contractors', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view')) {
             ajax_access_denied();
         }
 

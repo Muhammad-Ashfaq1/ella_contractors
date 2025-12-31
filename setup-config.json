@@ -1,0 +1,118 @@
+{
+  "setup_guide": {
+    "title": "Application Setup Guide",
+    "description": "Configuration and setup instructions for the application",
+    "prerequisites": [
+      "PHP 7.4 or higher",
+      "MySQL 5.7 or higher (with sql_mode=only_full_group_by enabled)",
+      "Web server (Apache/Nginx)",
+      "CodeIgniter framework"
+    ],
+    "setup_steps": {
+      "database_configuration": {
+        "file": "application/config/app-config.php",
+        "lines": "84-87",
+        "description": "Update database credentials",
+        "config_values": {
+          "APP_DB_HOSTNAME": "localhost",
+          "APP_DB_USERNAME": "your_database_username",
+          "APP_DB_PASSWORD": "your_database_password",
+          "APP_DB_NAME": "your_database_name"
+        },
+        "example": {
+          "APP_DB_HOSTNAME": "localhost",
+          "APP_DB_USERNAME": "root",
+          "APP_DB_PASSWORD": "your_password",
+          "APP_DB_NAME": "crm-awt-backup"
+        }
+      },
+      "environment_configuration": {
+        "file": "index.php",
+        "line": "61",
+        "description": "Set application environment",
+        "options": {
+          "development": "define('ENVIRONMENT', 'development');",
+          "production": "define('ENVIRONMENT', 'production');",
+          "testing": "define('ENVIRONMENT', 'testing');"
+        },
+        "default": "development"
+      },
+      "base_url": {
+        "description": "Automatic domain detection is enabled in app-config.php. No manual configuration required."
+      },
+      "code_fixes": {
+        "usort_fix": {
+          "file": "application/controllers/admin/Leads.php",
+          "line": "around 164",
+          "description": "Fixed usort() error for staffstatus array",
+          "fix": "Added initialization check before sorting $data['staffstatus']",
+          "code_before": "usort($data['staffstatus'], function ($a, $b) {\n    return strcmp($a['staff_name'], $b['staff_name']);\n});",
+          "code_after": "if (!isset($data['staffstatus']) || !is_array($data['staffstatus'])) {\n    $data['staffstatus'] = array();\n}\nif (!empty($data['staffstatus'])) {\n    usort($data['staffstatus'], function ($a, $b) {\n        return strcmp($a['staff_name'], $b['staff_name']);\n    });\n}"
+        },
+        "mysql_groupby_fix": {
+          "description": "Fixed MySQL GROUP BY strict mode errors",
+          "files_updated": [
+            "application/views/admin/tables/leads.php",
+            "application/views/admin/tables/leads-international.php",
+            "application/views/admin/tables/leads-deleted.php"
+          ],
+          "fix": "Wrapped notes.description and notes.dateadded columns with ANY_VALUE() function",
+          "columns_fixed": [
+            "notes.description as notes_description",
+            "notes.dateadded as notes_date_added"
+          ],
+          "fix_applied": "ANY_VALUE(tblnotes.description) as notes_description",
+          "reason": "Comply with MySQL's only_full_group_by mode"
+        }
+      },
+      "database_setup": {
+        "steps": [
+          "Create MySQL database with utf8mb4 charset and utf8mb4_unicode_ci collation",
+          "Import database schema and data from SQL dump file",
+          "Update database credentials in app-config.php"
+        ],
+        "sql_command": "CREATE DATABASE your_database_name CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+      },
+      "file_permissions": {
+        "directories": [
+          "application/cache/",
+          "application/logs/",
+          "application/uploads/",
+          "application/sessions/"
+        ],
+        "permission_command": "chmod -R 755"
+      },
+      "checklist": [
+        "Database credentials updated in app-config.php",
+        "Environment set correctly in index.php",
+        "Database created and schema imported",
+        "File permissions set correctly",
+        ".htaccess file configured (if using Apache)",
+        "PHP extensions installed (mysqli, mbstring, etc.)"
+      ],
+      "verification": [
+        "Access the application URL in browser",
+        "Check for PHP errors in browser or log files",
+        "Verify database connectivity",
+        "Test the leads listing page (which uses the fixed queries)"
+      ]
+    },
+    "notes": [
+      "Code fixes ensure compatibility with MySQL strict mode (only_full_group_by)",
+      "ANY_VALUE() function resolves GROUP BY clause issues in table queries",
+      "usort() fix prevents null array errors when staff status data is not available",
+      "Always backup database before making changes in production"
+    ],
+    "troubleshooting": {
+      "database_connection": "Check credentials in app-config.php",
+      "sql_errors": "Ensure MySQL strict mode compatibility fixes are in place",
+      "php_errors": "Check application/logs/ directory for error logs"
+    },
+    "resources": {
+      "codeigniter_docs": "https://codeigniter.com/user_guide/",
+      "mysql_docs": "https://dev.mysql.com/doc/",
+      "php_docs": "https://www.php.net/docs.php"
+    }
+  }
+}
+

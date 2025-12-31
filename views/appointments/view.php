@@ -587,7 +587,7 @@ html {
                                     <div class="col-md-12">
                                         <hr class="hr-panel-heading" />
                                         
-                                        <?php if (has_permission('ella_contractors', '', 'edit')) { ?>
+                                        <?php if (has_permission('ella_contractor', '', 'edit')) { ?>
                                         <div class="clearfix mbot15">
                                             <button type="button" class="btn btn-info pull-right" data-toggle="modal" data-target="#attachmentUploadModal">
                                                 <i class="fa fa-upload"></i> <?php echo _l('upload_files'); ?>
