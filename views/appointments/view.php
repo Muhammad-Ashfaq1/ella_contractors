@@ -1341,13 +1341,14 @@ function updatePresentationsForAppointment() {
             var presentationId = toAttach[attachIndex];
             
             if (typeof attachPresentationToAppointment === 'function') {
+                // Suppress individual alerts when updating multiple presentations
                 attachPresentationToAppointment(appointmentId, presentationId, function(response) {
                     if (response.success) {
                         attachCount++;
                     }
                     attachIndex++;
                     attachNext();
-                });
+                }, true); // Suppress alerts
             } else {
                 attachIndex++;
                 attachNext();
@@ -1796,6 +1797,7 @@ function syncPresentationsForAppointment(appointmentId, currentlySelectedIds, or
             var presentationId = toAttach[attachIndex];
             
             if (typeof attachPresentationToAppointment === 'function') {
+                // Suppress individual alerts when syncing multiple presentations
                 attachPresentationToAppointment(appointmentId, presentationId, function(response) {
                     if (response && response.success) {
                         attachCount++;
@@ -1803,7 +1805,7 @@ function syncPresentationsForAppointment(appointmentId, currentlySelectedIds, or
                     completedOps++;
                     attachIndex++;
                     attachNext();
-                });
+                }, true); // Suppress alerts
             } else {
                 completedOps++;
                 attachIndex++;

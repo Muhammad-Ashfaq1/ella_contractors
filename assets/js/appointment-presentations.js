@@ -209,8 +209,9 @@ function renderAttachedPresentations(presentations, containerId) {
  * @param {number} appointmentId - Appointment ID
  * @param {number} presentationId - Presentation ID
  * @param {function} callback - Optional callback after attaching
+ * @param {boolean} suppressAlert - If true, don't show success alert (for batch operations)
  */
-function attachPresentationToAppointment(appointmentId, presentationId, callback) {
+function attachPresentationToAppointment(appointmentId, presentationId, callback, suppressAlert) {
     if (!presentationId) {
         alert_float('warning', 'Please select a presentation');
         if (callback) callback({ success: false, message: 'No presentation selected' });
@@ -230,7 +231,9 @@ function attachPresentationToAppointment(appointmentId, presentationId, callback
         dataType: 'json',
         success: function(response) {
             if (response.success) {
-                alert_float('success', 'Presentation attached successfully');
+                if (!suppressAlert) {
+                    alert_float('success', 'Presentation attached successfully');
+                }
                 if (callback) callback(response);
             } else {
                 alert_float('danger', response.message || 'Failed to attach presentation');
@@ -353,10 +356,11 @@ function attachMultiplePresentationsToAppointment(appointmentId, presentationIds
     var totalCount = presentationIds.length;
     
     presentationIds.forEach(function(presentationId) {
+        // Suppress individual alerts when attaching multiple
         attachPresentationToAppointment(appointmentId, presentationId, function(response) {
             attachedCount++;
             if (response.success) {
-                // Success - do nothing, already showed alert
+                // Success - individual alerts suppressed
             } else {
                 failedCount++;
             }
@@ -372,7 +376,7 @@ function attachMultiplePresentationsToAppointment(appointmentId, presentationIds
                     });
                 }
             }
-        });
+        }, true); // Suppress alerts for batch operations
     });
 }
 
