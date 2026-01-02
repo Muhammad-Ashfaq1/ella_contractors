@@ -1702,6 +1702,134 @@ function hideAppointmentModalLoader() {
 }
 
 /**
+ * Sync presentations for appointment (detach removed, attach new)
+ * @param {number} appointmentId - Appointment ID
+ * @param {array} currentlySelectedIds - Currently selected presentation IDs
+ * @param {array} originallyAttachedIds - Originally attached presentation IDs
+ * @param {function} callback - Optional callback after sync completes
+ */
+function syncPresentationsForAppointment(appointmentId, currentlySelectedIds, originallyAttachedIds, callback) {
+    if (!appointmentId) {
+        if (callback) callback({ success: false, message: 'Appointment ID required' });
+        return;
+    }
+    
+    // Ensure arrays
+    currentlySelectedIds = currentlySelectedIds || [];
+    originallyAttachedIds = originallyAttachedIds || [];
+    
+    // Convert to strings for comparison
+    currentlySelectedIds = currentlySelectedIds.map(function(id) { return id.toString(); });
+    originallyAttachedIds = originallyAttachedIds.map(function(id) { return id.toString(); });
+    
+    // Determine what to add and what to remove
+    var toAttach = currentlySelectedIds.filter(function(id) {
+        return originallyAttachedIds.indexOf(id) === -1; // Not previously attached
+    });
+    
+    var toDetach = originallyAttachedIds.filter(function(id) {
+        return currentlySelectedIds.indexOf(id) === -1; // No longer selected
+    });
+    
+    var attachCount = 0;
+    var detachCount = 0;
+    var totalOps = toAttach.length + toDetach.length;
+    var completedOps = 0;
+    
+    // If nothing to do, call callback immediately
+    if (totalOps === 0) {
+        if (callback) callback({ success: true, attached: 0, detached: 0 });
+        return;
+    }
+    
+    // Step 1: Detach presentations that are no longer selected
+    function detachPresentations(detachCallback) {
+        if (toDetach.length === 0) {
+            detachCallback();
+            return;
+        }
+        
+        var detachIndex = 0;
+        
+        function detachNext() {
+            if (detachIndex >= toDetach.length) {
+                detachCallback();
+                return;
+            }
+            
+            var presentationId = toDetach[detachIndex];
+            
+            if (typeof detachPresentationFromAppointment === 'function') {
+                detachPresentationFromAppointment(presentationId, appointmentId, null, function(response) {
+                    if (response && response.success) {
+                        detachCount++;
+                    }
+                    completedOps++;
+                    detachIndex++;
+                    detachNext();
+                });
+            } else {
+                completedOps++;
+                detachIndex++;
+                detachNext();
+            }
+        }
+        
+        detachNext();
+    }
+    
+    // Step 2: Attach new presentations
+    function attachPresentations(attachCallback) {
+        if (toAttach.length === 0) {
+            attachCallback();
+            return;
+        }
+        
+        var attachIndex = 0;
+        
+        function attachNext() {
+            if (attachIndex >= toAttach.length) {
+                attachCallback();
+                return;
+            }
+            
+            var presentationId = toAttach[attachIndex];
+            
+            if (typeof attachPresentationToAppointment === 'function') {
+                attachPresentationToAppointment(appointmentId, presentationId, function(response) {
+                    if (response && response.success) {
+                        attachCount++;
+                    }
+                    completedOps++;
+                    attachIndex++;
+                    attachNext();
+                });
+            } else {
+                completedOps++;
+                attachIndex++;
+                attachNext();
+            }
+        }
+        
+        attachNext();
+    }
+    
+    // Execute: First detach, then attach
+    detachPresentations(function() {
+        attachPresentations(function() {
+            if (callback) {
+                callback({
+                    success: true,
+                    attached: attachCount,
+                    detached: detachCount,
+                    total: totalOps
+                });
+            }
+        });
+    });
+}
+
+/**
  * Initialize contact dropdown with AJAX search and set value (shared function)
  * @param {string} contactDropdownValue - Value like 'lead_123' or 'client_456'
  * @param {string} contactDisplayName - Display name
@@ -1891,6 +2019,9 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                                 // Pre-select in dropdown
                                 var selectedIds = attachResponse.data.map(function(p) { return p.id.toString(); });
                                 
+                                // Store originally attached IDs for sync on save
+                                originallyAttachedPresentationIds = selectedIds.slice(); // Create a copy
+                                
                                 // Update the global array with actual presentation details
                                 selectedPresentationsInModal = attachResponse.data.map(function(p) {
                                     return {
@@ -1904,6 +2035,9 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                                 if (typeof renderPresentationSelectionPreview === 'function') {
                                     renderPresentationSelectionPreview('modal-presentation-list');
                                 }
+                            } else {
+                                // No presentations attached, reset tracking
+                                originallyAttachedPresentationIds = [];
                             }
                             
                             // Refresh all selectpickers one final time
@@ -2076,20 +2210,84 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
+                    var appointmentId = response.appointment_id || <?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>;
+                    // Capture edit status, originally attached IDs, and currently selected IDs BEFORE resetting modal
+                    var isEdit = $('#appointment_id').val() && $('#appointment_id').val() > 0;
+                    var originalAttachedIds = isEdit ? originallyAttachedPresentationIds.slice() : []; // Create a copy
+                    
+                    // Get selected presentation IDs from dropdown (ensure selectpicker is refreshed first)
+                    var selectedPresentationIds = [];
+                    if ($('#presentation_select').length) {
+                        // Get from selectpicker
+                        var dropdownValues = $('#presentation_select').val();
+                        if (dropdownValues) {
+                            selectedPresentationIds = Array.isArray(dropdownValues) ? dropdownValues : [dropdownValues];
+                        }
+                        // Also try to get from selectedPresentationsInModal array as fallback
+                        if (selectedPresentationIds.length === 0 && typeof selectedPresentationsInModal !== 'undefined' && selectedPresentationsInModal.length > 0) {
+                            selectedPresentationIds = selectedPresentationsInModal.map(function(p) { return p.id.toString(); });
+                        }
+                    }
+                    
                     // Close modal first
                     $('#appointmentModal').modal('hide');
                     resetAppointmentModal();
                     
-                    // Show success message with timeout before reload
-                    alert_float('success', response.message || 'Appointment updated successfully!', 2000);
-                    
-                    // Delay page reload to allow alert to show
-                    setTimeout(function() {
-                        // Refresh attendees display
-                        loadAttendeesDisplay(<?php echo $appointment->id; ?>);
-                        // Reload the page to show updated data
-                        window.location.reload();
-                    }, 2000); // 2 second delay allows user to see success message
+                    // Sync presentations if editing
+                    if (isEdit && appointmentId && typeof syncPresentationsForAppointment === 'function') {
+                        // Sync presentations: compare original vs current
+                        syncPresentationsForAppointment(appointmentId, selectedPresentationIds, originalAttachedIds, function(syncResponse) {
+                            var syncMsg = response.message || 'Appointment updated successfully!';
+                            if (syncResponse.success && (syncResponse.attached > 0 || syncResponse.detached > 0)) {
+                                syncMsg += ' Presentations updated.';
+                            }
+                            alert_float('success', syncMsg, 2000);
+                            
+                            // Delay page reload to allow alert to show
+                            setTimeout(function() {
+                                // Refresh attendees display
+                                loadAttendeesDisplay(<?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>);
+                                // Reload the page to show updated data
+                                window.location.reload();
+                            }, 2000); // 2 second delay allows user to see success message
+                        });
+                    } else if (appointmentId && typeof attachMultiplePresentationsToAppointment === 'function') {
+                        // For new appointments, just attach selected presentations
+                        if (selectedPresentationIds && selectedPresentationIds.length > 0) {
+                            attachMultiplePresentationsToAppointment(appointmentId, selectedPresentationIds, function(attachResponse) {
+                                alert_float('success', response.message || 'Appointment saved successfully with presentations!', 2000);
+                                
+                                // Delay page reload to allow alert to show
+                                setTimeout(function() {
+                                    // Refresh attendees display
+                                    loadAttendeesDisplay(<?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>);
+                                    // Reload the page to show updated data
+                                    window.location.reload();
+                                }, 2000);
+                            });
+                        } else {
+                            alert_float('success', response.message || 'Appointment saved successfully!', 2000);
+                            
+                            // Delay page reload to allow alert to show
+                            setTimeout(function() {
+                                // Refresh attendees display
+                                loadAttendeesDisplay(<?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>);
+                                // Reload the page to show updated data
+                                window.location.reload();
+                            }, 2000);
+                        }
+                    } else {
+                        // Show success message with timeout before reload
+                        alert_float('success', response.message || 'Appointment updated successfully!', 2000);
+                        
+                        // Delay page reload to allow alert to show
+                        setTimeout(function() {
+                            // Refresh attendees display
+                            loadAttendeesDisplay(<?php echo isset($appointment->id) ? (int)$appointment->id : 0; ?>);
+                            // Reload the page to show updated data
+                            window.location.reload();
+                        }, 2000); // 2 second delay allows user to see success message
+                    }
                 } else {
                     alert_float('danger', response.message || 'Failed to update appointment');
                 }

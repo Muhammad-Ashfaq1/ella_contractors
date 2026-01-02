@@ -1859,9 +1859,19 @@ $('#saveAppointment').on('click', function() {
                 // Capture edit status, originally attached IDs, and currently selected IDs BEFORE resetting modal
                 var isEdit = $('#appointment_id').val() && $('#appointment_id').val() > 0;
                 var originalAttachedIds = isEdit ? originallyAttachedPresentationIds.slice() : []; // Create a copy
+                
+                // Get selected presentation IDs from dropdown (ensure selectpicker is refreshed first)
                 var selectedPresentationIds = [];
-                if (typeof getSelectedPresentationIds === 'function') {
-                    selectedPresentationIds = getSelectedPresentationIds('presentation_select', 'selected_presentation_ids') || [];
+                if ($('#presentation_select').length) {
+                    // Get from selectpicker
+                    var dropdownValues = $('#presentation_select').val();
+                    if (dropdownValues) {
+                        selectedPresentationIds = Array.isArray(dropdownValues) ? dropdownValues : [dropdownValues];
+                    }
+                    // Also try to get from selectedPresentationsInModal array as fallback
+                    if (selectedPresentationIds.length === 0 && typeof selectedPresentationsInModal !== 'undefined' && selectedPresentationsInModal.length > 0) {
+                        selectedPresentationIds = selectedPresentationsInModal.map(function(p) { return p.id.toString(); });
+                    }
                 }
                 
                 // Close modal first to prevent z-index conflicts
@@ -1884,9 +1894,8 @@ $('#saveAppointment').on('click', function() {
                                 alert_float('success', response.message || 'Appointment saved successfully!', 4000);
                             }
                         });
-                    } else if (appointmentId && typeof getSelectedPresentationIds === 'function' && typeof attachMultiplePresentationsToAppointment === 'function') {
+                    } else if (appointmentId && typeof attachMultiplePresentationsToAppointment === 'function') {
                         // For new appointments, just attach selected presentations
-                        var selectedPresentationIds = getSelectedPresentationIds('presentation_select', 'selected_presentation_ids');
                         if (selectedPresentationIds && selectedPresentationIds.length > 0) {
                             attachMultiplePresentationsToAppointment(appointmentId, selectedPresentationIds, function(attachResponse) {
                                 alert_float('success', response.message || 'Appointment saved successfully with presentations!', 5000);
