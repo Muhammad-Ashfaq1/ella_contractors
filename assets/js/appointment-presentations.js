@@ -294,10 +294,10 @@ function detachPresentationFromAppointment(presentationId, appointmentId, contai
             if (response.success) {
                 alert_float('success', 'Presentation removed successfully');
                 
-                // Reload attached presentations if container ID provided
-                if (containerId) {
-                    loadAttachedPresentations(appointmentId, containerId);
-                }
+                // Empty container and reload
+                var targetContainer = containerId || 'attached-presentations-container';
+                $('#' + targetContainer).html('');
+                loadAttachedPresentations(appointmentId, targetContainer);
                 
                 if (callback) callback(response);
             } else {
