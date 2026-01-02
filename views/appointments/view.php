@@ -1536,15 +1536,17 @@ function openAppointmentModal(appointmentId = null) {
     // Reset form
     resetAppointmentModal();
     
-    // Show modal immediately for new appointments
+    // Show modal immediately for new appointments (no loader needed)
     if (!appointmentId) {
+        // Ensure loader is hidden for new appointments
+        hideAppointmentModalLoader();
         $('#appointmentModal').modal({
             backdrop: 'static',
             keyboard: false,
             show: true
         });
     } else {
-        // For editing, use the dedicated function that loads data first
+        // For editing, use the dedicated function that loads data first (shows loader)
         loadAppointmentDataAndShowModal(appointmentId);
     }
 }
@@ -1685,7 +1687,109 @@ function loadAppointmentData(appointmentId) {
     });
 }
 
+/**
+ * Show appointment modal loader (shared function)
+ */
+function showAppointmentModalLoader() {
+    $('#appointmentModalLoader').addClass('show');
+}
+
+/**
+ * Hide appointment modal loader (shared function)
+ */
+function hideAppointmentModalLoader() {
+    $('#appointmentModalLoader').removeClass('show');
+}
+
+/**
+ * Initialize contact dropdown with AJAX search and set value (shared function)
+ * @param {string} contactDropdownValue - Value like 'lead_123' or 'client_456'
+ * @param {string} contactDisplayName - Display name
+ * @returns {Promise} Promise that resolves when dropdown is initialized and value is set
+ */
+function initializeContactDropdown(contactDropdownValue, contactDisplayName) {
+    return new Promise(function(resolve) {
+        // Remove existing change handler
+        $('#contact_id').off('change');
+        
+        // Re-initialize AJAX search for contact dropdown
+        init_combined_ajax_search('#contact_id.ajax-search');
+        
+        // Re-add the change handler
+        $('#contact_id').on('change', function() {
+            var selectedValue = $(this).val();
+            if (selectedValue) {
+                var splitValue = selectedValue.split('_');
+                var relType = splitValue[0]; // 'lead' or 'client'
+                var relId = splitValue[1];   // The ID number
+                
+                if (relId) {
+                    $.ajax({
+                        url: admin_url + 'ella_contractors/appointments/get_relation_data_values/' + relId + '/' + relType,
+                        type: 'GET',
+                        dataType: 'json',
+                        success: function(data) {
+                            if (data.error) {
+                                alert_float('danger', data.error);
+                                return;
+                            }
+                            
+                            // Populate form fields with the selected relation data
+                            $('#email').val(data.email || '');
+                            $('#phone').val(data.phone || '');
+                            $('#address').val(data.address || '');
+                            
+                            // Store validation status in hidden fields
+                            if (typeof data.emailValidaionStatus !== 'undefined') {
+                                $('#email_validated').val(data.emailValidaionStatus);
+                            }
+                            
+                            if (typeof data.phoneNumberValid !== 'undefined') {
+                                $('#phone_validated').val(data.phoneNumberValid);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            alert_float('danger', 'Error loading lead information');
+                        }
+                    });
+                }
+            } else {
+                // Clear form fields if no contact is selected
+                $('#email').val('');
+                $('#phone').val('');
+                $('#address').val('');
+            }
+        });
+        
+        // Set contact value after AJAX search is initialized
+        if (contactDropdownValue && contactDisplayName) {
+            // Wait for selectpicker to be ready
+            requestAnimationFrame(function() {
+                var contactOption = '<option value="' + contactDropdownValue + '">' + contactDisplayName + '</option>';
+                $('#contact_id').append(contactOption);
+                $('#contact_id').selectpicker('val', contactDropdownValue);
+                $('#contact_id').selectpicker('refresh');
+                
+                // Small delay to ensure selectpicker is fully rendered
+                setTimeout(function() {
+                    resolve();
+                }, 150);
+            });
+        } else {
+            resolve();
+        }
+    });
+}
+
+/**
+ * Load appointment data and show modal with proper loader
+ * All async operations are tracked and modal only shows when everything is ready
+ */
 function loadAppointmentDataAndShowModal(appointmentId) {
+    // Show loader immediately
+    showAppointmentModalLoader();
+    
+    // Load appointment data first
     $.ajax({
         url: admin_url + 'ella_contractors/appointments/get_appointment_data',
         type: 'POST',
@@ -1698,7 +1802,7 @@ function loadAppointmentDataAndShowModal(appointmentId) {
             if (response.success) {
                 var data = response.data;
                 
-                // Populate form fields
+                // Populate basic form fields (synchronous)
                 $('#appointment_id').val(data.id);
                 $('#subject').val(data.subject);
                 
@@ -1732,132 +1836,110 @@ function loadAppointmentDataAndShowModal(appointmentId) {
                 // Handle reminder checkboxes
                 $('#send_reminder').prop('checked', data.send_reminder == 1);
                 $('#reminder_48h').prop('checked', data.reminder_48h == 1);
+                $('#reminder_same_day').prop('checked', data.reminder_same_day == 1);
+                $('#staff_reminder_48h').prop('checked', data.staff_reminder_48h == 1);
+                $('#staff_reminder_same_day').prop('checked', data.staff_reminder_same_day == 1);
+                
+                var reminderChannel = data.reminder_channel || 'both';
+                $('input[name="reminder_channel"][value="' + reminderChannel + '"]').prop('checked', true);
                 
                 // Set status dropdown
                 var status = data.appointment_status || 'scheduled';
                 $('#status').val(status);
                 
-                // Set appointment type (types already loaded from PHP)
+                // Set appointment type
                 $('#type_id').val(data.type_id);
-                
-                // Refresh selectpicker
-                $('.selectpicker').selectpicker('refresh');
-                
-                // Re-initialize AJAX search for contact dropdown
-                $('#contact_id').off('change'); // Remove existing change handler
-                init_combined_ajax_search('#contact_id.ajax-search');
-                
-                // Re-add the change handler
-                $('#contact_id').on('change', function() {
-                    var selectedValue = $(this).val();
-                    if (selectedValue) {
-                        var splitValue = selectedValue.split('_');
-                        var relType = splitValue[0]; // 'lead' or 'client'
-                        var relId = splitValue[1];   // The ID number
-                        
-                        if (relId) {
-                            $.ajax({
-                                url: admin_url + 'ella_contractors/appointments/get_relation_data_values/' + relId + '/' + relType,
-                                type: 'GET',
-                                dataType: 'json',
-                                success: function(data) {
-                                    if (data.error) {
-                                        alert_float('danger', data.error);
-                                        return;
-                                    }
-                                    
-                                    // Populate form fields with the selected relation data
-                                    $('#email').val(data.email || '');
-                                    $('#phone').val(data.phone || '');
-                                    $('#address').val(data.address || '');
-                                    
-                                    // Store validation status in hidden fields
-                                    if (typeof data.emailValidaionStatus !== 'undefined') {
-                                        $('#email_validated').val(data.emailValidaionStatus);
-                                    }
-                                    
-                                    if (typeof data.phoneNumberValid !== 'undefined') {
-                                        $('#phone_validated').val(data.phoneNumberValid);
-                                    }
-                                },
-                                error: function(xhr, status, error) {
-                                    alert_float('danger', 'Error loading lead information');
-                                }
-                            });
-                        }
-                    } else {
-                        // Clear form fields if no contact is selected
-                        $('#email').val('');
-                        $('#phone').val('');
-                        $('#address').val('');
-                    }
-                });
-                
-                // Re-set the contact value after AJAX search is initialized
-                if (data.contact_dropdown_value && data.contact_display_name) {
-                    setTimeout(function() {
-                        var contactOption = '<option value="' + data.contact_dropdown_value + '">' + data.contact_display_name + ' (' + data.contact_type + ')</option>';
-                        $('#contact_id').append(contactOption);
-                        $('#contact_id').selectpicker('val', data.contact_dropdown_value);
-                    }, 100);
-                }
-                
-                // Reload staff and set attendees using centralized function
-                reloadStaffAndSetAttendees(data.attendees);
-                
-                // Load presentations and attached presentations
-                if (typeof loadPresentationsForDropdown === 'function') {
-                    loadPresentationsForDropdown('presentation_select', function() {
-                        // After presentations dropdown is loaded, initialize preview
-                        if (typeof initPresentationSelectionPreview === 'function') {
-                            initPresentationSelectionPreview('presentation_select', 'modal-presentation-list');
-                        }
-                        
-                        // Load already attached presentations for this appointment
-                        if (typeof loadAttachedPresentations === 'function') {
-                            loadAttachedPresentations(appointmentId, null, function(response) {
-                                if (response.success && response.data && response.data.length > 0) {
-                                    // Update the global array with actual presentation details
-                                    if (typeof selectedPresentationsInModal !== 'undefined') {
-                                        selectedPresentationsInModal = response.data.map(function(p) {
-                                            return {
-                                                id: p.id.toString(),
-                                                name: p.original_name || p.file_name,
-                                                file_name: p.file_name
-                                            };
-                                        });
-                                    }
-                                    
-                                    // Pre-select in dropdown
-                                    var selectedIds = response.data.map(function(p) { return p.id.toString(); });
-                                    $('#presentation_select').selectpicker('val', selectedIds);
-                                    
-                                    // Render preview
-                                    if (typeof renderPresentationSelectionPreview === 'function') {
-                                        renderPresentationSelectionPreview('modal-presentation-list');
-                                    }
-                                }
-                            });
-                        }
-                    });
-                }
                 
                 // Update modal title and button text for editing
                 $('#appointmentModalLabel').text('Edit Appointment');
                 $('#saveAppointment').text('Save Appointment');
                 
-                // Show modal after data is loaded
-                $('#appointmentModal').modal({
-                    backdrop: 'static',
-                    keyboard: false,
-                    show: true
+                // Prepare all async operations as promises
+                var promises = [];
+                
+                // 1. Load staff and set attendees
+                promises.push(reloadStaffAndSetAttendees(data.attendees || []));
+                
+                // 2. Load presentations dropdown
+                if (typeof loadPresentationsForDropdown === 'function') {
+                    promises.push(loadPresentationsForDropdown('presentation_select'));
+                }
+                
+                // 3. Initialize contact dropdown and set value
+                var contactPromise = initializeContactDropdown(
+                    data.contact_dropdown_value || '',
+                    data.contact_display_name || ''
+                );
+                promises.push(contactPromise);
+                
+                // 4. Load attached presentations if editing
+                if (appointmentId && typeof loadAttachedPresentations === 'function') {
+                    promises.push(loadAttachedPresentations(appointmentId, null));
+                }
+                
+                // Wait for all async operations to complete
+                Promise.all(promises).then(function() {
+                    // Initialize presentation selection preview if function exists
+                    if (typeof initPresentationSelectionPreview === 'function') {
+                        initPresentationSelectionPreview('presentation_select', 'modal-presentation-list');
+                    }
+                    
+                    // Load and pre-select attached presentations if editing
+                    if (appointmentId && typeof loadAttachedPresentations === 'function') {
+                        loadAttachedPresentations(appointmentId, null, function(attachResponse) {
+                            if (attachResponse.success && attachResponse.data && attachResponse.data.length > 0) {
+                                // Pre-select in dropdown
+                                var selectedIds = attachResponse.data.map(function(p) { return p.id.toString(); });
+                                
+                                // Update the global array with actual presentation details
+                                selectedPresentationsInModal = attachResponse.data.map(function(p) {
+                                    return {
+                                        id: p.id.toString(),
+                                        name: p.original_name || p.file_name
+                                    };
+                                });
+                                
+                                // Set dropdown values and render preview
+                                $('#presentation_select').selectpicker('val', selectedIds);
+                                if (typeof renderPresentationSelectionPreview === 'function') {
+                                    renderPresentationSelectionPreview('modal-presentation-list');
+                                }
+                            }
+                            
+                            // Refresh all selectpickers one final time
+                            $('.selectpicker').selectpicker('refresh');
+                            
+                            // Hide loader and show modal
+                            hideAppointmentModalLoader();
+                            $('#appointmentModal').modal({
+                                backdrop: 'static',
+                                keyboard: false,
+                                show: true
+                            });
+                        });
+                    } else {
+                        // No presentations to load, just refresh and show modal
+                        $('.selectpicker').selectpicker('refresh');
+                        hideAppointmentModalLoader();
+                        $('#appointmentModal').modal({
+                            backdrop: 'static',
+                            keyboard: false,
+                            show: true
+                        });
+                    }
+                }).catch(function(error) {
+                    console.error('Error loading appointment data:', error);
+                    hideAppointmentModalLoader();
+                    alert_float('danger', 'Error loading appointment data. Please try again.');
                 });
                 
             } else {
-                alert_float('danger', response.message);
+                hideAppointmentModalLoader();
+                alert_float('danger', response.message || 'Failed to load appointment data');
             }
         },
         error: function(xhr, status, error) {
+            hideAppointmentModalLoader();
             alert_float('danger', 'Error loading appointment data: ' + error);
         }
     });
@@ -2053,6 +2135,11 @@ $(function () {
 $(document).ready(function() {
     // Initialize tooltips
     $('[data-toggle="tooltip"]').tooltip();
+    
+    // Hide loader when modal is closed
+    $('#appointmentModal').on('hidden.bs.modal', function() {
+        hideAppointmentModalLoader();
+    });
     
     // Restart Tutorial Button for View Page
     $('#restart-view-tutorial').on('click', function(e) {

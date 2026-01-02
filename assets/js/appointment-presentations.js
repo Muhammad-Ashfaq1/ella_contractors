@@ -51,47 +51,53 @@ function getPresentationCSRFToken() {
 /**
  * Load all available presentations for dropdown
  * @param {string} selectId - ID of the select element
- * @param {function} callback - Optional callback after loading
+ * @param {function} callback - Optional callback after loading (for backward compatibility)
+ * @returns {Promise} Promise that resolves when presentations are loaded
  */
 function loadPresentationsForDropdown(selectId, callback) {
-    var csrfToken = getPresentationCSRFToken();
-    
-    $.ajax({
-        url: admin_url + 'ella_contractors/presentations/get_all',
-        type: 'GET',
-        data: {
-            [csrfToken.name]: csrfToken.hash
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success && response.data && response.data.length > 0) {
-                var options = '<option value="" disabled>-- Select Presentation --</option>';
-                
-                // Cache all presentation data for later use
-                allPresentationsCache = {};
-                
-                response.data.forEach(function(presentation) {
-                    var presentationName = presentation.original_name || presentation.file_name;
-                    options += '<option value="' + presentation.id + '">' + presentationName + '</option>';
+    return new Promise(function(resolve, reject) {
+        var csrfToken = getPresentationCSRFToken();
+        
+        $.ajax({
+            url: admin_url + 'ella_contractors/presentations/get_all',
+            type: 'GET',
+            data: {
+                [csrfToken.name]: csrfToken.hash
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success && response.data && response.data.length > 0) {
+                    var options = '<option value="" disabled>-- Select Presentation --</option>';
                     
-                    // Cache presentation data including file info
-                    allPresentationsCache[presentation.id] = presentation;
-                });
-                
-                $('#' + selectId).html(options);
+                    // Cache all presentation data for later use
+                    allPresentationsCache = {};
+                    
+                    response.data.forEach(function(presentation) {
+                        var presentationName = presentation.original_name || presentation.file_name;
+                        options += '<option value="' + presentation.id + '">' + presentationName + '</option>';
+                        
+                        // Cache presentation data including file info
+                        allPresentationsCache[presentation.id] = presentation;
+                    });
+                    
+                    $('#' + selectId).html(options);
+                    $('#' + selectId).selectpicker('refresh');
+                } else {
+                    $('#' + selectId).html('<option value="">No presentations available</option>');
+                    $('#' + selectId).selectpicker('refresh');
+                }
+                if (callback) callback(response);
+                resolve(response);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading presentations:', error);
+                $('#' + selectId).html('<option value="">Error loading presentations</option>');
                 $('#' + selectId).selectpicker('refresh');
-            } else {
-                $('#' + selectId).html('<option value="">No presentations available</option>');
-                $('#' + selectId).selectpicker('refresh');
+                var errorResponse = { success: false, error: error };
+                if (callback) callback(errorResponse);
+                reject(new Error('Error loading presentations: ' + error));
             }
-            if (callback) callback(response);
-        },
-        error: function(xhr, status, error) {
-            console.error('Error loading presentations:', error);
-            $('#' + selectId).html('<option value="">Error loading presentations</option>');
-            $('#' + selectId).selectpicker('refresh');
-            if (callback) callback({ success: false, error: error });
-        }
+        });
     });
 }
 
@@ -99,38 +105,54 @@ function loadPresentationsForDropdown(selectId, callback) {
  * Load attached presentations for an appointment
  * @param {number} appointmentId - Appointment ID
  * @param {string} containerId - Container ID where to render the list
- * @param {function} callback - Optional callback after loading
+ * @param {function} callback - Optional callback after loading (for backward compatibility)
+ * @returns {Promise} Promise that resolves when presentations are loaded
  */
 function loadAttachedPresentations(appointmentId, containerId, callback) {
-    if (!appointmentId || appointmentId <= 0) {
-        $('#' + containerId).html('<p class="text-muted">No presentations attached</p>');
-        if (callback) callback({ success: true, data: [] });
-        return;
-    }
-    
-    var csrfToken = getPresentationCSRFToken();
-    
-    $.ajax({
-        url: admin_url + 'ella_contractors/appointments/get_attached_presentations',
-        type: 'GET',
-        data: {
-            appointment_id: appointmentId,
-            [csrfToken.name]: csrfToken.hash
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success && response.data) {
-                renderAttachedPresentations(response.data, containerId);
-            } else {
+    return new Promise(function(resolve, reject) {
+        if (!appointmentId || appointmentId <= 0) {
+            if (containerId) {
                 $('#' + containerId).html('<p class="text-muted">No presentations attached</p>');
             }
+            var response = { success: true, data: [] };
             if (callback) callback(response);
-        },
-        error: function(xhr, status, error) {
-            console.error('Error loading attached presentations:', error);
-            $('#' + containerId).html('<p class="text-danger">Error loading presentations</p>');
-            if (callback) callback({ success: false, error: error });
+            resolve(response);
+            return;
         }
+        
+        var csrfToken = getPresentationCSRFToken();
+        
+        $.ajax({
+            url: admin_url + 'ella_contractors/appointments/get_attached_presentations',
+            type: 'GET',
+            data: {
+                appointment_id: appointmentId,
+                [csrfToken.name]: csrfToken.hash
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success && response.data) {
+                    if (containerId) {
+                        renderAttachedPresentations(response.data, containerId);
+                    }
+                } else {
+                    if (containerId) {
+                        $('#' + containerId).html('<p class="text-muted">No presentations attached</p>');
+                    }
+                }
+                if (callback) callback(response);
+                resolve(response);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading attached presentations:', error);
+                if (containerId) {
+                    $('#' + containerId).html('<p class="text-danger">Error loading presentations</p>');
+                }
+                var errorResponse = { success: false, error: error };
+                if (callback) callback(errorResponse);
+                reject(new Error('Error loading attached presentations: ' + error));
+            }
+        });
     });
 }
 

@@ -79,18 +79,74 @@ function setAppointmentAttendees(attendees) {
 /**
  * Reload staff and set attendees for appointment modal
  * @param {Array} attendees - Optional array of attendee objects to pre-select
- * @param {number} delay - Optional delay in milliseconds before setting attendees
+ * @returns {Promise} Promise that resolves when staff is loaded and attendees are set
  */
-function reloadStaffAndSetAttendees(attendees, delay = 500) {
-    // Reload staff members first
-    loadStaffForAttendees();
-    
-    // Set attendees after a delay to ensure dropdown is populated
-    if (attendees) {
-        setTimeout(function() {
-            setAppointmentAttendees(attendees);
-        }, delay);
-    }
+function reloadStaffAndSetAttendees(attendees) {
+    return new Promise(function(resolve, reject) {
+        // Get CSRF token dynamically to handle all contexts
+        var csrfTokenName = '';
+        var csrfTokenHash = '';
+        
+        // Try to get CSRF token from multiple sources
+        if (typeof window.csrf_token_name !== 'undefined' && typeof window.csrf_hash !== 'undefined') {
+            csrfTokenName = window.csrf_token_name;
+            csrfTokenHash = window.csrf_hash;
+        } else if (typeof csrfData !== 'undefined' && csrfData.token_name && csrfData.hash) {
+            csrfTokenName = csrfData.token_name;
+            csrfTokenHash = csrfData.hash;
+        } else {
+            csrfTokenName = csrf_token_name || 'csrf_token_name';
+            csrfTokenHash = csrf_hash || '';
+        }
+        
+        var ajaxData = {};
+        if (csrfTokenName && csrfTokenHash) {
+            ajaxData[csrfTokenName] = csrfTokenHash;
+        }
+        
+        // Load staff members first
+        $.ajax({
+            url: admin_url + 'ella_contractors/appointments/get_staff',
+            type: 'GET',
+            data: ajaxData,
+            dataType: 'json',
+            success: function(response) {
+                if (response.success && response.data) {
+                    var options = '';
+                    response.data.forEach(function(staff) {
+                        options += `<option value="${staff.staffid}">${staff.firstname} ${staff.lastname}</option>`;
+                    });
+                    $('#attendees').html(options);
+                    $('#attendees').selectpicker('refresh');
+                    
+                    // Set attendees if provided (after dropdown is populated)
+                    if (attendees && attendees.length > 0) {
+                        // Use requestAnimationFrame to ensure DOM is updated
+                        requestAnimationFrame(function() {
+                            setAppointmentAttendees(attendees);
+                            // Small delay to ensure selectpicker is fully rendered
+                            setTimeout(function() {
+                                resolve();
+                            }, 100);
+                        });
+                    } else {
+                        resolve();
+                    }
+                } else {
+                    $('#attendees').html('<option value="">Error loading staff members</option>');
+                    $('#attendees').selectpicker('refresh');
+                    console.warn('Invalid response format from get_staff endpoint');
+                    reject(new Error('Failed to load staff members'));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading staff members:', error);
+                $('#attendees').html('<option value="">Error loading staff members</option>');
+                $('#attendees').selectpicker('refresh');
+                reject(new Error('Error loading staff members: ' + error));
+            }
+        });
+    });
 }
 
 /**

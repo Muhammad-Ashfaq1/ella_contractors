@@ -1,6 +1,82 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 
 <style>
+/* Appointment Modal Loader Overlay - Matching Core CRM Pattern */
+#appointmentModalLoader {
+    position: fixed;
+    z-index: 10000;
+    height: 2em;
+    width: 2em;
+    overflow: show;
+    margin: auto;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    display: none;
+}
+
+#appointmentModalLoader.show {
+    display: block;
+}
+
+/* Transparent Overlay */
+#appointmentModalLoader:before {
+    content: '';
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(rgba(255, 255, 255, .8), rgba(255, 255, 255, .8));
+    background: -webkit-radial-gradient(rgba(255, 255, 255, .8), rgba(255, 255, 255, .8));
+}
+
+/* :not(:required) hides these rules from IE9 and below */
+#appointmentModalLoader:not(:required) {
+    /* hide "loading..." text */
+    font: 0/0 a;
+    color: transparent;
+    text-shadow: none;
+    background-color: transparent;
+    border: 0;
+}
+
+/* Spinner */
+#appointmentModalLoader:not(:required):after {
+    content: '';
+    display: block;
+    font-size: 10px;
+    width: 1em;
+    height: 1em;
+    margin-top: -0.5em;
+    border-radius: 0.5em;
+    border: 0.2em solid rgba(52, 152, 219, 0.3);
+    border-top-color: rgba(52, 152, 219, 1);
+    -webkit-animation: spinner 150ms infinite linear;
+    -moz-animation: spinner 150ms infinite linear;
+    -ms-animation: spinner 150ms infinite linear;
+    -o-animation: spinner 150ms infinite linear;
+    animation: spinner 150ms infinite linear;
+}
+
+@-webkit-keyframes spinner {
+    to { -webkit-transform: rotate(360deg); }
+}
+@-moz-keyframes spinner {
+    to { -moz-transform: rotate(360deg); }
+}
+@-ms-keyframes spinner {
+    to { -ms-transform: rotate(360deg); }
+}
+@-o-keyframes spinner {
+    to { -o-transform: rotate(360deg); }
+}
+@keyframes spinner {
+    to { transform: rotate(360deg); }
+}
+
 /* Dropzone styles for appointment modal */
 .drop-zone {
   max-width: 100%;
@@ -269,6 +345,9 @@ button.delete-btn {
   background-color: rgba(0, 0, 0, 0.5) !important;
 }
 </style>
+
+<!-- Appointment Modal Loader Overlay -->
+<div id="appointmentModalLoader"></div>
 
 <div class="modal fade" id="appointmentModal" tabindex="-1" role="dialog" aria-labelledby="appointmentModalLabel" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg" role="document">
