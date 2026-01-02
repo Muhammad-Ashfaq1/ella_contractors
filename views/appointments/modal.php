@@ -1,10 +1,10 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 
 <style>
-/* Appointment Modal Loader Overlay - Matching Core CRM Pattern */
-#appointmentModalLoader {
+/* Absolute Center Spinner - Core CRM Pattern */
+.loading {
     position: fixed;
-    z-index: 10000;
+    z-index: 999;
     height: 2em;
     width: 2em;
     overflow: show;
@@ -16,12 +16,8 @@
     display: none;
 }
 
-#appointmentModalLoader.show {
-    display: block;
-}
-
 /* Transparent Overlay */
-#appointmentModalLoader:before {
+.loading:before {
     content: '';
     display: block;
     position: fixed;
@@ -34,7 +30,7 @@
 }
 
 /* :not(:required) hides these rules from IE9 and below */
-#appointmentModalLoader:not(:required) {
+.loading:not(:required) {
     /* hide "loading..." text */
     font: 0/0 a;
     color: transparent;
@@ -43,22 +39,21 @@
     border: 0;
 }
 
-/* Spinner */
-#appointmentModalLoader:not(:required):after {
+.loading:not(:required):after {
     content: '';
     display: block;
     font-size: 10px;
     width: 1em;
     height: 1em;
     margin-top: -0.5em;
-    border-radius: 0.5em;
-    border: 0.2em solid rgba(52, 152, 219, 0.3);
-    border-top-color: rgba(52, 152, 219, 1);
     -webkit-animation: spinner 150ms infinite linear;
     -moz-animation: spinner 150ms infinite linear;
     -ms-animation: spinner 150ms infinite linear;
     -o-animation: spinner 150ms infinite linear;
     animation: spinner 150ms infinite linear;
+    border-radius: 0.5em;
+    -webkit-box-shadow: rgba(0, 0, 0, 0.75) 1.5em 0 0 0, rgba(0, 0, 0, 0.75) 1.1em 1.1em 0 0, rgba(0, 0, 0, 0.75) 0 1.5em 0 0, rgba(0, 0, 0, 0.75) -1.1em 1.1em 0 0, rgba(0, 0, 0, 0.75) -1.5em 0 0 0, rgba(0, 0, 0, 0.75) -1.1em -1.1em 0 0, rgba(0, 0, 0, 0.75) 0 -1.5em 0 0, rgba(0, 0, 0, 0.75) 1.1em -1.1em 0 0;
+    box-shadow: rgba(0, 0, 0, 0.75) 1.5em 0 0 0, rgba(0, 0, 0, 0.75) 1.1em 1.1em 0 0, rgba(0, 0, 0, 0.75) 0 1.5em 0 0, rgba(0, 0, 0, 0.75) -1.1em 1.1em 0 0, rgba(0, 0, 0, 0.75) -1.5em 0 0 0, rgba(0, 0, 0, 0.75) -1.1em -1.1em 0 0, rgba(0, 0, 0, 0.75) 0 -1.5em 0 0, rgba(0, 0, 0, 0.75) 1.1em -1.1em 0 0;
 }
 
 @-webkit-keyframes spinner {
@@ -346,8 +341,8 @@ button.delete-btn {
 }
 </style>
 
-<!-- Appointment Modal Loader Overlay -->
-<div id="appointmentModalLoader"></div>
+<!-- Appointment Modal Loader Overlay - Core CRM Pattern -->
+<div class="loading">Loading&#8230;</div>
 
 <div class="modal fade" id="appointmentModal" tabindex="-1" role="dialog" aria-labelledby="appointmentModalLabel" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg" role="document">

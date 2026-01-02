@@ -1691,14 +1691,14 @@ function loadAppointmentData(appointmentId) {
  * Show appointment modal loader (shared function)
  */
 function showAppointmentModalLoader() {
-    $('#appointmentModalLoader').addClass('show');
+    $('.loading').show();
 }
 
 /**
  * Hide appointment modal loader (shared function)
  */
 function hideAppointmentModalLoader() {
-    $('#appointmentModalLoader').removeClass('show');
+    $('.loading').hide();
 }
 
 /**

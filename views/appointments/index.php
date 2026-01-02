@@ -1124,14 +1124,14 @@ function loadAppointmentData(appointmentId) {
  * Show appointment modal loader
  */
 function showAppointmentModalLoader() {
-    $('#appointmentModalLoader').addClass('show');
+    $('.loading').show();
 }
 
 /**
  * Hide appointment modal loader
  */
 function hideAppointmentModalLoader() {
-    $('#appointmentModalLoader').removeClass('show');
+    $('.loading').hide();
 }
 
 /**
