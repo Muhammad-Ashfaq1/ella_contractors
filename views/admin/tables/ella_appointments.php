@@ -17,9 +17,9 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
 
-$has_permission_delete = has_permission('ella_contractor', '', 'delete');
-$has_permission_view   = has_permission('ella_contractor', '', 'view');
-$has_permission_edit   = has_permission('ella_contractor', '', 'edit');
+$has_permission_delete = has_permission('ella_contractor', '', 'delete_appointment');
+$has_permission_view   = has_permission('ella_contractor', '', 'view_appointment');
+$has_permission_edit   = has_permission('ella_contractor', '', 'update_appointment');
 
 // Ensure required columns exist in the database
 $CI =& get_instance();

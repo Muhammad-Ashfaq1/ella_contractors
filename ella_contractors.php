@@ -39,7 +39,7 @@ if (is_admin()) {
  */
 function ella_contractors_init_menu() {
     $CI = &get_instance();
-    if (is_staff_logged_in() && (is_super_admin() || is_admin() || has_permission('ella_contractor', '', 'view'))) {
+    if (is_staff_logged_in() && (is_super_admin() || is_admin() || has_permission('ella_contractor', '', 'view_appointment'))) {
         $CI->app_menu->add_sidebar_menu_item('ella_contractors', [
             'slug' => 'ella_contractors',
             'name' => 'EllaContractor',
@@ -49,35 +49,44 @@ function ella_contractors_init_menu() {
         ]);
 
         // Submenu items with icons
-        $submenu = [
-            [
+        $submenu = [];
+        
+        // Appointments submenu - only show if user has view_appointment permission
+        if (is_super_admin() || is_admin() || has_permission('ella_contractor', '', 'view_appointment')) {
+            $submenu[] = [
                 'slug' => 'ella_contractors_appointments',
                 'name' => 'Appointments',
                 'href' => admin_url('ella_contractors/appointments'),
                 'icon' => 'fa fa-calendar-check-o',
                 'position' => 10,
-            ],
-            [
-                'slug' => 'ella_contractors_presentations',
-                'name' => 'Presentations',
-                'href' => admin_url('ella_contractors/presentations'),
-                'icon' => 'fa fa-file-powerpoint-o',
-                'position' => 20,
-            ],
-            [
-                'slug' => 'ella_contractors_estimates',
-                'name' => 'Estimates',
-                'href' => admin_url('proposals'),
-                'icon' => 'fa fa-file-text-o',
-                'position' => 23,
-            ],
-            [
-                'slug' => 'ella_contractors_line_items',
-                'name' => 'Service Items',
-                'href' => admin_url('invoice_items?service_items=true'),
-                'icon' => 'fa fa-list-alt',
-                'position' => 25,
-            ],
+            ];
+        }
+        
+        // Presentations submenu
+        $submenu[] = [
+            'slug' => 'ella_contractors_presentations',
+            'name' => 'Presentations',
+            'href' => admin_url('ella_contractors/presentations'),
+            'icon' => 'fa fa-file-powerpoint-o',
+            'position' => 20,
+        ];
+        
+        // Estimates submenu
+        $submenu[] = [
+            'slug' => 'ella_contractors_estimates',
+            'name' => 'Estimates',
+            'href' => admin_url('proposals'),
+            'icon' => 'fa fa-file-text-o',
+            'position' => 23,
+        ];
+        
+        // Service Items submenu
+        $submenu[] = [
+            'slug' => 'ella_contractors_line_items',
+            'name' => 'Service Items',
+            'href' => admin_url('invoice_items?service_items=true'),
+            'icon' => 'fa fa-list-alt',
+            'position' => 25,
         ];
 
         foreach ($submenu as $item) {

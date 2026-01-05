@@ -236,12 +236,16 @@ html {
                             <a href="<?php echo admin_url('ella_contractors/appointments'); ?>" class="btn btn-default">
                                 <i class="fa fa-arrow-left"></i> <?php echo _l('back_to_appointments'); ?>
                             </a>
+                            <?php if (has_permission('ella_contractor', '', 'update_appointment')): ?>
                             <a href="javascript:void(0)" class="btn btn-info" onclick="editAppointment(<?php echo $appointment->id; ?>)">
                                 <i class="fa fa-edit"></i> <?php echo _l('edit'); ?>
                             </a>
+                            <?php endif; ?>
+                            <?php if (has_permission('ella_contractor', '', 'delete_appointment')): ?>
                             <a href="javascript:void(0)" class="btn btn-danger" onclick="deleteAppointment(<?php echo $appointment->id; ?>)">
                                 <i class="fa fa-trash"></i> <?php echo _l('delete'); ?>
                             </a>
+                            <?php endif; ?>
                             <button type="button" class="btn btn-default" id="restart-view-tutorial" style="margin-left: 10px;" data-toggle="tooltip" data-placement="top" title="Restart Tutorial">
                                 <i class="fa fa-question-circle"></i> Help
                             </button>
@@ -369,9 +373,11 @@ html {
                                 <!-- Attendees Section -->
                                 <h5>
                                     <?php echo _l('attendees'); ?>
+                                    <?php if (has_permission('ella_contractor', '', 'update_appointment')): ?>
                                     <button class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 4px 8px; border-radius: 4px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px;" onclick="editAppointment(<?php echo $appointment->id; ?>)" title="Edit Attendees">
                                         <i class="fa fa-edit"></i>
                                     </button>
+                                    <?php endif; ?>
                                 </h5>
                                 <div id="attendees-container">
                                     <?php if(!empty($attendees)): ?>
@@ -587,7 +593,7 @@ html {
                                     <div class="col-md-12">
                                         <hr class="hr-panel-heading" />
                                         
-                                        <?php if (has_permission('ella_contractor', '', 'edit')) { ?>
+                                        <?php if (has_permission('ella_contractor', '', 'update_appointment')) { ?>
                                         <div class="clearfix mbot15">
                                             <button type="button" class="btn btn-info pull-right" data-toggle="modal" data-target="#attachmentUploadModal">
                                                 <i class="fa fa-upload"></i> <?php echo _l('upload_files'); ?>

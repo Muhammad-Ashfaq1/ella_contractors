@@ -27,7 +27,7 @@ class Appointments extends AdminController
      */
     public function index()
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             access_denied('ella_contractors');
         }
 
@@ -43,7 +43,7 @@ class Appointments extends AdminController
      */
     public function edit($id)
     {
-        if (!has_permission('ella_contractor', '', 'edit')) {
+        if (!has_permission('ella_contractor', '', 'update_appointment')) {
             access_denied('ella_contractors');
         }
 
@@ -61,7 +61,7 @@ class Appointments extends AdminController
      */
     public function view($id)
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             access_denied('ella_contractors');
         }
 
@@ -92,7 +92,7 @@ class Appointments extends AdminController
      */
     public function delete($id)
     {
-        if (!has_permission('ella_contractor', '', 'delete')) {
+        if (!has_permission('ella_contractor', '', 'delete_appointment')) {
             access_denied('ella_contractors');
         }
 
@@ -208,7 +208,7 @@ class Appointments extends AdminController
      */
     public function table()
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             ajax_access_denied();
         }
 
@@ -238,7 +238,7 @@ class Appointments extends AdminController
             
             // Check permissions
             $staff_id = get_staff_user_id();
-            if (!has_permission('ella_contractor', '', 'edit')) {
+            if (!has_permission('ella_contractor', '', 'update_appointment')) {
                 echo json_encode([
                     'success' => false,
                     'class' => 'danger',
@@ -293,7 +293,7 @@ class Appointments extends AdminController
      */
     public function get_appointments_ajax()
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             ajax_access_denied();
         }
 
@@ -306,7 +306,7 @@ class Appointments extends AdminController
      */
     public function get_appointment_data()
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             ajax_access_denied();
         }
 
@@ -362,7 +362,7 @@ class Appointments extends AdminController
 
     public function save_ajax()
     {
-        if (!has_permission('ella_contractor', '', 'create') && !has_permission('ella_contractor', '', 'edit')) {
+        if (!has_permission('ella_contractor', '', 'create_appointment') && !has_permission('ella_contractor', '', 'update_appointment')) {
             ajax_access_denied();
         }
 
@@ -518,7 +518,7 @@ class Appointments extends AdminController
      */
     public function delete_ajax()
     {
-        if (!has_permission('ella_contractor', '', 'delete')) {
+        if (!has_permission('ella_contractor', '', 'delete_appointment')) {
             ajax_access_denied();
         }
 
@@ -552,7 +552,7 @@ class Appointments extends AdminController
      */
     public function bulk_delete()
     {
-        if (!has_permission('ella_contractor', '', 'delete')) {
+        if (!has_permission('ella_contractor', '', 'delete_appointment')) {
             echo json_encode([
                 'success' => false,
                 'message' => 'Access denied'
@@ -639,7 +639,7 @@ class Appointments extends AdminController
      */
     public function get_types()
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             ajax_access_denied();
         }
 
@@ -656,7 +656,7 @@ class Appointments extends AdminController
      */
     public function calendar_events()
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             ajax_access_denied();
         }
 
@@ -727,7 +727,7 @@ class Appointments extends AdminController
      */
     public function send_sms()
     {
-        if (!has_permission('ella_contractor', '', 'edit')) {
+        if (!has_permission('ella_contractor', '', 'update_appointment')) {
             ajax_access_denied();
         }
 
@@ -893,7 +893,7 @@ class Appointments extends AdminController
      */
     public function get_sms_logs()
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             ajax_access_denied();
         }
         
@@ -922,7 +922,7 @@ class Appointments extends AdminController
      */
     public function get_template()
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             ajax_access_denied();
         }
         
@@ -953,7 +953,7 @@ class Appointments extends AdminController
      */
     public function insert_template()
     {
-        if (!has_permission('ella_contractor', '', 'create')) {
+        if (!has_permission('ella_contractor', '', 'create_appointment')) {
             ajax_access_denied();
         }
         
@@ -987,7 +987,7 @@ class Appointments extends AdminController
     
     public function upload_sms_media()
     {
-        if (!has_permission('ella_contractor', '', 'create')) {
+        if (!has_permission('ella_contractor', '', 'create_appointment')) {
             ajax_access_denied();
         }
         
@@ -1075,7 +1075,7 @@ class Appointments extends AdminController
      */
     public function log_email_click()
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             ajax_access_denied();
         }
         
@@ -1344,7 +1344,7 @@ class Appointments extends AdminController
      */
     public function get_appointment_attachments($appointment_id)
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             ajax_access_denied();
         }
 
@@ -1374,7 +1374,7 @@ class Appointments extends AdminController
      */
     public function upload_attachment($appointment_id)
     {
-        if (!has_permission('ella_contractor', '', 'edit')) {
+        if (!has_permission('ella_contractor', '', 'update_appointment')) {
             ajax_access_denied();
         }
 
@@ -1491,7 +1491,7 @@ class Appointments extends AdminController
      */
     public function delete_appointment_attachment($attachment_id)
     {
-        if (!has_permission('ella_contractor', '', 'delete')) {
+        if (!has_permission('ella_contractor', '', 'delete_appointment')) {
             ajax_access_denied();
         }
 
@@ -1549,7 +1549,7 @@ class Appointments extends AdminController
      */
     public function preview_attachment($attachment_id)
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             access_denied('ella_contractors');
         }
 
@@ -1857,7 +1857,7 @@ startxref
      */
     public function download_attachment($attachment_id)
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             access_denied('ella_contractors');
         }
 
@@ -1999,7 +1999,7 @@ startxref
      */
     public function get_timeline($id)
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             ajax_access_denied();
         }
         
@@ -2031,7 +2031,7 @@ startxref
      */
     public function get_attendees($appointment_id)
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             ajax_access_denied();
         }
 
@@ -2048,7 +2048,7 @@ startxref
      */
     public function get_staff()
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             ajax_access_denied();
         }
         $this->db->select('staffid, firstname, lastname, email');
@@ -2113,7 +2113,7 @@ startxref
      */
     public function log_scheduled_process()
     {
-        if (!has_permission('ella_contractor', '', 'edit')) {
+        if (!has_permission('ella_contractor', '', 'update_appointment')) {
             ajax_access_denied();
         }
         
@@ -2150,7 +2150,7 @@ startxref
      */
     public function update_reminder_setting()
     {
-        if (!has_permission('ella_contractor', '', 'edit')) {
+        if (!has_permission('ella_contractor', '', 'update_appointment')) {
             ajax_access_denied();
         }
         
@@ -2241,7 +2241,7 @@ startxref
      */
     public function get_attached_presentations()
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             ajax_access_denied();
         }
         
@@ -2293,7 +2293,7 @@ startxref
      */
     public function attach_presentation()
     {
-        if (!has_permission('ella_contractor', '', 'edit')) {
+        if (!has_permission('ella_contractor', '', 'update_appointment')) {
             ajax_access_denied();
         }
         
@@ -2383,7 +2383,7 @@ startxref
      */
     public function detach_presentation()
     {
-        if (!has_permission('ella_contractor', '', 'delete')) {
+        if (!has_permission('ella_contractor', '', 'delete_appointment')) {
             ajax_access_denied();
         }
         
@@ -2442,7 +2442,7 @@ startxref
      */
     public function download_ics($appointment_id, $type = 'client')
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             access_denied('ella_contractors');
         }
         
@@ -2834,7 +2834,7 @@ startxref
      */
     public function get_reminder_template_preview()
     {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_appointment')) {
             ajax_access_denied();
         }
 
@@ -3041,7 +3041,7 @@ startxref
      */
     public function save_reminder_template()
     {
-        if (!has_permission('ella_contractor', '', 'edit')) {
+        if (!has_permission('ella_contractor', '', 'update_appointment')) {
             ajax_access_denied();
         }
 

@@ -16,9 +16,11 @@
                         <div class="_buttons">
                             <div class="row">
                                 <div class="col-md-6">
+                                    <?php if (has_permission('ella_contractor', '', 'create_appointment')): ?>
                                     <button type="button" class="btn btn-info" id="new-appointment">
                                         <i class="fa fa-plus" style="margin-right: 2% !important;"></i> New Appointment
                                     </button>
+                                    <?php endif; ?>
                                     <button type="button" class="btn btn-default" id="restart-tutorial" style="margin-left: 10px;" data-toggle="tooltip" data-placement="top" title="Restart Tutorial">
                                         <i class="fa fa-question-circle"></i> Help
                                     </button>
@@ -2127,7 +2129,7 @@ function updateAppointmentStatusInPlace(appointment_id, newStatus) {
 function generateStatusHtml(status, appointment_id) {
     var statusClass = '';
     var statusLabel = '';
-    var hasPermission = <?php echo has_permission('ella_contractor', '', 'edit') ? 'true' : 'false'; ?>;
+    var hasPermission = <?php echo has_permission('ella_contractor', '', 'update_appointment') ? 'true' : 'false'; ?>;
     
     // Determine status class and label based on status value
     switch (status) {
