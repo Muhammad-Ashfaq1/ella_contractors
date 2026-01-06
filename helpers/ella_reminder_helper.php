@@ -297,14 +297,24 @@ function ella_send_reminder_email($appointment_id, $stage)
 
     log_message('info', 'EllaContractors: Sending email FROM: ' . $from_email . ' (' . $from_name . ') TO: ' . $to_email);
     
-    // Send email using CRM's email system (same pattern as send_reminder_ajax)
+    // Initialize email library with CRM's SMTP configuration
+    $CI->load->config('email');
     $CI->email->clear(true);
+    $CI->email->initialize();
+    
+    // Set newline and crlf settings (required for proper email formatting)
+    $CI->email->set_newline(config_item('newline'));
+    $CI->email->set_crlf(config_item('crlf'));
+    
+    // Send email using CRM's email system (same pattern as send_reminder_ajax)
     $CI->email->from($from_email, $from_name);
     $CI->email->to($to_email);
     $CI->email->subject($subject);
     $CI->email->message($email_body);
-    $CI->email->SMTPDebug = 2;
-    $CI->email->set_debug_output('error_log');
+    
+    // Only enable debug in development/testing (comment out in production)
+    // $CI->email->SMTPDebug = 2;
+    // $CI->email->set_debug_output('error_log');
     
     // Attach ICS file if generated successfully
     if ($ics_file && file_exists($ics_file)) {
