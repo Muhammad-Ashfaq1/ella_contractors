@@ -62,14 +62,16 @@ function ella_contractors_init_menu() {
             ];
         }
         
-        // Presentations submenu
-        $submenu[] = [
-            'slug' => 'ella_contractors_presentations',
-            'name' => 'Presentations',
-            'href' => admin_url('ella_contractors/presentations'),
-            'icon' => 'fa fa-file-powerpoint-o',
-            'position' => 20,
-        ];
+        // Presentations submenu - only show if user has view_presentation permission
+        if (is_super_admin() || is_admin() || has_permission('ella_contractor', '', 'view_presentation')) {
+            $submenu[] = [
+                'slug' => 'ella_contractors_presentations',
+                'name' => 'Presentations',
+                'href' => admin_url('ella_contractors/presentations'),
+                'icon' => 'fa fa-file-powerpoint-o',
+                'position' => 20,
+            ];
+        }
         
         // Estimates submenu
         $submenu[] = [

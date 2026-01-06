@@ -12,7 +12,7 @@ class Presentations extends AdminController
      * Main presentations management page
      */
     public function index() {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_presentation')) {
             access_denied('ella_contractors');
         }
         $data['title'] = 'Presentations';
@@ -23,7 +23,7 @@ class Presentations extends AdminController
      * DataTable server-side processing
      */
     public function table() {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_presentation')) {
             ajax_access_denied();
         }
 
@@ -34,7 +34,7 @@ class Presentations extends AdminController
      * Upload presentation file (AJAX)
      */
     public function upload() {
-        if (!has_permission('ella_contractor', '', 'create')) {
+        if (!has_permission('ella_contractor', '', 'create_presentation')) {
             echo json_encode([
                 'success' => false,
                 'message' => 'Access denied'
@@ -454,7 +454,7 @@ startxref
      * Used by appointment view to populate presentation selection modal
      */
     public function get_all() {
-        if (!has_permission('ella_contractor', '', 'view')) {
+        if (!has_permission('ella_contractor', '', 'view_presentation')) {
             ajax_access_denied();
         }
         
@@ -485,7 +485,7 @@ startxref
      * Delete presentation (AJAX)
      */
     public function delete() {
-        if (!has_permission('ella_contractor', '', 'delete')) {
+        if (!has_permission('ella_contractor', '', 'delete_presentation')) {
             echo json_encode([
                 'success' => false,
                 'message' => 'Access denied'
@@ -547,7 +547,7 @@ startxref
      * Update presentation name (AJAX inline edit)
      */
     public function update_name() {
-        if (!has_permission('ella_contractor', '', 'edit')) {
+        if (!has_permission('ella_contractor', '', 'update_presentation')) {
             echo json_encode([
                 'success' => false,
                 'message' => 'Access denied'
@@ -609,7 +609,7 @@ startxref
      * Bulk delete presentations via AJAX
      */
     public function bulk_delete() {
-        if (!has_permission('ella_contractor', '', 'delete')) {
+        if (!has_permission('ella_contractor', '', 'delete_presentation')) {
             echo json_encode([
                 'success' => false,
                 'message' => 'Access denied'

@@ -19,9 +19,11 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group pull-right">
+                                        <?php if (has_permission('ella_contractor', '', 'create_presentation')): ?>
                                         <button type="button" class="btn btn-info" data-toggle="modal" data-target="#uploadPresentationModal">
                                             <i class="fa fa-upload" style="margin-right: 2% !important;"></i> Upload Presentation
                                         </button>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
