@@ -564,6 +564,89 @@ function ella_parse_email_template($template_name, $appointment, $type)
 }
 
 /**
+ * Parse email template from database with appointment data (replace merge fields)
+ * This function is used when templates are loaded from the database
+ *
+ * @param string $template_content Template content from database
+ * @param object $appointment     Appointment object
+ * @param string $type            'client' or 'staff'
+ *
+ * @return string Parsed email content
+ */
+function ella_parse_email_template_from_db($template_content, $appointment, $type)
+{
+    if (empty($template_content)) {
+        return '';
+    }
+
+    // Merge appointment data into template
+    $client_or_lead_name = $appointment->lead_name ?: ($appointment->client_name ?: 'Valued Customer');
+
+    $replacements = [
+        '{appointment_subject}' => htmlspecialchars($appointment->subject ?? ''),
+        '{appointment_date}'    => !empty($appointment->date) ? date('F j, Y', strtotime($appointment->date)) : '',
+        '{appointment_time}'    => !empty($appointment->start_hour) ? date('g:i A', strtotime($appointment->start_hour)) : '',
+        '{appointment_location}' => htmlspecialchars($appointment->address ?? 'Online/Phone Call'),
+        '{client_name}'         => htmlspecialchars($client_or_lead_name),
+        '{staff_name}'          => !empty($appointment->created_by) ? get_staff_full_name($appointment->created_by) : '',
+        '{company_name}'        => get_option('companyname') ?: 'Our Company',
+        '{company_phone}'       => get_option('company_phone_number') ?: '',
+        '{company_email}'       => get_option('company_email') ?: '',
+        '{crm_link}'            => $type === 'staff' && !empty($appointment->id) ? admin_url('ella_contractors/appointments/view/' . $appointment->id) : '',
+        '{appointment_notes}'   => !empty($appointment->notes) ? nl2br(htmlspecialchars($appointment->notes)) : 'No additional notes',
+        '{presentation_block}'  => isset($appointment->presentation_block) ? $appointment->presentation_block : '',
+    ];
+
+    $parsed = $template_content;
+    foreach ($replacements as $key => $value) {
+        $parsed = str_replace($key, $value, $parsed);
+    }
+
+    return $parsed;
+}
+
+/**
+ * Parse SMS template from database with appointment data (replace merge fields)
+ * This function is used when SMS templates are loaded from the database
+ *
+ * @param string $template_content Template content from database
+ * @param object $appointment     Appointment object
+ * @param string $type            'client' or 'staff'
+ *
+ * @return string Parsed SMS message
+ */
+function ella_parse_sms_template_from_db($template_content, $appointment, $type)
+{
+    if (empty($template_content)) {
+        return '';
+    }
+
+    // Merge appointment data into template (SMS doesn't need HTML encoding)
+    $client_or_lead_name = $appointment->lead_name ?: ($appointment->client_name ?: 'Valued Customer');
+
+    $replacements = [
+        '{appointment_subject}' => $appointment->subject ?? '',
+        '{appointment_date}'    => !empty($appointment->date) ? date('F j, Y', strtotime($appointment->date)) : '',
+        '{appointment_time}'    => !empty($appointment->start_hour) ? date('g:i A', strtotime($appointment->start_hour)) : '',
+        '{appointment_location}' => $appointment->address ?? 'Online/Phone Call',
+        '{client_name}'         => $client_or_lead_name,
+        '{staff_name}'          => !empty($appointment->created_by) ? get_staff_full_name($appointment->created_by) : '',
+        '{company_name}'        => get_option('companyname') ?: 'Our Company',
+        '{company_phone}'       => get_option('company_phone_number') ?: '',
+        '{company_email}'       => get_option('company_email') ?: '',
+        '{crm_link}'            => $type === 'staff' && !empty($appointment->id) ? admin_url('ella_contractors/appointments/view/' . $appointment->id) : '',
+        '{appointment_notes}'   => $appointment->notes ?? 'No additional notes',
+    ];
+
+    $parsed = $template_content;
+    foreach ($replacements as $key => $value) {
+        $parsed = str_replace($key, $value, $parsed);
+    }
+
+    return $parsed;
+}
+
+/**
  * Send appointment reminder SMS with ICS link
  * Uses existing CRM SMS functionality via leads_model
  * 
