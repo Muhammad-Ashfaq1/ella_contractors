@@ -452,9 +452,16 @@ startxref
     /**
      * Get all presentations (AJAX)
      * Used by appointment view to populate presentation selection modal
+     * Allow access if user has view_presentation OR can view/edit appointments
      */
     public function get_all() {
-        if (!has_permission('ella_contractor', '', 'view_presentation')) {
+        $has_view_presentation = has_permission('ella_contractor', '', 'view_presentation');
+        $has_view_appointment = has_permission('ella_contractor', '', 'view_appointment');
+        $has_create_appointment = has_permission('ella_contractor', '', 'create_appointment');
+        $has_update_appointment = has_permission('ella_contractor', '', 'update_appointment');
+        
+        // Allow if user has presentation view permission OR any appointment permission
+        if (!$has_view_presentation && !$has_view_appointment && !$has_create_appointment && !$has_update_appointment) {
             ajax_access_denied();
         }
         
