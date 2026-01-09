@@ -1,5 +1,7 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
 
+use SendGrid\Mail;
+
 class Reminders extends App_Controller
 {
     public function __construct()
@@ -82,7 +84,7 @@ class Reminders extends App_Controller
     }
 
     /**
-     * Temporary test endpoint to verify SMTP delivery.
+     * Temporary test endpoint to verify email delivery using SendGrid (same as Campaignprocess.php).
      * Usage (HTTP): /ella_contractors/reminders/test_email?key=APP_CRON_KEY
      * Usage (CLI):  php index.php ella_contractors reminders test_email --key=APP_CRON_KEY
      */
@@ -98,9 +100,27 @@ class Reminders extends App_Controller
             exit('Invalid cron key.');
         }
 
-        $CI =& get_instance();
-        $CI->load->library('email');
+        // Get SendGrid API key (same pattern as Campaignprocess.php)
+        $API_KEY = get_option("sendgrid_api_key");
+        
+        if (empty($API_KEY)) {
+            $response = [
+                'success'   => false,
+                'error'     => 'SendGrid API key is not configured',
+                'timestamp' => date('c'),
+            ];
+            
+            if ($this->input->is_cli_request()) {
+                echo json_encode($response, JSON_PRETTY_PRINT) . PHP_EOL;
+            } else {
+                $this->output
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode($response, JSON_PRETTY_PRINT));
+            }
+            return;
+        }
 
+        // Set up email details (same pattern as Campaignprocess.php)
         $to        = 'mashfaq86861@gmail.com';
         $fromEmail = get_option('smtp_email');
         $fromName  = get_option('companyname') ?: 'Ella Contractors CRM';
@@ -109,38 +129,59 @@ class Reminders extends App_Controller
             $fromEmail = 'noreply@ellasbubbles.com';
         }
 
-        $subject = 'Ella Contractors Reminder SMTP Test (' . date('Y-m-d H:i:s') . ')';
-        $message = '<p>This is a live SMTP test sent from the Ella Contractors reminder cron environment.</p>'
-                 . '<p>Timestamp: ' . date('c') . '</p>';
+        $subject = 'Ella Contractors Reminder Test Email (' . date('Y-m-d H:i:s') . ')';
+        $htmlMessage = '<p>This is a test email sent from the Ella Contractors reminder cron environment using SendGrid.</p>'
+                     . '<p>Timestamp: ' . date('c') . '</p>'
+                     . '<p>This confirms that the email configuration is working correctly.</p>';
+        
+        $plainMessage = "This is a test email sent from the Ella Contractors reminder cron environment using SendGrid.\n"
+                      . "Timestamp: " . date('c') . "\n"
+                      . "This confirms that the email configuration is working correctly.";
 
-        $CI->email->clear(true);
-        $CI->email->from($fromEmail, $fromName);
-        $CI->email->to($to);
-        $CI->email->subject($subject);
-        $CI->email->message($message);
-        $CI->email->SMTPDebug = 2;
-        $CI->email->set_debug_output('error_log');
+        // Initialize SendGrid (same pattern as Campaignprocess.php)
+        $sg = new \SendGrid($API_KEY);
+        $sg_email = new \SendGrid\Mail\Mail();
+        $sg_email->setFrom($fromEmail, $fromName);
+        $sg_email->setSubject($subject);
+        $sg_email->addTo($to, "");
+        $sg_email->addContent("text/plain", $plainMessage);
+        $sg_email->addContent("text/html", $htmlMessage);
 
-        $sent  = $CI->email->send();
-        $debug = $CI->email->print_debugger(['headers', 'subject', 'body']);
+        $sent = false;
+        $error = '';
+        $statusCode = null;
+        $responseBody = '';
 
-        if (!$sent) {
-            log_message('error', 'EllaContractors Test Email failed: ' . $debug);
+        try {
+            $response = $sg->send($sg_email);
+            $sent = true;
+            $statusCode = $response->statusCode();
+            $responseBody = $response->body();
+            
+            log_message('info', 'EllaContractors Test Email sent successfully via SendGrid. Status: ' . $statusCode);
+        } catch (Exception $e) {
+            $sent = false;
+            $error = $e->getMessage();
+            log_message('error', 'EllaContractors Test Email failed via SendGrid: ' . $error);
         }
 
         $response = [
-            'success'   => (bool) $sent,
-            'sent_to'   => $to,
-            'timestamp' => date('c'),
-            'debug'     => $debug,
+            'success'      => $sent,
+            'sent_to'      => $to,
+            'from_email'   => $fromEmail,
+            'from_name'    => $fromName,
+            'timestamp'    => date('c'),
+            'status_code'  => $statusCode,
+            'response_body'=> $responseBody,
+            'error'        => $error ?: null,
         ];
 
         if ($this->input->is_cli_request()) {
-            echo json_encode($response) . PHP_EOL;
+            echo json_encode($response, JSON_PRETTY_PRINT) . PHP_EOL;
         } else {
             $this->output
                 ->set_content_type('application/json')
-                ->set_output(json_encode($response));
+                ->set_output(json_encode($response, JSON_PRETTY_PRINT));
         }
     }
 }
