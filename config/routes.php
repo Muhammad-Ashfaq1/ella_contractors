@@ -68,6 +68,7 @@ $route[$module_name . $appointment_module . '/upload_sms_media'] = 'Appointments
 
 // Reminder cron endpoint
 $route[$module_name . '/reminders/cron'] = 'Reminders/cron';
+$route[$module_name . '/reminders/test_email'] = 'Reminders/test_email';
 
 // Google Calendar integration routes (FIXED - proper method routing)
 $route[$module_name . '/google_auth/connect'] = 'Google_auth/connect';
