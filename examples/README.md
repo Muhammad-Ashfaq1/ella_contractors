@@ -93,6 +93,21 @@ Contains example attachment files linked to appointments.
 - Attachment management
 - Document sharing workflows
 
+### 8. `leads.json`
+Contains example lead records with all contact and status information.
+
+**Structure:**
+- `leads`: Array of lead records with complete contact details, status, source, assigned staff, and project descriptions
+- `lead_statuses`: Array of possible lead statuses (New, Contacted, Qualified, Proposal Sent, etc.)
+- `lead_sources`: Array of lead sources (Walk-In, Phone Call, Referral, Social Media, etc.)
+
+**Use Cases:**
+- Testing lead management and workflows
+- Lead conversion to clients
+- Appointment creation from leads
+- Status tracking and reporting
+- Assignment and routing workflows
+
 ## Data Characteristics
 
 All example data includes:
