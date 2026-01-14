@@ -63,6 +63,19 @@
           ],
           "fix_applied": "ANY_VALUE(tblnotes.description) as notes_description",
           "reason": "Comply with MySQL's only_full_group_by mode"
+        },
+        "lead_search_groupby_fix": {
+          "file": "application/models/Misc_model.php",
+          "line": "982",
+          "description": "Fixed MySQL GROUP BY strict mode error in lead search functionality",
+          "context": "When searching for leads in ella_contractors module appointment creation",
+          "issue": "Expression #100 of SELECT list is not in GROUP BY clause and contains nonaggregated column 'awt.tblnotes.id' which is not functionally dependent on columns in GROUP BY clause",
+          "fix": "Removed 'notes.id AS note_id' from SELECT clause in _search_leads method",
+          "code_before": "$this->db->select(db_prefix() . 'leads.*, '.db_prefix() . 'notes.id AS note_id');",
+          "code_after": "$this->db->select(db_prefix() . 'leads.*');",
+          "reason": "The notes.id column was not needed in the SELECT and caused GROUP BY violation when multiple notes exist per lead. The LEFT JOIN with notes table is still maintained for search functionality in notes.description.",
+          "affected_functionality": "Lead search in appointment modal (ella_contractors module)",
+          "compatibility": "MySQL 5.7+ with sql_mode=only_full_group_by enabled"
         }
       },
       "database_setup": {
@@ -94,13 +107,15 @@
         "Access the application URL in browser",
         "Check for PHP errors in browser or log files",
         "Verify database connectivity",
-        "Test the leads listing page (which uses the fixed queries)"
+        "Test the leads listing page (which uses the fixed queries)",
+        "Test lead search functionality in ella_contractors appointment creation modal"
       ]
     },
     "notes": [
       "Code fixes ensure compatibility with MySQL strict mode (only_full_group_by)",
       "ANY_VALUE() function resolves GROUP BY clause issues in table queries",
       "usort() fix prevents null array errors when staff status data is not available",
+      "Lead search fix removes unnecessary notes.id from SELECT to comply with GROUP BY requirements",
       "Always backup database before making changes in production"
     ],
     "troubleshooting": {
