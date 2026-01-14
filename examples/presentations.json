@@ -1,0 +1,108 @@
+{
+  "presentations": [
+    {
+      "id": 1,
+      "rel_type": "presentation",
+      "rel_id": null,
+      "org_id": 1,
+      "file_name": "bathroom_remodel_2024_01_15_143022.pptx",
+      "original_name": "Bathroom Remodel Presentation 2024.pptx",
+      "file_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "file_size": 2456789,
+      "description": "Complete bathroom remodeling presentation with design options, material selections, and pricing breakdown",
+      "date_uploaded": "2024-01-15 14:30:22",
+      "public_url": "https://crm.ellasbubbles.com/uploads/ella_presentations/bathroom_remodel_2024_01_15_143022.pptx"
+    },
+    {
+      "id": 2,
+      "rel_type": "presentation",
+      "rel_id": null,
+      "org_id": 1,
+      "file_name": "kitchen_renovation_showcase_2024_01_10_091545.ppt",
+      "original_name": "Kitchen Renovation Showcase.ppt",
+      "file_type": "application/vnd.ms-powerpoint",
+      "file_size": 1892345,
+      "description": "Kitchen renovation presentation featuring modern designs, appliance options, and layout configurations",
+      "date_uploaded": "2024-01-10 09:15:45",
+      "public_url": "https://crm.ellasbubbles.com/uploads/ella_presentations/kitchen_renovation_showcase_2024_01_10_091545.ppt"
+    },
+    {
+      "id": 3,
+      "rel_type": "presentation",
+      "rel_id": null,
+      "org_id": 1,
+      "file_name": "shower_systems_catalog_2024_01_08_110230.pptx",
+      "original_name": "Premium Shower Systems Catalog.pptx",
+      "file_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "file_size": 3214567,
+      "description": "Comprehensive catalog of premium shower systems including rainfall, handheld, and body spray options",
+      "date_uploaded": "2024-01-08 11:02:30",
+      "public_url": "https://crm.ellasbubbles.com/uploads/ella_presentations/shower_systems_catalog_2024_01_08_110230.pptx"
+    },
+    {
+      "id": 4,
+      "rel_type": "presentation",
+      "rel_id": null,
+      "org_id": 1,
+      "file_name": "tile_selection_guide_2024_01_05_153045.pptx",
+      "original_name": "Tile Selection Guide - Residential.pptx",
+      "file_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "file_size": 1567890,
+      "description": "Tile selection guide showcasing ceramic, porcelain, and natural stone options with installation examples",
+      "date_uploaded": "2024-01-05 15:30:45",
+      "public_url": "https://crm.ellasbubbles.com/uploads/ella_presentations/tile_selection_guide_2024_01_05_153045.pptx"
+    },
+    {
+      "id": 5,
+      "rel_type": "presentation",
+      "rel_id": null,
+      "org_id": 1,
+      "file_name": "vanity_cabinetry_options_2024_01_03_142015.ppt",
+      "original_name": "Vanity & Cabinetry Options.ppt",
+      "file_type": "application/vnd.ms-powerpoint",
+      "file_size": 2134567,
+      "description": "Vanity and cabinetry presentation with custom and stock options, finishes, and hardware selections",
+      "date_uploaded": "2024-01-03 14:20:15",
+      "public_url": "https://crm.ellasbubbles.com/uploads/ella_presentations/vanity_cabinetry_options_2024_01_03_142015.ppt"
+    },
+    {
+      "id": 6,
+      "rel_type": "presentation",
+      "rel_id": null,
+      "org_id": 1,
+      "file_name": "countertop_materials_2023_12_28_103022.pptx",
+      "original_name": "Countertop Materials & Finishes.pptx",
+      "file_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "file_size": 2789012,
+      "description": "Countertop materials presentation featuring quartz, granite, marble, and solid surface options",
+      "date_uploaded": "2023-12-28 10:30:22",
+      "public_url": "https://crm.ellasbubbles.com/uploads/ella_presentations/countertop_materials_2023_12_28_103022.pptx"
+    },
+    {
+      "id": 7,
+      "rel_type": "presentation",
+      "rel_id": null,
+      "org_id": 1,
+      "file_name": "lighting_solutions_2023_12_25_091530.pptx",
+      "original_name": "Bathroom & Kitchen Lighting Solutions.pptx",
+      "file_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "file_size": 1987654,
+      "description": "Lighting solutions presentation with recessed, vanity, and accent lighting options",
+      "date_uploaded": "2023-12-25 09:15:30",
+      "public_url": "https://crm.ellasbubbles.com/uploads/ella_presentations/lighting_solutions_2023_12_25_091530.pptx"
+    },
+    {
+      "id": 8,
+      "rel_type": "presentation",
+      "rel_id": null,
+      "org_id": 1,
+      "file_name": "complete_remodel_package_2023_12_20_161045.ppt",
+      "original_name": "Complete Remodel Package Overview.ppt",
+      "file_type": "application/vnd.ms-powerpoint",
+      "file_size": 3456789,
+      "description": "Complete remodeling package presentation covering all services, timeline, and pricing options",
+      "date_uploaded": "2023-12-20 16:10:45",
+      "public_url": "https://crm.ellasbubbles.com/uploads/ella_presentations/complete_remodel_package_2023_12_20_161045.ppt"
+    }
+  ]
+}

@@ -1,0 +1,294 @@
+{
+  "service_items": [
+    {
+      "id": 1,
+      "group_id": 1,
+      "group_name": "Bathroom Fixtures",
+      "name": "Standard Shower Enclosure - 36x36",
+      "description": "Frameless glass shower enclosure with chrome hardware. Includes door, side panel, and all mounting hardware.",
+      "unit": "Each",
+      "cost": 1250.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 10:30:00",
+      "updated_at": "2024-01-15 10:30:00"
+    },
+    {
+      "id": 2,
+      "group_id": 1,
+      "group_name": "Bathroom Fixtures",
+      "name": "Premium Shower System - Rainfall",
+      "description": "Luxury rainfall shower system with thermostatic valve, overhead rain shower head, and handheld wand. Includes all plumbing connections.",
+      "unit": "Set",
+      "cost": 2850.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 10:32:00",
+      "updated_at": "2024-01-15 10:32:00"
+    },
+    {
+      "id": 3,
+      "group_id": 1,
+      "group_name": "Bathroom Fixtures",
+      "name": "Vanity Sink - Double Bowl",
+      "description": "60-inch double bowl vanity with quartz countertop, undermount sinks, and soft-close cabinet doors. Available in multiple finishes.",
+      "unit": "Each",
+      "cost": 1895.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 10:35:00",
+      "updated_at": "2024-01-15 10:35:00"
+    },
+    {
+      "id": 4,
+      "group_id": 2,
+      "group_name": "Tile & Flooring",
+      "name": "Ceramic Floor Tile - 12x24",
+      "description": "Premium ceramic floor tile, 12x24 inches, suitable for bathrooms and kitchens. Water-resistant and easy to clean.",
+      "unit": "Square Foot",
+      "cost": 4.95,
+      "is_active": 1,
+      "created_at": "2024-01-15 11:00:00",
+      "updated_at": "2024-01-15 11:00:00"
+    },
+    {
+      "id": 5,
+      "group_id": 2,
+      "group_name": "Tile & Flooring",
+      "name": "Porcelain Wall Tile - 6x12",
+      "description": "Porcelain wall tile for shower surrounds and backsplashes. Available in multiple colors and finishes.",
+      "unit": "Square Foot",
+      "cost": 6.75,
+      "is_active": 1,
+      "created_at": "2024-01-15 11:05:00",
+      "updated_at": "2024-01-15 11:05:00"
+    },
+    {
+      "id": 6,
+      "group_id": 2,
+      "group_name": "Tile & Flooring",
+      "name": "Tile Installation Labor",
+      "description": "Professional tile installation including surface preparation, adhesive application, grouting, and sealing.",
+      "unit": "Square Foot",
+      "cost": 12.50,
+      "is_active": 1,
+      "created_at": "2024-01-15 11:10:00",
+      "updated_at": "2024-01-15 11:10:00"
+    },
+    {
+      "id": 7,
+      "group_id": 3,
+      "group_name": "Plumbing",
+      "name": "Water Heater Installation",
+      "description": "Complete water heater installation including removal of old unit, new unit installation, and all necessary connections.",
+      "unit": "Each",
+      "cost": 850.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 11:30:00",
+      "updated_at": "2024-01-15 11:30:00"
+    },
+    {
+      "id": 8,
+      "group_id": 3,
+      "group_name": "Plumbing",
+      "name": "Pipe Rerouting - Per Hour",
+      "description": "Plumbing pipe rerouting and installation. Includes materials and labor for standard residential applications.",
+      "unit": "Hour",
+      "cost": 95.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 11:35:00",
+      "updated_at": "2024-01-15 11:35:00"
+    },
+    {
+      "id": 9,
+      "group_id": 4,
+      "group_name": "Electrical",
+      "name": "GFCI Outlet Installation",
+      "description": "Installation of GFCI outlet with proper wiring and code compliance. Includes outlet and cover plate.",
+      "unit": "Each",
+      "cost": 125.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 12:00:00",
+      "updated_at": "2024-01-15 12:00:00"
+    },
+    {
+      "id": 10,
+      "group_id": 4,
+      "group_name": "Electrical",
+      "name": "Recessed Lighting Installation",
+      "description": "Installation of recessed LED lighting fixture. Includes fixture, trim, and wiring connections.",
+      "unit": "Each",
+      "cost": 185.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 12:05:00",
+      "updated_at": "2024-01-15 12:05:00"
+    },
+    {
+      "id": 11,
+      "group_id": 5,
+      "group_name": "Cabinetry",
+      "name": "Custom Vanity Cabinet - 48 inch",
+      "description": "Custom-built vanity cabinet with soft-close hinges, adjustable shelves, and premium wood construction.",
+      "unit": "Each",
+      "cost": 1450.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 12:30:00",
+      "updated_at": "2024-01-15 12:30:00"
+    },
+    {
+      "id": 12,
+      "group_id": 5,
+      "group_name": "Cabinetry",
+      "name": "Medicine Cabinet - Recessed",
+      "description": "Recessed medicine cabinet with mirror and LED lighting. Available in multiple sizes.",
+      "unit": "Each",
+      "cost": 425.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 12:35:00",
+      "updated_at": "2024-01-15 12:35:00"
+    },
+    {
+      "id": 13,
+      "group_id": 6,
+      "group_name": "Countertops",
+      "name": "Quartz Countertop Installation",
+      "description": "Premium quartz countertop installation including template, fabrication, and professional installation.",
+      "unit": "Square Foot",
+      "cost": 85.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 13:00:00",
+      "updated_at": "2024-01-15 13:00:00"
+    },
+    {
+      "id": 14,
+      "group_id": 6,
+      "group_name": "Countertops",
+      "name": "Granite Countertop Installation",
+      "description": "Natural granite countertop with edge profiling, sink cutout, and professional installation.",
+      "unit": "Square Foot",
+      "cost": 75.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 13:05:00",
+      "updated_at": "2024-01-15 13:05:00"
+    },
+    {
+      "id": 15,
+      "group_id": 7,
+      "group_name": "Labor",
+      "name": "General Contractor Labor - Per Hour",
+      "description": "General contractor labor for project management, coordination, and oversight.",
+      "unit": "Hour",
+      "cost": 85.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 13:30:00",
+      "updated_at": "2024-01-15 13:30:00"
+    },
+    {
+      "id": 16,
+      "group_id": 7,
+      "group_name": "Labor",
+      "name": "Plumber Labor - Per Hour",
+      "description": "Licensed plumber labor rate for installations, repairs, and maintenance work.",
+      "unit": "Hour",
+      "cost": 95.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 13:35:00",
+      "updated_at": "2024-01-15 13:35:00"
+    },
+    {
+      "id": 17,
+      "group_id": 7,
+      "group_name": "Labor",
+      "name": "Electrician Labor - Per Hour",
+      "description": "Licensed electrician labor rate for electrical installations and repairs.",
+      "unit": "Hour",
+      "cost": 105.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 13:40:00",
+      "updated_at": "2024-01-15 13:40:00"
+    },
+    {
+      "id": 18,
+      "group_id": 8,
+      "group_name": "Materials",
+      "name": "Drywall - 4x8 Sheet",
+      "description": "Standard 1/2 inch drywall sheet, 4x8 feet. Moisture-resistant option available.",
+      "unit": "Sheet",
+      "cost": 18.50,
+      "is_active": 1,
+      "created_at": "2024-01-15 14:00:00",
+      "updated_at": "2024-01-15 14:00:00"
+    },
+    {
+      "id": 19,
+      "group_id": 8,
+      "group_name": "Materials",
+      "name": "Paint - Premium Interior",
+      "description": "Premium interior paint, one gallon. Available in various finishes and colors.",
+      "unit": "Gallon",
+      "cost": 45.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 14:05:00",
+      "updated_at": "2024-01-15 14:05:00"
+    },
+    {
+      "id": 20,
+      "group_id": 8,
+      "group_name": "Materials",
+      "name": "Grout - Premium Tile Grout",
+      "description": "Premium tile grout, 25 lb bag. Available in multiple colors to match tile selection.",
+      "unit": "Bag",
+      "cost": 28.00,
+      "is_active": 1,
+      "created_at": "2024-01-15 14:10:00",
+      "updated_at": "2024-01-15 14:10:00"
+    }
+  ],
+  "line_item_groups": [
+    {
+      "id": 1,
+      "name": "Bathroom Fixtures",
+      "description": "Shower systems, sinks, toilets, and bathroom accessories",
+      "sort_order": 1
+    },
+    {
+      "id": 2,
+      "name": "Tile & Flooring",
+      "description": "Floor and wall tiles, installation materials",
+      "sort_order": 2
+    },
+    {
+      "id": 3,
+      "name": "Plumbing",
+      "description": "Plumbing fixtures, pipes, and installation services",
+      "sort_order": 3
+    },
+    {
+      "id": 4,
+      "name": "Electrical",
+      "description": "Electrical fixtures, outlets, and wiring",
+      "sort_order": 4
+    },
+    {
+      "id": 5,
+      "name": "Cabinetry",
+      "description": "Custom and stock cabinetry for bathrooms and kitchens",
+      "sort_order": 5
+    },
+    {
+      "id": 6,
+      "name": "Countertops",
+      "description": "Quartz, granite, and other countertop materials",
+      "sort_order": 6
+    },
+    {
+      "id": 7,
+      "name": "Labor",
+      "description": "Professional labor rates by trade",
+      "sort_order": 7
+    },
+    {
+      "id": 8,
+      "name": "Materials",
+      "description": "General construction and finishing materials",
+      "sort_order": 8
+    }
+  ]
+}

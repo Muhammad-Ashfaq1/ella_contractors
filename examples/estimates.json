@@ -1,0 +1,336 @@
+{
+  "estimates": [
+    {
+      "id": 1,
+      "subject": "Bathroom Remodel - Smith Residence",
+      "content": "<p>Thank you for choosing Ella Contractors for your bathroom remodeling project. This estimate includes all materials, labor, and fixtures for a complete bathroom renovation.</p><p><strong>Project Scope:</strong></p><ul><li>Complete bathroom demolition and removal</li><li>New plumbing installation</li><li>Tile installation (walls and floor)</li><li>Vanity and sink installation</li><li>Shower system installation</li><li>Lighting and electrical work</li><li>Paint and finishing</li></ul>",
+      "addedfrom": 5,
+      "datecreated": "2024-02-15 14:30:00",
+      "total": 18750.00,
+      "currency": 1,
+      "open_till": "2024-03-15",
+      "date": "2024-02-15",
+      "rel_id": 125,
+      "rel_type": "lead",
+      "assigned": 5,
+      "hash": "est_a1b2c3d4e5f6g7h8i9j0k1l2m3n4",
+      "proposal_to": "John Smith",
+      "address": "1234 Oak Street<br>Springfield, IL 62701",
+      "email": "john.smith@email.com",
+      "phone": "+1-555-0123",
+      "allow_comments": 1,
+      "status": 1,
+      "estimate_id": null,
+      "invoice_id": null,
+      "date_converted": null,
+      "appointment_id": 1,
+      "org_id": 1,
+      "proposal_items": [
+        {
+          "id": 1,
+          "proposalid": 1,
+          "description": "Standard Shower Enclosure - 36x36",
+          "long_description": "Frameless glass shower enclosure with chrome hardware. Includes door, side panel, and all mounting hardware.",
+          "qty": 1,
+          "rate": 1250.00,
+          "unit": "Each",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 1
+        },
+        {
+          "id": 2,
+          "proposalid": 1,
+          "description": "Premium Shower System - Rainfall",
+          "long_description": "Luxury rainfall shower system with thermostatic valve, overhead rain shower head, and handheld wand.",
+          "qty": 1,
+          "rate": 2850.00,
+          "unit": "Set",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 2
+        },
+        {
+          "id": 3,
+          "proposalid": 1,
+          "description": "Vanity Sink - Double Bowl",
+          "long_description": "60-inch double bowl vanity with quartz countertop, undermount sinks, and soft-close cabinet doors.",
+          "qty": 1,
+          "rate": 1895.00,
+          "unit": "Each",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 3
+        },
+        {
+          "id": 4,
+          "proposalid": 1,
+          "description": "Ceramic Floor Tile - 12x24",
+          "long_description": "Premium ceramic floor tile, 12x24 inches, suitable for bathrooms.",
+          "qty": 110,
+          "rate": 4.95,
+          "unit": "Square Foot",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 4
+        },
+        {
+          "id": 5,
+          "proposalid": 1,
+          "description": "Porcelain Wall Tile - 6x12",
+          "long_description": "Porcelain wall tile for shower surrounds and backsplashes.",
+          "qty": 280,
+          "rate": 6.75,
+          "unit": "Square Foot",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 5
+        },
+        {
+          "id": 6,
+          "proposalid": 1,
+          "description": "Tile Installation Labor",
+          "long_description": "Professional tile installation including surface preparation, adhesive application, grouting, and sealing.",
+          "qty": 390,
+          "rate": 12.50,
+          "unit": "Square Foot",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 6
+        },
+        {
+          "id": 7,
+          "proposalid": 1,
+          "description": "Plumber Labor",
+          "long_description": "Licensed plumber labor for shower and sink installation.",
+          "qty": 8,
+          "rate": 95.00,
+          "unit": "Hour",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 7
+        },
+        {
+          "id": 8,
+          "proposalid": 1,
+          "description": "Electrician Labor",
+          "long_description": "Licensed electrician labor for lighting installation.",
+          "qty": 4,
+          "rate": 105.00,
+          "unit": "Hour",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 8
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "subject": "Kitchen Renovation - Rodriguez Residence",
+      "content": "<p>Thank you for choosing Ella Contractors for your kitchen renovation. This comprehensive estimate covers all aspects of your kitchen remodeling project.</p><p><strong>Project Scope:</strong></p><ul><li>Kitchen demolition and removal</li><li>New cabinet installation</li><li>Countertop installation</li><li>Backsplash installation</li><li>Appliance connections</li><li>Lighting installation</li><li>Flooring installation</li></ul>",
+      "addedfrom": 3,
+      "datecreated": "2024-02-18 15:00:00",
+      "total": 32500.00,
+      "currency": 1,
+      "open_till": "2024-03-18",
+      "date": "2024-02-18",
+      "rel_id": 128,
+      "rel_type": "lead",
+      "assigned": 3,
+      "hash": "est_b2c3d4e5f6g7h8i9j0k1l2m3n4o5",
+      "proposal_to": "Emily Rodriguez",
+      "address": "5678 Maple Avenue<br>Chicago, IL 60601",
+      "email": "emily.rodriguez@email.com",
+      "phone": "+1-555-0456",
+      "allow_comments": 1,
+      "status": 2,
+      "estimate_id": null,
+      "invoice_id": null,
+      "date_converted": null,
+      "appointment_id": 2,
+      "org_id": 1,
+      "proposal_items": [
+        {
+          "id": 9,
+          "proposalid": 2,
+          "description": "Custom Vanity Cabinet - 48 inch",
+          "long_description": "Custom-built vanity cabinet with soft-close hinges, adjustable shelves, and premium wood construction.",
+          "qty": 1,
+          "rate": 1450.00,
+          "unit": "Each",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 1
+        },
+        {
+          "id": 10,
+          "proposalid": 2,
+          "description": "Quartz Countertop Installation",
+          "long_description": "Premium quartz countertop installation including template, fabrication, and professional installation.",
+          "qty": 25,
+          "rate": 85.00,
+          "unit": "Square Foot",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 2
+        },
+        {
+          "id": 11,
+          "proposalid": 2,
+          "description": "Porcelain Wall Tile - 6x12",
+          "long_description": "Porcelain wall tile for backsplash.",
+          "qty": 37,
+          "rate": 6.75,
+          "unit": "Square Foot",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 3
+        },
+        {
+          "id": 12,
+          "proposalid": 2,
+          "description": "Ceramic Floor Tile - 12x24",
+          "long_description": "Premium ceramic floor tile for kitchen.",
+          "qty": 216,
+          "rate": 4.95,
+          "unit": "Square Foot",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 4
+        },
+        {
+          "id": 13,
+          "proposalid": 2,
+          "description": "Tile Installation Labor",
+          "long_description": "Professional tile installation.",
+          "qty": 253,
+          "rate": 12.50,
+          "unit": "Square Foot",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 5
+        },
+        {
+          "id": 14,
+          "proposalid": 2,
+          "description": "Cabinet Installation Labor",
+          "long_description": "Professional cabinet installation and leveling.",
+          "qty": 18,
+          "rate": 85.00,
+          "unit": "Linear Foot",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 6
+        },
+        {
+          "id": 15,
+          "proposalid": 2,
+          "description": "Recessed Lighting Installation",
+          "long_description": "Installation of recessed LED lighting fixtures.",
+          "qty": 8,
+          "rate": 185.00,
+          "unit": "Each",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 7
+        },
+        {
+          "id": 16,
+          "proposalid": 2,
+          "description": "General Contractor Labor",
+          "long_description": "Project management and coordination.",
+          "qty": 40,
+          "rate": 85.00,
+          "unit": "Hour",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 8
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "subject": "Bathroom & Kitchen Remodel - Anderson Residence",
+      "content": "<p>Thank you for choosing Ella Contractors for your comprehensive remodeling project. This estimate covers both bathroom and kitchen renovations.</p><p><strong>Project Scope:</strong></p><ul><li>Complete bathroom renovation</li><li>Complete kitchen renovation</li><li>All materials and labor included</li><li>Eco-friendly material options</li><li>Energy-efficient fixtures</li></ul>",
+      "addedfrom": 5,
+      "datecreated": "2024-02-22 12:00:00",
+      "total": 42500.00,
+      "currency": 1,
+      "open_till": "2024-03-22",
+      "date": "2024-02-22",
+      "rel_id": 132,
+      "rel_type": "lead",
+      "assigned": 5,
+      "hash": "est_c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+      "proposal_to": "Jennifer Anderson",
+      "address": "3456 Pine Road<br>Rockford, IL 61101",
+      "email": "jennifer.anderson@email.com",
+      "phone": "+1-555-0321",
+      "allow_comments": 1,
+      "status": 1,
+      "estimate_id": null,
+      "invoice_id": null,
+      "date_converted": null,
+      "appointment_id": 4,
+      "org_id": 1,
+      "proposal_items": [
+        {
+          "id": 17,
+          "proposalid": 3,
+          "description": "Bathroom Remodel Package",
+          "long_description": "Complete bathroom renovation including fixtures, tile, vanity, and all labor.",
+          "qty": 1,
+          "rate": 19500.00,
+          "unit": "Each",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 1
+        },
+        {
+          "id": 18,
+          "proposalid": 3,
+          "description": "Kitchen Remodel Package",
+          "long_description": "Complete kitchen renovation including cabinets, countertops, backsplash, and all labor.",
+          "qty": 1,
+          "rate": 23000.00,
+          "unit": "Each",
+          "tax": 0,
+          "tax2": 0,
+          "item_order": 2
+        }
+      ]
+    }
+  ],
+  "estimate_statuses": [
+    {
+      "id": 1,
+      "name": "Draft",
+      "color": "#98a6ad"
+    },
+    {
+      "id": 2,
+      "name": "Sent",
+      "color": "#03a9f4"
+    },
+    {
+      "id": 3,
+      "name": "Open",
+      "color": "#ffc107"
+    },
+    {
+      "id": 4,
+      "name": "Revised",
+      "color": "#9c27b0"
+    },
+    {
+      "id": 5,
+      "name": "Declined",
+      "color": "#f44336"
+    },
+    {
+      "id": 6,
+      "name": "Accepted",
+      "color": "#4caf50"
+    }
+  ]
+}

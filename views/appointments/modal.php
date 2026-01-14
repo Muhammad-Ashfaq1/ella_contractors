@@ -453,7 +453,7 @@ button.delete-btn {
                                     <div class="checkbox checkbox-primary">
                                         <input type="checkbox" name="send_reminder" id="send_reminder" value="1" checked>
                                         <label for="send_reminder">
-                                            Appointment Creation Notice
+                                        Instant Notice
                                             <i class="fa fa-info-circle text-info reminder-template-preview" 
                                                data-reminder-stage="client_instant" 
                                                data-template-type="email" 

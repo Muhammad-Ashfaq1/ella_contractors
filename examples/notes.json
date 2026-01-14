@@ -1,0 +1,147 @@
+{
+  "notes": [
+    {
+      "id": 1,
+      "rel_type": "appointment",
+      "rel_id": 1,
+      "description": "Appointment created on 2024-02-15 at 10:00 AM",
+      "dateadded": "2024-02-15 10:00:00",
+      "addedfrom": 5,
+      "staff_name": "Sarah Johnson",
+      "staff_profile_image": "https://crm.ellasbubbles.com/uploads/staff_profile_images/5.jpg",
+      "time_ago": "2 hours ago"
+    },
+    {
+      "id": 2,
+      "rel_type": "appointment",
+      "rel_id": 1,
+      "description": "Client called to confirm appointment time. Mentioned they will be bringing design inspiration photos. Very interested in modern minimalist style with premium fixtures.",
+      "dateadded": "2024-01-21 09:30:00",
+      "addedfrom": 5,
+      "staff_name": "Sarah Johnson",
+      "staff_profile_image": "https://crm.ellasbubbles.com/uploads/staff_profile_images/5.jpg",
+      "time_ago": "1 day ago"
+    },
+    {
+      "id": 3,
+      "rel_type": "appointment",
+      "rel_id": 1,
+      "description": "Sent presentation materials via email. Client reviewed and has questions about tile options. Will discuss during appointment.",
+      "dateadded": "2024-01-22 14:15:00",
+      "addedfrom": 5,
+      "staff_name": "Sarah Johnson",
+      "staff_profile_image": "https://crm.ellasbubbles.com/uploads/staff_profile_images/5.jpg",
+      "time_ago": "5 hours ago"
+    },
+    {
+      "id": 4,
+      "rel_type": "appointment",
+      "rel_id": 2,
+      "description": "Appointment created on 2024-02-18 at 01:00 PM",
+      "dateadded": "2024-02-18 13:00:00",
+      "addedfrom": 3,
+      "staff_name": "Michael Chen",
+      "staff_profile_image": "https://crm.ellasbubbles.com/uploads/staff_profile_images/3.jpg",
+      "time_ago": "3 hours ago"
+    },
+    {
+      "id": 5,
+      "rel_type": "appointment",
+      "rel_id": 2,
+      "description": "Client requested to see cabinet samples. Will bring sample doors and hardware options. Kitchen is currently functional but outdated - client wants complete renovation.",
+      "dateadded": "2024-01-23 10:45:00",
+      "addedfrom": 3,
+      "staff_name": "Michael Chen",
+      "staff_profile_image": "https://crm.ellasbubbles.com/uploads/staff_profile_images/3.jpg",
+      "time_ago": "2 days ago"
+    },
+    {
+      "id": 6,
+      "rel_type": "appointment",
+      "rel_id": 3,
+      "description": "Appointment created on 2024-02-20 at 02:00 PM",
+      "dateadded": "2024-02-20 14:00:00",
+      "addedfrom": 7,
+      "staff_name": "David Martinez",
+      "staff_profile_image": "https://crm.ellasbubbles.com/uploads/staff_profile_images/7.jpg",
+      "time_ago": "1 hour ago"
+    },
+    {
+      "id": 7,
+      "rel_type": "appointment",
+      "rel_id": 3,
+      "description": "Installation progressing well. Shower system installed, now working on tile. Client very pleased with quality. No issues reported.",
+      "dateadded": "2024-01-26 16:20:00",
+      "addedfrom": 7,
+      "staff_name": "David Martinez",
+      "staff_profile_image": "https://crm.ellasbubbles.com/uploads/staff_profile_images/7.jpg",
+      "time_ago": "4 hours ago"
+    },
+    {
+      "id": 8,
+      "rel_type": "appointment",
+      "rel_id": 4,
+      "description": "Appointment created on 2024-02-22 at 10:00 AM",
+      "dateadded": "2024-02-22 10:00:00",
+      "addedfrom": 5,
+      "staff_name": "Sarah Johnson",
+      "staff_profile_image": "https://crm.ellasbubbles.com/uploads/staff_profile_images/5.jpg",
+      "time_ago": "30 minutes ago"
+    },
+    {
+      "id": 9,
+      "rel_type": "appointment",
+      "rel_id": 4,
+      "description": "Large scope project - both bathroom and kitchen. Client wants eco-friendly materials and energy-efficient fixtures. Budget approved, ready to proceed with design phase.",
+      "dateadded": "2024-01-29 11:00:00",
+      "addedfrom": 5,
+      "staff_name": "Sarah Johnson",
+      "staff_profile_image": "https://crm.ellasbubbles.com/uploads/staff_profile_images/5.jpg",
+      "time_ago": "1 day ago"
+    },
+    {
+      "id": 10,
+      "rel_type": "appointment",
+      "rel_id": 5,
+      "description": "Appointment created on 2024-02-25 at 03:00 PM",
+      "dateadded": "2024-02-25 15:00:00",
+      "addedfrom": 3,
+      "staff_name": "Michael Chen",
+      "staff_profile_image": "https://crm.ellasbubbles.com/uploads/staff_profile_images/3.jpg",
+      "time_ago": "45 minutes ago"
+    },
+    {
+      "id": 11,
+      "rel_type": "appointment",
+      "rel_id": 5,
+      "description": "Project completed successfully. Custom vanity installed perfectly. Client extremely satisfied. Final payment received. Warranty documentation provided.",
+      "dateadded": "2024-01-31 15:30:00",
+      "addedfrom": 3,
+      "staff_name": "Michael Chen",
+      "staff_profile_image": "https://crm.ellasbubbles.com/uploads/staff_profile_images/3.jpg",
+      "time_ago": "3 hours ago"
+    },
+    {
+      "id": 12,
+      "rel_type": "appointment",
+      "rel_id": 6,
+      "description": "Appointment created on 2024-02-28 at 11:00 AM",
+      "dateadded": "2024-02-28 11:00:00",
+      "addedfrom": 7,
+      "staff_name": "David Martinez",
+      "staff_profile_image": "https://crm.ellasbubbles.com/uploads/staff_profile_images/7.jpg",
+      "time_ago": "15 minutes ago"
+    },
+    {
+      "id": 13,
+      "rel_type": "appointment",
+      "rel_id": 6,
+      "description": "Client has specific tile preferences - wants subway tile in white and navy blue. Need to bring samples and discuss layout options. Also interested in heated floor option.",
+      "dateadded": "2024-02-02 08:20:00",
+      "addedfrom": 7,
+      "staff_name": "David Martinez",
+      "staff_profile_image": "https://crm.ellasbubbles.com/uploads/staff_profile_images/7.jpg",
+      "time_ago": "2 days ago"
+    }
+  ]
+}
